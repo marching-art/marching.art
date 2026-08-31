@@ -43,6 +43,8 @@ function buildResultEntry(params) {
     crossClass = false,
     userPercentile,
     opponentPercentile,
+    userBest,
+    opponentBest,
     leagueId,
     leagueName,
     seasonUid,
@@ -57,7 +59,13 @@ function buildResultEntry(params) {
       ? `you finished in the ${ordinal(Math.round(userPercentile))} percentile of your class, ` +
         `they in the ${ordinal(Math.round(opponentPercentile))} of theirs`
       : null;
-  const scoreLine = `${userScore.toFixed(3)} – ${opponentScore.toFixed(3)}`;
+  // On a One-Night Slate week the best single shows decided it, so those are
+  // the numbers the copy quotes — the weekly totals could contradict the
+  // verdict they announce.
+  const scoreLine =
+    typeof userBest === "number" && typeof opponentBest === "number"
+      ? `best show ${userBest.toFixed(3)} – ${opponentBest.toFixed(3)}`
+      : `${userScore.toFixed(3)} – ${opponentScore.toFixed(3)}`;
   let title;
   let message;
   if (outcome === "win") {
@@ -142,6 +150,8 @@ function buildMatchupEntries(nameByUid, { pairs, previousStandings, newStandings
         opponentScore: s2,
         userPercentile: pair.player1Normalized,
         opponentPercentile: pair.player2Normalized,
+        userBest: pair.player1Best,
+        opponentBest: pair.player2Best,
         outcome: outcome1,
       })
     );
@@ -154,6 +164,8 @@ function buildMatchupEntries(nameByUid, { pairs, previousStandings, newStandings
         opponentScore: s1,
         userPercentile: pair.player2Normalized,
         opponentPercentile: pair.player1Normalized,
+        userBest: pair.player2Best,
+        opponentBest: pair.player1Best,
         outcome: outcome2,
       })
     );

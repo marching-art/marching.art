@@ -152,3 +152,27 @@ describe("cross-class matchup copy", () => {
     assert.doesNotMatch(alice.message, /cross-class/);
   });
 });
+
+describe("one-night slate matchup copy", () => {
+  test("quotes the best-show line the week was decided on", () => {
+    const entries = buildMatchupEntries(names, {
+      ...baseArgs,
+      pairs: [
+        {
+          player1: "alice",
+          player2: "bob",
+          player1Score: 162, // the fuller week…
+          player2Score: 85,
+          player1Best: 82,
+          player2Best: 85, // …but bob's single night was better
+          winner: "bob",
+          corpsClass: "worldClass",
+        },
+      ],
+    });
+    const bob = entries.find((e) => e.uid === "bob");
+    assert.match(bob.message, /best show 85\.000 – 82\.000/);
+    // The weekly totals would read as a 162-85 blowout the other way.
+    assert.doesNotMatch(bob.message, /162\.000/);
+  });
+});

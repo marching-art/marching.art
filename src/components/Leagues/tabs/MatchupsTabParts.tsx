@@ -46,6 +46,8 @@ export interface TabMatchup {
    *  not seat, paired across classes and decided on class percentile). */
   classes?: Record<string, string>;
   crossClass?: boolean;
+  /** Each side's best single show, on a league running One-Night Slate. */
+  best?: Record<string, { score?: number; showName?: string | null } | undefined>;
   /** Each side's weekly finish against its own class, 0–100. */
   normalized?: Record<string, number>;
   /** Synthetic React key, attached when a week is flattened for render. */
@@ -602,6 +604,13 @@ const VersusStrip = memo(
       const cls = uid ? matchup.classes?.[uid] : undefined;
       return cls ? CORPS_CLASS_CONFIG[cls]?.name || cls : undefined;
     };
+    // One side's best single show (One-Night Slate). SoundSport is ratings-
+    // only, so its best night renders as the earned tier, never a number.
+    const bestLabel = (uid: string | null) => {
+      const score = (uid && matchup.best?.[uid]?.score) || 0;
+      if (score <= 0) return '—';
+      return isSoundSport ? getSoundSportRating(score) : score.toFixed(1);
+    };
 
     return (
       <button
@@ -696,6 +705,33 @@ const VersusStrip = memo(
                       {home.score.toFixed(0)}-{away.score.toFixed(0)}
                     </div>
                   )}
+                </div>
+              ) : matchup.completed && matchup.best ? (
+                /* One-Night Slate: the best single show is the result, the
+                   weekly totals are the supporting detail. */
+                <div>
+                  <div
+                    className={`flex items-center justify-center gap-1 font-bold ${
+                      isSoundSport ? 'text-[10px] uppercase' : 'text-sm font-data tabular-nums'
+                    }`}
+                  >
+                    <span
+                      className={
+                        homeWon ? 'text-green-400' : isTie ? 'text-secondary' : 'text-muted'
+                      }
+                    >
+                      {bestLabel(p1_uid)}
+                    </span>
+                    <span className="text-muted">-</span>
+                    <span
+                      className={
+                        awayWon ? 'text-green-400' : isTie ? 'text-secondary' : 'text-muted'
+                      }
+                    >
+                      {bestLabel(p2_uid)}
+                    </span>
+                  </div>
+                  <div className="text-[9px] text-muted uppercase">best show</div>
                 </div>
               ) : isCrossClass && matchup.completed ? (
                 /* Decided on each side's finish against its own class — the

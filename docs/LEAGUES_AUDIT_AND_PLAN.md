@@ -792,7 +792,13 @@ production credentials.
 
   `settings.scoringFormat` came back with an implementation behind it, paired
   with the season uid it was bought for so a stale value can never switch a
-  league into a format nobody paid for. Survivor and Pick'em remain undesigned.
+  league into a format nobody paid for. **One-Night Slate** followed as the
+  second paid format (docs/ONE_NIGHT_SLATE.md): the week decided by each
+  director's best single show, through the same purchase flow and the same
+  shared decision rule (`leagueScoring.js decideHeadToHead`) — which the
+  commissioner's manual close now also uses, closing the gap where it resolved
+  every league on totals whatever format was bought. Survivor and Pick'em
+  remain undesigned.
 
 - **Consolation bracket** — ~~outstanding~~ shipped. Everyone below the finals
   cut runs the same race on championship week for a second, lesser title,

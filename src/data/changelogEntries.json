@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-31-one-night-slate",
+    "date": "2026-08-31",
+    "title": "One-Night Slate: a league format where your best show decides the week",
+    "category": "feature",
+    "summary": "The second format on the league shelf, next to Caption Wars. A commissioner can put their league on One-Night Slate for a season: instead of summing every show you attend, your weekly matchup comes down to your best single show against your opponent's best. One great Saturday beats a week of steady Tuesdays — built for leagues whose members can't all give the game the same number of nights. Nobody's lineup changes, and everything else about the league works exactly as before.",
+    "highlights": [
+      "Enable it from your league's Settings tab before the season's first week, for 1,500 CC from the commissioner's own balance — the prize pool is untouched.",
+      "Showing up still matters: every show is another chance at a peak, and identical best shows fall to the fuller week's total.",
+      "Matchup cards, notifications, and pushes quote the two nights that decided the week.",
+      "Covers one season and clears at rollover, same terms as Caption Wars. The game guide's League Formats section explains both."
+    ]
+  },
+  {
     "id": "2026-08-31-cross-class-matchups",
     "date": "2026-08-31",
     "title": "Mixed-class leagues: real matchups instead of automatic byes",

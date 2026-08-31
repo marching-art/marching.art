@@ -65,6 +65,8 @@ interface SelectedMatchup {
   crossClass?: boolean;
   classes?: Record<string, string>;
   normalized?: Record<string, number>;
+  /** Each side's best single show, on a league running One-Night Slate. */
+  best?: Record<string, { score?: number; showName?: string | null } | undefined>;
   winner?: string | null;
   completed?: boolean;
   isUserMatchup: boolean;
@@ -287,11 +289,12 @@ const MatchupsTab = ({
       // through rather than recomputed so the detail card can never disagree
       // with the result on the row that opened it.
       captions: matchup.captions,
-      // Same principle for cross-class matchups: the stored verdict and the
-      // per-side classes/percentiles travel with the row.
+      // Same principle for cross-class and One-Night matchups: the stored
+      // verdict and the per-side classes/percentiles travel with the row.
       crossClass: matchup.crossClass,
       classes: matchup.classes,
       normalized: matchup.normalized,
+      best: matchup.best,
       winner: matchup.winner,
       completed: matchup.completed,
       isUserMatchup: matchup.pair[0] === userProfile?.uid || matchup.pair[1] === userProfile?.uid,

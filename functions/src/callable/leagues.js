@@ -25,6 +25,7 @@ const {
   getActiveSeasonUid,
 } = require("../helpers/leagueActivity");
 const { fetchWeeklyScoreIndex, decideHeadToHead } = require("../helpers/leagueScoring");
+const { activeScoringFormat, captionsWonBy } = require("../helpers/captionWars");
 const { isLeagueCommissioner, pickSuccessor } = require("../helpers/leaguePermissions");
 
 exports.createLeague = onCall({ cors: true }, async (request) => {
@@ -835,6 +836,10 @@ exports.updateMatchupResults = onCall({ cors: true }, async (request) => {
     );
   }
 
+  // The format this league's weeks are decided on, season-pinned exactly as
+  // the nightly resolution reads it (helpers/captionWars.js).
+  const scoringFormat = activeScoringFormat(leagueDoc.data(), seasonDocForWeek.data().seasonUid);
+
   // Resolve the week and fold standings in ONE transaction. The old flow
   // (plain read → plain matchup update → get-then-update standings) let two
   // concurrent calls — or a call racing the nightly weekly resolution — both
@@ -878,11 +883,11 @@ exports.updateMatchupResults = onCall({ cors: true }, async (request) => {
 
         // The week's total for each side in ITS OWN class, across every show
         // the corps attended. Not competing scores 0 — a forfeited week, not a
-        // 0.0 run. The decision rule — points same-class, class percentile
-        // cross-class — is shared with the nightly resolution
-        // (helpers/leagueScoring.js decideHeadToHead) so a commissioner close
-        // can never disagree with the automatic one.
-        const decided = decideHeadToHead(matchup, corpsClass, weekScores);
+        // 0.0 run. The full decision rule — the league's scoring format
+        // same-class, class percentile cross-class — is shared with the
+        // nightly resolution (helpers/leagueScoring.js decideHeadToHead) so a
+        // commissioner close can never disagree with the automatic one.
+        const decided = decideHeadToHead(matchup, corpsClass, weekScores, scoringFormat);
         const { p1: p1_uid, p2: p2_uid, p1Class, p2Class, winner } = decided;
         const p1_score = decided.p1Week.score;
         const p2_score = decided.p2Week.score;
@@ -895,6 +900,9 @@ exports.updateMatchupResults = onCall({ cors: true }, async (request) => {
             [p1_uid]: decided.p1Week.classPercentile,
             [p2_uid]: decided.p2Week.classPercentile,
           },
+          // Format blocks, matching the nightly resolution's doc convention.
+          ...(decided.captions ? { captions: decided.captions } : {}),
+          ...(decided.best ? { best: decided.best } : {}),
           winner,
           completed: true
         };
@@ -910,6 +918,12 @@ exports.updateMatchupResults = onCall({ cors: true }, async (request) => {
           player2Normalized: decided.p2Week.classPercentile,
           player1Class: p1Class,
           player2Class: p2Class,
+          ...(decided.captions
+            ? {
+                player1Captions: captionsWonBy(decided.captions, p1_uid),
+                player2Captions: captionsWonBy(decided.captions, p2_uid),
+              }
+            : {}),
           winner,
           completed: true,
           corpsClass

@@ -128,7 +128,7 @@ export const ROADMAP: RoadmapItem[] = [
     id: 'league-formats',
     title: 'More ways for leagues to compete',
     description:
-      'Caption Wars was the first alternate league format. Survivor- and pick’em-style formats are on the drawing board next.',
+      'Caption Wars and One-Night Slate are live. Survivor- and pick’em-style formats are on the drawing board next.',
     status: 'exploring',
   },
 ];

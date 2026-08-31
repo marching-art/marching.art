@@ -77,6 +77,8 @@ interface DetailMatchup {
   crossClass?: boolean;
   classes?: Record<string, string>;
   normalized?: Record<string, number>;
+  /** Each side's best single show, on a league running One-Night Slate. */
+  best?: Record<string, { score?: number; showName?: string | null } | undefined>;
   winner?: string | null;
   completed?: boolean;
 }
@@ -417,10 +419,11 @@ const MatchupDetailView = ({
     processRecaps();
   }, [matchup, league?.id, recapsProp]);
 
-  // A settled cross-class matchup is decided on class percentiles, so the
-  // stored winner outranks anything recomputed from raw totals here.
+  // A settled matchup's stored winner outranks anything recomputed from raw
+  // totals here: cross-class weeks are decided on class percentiles, Caption
+  // Wars on the category tally, One-Night Slate on the best single show.
   const isCrossClass = Boolean(matchup.crossClass);
-  const settledWinner = isCrossClass && matchup.completed ? matchup.winner : undefined;
+  const settledWinner = matchup.completed ? matchup.winner : undefined;
   const user1Leading = settledWinner
     ? settledWinner === matchup.user1
     : weeklyScores.user1 > weeklyScores.user2;

@@ -69,6 +69,9 @@ function collectMemberResults(matchupData, memberProfiles) {
           crossClass: Boolean(matchup.crossClass),
           myPercentile: matchup.normalized?.[uid],
           oppPercentile: matchup.normalized?.[opponent],
+          // On a One-Night Slate league, the shows that decided the week.
+          myBest: matchup.best?.[uid]?.score,
+          oppBest: matchup.best?.[opponent]?.score,
         });
         byUid.set(uid, results);
       }
@@ -93,13 +96,21 @@ function singleResultBody(result, leagueName) {
       : `You fell to ${opponent} in your cross-class matchup — their week outranked your ${label} run (${league}).`;
   }
 
-  const line = `${formatScore(result.myScore)}–${formatScore(result.oppScore)}`;
+  // One-Night Slate weeks are decided on the best single show, so that is the
+  // line the push quotes — weekly totals could contradict the verdict.
+  const oneNight = typeof result.myBest === "number" && typeof result.oppBest === "number";
+  const line = oneNight
+    ? `${formatScore(result.myBest)}–${formatScore(result.oppBest)} (best show)`
+    : `${formatScore(result.myScore)}–${formatScore(result.oppScore)}`;
 
   if (result.won === null) {
     return `You tied ${opponent} ${line} in ${label} (${league}).`;
   }
-  return result.won
-    ? `You beat ${opponent} ${line} in ${label} (${league})!`
+  if (result.won) {
+    return `You beat ${opponent} ${line} in ${label} (${league})!`;
+  }
+  return oneNight
+    ? `You fell to ${opponent} ${formatScore(result.oppBest)}–${formatScore(result.myBest)} (best show) in ${label} (${league}).`
     : `You fell to ${opponent} ${formatScore(result.oppScore)}–${formatScore(result.myScore)} in ${label} (${league}).`;
 }
 

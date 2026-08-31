@@ -88,7 +88,7 @@ export interface LeagueSettings {
    * BOTH, so a value left behind by a previous season can never switch a league
    * into a paid format nobody bought. See docs/CAPTION_WARS_SPEC.md.
    */
-  scoringFormat?: 'total' | 'captionWars';
+  scoringFormat?: 'total' | 'captionWars' | 'oneNight';
   scoringFormatSeasonUid?: string;
 }
 

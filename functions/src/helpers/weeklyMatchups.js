@@ -23,7 +23,7 @@ const {
   decideHeadToHead,
   participatingClassesByUid,
 } = require("./leagueScoring");
-const { isCaptionWarsLeague, resolveCaptionWars, captionsWonBy } = require("./captionWars");
+const { activeScoringFormat, captionsWonBy } = require("./captionWars");
 const {
   weeklyXpToken,
   weeklyWinToken,
@@ -115,8 +115,8 @@ async function processWeeklyMatchups(week, seasonData, db, { force = false } = {
     // Which format decides this league's weeks. Checked per league and pinned
     // to the season it was bought for, so a league that never opted in — or
     // whose opt-in belongs to a previous season — resolves on totals exactly as
-    // it always has. See helpers/captionWars.js.
-    const captionWars = isCaptionWarsLeague(leagueDoc.data(), seasonData.seasonUid);
+    // it always has. See helpers/captionWars.js activeScoringFormat.
+    const scoringFormat = activeScoringFormat(leagueDoc.data(), seasonData.seasonUid);
     // Resolved pairs for the standings/current doc — same shape the
     // commissioner callable feeds updateStandings, so the automatic weekly
     // close and a manual resolution produce identical standings.
@@ -180,28 +180,20 @@ async function processWeeklyMatchups(week, seasonData, db, { force = false } = {
         // cross-class matchup (leagueHelpers.js pairLeagueWeek) carries a
         // per-side `classes` map and is decided on class percentile rather
         // than raw points — see leagueScoring.js decideHeadToHead.
-        const decided = decideHeadToHead(matchup, corpsClass, weekScores);
-        const { p1Class, p2Class, crossClass, p1Week: p1_week, p2Week: p2_week } = decided;
+        const decided = decideHeadToHead(matchup, corpsClass, weekScores, scoringFormat);
+        const { p1Class, p2Class, p1Week: p1_week, p2Week: p2_week } = decided;
         const p1_score = p1_week.score;
         const p2_score = p2_week.score;
 
-        // Best-of-three across the caption groups, or the single comparison of
-        // weekly totals (percentiles, cross-class). Either way this produces
-        // one winner uid (or a tie), and everything below this point — the
-        // record increment, the award tokens, the weekly-win bonus, the
-        // standings pair — is identical. A cross-class matchup in a Caption
-        // Wars league still resolves on the percentile: the three caption
-        // groups are raw per-class numbers too, so a caption comparison across
-        // classes would smuggle the exact scale problem back in.
-        let winnerUid = null;
-        let captions = null;
-        if (captionWars && !crossClass) {
-          const resolved = resolveCaptionWars(p1_uid, p2_uid, p1_week, p2_week);
-          captions = resolved.captions;
-          winnerUid = resolved.winner === "tie" ? null : resolved.winner;
-        } else {
-          winnerUid = decided.winner === "tie" ? null : decided.winner;
-        }
+        // Caption best-of-three, best single show, class percentile
+        // (cross-class), or the plain comparison of weekly totals — the
+        // format-aware rule lives in ONE place (leagueScoring.js
+        // decideHeadToHead). Whatever decided it, everything below this point
+        // — the record increment, the award tokens, the weekly-win bonus, the
+        // standings pair — is identical.
+        const winnerUid = decided.winner === "tie" ? null : decided.winner;
+        const captions = decided.captions;
+        const best = decided.best;
 
         // Per side, so a cross-class win lands on the class the director
         // actually fielded, not the array the matchup happened to be stored in.
@@ -300,11 +292,13 @@ async function processWeeklyMatchups(week, seasonData, db, { force = false } = {
             [p1_uid]: p1_week.classPercentile,
             [p2_uid]: p2_week.classPercentile,
           },
-          // Only present on leagues running Caption Wars. `scores` above still
-          // holds the weekly TOTAL in both formats, so points-for/against, the
-          // percentile and the record book keep meaning the same thing across a
-          // league that changed format between seasons.
+          // Only present on leagues running the matching format. `scores`
+          // above still holds the weekly TOTAL in every format, so
+          // points-for/against, the percentile and the record book keep
+          // meaning the same thing across a league that changed format
+          // between seasons.
           ...(captions ? { captions } : {}),
+          ...(best ? { best } : {}),
           winner: winnerUid ?? "tie",
           completed: true,
         };
@@ -321,6 +315,14 @@ async function processWeeklyMatchups(week, seasonData, db, { force = false } = {
           // week (decided on percentile) from a normal one (decided on points).
           player1Class: p1Class,
           player2Class: p2Class,
+          // Best single shows, on a One-Night Slate league — the numbers the
+          // week was actually decided on, for the notification copy.
+          ...(best
+            ? {
+                player1Best: best[p1_uid]?.score ?? 0,
+                player2Best: best[p2_uid]?.score ?? 0,
+              }
+            : {}),
           ...(captions
             ? {
                 player1Captions: captionsWonBy(captions, p1_uid),

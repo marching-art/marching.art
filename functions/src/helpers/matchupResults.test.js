@@ -156,3 +156,28 @@ describe("cross-class matchup pushes", () => {
     for (const push of pushes) assert.match(push.body, /tied/);
   });
 });
+
+describe("one-night slate pushes", () => {
+  test("the push quotes best shows, not weekly totals", () => {
+    const pushes = buildMatchupResultPushes({
+      leagueName: "Peak League",
+      week: 3,
+      matchupData: {
+        worldClassMatchups: [
+          {
+            pair: ["u1", "u2"],
+            completed: true,
+            winner: "u2",
+            scores: { u1: 162, u2: 85 },
+            best: { u1: { score: 82, showName: "Tuesday" }, u2: { score: 85, showName: "Saturday" } },
+          },
+        ],
+      },
+      memberProfiles: {},
+    });
+    const byUid = new Map(pushes.map((p) => [p.uid, p]));
+    assert.match(byUid.get("u2").body, /85\.000–82\.000 \(best show\)/);
+    assert.match(byUid.get("u1").body, /You fell to/);
+    assert.doesNotMatch(byUid.get("u2").body, /162\.000/);
+  });
+});

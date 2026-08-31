@@ -5,7 +5,7 @@
 // cannot promise a rule or a payout the game does not honour.
 
 import React from 'react';
-import { Users, Swords } from 'lucide-react';
+import { Users, Swords, Moon } from 'lucide-react';
 import { SectionHead, NoteGrid, NoteCard, SubHead } from './howToPlayPrimitives';
 import {
   LEAGUE_BASICS,
@@ -17,6 +17,7 @@ import {
   CAPTION_WARS_CATEGORIES,
   CAPTION_WARS_RULES,
   CAPTION_WARS_PURCHASE,
+  ONE_NIGHT_RULES,
 } from './howToPlayData';
 
 const LeaguesSection = () => (
@@ -104,6 +105,23 @@ const CaptionWarsSection = () => (
 
     <SubHead>What it costs the commissioner</SubHead>
     <NoteGrid items={CAPTION_WARS_PURCHASE} />
+
+    <div className="mt-6">
+      <SectionHead icon={Moon} kicker="An alternate league format" title="One-Night Slate" />
+    </div>
+    <p className="text-sm text-secondary leading-relaxed mb-4">
+      The other format on the shelf. Instead of summing every show you attend, the week comes down
+      to <strong className="text-white">your best single show</strong> — one great night beats a
+      week of grinding. Built for leagues whose members can&apos;t all give the game the same number
+      of nights.
+    </p>
+    <div className="space-y-2">
+      {ONE_NIGHT_RULES.map((rule) => (
+        <NoteCard key={rule.title} title={rule.title}>
+          {rule.desc}
+        </NoteCard>
+      ))}
+    </div>
   </>
 );
 
