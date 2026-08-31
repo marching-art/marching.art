@@ -52,6 +52,14 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 3
+    ignore:
+      # puppeteer-core majors track specific Chrome releases, so they must be
+      # bumped in lockstep with @sparticuz/chromium (which ships the Chromium
+      # binary the scraper actually launches). A bare puppeteer-core bump
+      # leaves the two out of sync and breaks the scraper at runtime, which no
+      # CI covers. Upgrade both together, deliberately. Closed PR #1466.
+      - dependency-name: puppeteer-core
+        update-types: [version-update:semver-major]
     groups:
       all-dependencies:
         update-types: [minor, patch]

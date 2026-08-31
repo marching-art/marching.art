@@ -17,14 +17,11 @@ import {
   Minus,
   ExternalLink,
   Globe,
-  Twitter,
-  Instagram,
-  Youtube,
-  Facebook,
   MessageCircle,
   Flag,
   Quote,
 } from 'lucide-react';
+import { TwitterIcon, InstagramIcon, YoutubeIcon, FacebookIcon } from '../icons/brandIcons';
 import type {
   Achievement,
   CorpsClass,
@@ -326,11 +323,11 @@ const SOCIAL_META: Array<{
   color: string;
 }> = [
   { key: 'website', label: 'Website', icon: Globe, color: 'text-interactive' },
-  { key: 'twitter', label: 'Twitter', icon: Twitter, color: 'text-sky-400' },
-  { key: 'instagram', label: 'Instagram', icon: Instagram, color: 'text-pink-400' },
-  { key: 'youtube', label: 'YouTube', icon: Youtube, color: 'text-red-400' },
+  { key: 'twitter', label: 'Twitter', icon: TwitterIcon, color: 'text-sky-400' },
+  { key: 'instagram', label: 'Instagram', icon: InstagramIcon, color: 'text-pink-400' },
+  { key: 'youtube', label: 'YouTube', icon: YoutubeIcon, color: 'text-red-400' },
   { key: 'tiktok', label: 'TikTok', icon: Music, color: 'text-secondary' },
-  { key: 'facebook', label: 'Facebook', icon: Facebook, color: 'text-blue-500' },
+  { key: 'facebook', label: 'Facebook', icon: FacebookIcon, color: 'text-blue-500' },
   { key: 'discord', label: 'Discord', icon: MessageCircle, color: 'text-[#5865F2]' },
 ];
 
