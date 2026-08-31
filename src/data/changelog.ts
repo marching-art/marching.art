@@ -131,13 +131,6 @@ export const ROADMAP: RoadmapItem[] = [
       'Caption Wars was the first alternate league format. Survivor- and pick’em-style formats are on the drawing board next.',
     status: 'exploring',
   },
-  {
-    id: 'mixed-class-scoring',
-    title: 'Fairer mixed-class league standings',
-    description:
-      'Ranking corps from different classes on one comparable scale, so a mixed-class league isn’t decided by who plays the higher class.',
-    status: 'exploring',
-  },
 ];
 
 // -----------------------------------------------------------------------------

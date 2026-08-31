@@ -309,3 +309,36 @@ describe('records across seasons', () => {
     expect(records.seasonsCounted).toBe(1);
   });
 });
+
+describe('cross-class matchups in the record book', () => {
+  const cross = (p1: string, p2: string, s1: number, s2: number, winner: string) => ({
+    pair: [p1, p2] as [string, string],
+    scores: { [p1]: s1, [p2]: s2 },
+    normalized: { [p1]: 40, [p2]: 100 },
+    classes: { [p1]: 'worldClass', [p2]: 'soundSport' },
+    crossClass: true,
+    winner,
+    completed: true,
+  });
+
+  it('never sets a points-margin record from a cross-class week', () => {
+    // 85 vs 60 looks like a 25-point blowout, but the week was decided on
+    // class percentiles — margins across classes are not comparable.
+    const records = computeLeagueRecords(
+      [week(1, [cross('a', 'b', 85, 60, 'a')]), week(2, [cross('a', 'b', 88, 61, 'a')])],
+      CLASSES
+    );
+    expect(records.biggestBlowout).toBeNull();
+    expect(records.closestCall).toBeNull();
+    // The weeks still count as played, and the win streak still counts them.
+    expect(records.longestWinStreak).toMatchObject({ uid: 'a', length: 2 });
+  });
+
+  it("labels each side's records with its OWN class", () => {
+    const records = computeLeagueRecords([week(1, [cross('a', 'b', 85, 60, 'b')])], CLASSES);
+    // b's 100th-percentile week belongs to soundSport even though the matchup
+    // was stored under the worldClass array.
+    expect(records.bestClassFinish).toMatchObject({ uid: 'b', corpsClass: 'soundSport' });
+    expect(records.highestWeek).toMatchObject({ uid: 'a', corpsClass: 'worldClass' });
+  });
+});

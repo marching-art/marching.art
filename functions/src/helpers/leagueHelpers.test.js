@@ -7,6 +7,7 @@ const assert = require("node:assert/strict");
 const {
   generateUniqueInviteCode,
   smartPairMembers,
+  pairLeagueWeek,
   buildPairingHistory,
   recordPairingsInHistory,
   invitationId,
@@ -256,5 +257,89 @@ describe('recordPairingsInHistory', () => {
     for (const matchup of week2) {
       assert.ok(!week1Pairs.has(key(matchup)), `${key(matchup)} repeated in week 2`);
     }
+  });
+});
+
+describe("pairLeagueWeek (cross-class round)", () => {
+  const CLASSES = ["worldClass", "openClass", "aClass", "soundSport"];
+
+  test("a single-class league is exactly smartPairMembers' output", () => {
+    const membersByClass = { worldClass: ["a", "b", "c", "d"] };
+    const paired = pairLeagueWeek(membersByClass, {}, {}, CLASSES);
+    assert.deepEqual(paired.worldClass, smartPairMembers(["a", "b", "c", "d"], {}, {}));
+    for (const cls of CLASSES.slice(1)) assert.deepEqual(paired[cls], []);
+  });
+
+  test("two singleton classes play each other instead of collecting bye wins", () => {
+    const paired = pairLeagueWeek(
+      { worldClass: ["wc-solo"], soundSport: ["ss-solo"] },
+      {},
+      {},
+      CLASSES
+    );
+    const all = CLASSES.flatMap((c) => paired[c]);
+    assert.equal(all.length, 1);
+    const [matchup] = all;
+    assert.deepEqual([...matchup.pair].sort(), ["ss-solo", "wc-solo"]);
+    assert.equal(matchup.crossClass, true);
+    assert.equal(matchup.completed, false);
+    assert.equal(matchup.classes["wc-solo"], "worldClass");
+    assert.equal(matchup.classes["ss-solo"], "soundSport");
+    // Stored under the first (higher-seeded) director's class array only.
+    assert.equal(
+      CLASSES.filter((c) => paired[c].length > 0).length,
+      1
+    );
+  });
+
+  test("odd classes send their leftover to the cross round; a true odd total still byes", () => {
+    // 3 worldClass (one leftover) + 1 aClass (leftover) + 1 soundSport
+    // (leftover): two of the three leftovers pair, one gets the bye.
+    const paired = pairLeagueWeek(
+      { worldClass: ["w1", "w2", "w3"], aClass: ["a1"], soundSport: ["s1"] },
+      {},
+      {},
+      CLASSES
+    );
+    const all = CLASSES.flatMap((c) => paired[c]);
+    const cross = all.filter((m) => m.crossClass);
+    const byes = all.filter((m) => m.isBye);
+    const sameClass = all.filter((m) => !m.crossClass && !m.isBye);
+    assert.equal(sameClass.length, 1); // w-vs-w
+    assert.equal(cross.length, 1);
+    assert.equal(byes.length, 1);
+    // The bye is a completed win, exactly as before.
+    assert.equal(byes[0].completed, true);
+    assert.equal(byes[0].winner, byes[0].pair[0]);
+  });
+
+  test("a director leftover in two classes is never paired against themself", () => {
+    // "dual" fields two singleton classes; "solo" fields one. dual must play
+    // solo once, and the remaining dual leftover takes the bye.
+    const paired = pairLeagueWeek(
+      { worldClass: ["dual"], openClass: ["dual"], aClass: ["solo"] },
+      {},
+      {},
+      CLASSES
+    );
+    const all = CLASSES.flatMap((c) => paired[c]);
+    const cross = all.filter((m) => m.crossClass);
+    const byes = all.filter((m) => m.isBye);
+    assert.equal(cross.length, 1);
+    assert.notEqual(cross[0].pair[0], cross[0].pair[1]);
+    assert.ok(cross[0].pair.includes("solo"));
+    assert.equal(byes.length, 1);
+    assert.deepEqual(byes[0].pair, ["dual", null]);
+  });
+
+  test("cross pairing avoids last week's cross opponent when it can", () => {
+    const membersByClass = { worldClass: ["w"], aClass: ["a"], soundSport: ["s"] };
+    const history = { meetings: { w: { a: 1 }, a: { w: 1 } }, byes: { s: 1 } };
+    const paired = pairLeagueWeek(membersByClass, {}, history, CLASSES);
+    const cross = CLASSES.flatMap((c) => paired[c]).filter((m) => m.crossClass);
+    assert.equal(cross.length, 1);
+    // w and a already met, so whatever pairs this week, it is not that rematch.
+    assert.notDeepEqual([...cross[0].pair].sort(), ["a", "w"]);
+    assert.ok(cross[0].pair.includes("s"));
   });
 });

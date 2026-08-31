@@ -22,7 +22,7 @@ const { assertAuth, assertWriteBudget } = require("../helpers/callableGuards");
 // drifted from it (differing bye shape), so automated and manual generation
 // could produce structurally different matchup documents.
 const {
-  smartPairMembers,
+  pairLeagueWeek,
   buildPairingHistory,
   recordPairingsInHistory,
 } = require("../helpers/leagueHelpers");
@@ -201,13 +201,13 @@ exports.generateWeeklyMatchups = onSchedule(
               pairs: []
             };
 
+            // Per-class pairing plus the cross-class round for leftovers, so a
+            // mixed-class league's odd directors play each other instead of
+            // collecting bye wins (helpers/leagueHelpers.js pairLeagueWeek).
+            const paired = pairLeagueWeek(membersByClass, standings, pairingHistory, CORPS_CLASSES);
             for (const corpsClass of CORPS_CLASSES) {
               const matchupArrayKey = `${corpsClass}Matchups`;
-              matchupData[matchupArrayKey] = smartPairMembers(
-                membersByClass[corpsClass],
-                standings,
-                pairingHistory
-              );
+              matchupData[matchupArrayKey] = paired[corpsClass];
               leagueMatchups += matchupData[matchupArrayKey].filter(m => !m.isBye).length;
             }
 
@@ -479,12 +479,11 @@ exports.triggerMatchupGeneration = onCall(
       pairs: []
     };
 
+    // Same pairing as the scheduled generator: per-class plus the cross-class
+    // leftover round (helpers/leagueHelpers.js pairLeagueWeek).
+    const paired = pairLeagueWeek(membersByClass, standings, pairingHistory, CORPS_CLASSES);
     for (const corpsClass of CORPS_CLASSES) {
-      matchupData[`${corpsClass}Matchups`] = smartPairMembers(
-        membersByClass[corpsClass],
-        standings,
-        pairingHistory
-      );
+      matchupData[`${corpsClass}Matchups`] = paired[corpsClass];
     }
 
     await matchupRef.set(matchupData);

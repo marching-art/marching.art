@@ -30,6 +30,10 @@ export interface LeagueMatchup {
   completed?: boolean;
   scores?: Record<string, number>;
   corpsClass?: string;
+  /** Cross-class matchup: per-side classes, decided on class percentile. */
+  crossClass?: boolean;
+  classes?: Record<string, string>;
+  normalized?: Record<string, number>;
 }
 
 /** A raw `leagues/{id}/matchups/week-N` document as read from Firestore. */
@@ -189,7 +193,9 @@ function scoreForMatchup(
   weekNum: number,
   uid: string
 ): number {
-  const corpsClass = matchup.corpsClass;
+  // On a cross-class matchup each side played in its own class; everywhere
+  // else the matchup's class applies to both.
+  const corpsClass = matchup.classes?.[uid] ?? matchup.corpsClass;
   const perClass = corpsClass ? classResults?.[weekNum]?.[uid] : undefined;
   if (perClass) {
     const classScore = perClass[corpsClass as string];
@@ -231,6 +237,9 @@ export function buildMatchupsByWeek(
         winner?: string | null;
         completed?: boolean;
         scores?: Record<string, number>;
+        crossClass?: boolean;
+        classes?: Record<string, string>;
+        normalized?: Record<string, number>;
       }>;
       classMatchups.forEach((matchup) => {
         if (matchup.pair && matchup.pair[0] && matchup.pair[1]) {
@@ -241,6 +250,9 @@ export function buildMatchupsByWeek(
             completed: matchup.completed,
             scores: matchup.scores,
             corpsClass,
+            crossClass: matchup.crossClass,
+            classes: matchup.classes,
+            normalized: matchup.normalized,
           });
         }
       });
@@ -268,6 +280,29 @@ function findMatchupsForUser(
 ): LeagueMatchup[] {
   const matchups = matchupsByWeek[weekNum] || [];
   return matchups.filter((m) => m.user1 === uid || m.user2 === uid);
+}
+
+/**
+ * W/L/T for one member's matchup. The SETTLED winner is trusted whenever the
+ * matchup carries one: a cross-class week is decided on class percentiles, so
+ * re-deriving it from raw scores here would put this provisional table in
+ * disagreement with the server's — the exact two-systems bug (A2) this module
+ * was rebuilt to end. Score comparison remains the fallback for unresolved
+ * and legacy matchups.
+ */
+function matchupOutcomeFor(
+  matchup: LeagueMatchup,
+  uid: string,
+  myScore: number,
+  oppScore: number
+): 'W' | 'L' | 'T' {
+  if (matchup.completed && matchup.winner) {
+    if (matchup.winner === uid) return 'W';
+    if (matchup.winner === 'tie') return 'T';
+    const oppUid = matchup.user1 === uid ? matchup.user2 : matchup.user1;
+    if (matchup.winner === oppUid) return 'L';
+  }
+  return myScore > oppScore ? 'W' : myScore < oppScore ? 'L' : 'T';
 }
 
 /** A member's score and their opponent's, for one matchup. */
@@ -346,10 +381,11 @@ export function computeMemberStandings(
         memberStats[matchup.user2].weeklyScores[weekNum] = scores[matchup.user2] || score2;
       }
 
-      if (score1 > score2) {
+      const outcome1 = matchupOutcomeFor(matchup, matchup.user1, score1, score2);
+      if (outcome1 === 'W') {
         if (memberStats[matchup.user1]) memberStats[matchup.user1].wins++;
         if (memberStats[matchup.user2]) memberStats[matchup.user2].losses++;
-      } else if (score2 > score1) {
+      } else if (outcome1 === 'L') {
         if (memberStats[matchup.user2]) memberStats[matchup.user2].wins++;
         if (memberStats[matchup.user1]) memberStats[matchup.user1].losses++;
       }
@@ -381,7 +417,10 @@ export function computeMemberStandings(
           stats.uid,
           classResults
         );
-        const currentType: 'W' | 'L' = myScore > oppScore ? 'W' : 'L';
+        // Pinned quirk preserved: a drawn week extends an L streak ("did not
+        // win"), but the settled winner decides W vs not-W.
+        const currentType: 'W' | 'L' =
+          matchupOutcomeFor(matchup, stats.uid, myScore, oppScore) === 'W' ? 'W' : 'L';
 
         if (streakType === null) {
           streakType = currentType;
@@ -424,9 +463,10 @@ export function computeMemberStandings(
           stats.uid,
           classResults
         );
-        if (myScore > oppScore) {
+        const outcome = matchupOutcomeFor(matchup, stats.uid, myScore, oppScore);
+        if (outcome === 'W') {
           recentWins++;
-        } else if (oppScore > myScore) {
+        } else if (outcome === 'L') {
           recentLosses++;
         }
       }

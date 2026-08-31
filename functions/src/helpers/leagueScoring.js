@@ -207,6 +207,48 @@ function getWeekScore(index, uid, corpsClass) {
 }
 
 /**
+ * Decide one head-to-head matchup from the week index — the ONE place the
+ * decision rule lives, shared by the nightly resolution
+ * (helpers/weeklyMatchups.js) and the commissioner's manual close
+ * (callable/leagues.js updateMatchupResults) so the two can never disagree
+ * about who won a week.
+ *
+ * A same-class matchup is decided on the weekly point totals, as always. A
+ * CROSS-CLASS matchup (generated for the directors a class could not seat —
+ * see leagueHelpers.js pairLeagueWeek) carries a per-side `classes` map and is
+ * decided on each corps' percentile against ITS OWN class field, because a
+ * ~90-point World Class week and a ~60-point SoundSport week are not on the
+ * same scale. Sitting the week out is 0th percentile, so showing up still
+ * beats a forfeit; two forfeits (or two identical percentiles) tie.
+ *
+ * @param {Object} matchup - stored matchup entry ({ pair, classes? })
+ * @param {string} corpsClass - the class array the matchup is stored under
+ * @param {Map<string, WeekScoreEntry>} index - the week's score index
+ * @returns {{p1: string, p2: string, p1Class: string, p2Class: string,
+ *   crossClass: boolean, p1Week: WeekScoreEntry, p2Week: WeekScoreEntry,
+ *   winner: string}} winner is a uid or the string 'tie'
+ */
+function decideHeadToHead(matchup, corpsClass, index) {
+  const [p1, p2] = matchup.pair;
+  const p1Class = matchup.classes?.[p1] || corpsClass;
+  const p2Class = matchup.classes?.[p2] || corpsClass;
+  const crossClass = p1Class !== p2Class;
+  const p1Week = getWeekScore(index, p1, p1Class);
+  const p2Week = getWeekScore(index, p2, p2Class);
+
+  let winner = "tie";
+  if (crossClass) {
+    if (p1Week.classPercentile > p2Week.classPercentile) winner = p1;
+    else if (p2Week.classPercentile > p1Week.classPercentile) winner = p2;
+  } else {
+    if (p1Week.score > p2Week.score) winner = p1;
+    else if (p2Week.score > p1Week.score) winner = p2;
+  }
+
+  return { p1, p2, p1Class, p2Class, crossClass, p1Week, p2Week, winner };
+}
+
+/**
  * Distinct classes each director competed in during the week, derived from the
  * same index — so participation XP and matchup resolution can never disagree
  * about who showed up.
@@ -231,5 +273,6 @@ module.exports = {
   buildWeeklyScoreIndex,
   fetchWeeklyScoreIndex,
   getWeekScore,
+  decideHeadToHead,
   participatingClassesByUid,
 };

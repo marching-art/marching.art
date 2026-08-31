@@ -113,3 +113,46 @@ describe("buildMatchupResultPushes", () => {
     assert.match(byUid.get("u1").body, /\(your league\)/);
   });
 });
+
+describe("cross-class matchup pushes", () => {
+  test("the copy explains the class-rank verdict and drops the score line", () => {
+    const pushes = buildMatchupResultPushes({
+      leagueName: "Mixed League",
+      week: 4,
+      matchupData: {
+        worldClassMatchups: [
+          {
+            pair: ["u1", "u2"],
+            classes: { u1: "worldClass", u2: "soundSport" },
+            crossClass: true,
+            completed: true,
+            winner: "u2", // fewer raw points, better week against their class
+            scores: { u1: 85, u2: 62 },
+            normalized: { u1: 33, u2: 100 },
+          },
+        ],
+      },
+      memberProfiles: {},
+    });
+    const byUid = new Map(pushes.map((p) => [p.uid, p]));
+    assert.match(byUid.get("u2").body, /cross-class/);
+    assert.match(byUid.get("u1").body, /cross-class/);
+    assert.doesNotMatch(byUid.get("u2").body, /85\.000/);
+    // Each side is labeled with its OWN class, not the array it was stored in.
+    assert.match(byUid.get("u2").body, /SoundSport/);
+  });
+
+  test("a stored tie reads as a tie, not a loss for both sides", () => {
+    const pushes = buildMatchupResultPushes({
+      leagueName: null,
+      week: 2,
+      matchupData: {
+        aClassMatchups: [
+          { pair: ["u1", "u2"], completed: true, winner: "tie", scores: { u1: 70, u2: 70 } },
+        ],
+      },
+      memberProfiles: {},
+    });
+    for (const push of pushes) assert.match(push.body, /tied/);
+  });
+});

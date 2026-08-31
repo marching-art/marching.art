@@ -5,7 +5,7 @@ const admin = require("firebase-admin");
 const { logger } = require("firebase-functions/v2");
 const {
   generateUniqueInviteCode,
-  smartPairMembers,
+  pairLeagueWeek,
   buildPairingHistory,
   createLeagueActivity,
   notifyCommissionersOfJoin,
@@ -24,7 +24,7 @@ const {
   refreshLeagueActivity,
   getActiveSeasonUid,
 } = require("../helpers/leagueActivity");
-const { fetchWeeklyScoreIndex, getWeekScore } = require("../helpers/leagueScoring");
+const { fetchWeeklyScoreIndex, decideHeadToHead } = require("../helpers/leagueScoring");
 const { isLeagueCommissioner, pickSuccessor } = require("../helpers/leaguePermissions");
 
 exports.createLeague = onCall({ cors: true }, async (request) => {
@@ -730,13 +730,11 @@ exports.generateMatchups = onCall({ cors: true }, async (request) => {
     generatedBy: uid
   };
 
+  // Per-class pairing plus the cross-class round for leftovers, matching the
+  // scheduled generator (helpers/leagueHelpers.js pairLeagueWeek).
+  const paired = pairLeagueWeek(membersByClass, standings, pairingHistory, corpsClasses);
   for (const corpsClass of corpsClasses) {
-    const classMembers = membersByClass[corpsClass];
-    matchupData[`${corpsClass}Matchups`] = smartPairMembers(
-      classMembers,
-      standings,
-      pairingHistory
-    );
+    matchupData[`${corpsClass}Matchups`] = paired[corpsClass];
   }
 
   await matchupRef.set(matchupData);
@@ -878,31 +876,24 @@ exports.updateMatchupResults = onCall({ cors: true }, async (request) => {
           continue;
         }
 
-        const [p1_uid, p2_uid] = matchup.pair;
-
-        // The week's total for this class, across every show the corps
-        // attended. Not competing scores 0 — a forfeited week, not a 0.0 run.
-        const p1_week = getWeekScore(weekScores, p1_uid, corpsClass);
-        const p2_week = getWeekScore(weekScores, p2_uid, corpsClass);
-        const p1_score = p1_week.score;
-        const p2_score = p2_week.score;
-
-        let winner = null;
-        if (p1_score > p2_score) {
-          winner = p1_uid;
-        } else if (p2_score > p1_score) {
-          winner = p2_uid;
-        } else {
-          winner = 'tie';
-        }
+        // The week's total for each side in ITS OWN class, across every show
+        // the corps attended. Not competing scores 0 — a forfeited week, not a
+        // 0.0 run. The decision rule — points same-class, class percentile
+        // cross-class — is shared with the nightly resolution
+        // (helpers/leagueScoring.js decideHeadToHead) so a commissioner close
+        // can never disagree with the automatic one.
+        const decided = decideHeadToHead(matchup, corpsClass, weekScores);
+        const { p1: p1_uid, p2: p2_uid, p1Class, p2Class, winner } = decided;
+        const p1_score = decided.p1Week.score;
+        const p2_score = decided.p2Week.score;
 
         const updatedMatchup = {
           ...matchup,
           scores: { [p1_uid]: p1_score, [p2_uid]: p2_score },
-          shows: { [p1_uid]: p1_week.shows, [p2_uid]: p2_week.shows },
+          shows: { [p1_uid]: decided.p1Week.shows, [p2_uid]: decided.p2Week.shows },
           normalized: {
-            [p1_uid]: p1_week.classPercentile,
-            [p2_uid]: p2_week.classPercentile,
+            [p1_uid]: decided.p1Week.classPercentile,
+            [p2_uid]: decided.p2Week.classPercentile,
           },
           winner,
           completed: true
@@ -915,8 +906,10 @@ exports.updateMatchupResults = onCall({ cors: true }, async (request) => {
           player2: p2_uid,
           player1Score: p1_score,
           player2Score: p2_score,
-          player1Normalized: p1_week.classPercentile,
-          player2Normalized: p2_week.classPercentile,
+          player1Normalized: decided.p1Week.classPercentile,
+          player2Normalized: decided.p2Week.classPercentile,
+          player1Class: p1Class,
+          player2Class: p2Class,
           winner,
           completed: true,
           corpsClass

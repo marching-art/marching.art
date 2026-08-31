@@ -43,19 +43,32 @@ function collectMemberResults(matchupData, memberProfiles) {
         const myScore = matchup.scores[uid] || 0;
         const oppScore = matchup.scores[opponent] || 0;
         // Trust the settled winner; fall back to the score line, with equal
-        // scores (and no winner) reported as a tie.
-        const won = matchup.winner
-          ? matchup.winner === uid
-          : myScore === oppScore
-            ? null
-            : myScore > oppScore;
+        // scores (and no winner) reported as a tie. A tie is stored as the
+        // string 'tie', which is not a uid, so it reads as won: false for
+        // both — compare against the pair explicitly instead.
+        const won =
+          matchup.winner === uid
+            ? true
+            : matchup.winner === opponent
+              ? false
+              : matchup.winner
+                ? null
+                : myScore === oppScore
+                  ? null
+                  : myScore > oppScore;
         const results = byUid.get(uid) || [];
         results.push({
           won,
           opponentName: memberProfiles?.[opponent]?.displayName || "your opponent",
           myScore,
           oppScore,
-          corpsClass,
+          // Cross-class matchups (leagueHelpers.js pairLeagueWeek) carry each
+          // side's own class and are decided on class percentiles — the push
+          // copy must not imply the raw score line settled them.
+          corpsClass: matchup.classes?.[uid] || corpsClass,
+          crossClass: Boolean(matchup.crossClass),
+          myPercentile: matchup.normalized?.[uid],
+          oppPercentile: matchup.normalized?.[opponent],
         });
         byUid.set(uid, results);
       }
@@ -68,6 +81,18 @@ function singleResultBody(result, leagueName) {
   const opponent = clampName(result.opponentName);
   const league = clampName(leagueName || "your league");
   const label = CLASS_LABELS[result.corpsClass] || result.corpsClass;
+
+  // Decided on each corps' finish against its own class, not the raw totals —
+  // quoting the score line would routinely contradict the verdict.
+  if (result.crossClass) {
+    if (result.won === null) {
+      return `Your cross-class matchup vs ${opponent} ended level (${league}).`;
+    }
+    return result.won
+      ? `You beat ${opponent} in your cross-class matchup — your ${label} week outranked theirs (${league})!`
+      : `You fell to ${opponent} in your cross-class matchup — their week outranked your ${label} run (${league}).`;
+  }
+
   const line = `${formatScore(result.myScore)}–${formatScore(result.oppScore)}`;
 
   if (result.won === null) {
