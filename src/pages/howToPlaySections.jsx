@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // GAME GUIDE — SECTION CONTENT (/guide). The body of the How-to-Play document,
 // split out of HowToPlay.jsx so the shell stays small. Ordering + icons live in
 // HowToPlay.jsx's SECTIONS list; this file supplies the matching content. Game
@@ -66,6 +65,7 @@ const CAPTION_GROUPS = [
   { label: 'Music', abbrs: ['B', 'MA', 'P'], max: 30, icon: Music, accent: 'text-purple-400' },
 ];
 
+/** @param {string} abbr */
 const findCaption = (abbr) => CAPTIONS.find((c) => c.abbr === abbr);
 
 // =============================================================================
@@ -198,6 +198,7 @@ const CaptionsSection = () => (
             <div className="grid sm:grid-cols-3 gap-2">
               {group.abbrs.map((abbr) => {
                 const cap = findCaption(abbr);
+                if (!cap) return null;
                 return (
                   <div key={abbr} className="bg-black/30 rounded-none p-2">
                     <p className="text-xs text-white">
@@ -546,6 +547,9 @@ const EconomySection = () => (
   </>
 );
 
+/**
+ * @param {{ icon: React.ElementType, title: string, children: React.ReactNode }} props
+ */
 const PodiumCard = ({ icon: Icon, title, children }) => (
   <div className="bg-surface-sunken border border-brand/20 rounded-none p-3">
     <div className="flex items-center gap-2 mb-1">
@@ -657,6 +661,7 @@ const FaqSection = () => (
 );
 
 // Map keyed by the section ids declared in HowToPlay.jsx SECTIONS.
+/** @type {Record<string, () => React.JSX.Element>} */
 const SECTION_CONTENT = {
   overview: OverviewSection,
   start: StartSection,
@@ -676,6 +681,7 @@ const SECTION_CONTENT = {
 // Renders the section body for a given id. Exposed as a component (rather than
 // exporting the map directly) so this module only exports components and React
 // fast refresh keeps working.
+/** @param {{ id: string }} props */
 export const GuideSection = ({ id }) => {
   const Content = SECTION_CONTENT[id];
   return Content ? <Content /> : null;
