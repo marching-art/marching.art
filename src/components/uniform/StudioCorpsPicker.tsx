@@ -80,7 +80,7 @@ export default function StudioCorpsPicker({
         <div
           role="menu"
           aria-label="Corps"
-          className="absolute right-0 top-full mt-1 z-40 min-w-full w-max max-w-[80vw] bg-surface-card border border-line-strong shadow-xl"
+          className="absolute right-0 top-full mt-1 z-40 min-w-full w-max max-w-[80vw] bg-surface-card border border-line-strong"
         >
           {options.map((o) => (
             <button

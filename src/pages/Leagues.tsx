@@ -369,7 +369,7 @@ const Leagues = () => {
   }, [refetchMyLeagues, refetchPublicLeagues]);
 
   // Mutations
-  const createLeagueMutation = useCreateLeague();
+  const createLeagueMutation = useCreateLeague(user?.uid);
   const joinLeagueMutation = useJoinLeague(user?.uid);
   const joinByCodeMutation = useJoinLeagueByCode(user?.uid);
   const leaveLeagueMutation = useLeaveLeague(user?.uid);
@@ -442,8 +442,12 @@ const Leagues = () => {
     leagueData: Parameters<typeof createLeagueMutation.mutateAsync>[0]
   ) => {
     try {
-      await createLeagueMutation.mutateAsync(leagueData);
+      // Returned to the modal: it shows the server's real invite code on the
+      // success screen. Never substitute a client-generated code — a made-up
+      // code is worse than none, because friends who use it can't join.
+      const result = await createLeagueMutation.mutateAsync(leagueData);
       toast.success('League created!');
+      return result;
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to create league');
       throw error;
@@ -730,6 +734,10 @@ const Leagues = () => {
         <CreateLeagueModal
           onClose={() => setShowCreateModal(false)}
           onCreate={handleCreateLeague}
+          onOpenLeague={(leagueId) => {
+            setShowCreateModal(false);
+            navigate(`/leagues/${leagueId}`);
+          }}
         />
       )}
     </div>

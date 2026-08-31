@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-08-31-league-invite-codes-work",
+    "date": "2026-08-31",
+    "title": "League invite codes you share now actually work",
+    "category": "fix",
+    "summary": "The invite code shown right after creating a league could be wrong — friends who used it were told the league didn't exist, while the real code sat quietly in the league's Settings tab. The success screen now always shows your league's true invite code, so Copy Code, Copy Link, and Share all hand out an invite that works on the first try. The Go to League button there now takes you straight into your new league too, instead of just closing the window. And when creating or joining a league fails, you now get one clear message about why instead of a stack of conflicting pop-ups.",
+    "highlights": [
+      "The code on the League Created screen is now guaranteed to be the one your friends can join with.",
+      "Go to League on that screen now opens your new league instead of dropping you back on the league list.",
+      "Your new league shows up in My Leagues immediately after creating it.",
+      "Failed create/join attempts show a single, accurate error message — no more contradictory toasts stacking up."
+    ]
+  },
+  {
     "id": "2026-08-28-studio-locked-workstation",
     "date": "2026-08-28",
     "title": "The Uniform Studio becomes a real design station",

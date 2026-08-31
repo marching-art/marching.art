@@ -8,6 +8,7 @@ import Portal from '../Portal';
 import toast from 'react-hot-toast';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
 import type { LeagueCreationData } from '../../types';
+import type { CreateLeagueResult } from '../../api/leagues';
 
 /** Exactly what createLeague accepts — no prizePool, which is server escrow. */
 type LeagueFormData = LeagueCreationData & {
@@ -15,18 +16,21 @@ type LeagueFormData = LeagueCreationData & {
 };
 
 interface CreatedLeague extends LeagueFormData {
-  inviteCode: string;
+  /** The server-issued invite code. Absent only if the server didn't return
+   *  one — the success screen then points at the Settings tab instead of
+   *  showing a code, because a made-up code would send friends to a dead end. */
+  inviteCode?: string;
   leagueId?: string;
 }
 
 interface CreateLeagueModalProps {
   onClose: () => void;
-  onCreate: (data: LeagueCreationData) => Promise<{
-    data?: { inviteCode?: string; leagueId?: string };
-  } | void>;
+  onCreate: (data: LeagueCreationData) => Promise<CreateLeagueResult | void>;
+  /** Open the newly created league (used by the success screen's CTA). */
+  onOpenLeague?: (leagueId: string) => void;
 }
 
-const CreateLeagueModal = ({ onClose, onCreate }: CreateLeagueModalProps) => {
+const CreateLeagueModal = ({ onClose, onCreate, onOpenLeague }: CreateLeagueModalProps) => {
   // Close on Escape key
   useEscapeKey(onClose);
 
@@ -55,20 +59,17 @@ const CreateLeagueModal = ({ onClose, onCreate }: CreateLeagueModalProps) => {
       const result = await onCreate(formData);
       setCreatedLeague({
         ...formData,
-        inviteCode: result?.data?.inviteCode || generateInviteCode(),
-        leagueId: result?.data?.leagueId,
+        inviteCode: result?.inviteCode,
+        leagueId: result?.leagueId,
       });
       setStep('success');
     } catch (error) {
+      // No toast here — onCreate (Leagues.handleCreateLeague) already toasted
+      // the server's message before rethrowing; we just stay on the form.
       console.error('Error in handleSubmit:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to create league');
     } finally {
       setProcessing(false);
     }
-  };
-
-  const generateInviteCode = () => {
-    return Math.random().toString(36).substring(2, 8).toUpperCase();
   };
 
   const copyInviteCode = async () => {
@@ -291,7 +292,11 @@ const CreateLeagueModal = ({ onClose, onCreate }: CreateLeagueModalProps) => {
                   <Check className="w-6 h-6 text-green-500" />
                 </div>
 
-                <p className="text-sm text-muted mb-4">Share the invite code with friends</p>
+                <p className="text-sm text-muted mb-4">
+                  {createdLeague?.inviteCode
+                    ? 'Share the invite code with friends'
+                    : 'Your league is ready'}
+                </p>
 
                 {/* League Info */}
                 <div className="bg-background border border-line p-3 mb-4">
@@ -316,52 +321,67 @@ const CreateLeagueModal = ({ onClose, onCreate }: CreateLeagueModalProps) => {
                   </div>
                 </div>
 
-                {/* Invite Code */}
-                <div className="mb-4">
-                  <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-2">
-                    Invite Code
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 bg-background border-2 border-dashed border-interactive/30 p-3">
-                      <code className="text-xl font-data font-bold text-interactive tracking-widest">
-                        {createdLeague?.inviteCode || '------'}
-                      </code>
+                {createdLeague?.inviteCode ? (
+                  <>
+                    {/* Invite Code */}
+                    <div className="mb-4">
+                      <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-2">
+                        Invite Code
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 bg-background border-2 border-dashed border-interactive/30 p-3">
+                          <code className="text-xl font-data font-bold text-interactive tracking-widest">
+                            {createdLeague.inviteCode}
+                          </code>
+                        </div>
+                        <button
+                          onClick={copyInviteCode}
+                          className="h-12 w-12 bg-interactive/10 border border-interactive/30 text-interactive hover:bg-interactive/20 flex items-center justify-center"
+                        >
+                          {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
+                        </button>
+                      </div>
                     </div>
-                    <button
-                      onClick={copyInviteCode}
-                      className="h-12 w-12 bg-interactive/10 border border-interactive/30 text-interactive hover:bg-interactive/20 flex items-center justify-center"
-                    >
-                      {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
-                    </button>
-                  </div>
-                </div>
 
-                {/* Share Actions */}
-                <div className="grid grid-cols-2 gap-2 mb-4">
-                  <button
-                    onClick={copyInviteLink}
-                    className="flex items-center justify-center gap-2 p-2 bg-background border border-line text-secondary hover:border-line-strong text-sm font-bold"
-                  >
-                    <Link2 className="w-4 h-4" />
-                    Copy Link
-                  </button>
-                  <button
-                    onClick={shareInvite}
-                    className="flex items-center justify-center gap-2 p-2 bg-interactive/10 border border-interactive/30 text-interactive hover:bg-interactive/20 text-sm font-bold"
-                  >
-                    <Share2 className="w-4 h-4" />
-                    Share
-                  </button>
-                </div>
+                    {/* Share Actions */}
+                    <div className="grid grid-cols-2 gap-2 mb-4">
+                      <button
+                        onClick={copyInviteLink}
+                        className="flex items-center justify-center gap-2 p-2 bg-background border border-line text-secondary hover:border-line-strong text-sm font-bold"
+                      >
+                        <Link2 className="w-4 h-4" />
+                        Copy Link
+                      </button>
+                      <button
+                        onClick={shareInvite}
+                        className="flex items-center justify-center gap-2 p-2 bg-interactive/10 border border-interactive/30 text-interactive hover:bg-interactive/20 text-sm font-bold"
+                      >
+                        <Share2 className="w-4 h-4" />
+                        Share
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-xs text-muted mb-4 border border-dashed border-line p-3">
+                    Your invite code is in the league&apos;s Settings tab — open the league to find
+                    and share it.
+                  </p>
+                )}
               </div>
 
               {/* Footer */}
               <div className="px-4 py-3 border-t border-line bg-surface-sunken flex justify-end">
                 <button
-                  onClick={onClose}
+                  onClick={() => {
+                    if (createdLeague?.leagueId && onOpenLeague) {
+                      onOpenLeague(createdLeague.leagueId);
+                    } else {
+                      onClose();
+                    }
+                  }}
                   className="h-9 px-4 bg-interactive text-white text-sm font-bold uppercase tracking-wider hover:bg-interactive-hover"
                 >
-                  Go to League
+                  {createdLeague?.leagueId && onOpenLeague ? 'Go to League' : 'Done'}
                 </button>
               </div>
             </div>

@@ -246,14 +246,23 @@ export function subscribeToStandings(
 // LEAGUE ACTIONS (Cloud Functions)
 // =============================================================================
 
+/** What the createLeague callable actually returns: the new league's id and
+ *  its real invite code, at the top level (not nested under `data`). The
+ *  success screen shares this code, so it must be the server's — never a
+ *  client-side guess. */
+export interface CreateLeagueResult {
+  success: boolean;
+  message?: string;
+  inviteCode?: string;
+  leagueId?: string;
+}
+
 /**
  * Create a new league
  */
-export async function createLeague(
-  data: LeagueCreationData
-): Promise<ApiResponse<{ leagueId: string }>> {
+export async function createLeague(data: LeagueCreationData): Promise<CreateLeagueResult> {
   return withErrorHandling(async () => {
-    const result = await callFunctionTracked<LeagueCreationData, ApiResponse<{ leagueId: string }>>(
+    const result = await callFunctionTracked<LeagueCreationData, CreateLeagueResult>(
       'createLeague',
       data
     );

@@ -104,17 +104,22 @@ export function useLeagueStandings(leagueId: string | undefined) {
 /**
  * Hook to create a new league
  */
-export function useCreateLeague() {
+export function useCreateLeague(uid: string | undefined) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (data: LeagueCreationData) => leaguesApi.createLeague(data),
     onSuccess: () => {
+      if (uid) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.myLeagues(uid) });
+      }
       queryClient.invalidateQueries({ queryKey: queryKeys.publicLeagues() });
     },
+    // No toast here: the caller (Leagues.handleCreateLeague) surfaces the
+    // server's specific message; a second generic toast on top of it read as
+    // the app malfunctioning.
     onError: (error: Error) => {
       console.error('Create league error:', error);
-      toast.error('Failed to create league. Please try again.');
     },
   });
 }
@@ -133,9 +138,9 @@ export function useJoinLeague(uid: string | undefined) {
       }
       queryClient.invalidateQueries({ queryKey: queryKeys.publicLeagues() });
     },
+    // No toast here: Leagues.handleJoinLeague toasts the server's message.
     onError: (error: Error) => {
       console.error('Join league error:', error);
-      toast.error('Failed to join league. You may already be a member.');
     },
   });
 }
@@ -154,9 +159,10 @@ export function useJoinLeagueByCode(uid: string | undefined) {
       }
       queryClient.invalidateQueries({ queryKey: queryKeys.publicLeagues() });
     },
+    // No toast here: Leagues.handleJoinByCode toasts the server's message
+    // (which distinguishes "invalid code" from e.g. "league is full").
     onError: (error: Error) => {
       console.error('Join league by code error:', error);
-      toast.error('Invalid invite code or league not found.');
     },
   });
 }
