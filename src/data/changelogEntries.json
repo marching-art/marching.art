@@ -1,5 +1,17 @@
 [
   {
+    "id": "2026-08-31-newsroom-in-review",
+    "date": "2026-08-31",
+    "title": "Your Newsroom now shows press releases that are still in review",
+    "category": "improvement",
+    "summary": "A new director's first press releases (and every submitted article) go through a quick review before they publish — but until now they simply disappeared after you hit send, and your Newsroom acted like you'd never written anything. Your profile's Newsroom now has an In Review section: anything waiting on review, scheduled to publish, or not approved shows up there with its status, so your organization's story never vanishes into a void.",
+    "highlights": [
+      "Pending press releases and articles appear in your Newsroom the moment you submit them.",
+      "Scheduled pieces show when they'll publish; declined ones show the reason.",
+      "Once a piece publishes it moves into your Newsroom's published list, same as before."
+    ]
+  },
+  {
     "id": "2026-08-31-league-invite-codes-work",
     "date": "2026-08-31",
     "title": "League invite codes you share now actually work",

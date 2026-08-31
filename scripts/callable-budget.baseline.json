@@ -21,6 +21,7 @@
     "functions/src/callable/users.js#getShowRegistrations": "Read endpoint; only write is a best-effort materialization of the show-registration index doc on legacy fallback.",
     "functions/src/callable/users.js#getUserRankings": "Read-only: rankings snapshot read with scan fallback.",
     "functions/src/triggers/newsFeed.js#getDailyNews": "Read-only: single news doc fetch, day/seasonId validated.",
-    "functions/src/triggers/newsFeed.js#getRecentNews": "Read-only endpoint; only write is the shared server-side feed cache doc (validated category + clamped limit key)."
+    "functions/src/triggers/newsFeed.js#getRecentNews": "Read-only endpoint; only write is the shared server-side feed cache doc (validated category + clamped limit key).",
+    "functions/src/triggers/newsSubmissions.js#getMyNewsSubmissions": "Read-only: lists the caller's OWN in-flight submissions (authorUid == caller), field-allowlisted server-side, capped at 25."
   }
 }

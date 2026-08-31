@@ -389,6 +389,20 @@
       ]
     },
     {
+      "collectionGroup": "news_submissions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "authorUid",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "article_comments",
       "queryScope": "COLLECTION",
       "fields": [

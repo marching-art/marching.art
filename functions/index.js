@@ -306,6 +306,7 @@ const {
   submitNewsForApproval,
   publishPressRelease,
   deleteMyPressRelease,
+  getMyNewsSubmissions,
   listPendingSubmissions,
   approveSubmission,
   rejectSubmission,
@@ -565,6 +566,7 @@ module.exports = {
 
   // User News Submissions
   submitNewsForApproval,
+  getMyNewsSubmissions,
   listPendingSubmissions,
   approveSubmission,
   rejectSubmission,

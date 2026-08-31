@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered when functions checkJs landed (functions/tsconfig.json); remove when this file is typed or cleaned up
 // User news submission callables: submit for approval plus the admin
 // pending-list/approve/reject flow. Extracted verbatim from
 // triggers/newsGeneration.js.
@@ -20,6 +19,7 @@ const {
   resolveOwnedCorps,
   validatePressReleaseInput,
   publishPressReleaseArticle,
+  submissionForAuthor,
 } = require("../helpers/newsSubmissionsShared");
 const { invalidateNewsCache } = require("./newsFeed");
 
@@ -248,7 +248,9 @@ exports.publishPressRelease = onCall(
     const { headline, summary, body, imageUrl, corpsClass } = request.data || {};
 
     const validation = validatePressReleaseInput({ headline, summary, body, imageUrl });
-    if (!validation.valid) {
+    // `=== false` (not `!`): this tsconfig runs non-strict, where truthiness
+    // checks don't narrow the valid/invalid result union.
+    if (validation.valid === false) {
       throw new HttpsError("invalid-argument", validation.error);
     }
 
@@ -486,6 +488,57 @@ exports.deleteMyPressRelease = onCall(
       logger.error("Error removing press release:", error);
       if (error instanceof HttpsError) throw error;
       throw new HttpsError("internal", "Failed to remove press release");
+    }
+  }
+);
+
+// =============================================================================
+// AUTHOR'S OWN SUBMISSIONS
+// =============================================================================
+
+/**
+ * List the caller's own recent submissions that are still in flight — pending
+ * review, scheduled to auto-publish, or rejected. This is the author-facing
+ * window into the review queue: without it, a queued press release or article
+ * produces one toast and then vanishes until an admin acts, and the profile
+ * Newsroom (published articles only) tells the author nothing is there.
+ * Approved submissions are excluded — they surface as published articles.
+ *
+ * Read-only; each doc is field-allowlisted by submissionForAuthor before it
+ * leaves the server (admin uids, authorEmail, publish paths are dropped).
+ */
+exports.getMyNewsSubmissions = onCall(
+  {
+    cors: true,
+    timeoutSeconds: 30,
+  },
+  async (request) => {
+    assertAuth(request);
+
+    const db = getDb();
+
+    try {
+      // Newest 25 of the author's submissions, filtered to the in-flight
+      // statuses in memory. 25 is plenty: pending/scheduled items are by
+      // nature recent, and the surface is "what's happening to my recent
+      // submissions", not an archive.
+      const snapshot = await db
+        .collection("news_submissions")
+        .where("authorUid", "==", request.auth.uid)
+        .orderBy("createdAt", "desc")
+        .limit(25)
+        .get();
+
+      const submissions = [];
+      for (const doc of snapshot.docs) {
+        const mapped = submissionForAuthor(doc.id, doc.data());
+        if (mapped) submissions.push(mapped);
+      }
+
+      return { success: true, submissions };
+    } catch (error) {
+      logger.error("Error listing author's own submissions:", error);
+      throw new HttpsError("internal", "Failed to load your submissions");
     }
   }
 );
@@ -890,6 +943,7 @@ module.exports = {
   submitNewsForApproval: exports.submitNewsForApproval,
   publishPressRelease: exports.publishPressRelease,
   deleteMyPressRelease: exports.deleteMyPressRelease,
+  getMyNewsSubmissions: exports.getMyNewsSubmissions,
   listPendingSubmissions: exports.listPendingSubmissions,
   approveSubmission: exports.approveSubmission,
   rejectSubmission: exports.rejectSubmission,

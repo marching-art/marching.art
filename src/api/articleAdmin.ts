@@ -174,6 +174,37 @@ export const submitNewsForApproval = createCallable<SubmitNewsData, SubmitNewsRe
   'submitNewsForApproval'
 );
 
+/**
+ * One of the caller's own submissions still in flight: waiting on admin review,
+ * scheduled to auto-publish, or rejected. Approved submissions are excluded —
+ * they surface in the Newsroom as published articles instead. Field-allowlisted
+ * server-side (functions/src/helpers/newsSubmissionsShared.js).
+ */
+export interface MyNewsSubmission {
+  id: string;
+  kind: 'press_release' | 'news';
+  status: 'pending' | 'scheduled' | 'rejected';
+  headline: string;
+  summary: string;
+  category: string;
+  /** The corps a press release is bylined to; null for news submissions. */
+  corpsName: string | null;
+  createdAt: string | null;
+  scheduledPublishAt: string | null;
+  /** Set only when status is 'rejected'. */
+  rejectionReason: string | null;
+}
+
+export interface GetMyNewsSubmissionsResult {
+  success: boolean;
+  submissions: MyNewsSubmission[];
+}
+
+/** The author-facing view of the review queue: my pending/scheduled/rejected submissions. */
+export const getMyNewsSubmissions = createCallable<void, GetMyNewsSubmissionsResult>(
+  'getMyNewsSubmissions'
+);
+
 // =============================================================================
 // ADMIN ARTICLE MANAGEMENT
 // =============================================================================

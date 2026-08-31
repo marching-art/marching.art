@@ -107,7 +107,7 @@ function computeNextAutoPublishAt(from = new Date()) {
  *
  * @param {FirebaseFirestore.Firestore} db
  * @param {string} uid
- * @returns {Promise<{authorName: string, authorUsername: string|null, authorLocation: string|null, corps: object|null}>}
+ * @returns {Promise<{authorName: string, authorUsername: string|null, authorLocation: string|null, corps: object|null, approvedCount: number, approvedPressReleaseCount: number}>}
  */
 async function resolveAuthorCredit(db, uid) {
   let userData = {};
@@ -753,6 +753,71 @@ async function publishSubmission(db, {
   return { articlePath, articleId, imageUrl: finalImageUrl, imageGenerationFailed };
 }
 
+// =============================================================================
+// AUTHOR-FACING SUBMISSION VIEW
+// =============================================================================
+
+/** ISO string from a Firestore Timestamp, Date, or ISO string; else null. */
+function toIsoDate(v) {
+  if (!v) return null;
+  if (typeof v.toDate === "function") v = v.toDate();
+  if (v instanceof Date) return Number.isNaN(v.getTime()) ? null : v.toISOString();
+  if (typeof v === "string") {
+    const d = new Date(v);
+    return Number.isNaN(d.getTime()) ? null : d.toISOString();
+  }
+  return null;
+}
+
+/**
+ * Shape a news_submissions doc for its OWN author (getMyNewsSubmissions).
+ *
+ * Strict field allowlist: submission docs also carry admin-side state
+ * (approvedBy/rejectedBy uids, authorEmail, publishedPath) that has no
+ * business in a client payload, so everything not named here is dropped.
+ * Returns null for approved submissions — those are already visible as
+ * published articles in the profile Newsroom, and listing them twice would
+ * double-count the author's record.
+ *
+ * @param {string} id Submission doc id.
+ * @param {Object | null | undefined} data Raw submission doc data.
+ * @returns {{
+ *   id: string,
+ *   kind: 'press_release' | 'news',
+ *   status: 'pending' | 'scheduled' | 'rejected',
+ *   headline: string,
+ *   summary: string,
+ *   category: string,
+ *   corpsName: string | null,
+ *   createdAt: string | null,
+ *   scheduledPublishAt: string | null,
+ *   rejectionReason: string | null,
+ * } | null}
+ */
+function submissionForAuthor(id, data) {
+  if (!data) return null;
+  const status = data.status;
+  if (status !== "pending" && status !== "scheduled" && status !== "rejected") return null;
+  return {
+    id,
+    kind: data.kind === "press_release" ? "press_release" : "news",
+    status,
+    headline: typeof data.headline === "string" ? data.headline : "",
+    summary: typeof data.summary === "string" ? data.summary : "",
+    category: typeof data.category === "string" ? data.category : "",
+    corpsName:
+      data.pressCorps && typeof data.pressCorps.corpsName === "string"
+        ? data.pressCorps.corpsName
+        : null,
+    createdAt: toIsoDate(data.createdAt),
+    scheduledPublishAt: toIsoDate(data.scheduledPublishAt),
+    rejectionReason:
+      status === "rejected" && typeof data.rejectionReason === "string"
+        ? data.rejectionReason
+        : null,
+  };
+}
+
 module.exports = {
   AUTO_PUBLISH_THRESHOLD,
   PRESS_RELEASE_AUTO_APPROVE_THRESHOLD,
@@ -771,4 +836,6 @@ module.exports = {
   validatePressReleaseInput,
   buildPressReleaseArticle,
   publishPressReleaseArticle,
+  // Author-facing submission view
+  submissionForAuthor,
 };
