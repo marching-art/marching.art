@@ -20,6 +20,7 @@ import {
   deleteDoc,
   deleteField,
   collection,
+  collectionGroup,
   getDocs,
   query,
   where,
@@ -1589,6 +1590,58 @@ await check(
   assertFails(
     setDoc(doc(mallory(), 'fantasy_standings/season-1/classes/worldClass'), { entries: [] })
   )
+);
+
+// --- PROFILE READ SURFACE + ENUMERATION (2026-09 audit) ---
+// profile/data carries lineups, show picks, and prediction picks: readable by
+// any signed-in director, never anonymously. The `profile` collection group
+// and the `usernames` collection are the two bulk-enumeration paths.
+await freshSeed();
+await check(
+  'unauthenticated visitor cannot read profile/data',
+  assertFails(getDoc(doc(testEnv.unauthenticatedContext().firestore(), profilePath)))
+);
+
+await check(
+  'signed-in third party can read another director profile/data',
+  assertSucceeds(getDoc(doc(mallory(), profilePath)))
+);
+
+await check(
+  'signed-in user cannot list the profile collection group (enumeration)',
+  assertFails(getDocs(collectionGroup(mallory(), 'profile')))
+);
+
+await check(
+  'admin can list the profile collection group',
+  assertSucceeds(
+    getDocs(
+      collectionGroup(
+        testEnv.authenticatedContext('admin-uid', { admin: true }).firestore(),
+        'profile'
+      )
+    )
+  )
+);
+
+await testEnv.withSecurityRulesDisabled(async (ctx) => {
+  await setDoc(doc(ctx.firestore(), 'usernames/alice'), { uid: ALICE });
+  await setDoc(doc(ctx.firestore(), 'usernames/bob'), { uid: 'bob-uid' });
+});
+
+await check(
+  'anyone can get a single usernames doc (username → uid resolve)',
+  assertSucceeds(getDoc(doc(testEnv.unauthenticatedContext().firestore(), 'usernames/alice')))
+);
+
+await check(
+  'signed-in user cannot list usernames (username → uid map enumeration)',
+  assertFails(getDocs(collection(mallory(), 'usernames')))
+);
+
+await check(
+  'signed-in user cannot list usernames via a filter either',
+  assertFails(getDocs(query(collection(mallory(), 'usernames'), where('uid', '==', ALICE))))
 );
 
 await testEnv.cleanup();

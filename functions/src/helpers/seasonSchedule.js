@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered when functions checkJs landed (functions/tsconfig.json); remove when this file is typed or cleaned up
 // Season schedule core: scraped-event enrichment, the DCI event scraper
 // client, Firestore schedule storage (subcollection + legacy collection), and
 // small shared utilities. Extracted verbatim from season.js.
@@ -6,7 +5,9 @@
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
 const { defineSecret } = require("firebase-functions/params");
-const axios = require("axios");
+// The CJS build exposes the instance as both module.exports and `.default`;
+// `.default` is the one the ESM type declarations describe (has `.post`).
+const axios = require("axios").default;
 // Replaces "DCI" with "marching.art" in an event name for in-game branding.
 // Applied wherever schedules are imported from scraped DCI data, and wherever a
 // director names a show themselves (podium/hostedEvents). Re-exported below
@@ -157,7 +158,7 @@ async function writeScheduleToSubcollection(seasonId, schedule) {
  * Gets a single day's schedule from the schedules collection
  * @param {string} seasonId - The season identifier
  * @param {number} dayNumber - The offSeasonDay (1-49)
- * @returns {Object|null} The day data or null if not found
+ * @returns {Promise<Object|null>} The day data or null if not found
  */
 async function getScheduleDay(seasonId, dayNumber) {
   const db = getDb();
@@ -198,7 +199,7 @@ async function getScheduleDay(seasonId, dayNumber) {
  * @param {string} seasonId - The season identifier
  * @param {number} startDay - First day to fetch (inclusive)
  * @param {number} endDay - Last day to fetch (inclusive)
- * @returns {Array} Array of day objects
+ * @returns {Promise<Array>} Array of day objects
  */
 async function getScheduleDays(seasonId, startDay, endDay) {
   const db = getDb();
@@ -236,7 +237,7 @@ async function getScheduleDays(seasonId, startDay, endDay) {
 /**
  * Gets all schedule days for a season
  * @param {string} seasonId - The season identifier
- * @returns {Array} Array of all day objects
+ * @returns {Promise<Array>} Array of all day objects
  */
 async function getAllScheduleDays(seasonId) {
   const db = getDb();
@@ -315,7 +316,7 @@ async function updateScheduleDay(seasonId, dayNumber, shows) {
  * @param {string} seasonId - The season identifier
  * @param {number} dayNumber - The offSeasonDay
  * @param {Object} show - The show object to add
- * @returns {boolean} True if show was added, false if it already exists
+ * @returns {Promise<boolean>} True if show was added, false if it already exists
  */
 async function addShowToDay(seasonId, dayNumber, show) {
   const db = getDb();

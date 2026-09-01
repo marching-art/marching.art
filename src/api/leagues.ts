@@ -3,9 +3,7 @@
 
 import {
   collection,
-  collectionGroup,
   doc,
-  documentId,
   getDoc,
   getDocs,
   query,
@@ -442,8 +440,6 @@ export interface LeagueMemberProfile {
 }
 
 /** Firestore caps `in` filters at 30 values. */
-const MEMBER_PROFILE_CHUNK_SIZE = 30;
-
 function projectMemberProfile(data: DocumentData): LeagueMemberProfile {
   return {
     displayName: data.displayName,
@@ -462,42 +458,16 @@ function chunk<T>(items: T[], size: number): T[][] {
 }
 
 /**
- * Per-document fallback for getMemberProfiles.
- *
- * The path-based profile rule is `allow read: if true` while the collection
- * group rule requires auth, and a collection group filter on documentId()
- * leans on index behaviour we cannot exercise from the client test suite. If
- * the batched query is ever rejected, degrade to the original fan-out rather
- * than blanking the league — bounded so a large roster cannot open dozens of
- * simultaneous connections.
- */
-async function getMemberProfilesIndividually(
-  memberUids: string[]
-): Promise<Record<string, LeagueMemberProfile>> {
-  const profiles: Record<string, LeagueMemberProfile> = {};
-  const MAX_CONCURRENT = 10;
-  for (const batch of chunk(memberUids, MAX_CONCURRENT)) {
-    await Promise.all(
-      batch.map(async (uid) => {
-        const profileDoc = await getDoc(doc(db, paths.userProfile(uid)));
-        if (profileDoc.exists()) {
-          profiles[uid] = projectMemberProfile(profileDoc.data());
-        }
-      })
-    );
-  }
-  return profiles;
-}
-
-/**
  * Fetch the profile documents for a set of league members, keyed by uid.
  * Members without a profile document are omitted.
  *
- * Profiles live at `users/{uid}/profile/data`, so they are only reachable as a
- * set through the `profile` collection group — one query per 30 members
- * instead of one round trip per member. `documentId()` in a collection group
- * query must be compared against full document paths, which is why the values
- * are DocumentReferences built from the shared path helper.
+ * Profiles are fetched one document at a time by path (bounded concurrency).
+ * This used to batch through a `profile` collection-group query filtered on
+ * documentId(), but that query only works if the collection-group rule is
+ * open to every signed-in user — which is the same rule that let any account
+ * list EVERY profile in the database. The group rule is admin-only now, and
+ * the per-document `profile/data` rule (any signed-in director) is all a
+ * roster needs.
  */
 export async function getMemberProfiles(
   memberUids: string[]
@@ -505,25 +475,21 @@ export async function getMemberProfiles(
   if (!memberUids.length) return {};
 
   const profiles: Record<string, LeagueMemberProfile> = {};
-  try {
+  const MAX_CONCURRENT = 10;
+  for (const batch of chunk(memberUids, MAX_CONCURRENT)) {
     await Promise.all(
-      chunk(memberUids, MEMBER_PROFILE_CHUNK_SIZE).map(async (uids) => {
-        const refs = uids.map((uid) => doc(db, paths.userProfile(uid)));
-        const snapshot = await getDocs(
-          query(collectionGroup(db, 'profile'), where(documentId(), 'in', refs))
-        );
-        snapshot.docs.forEach((d) => {
-          // `.../users/{uid}/profile/data` — the uid is the grandparent doc.
-          const uid = d.ref.parent.parent?.id;
-          if (uid) {
-            profiles[uid] = projectMemberProfile(d.data());
+      batch.map(async (uid) => {
+        try {
+          const profileDoc = await getDoc(doc(db, paths.userProfile(uid)));
+          if (profileDoc.exists()) {
+            profiles[uid] = projectMemberProfile(profileDoc.data());
           }
-        });
+        } catch (error) {
+          // One unreadable member must not blank the whole roster.
+          console.warn(`Member profile read failed for ${uid}`, error);
+        }
       })
     );
-  } catch (error) {
-    console.warn('Batched member profile query failed; falling back to per-document reads', error);
-    return getMemberProfilesIndividually(memberUids);
   }
   return profiles;
 }
