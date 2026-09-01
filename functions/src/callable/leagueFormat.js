@@ -3,7 +3,9 @@
  *
  * A commissioner can put their league on Caption Wars — weeks decided as a
  * best-of-three across GE, Visual and Music rather than one comparison of
- * totals (helpers/captionWars.js, docs/CAPTION_WARS_SPEC.md).
+ * totals (helpers/captionWars.js, docs/CAPTION_WARS_SPEC.md) — or on
+ * One-Night Slate — weeks decided by each director's best single show
+ * (helpers/oneNightSlate.js).
  *
  * Three decisions are baked into this endpoint and are the reason it exists as
  * its own callable rather than another field on updateLeagueSettings:
@@ -41,11 +43,38 @@ const { getActiveSeasonUid } = require("../helpers/leagueActivity");
 const { isLeagueCommissioner } = require("../helpers/leaguePermissions");
 const { addCoinHistoryEntryToTransaction, TRANSACTION_TYPES } = require("../helpers/economy");
 const { SCORING_FORMATS, CAPTION_WARS_SEASON_COST } = require("../helpers/captionWars");
+const { ONE_NIGHT_SEASON_COST } = require("../helpers/oneNightSlate");
 
 /** What each format costs for one season. The default is always free. */
 const FORMAT_COSTS = {
   [SCORING_FORMATS.TOTAL]: 0,
   [SCORING_FORMATS.CAPTION_WARS]: CAPTION_WARS_SEASON_COST,
+  [SCORING_FORMATS.ONE_NIGHT]: ONE_NIGHT_SEASON_COST,
+};
+
+/** Player-facing copy per format: the activity-feed announcement members see
+ *  and the confirmation the commissioner gets back. */
+const FORMAT_COPY = {
+  [SCORING_FORMATS.TOTAL]: {
+    label: "standard scoring",
+    title: "Back to standard scoring",
+    announcement: "Weeks are decided on total score again this season.",
+    confirmation: "This league is back on standard scoring.",
+  },
+  [SCORING_FORMATS.CAPTION_WARS]: {
+    label: "Caption Wars",
+    title: "Caption Wars enabled",
+    announcement:
+      "Weeks are decided as a best-of-three across General Effect, Visual and Music this season — win two captions and you win the week.",
+    confirmation: "Caption Wars is on for this season.",
+  },
+  [SCORING_FORMATS.ONE_NIGHT]: {
+    label: "One-Night Slate",
+    title: "One-Night Slate enabled",
+    announcement:
+      "Weeks are decided by each director's best single show this season — one great night beats a week of grinding.",
+    confirmation: "One-Night Slate is on for this season.",
+  },
 };
 
 /**
@@ -133,7 +162,7 @@ exports.setLeagueScoringFormat = onCall({ cors: true }, async (request) => {
     if (cost > 0 && balance < cost) {
       throw new HttpsError(
         "failed-precondition",
-        `Caption Wars costs ${cost.toLocaleString()} CC for the season. You have ${balance.toLocaleString()} CC.`
+        `${FORMAT_COPY[format].label} costs ${cost.toLocaleString()} CC for the season. You have ${balance.toLocaleString()} CC.`
       );
     }
 
@@ -153,7 +182,7 @@ exports.setLeagueScoringFormat = onCall({ cors: true }, async (request) => {
         type: TRANSACTION_TYPES.LEAGUE_FORMAT,
         amount: -cost,
         balance: balance - cost,
-        description: `Caption Wars for ${league.name || "your league"} this season`,
+        description: `${FORMAT_COPY[format].label} for ${league.name || "your league"} this season`,
         leagueId,
       });
     }
@@ -164,14 +193,8 @@ exports.setLeagueScoringFormat = onCall({ cors: true }, async (request) => {
   // season starts rather than when their first result looks wrong.
   await createLeagueActivity(db, leagueId, {
     type: "settings_changed",
-    title:
-      format === SCORING_FORMATS.CAPTION_WARS
-        ? "Caption Wars enabled"
-        : "Back to standard scoring",
-    message:
-      format === SCORING_FORMATS.CAPTION_WARS
-        ? "Weeks are decided as a best-of-three across General Effect, Visual and Music this season — win two captions and you win the week."
-        : "Weeks are decided on total score again this season.",
+    title: FORMAT_COPY[format].title,
+    message: FORMAT_COPY[format].announcement,
     userId: uid,
     metadata: { changes: [{ field: "scoringFormat", to: format }], seasonUid },
   });
@@ -183,10 +206,7 @@ exports.setLeagueScoringFormat = onCall({ cors: true }, async (request) => {
     success: true,
     charged,
     format,
-    message:
-      format === SCORING_FORMATS.CAPTION_WARS
-        ? "Caption Wars is on for this season."
-        : "This league is back on standard scoring.",
+    message: FORMAT_COPY[format].confirmation,
   };
 });
 

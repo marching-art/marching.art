@@ -1,5 +1,31 @@
 [
   {
+    "id": "2026-08-31-one-night-slate",
+    "date": "2026-08-31",
+    "title": "One-Night Slate: a league format where your best show decides the week",
+    "category": "feature",
+    "summary": "The second format on the league shelf, next to Caption Wars. A commissioner can put their league on One-Night Slate for a season: instead of summing every show you attend, your weekly matchup comes down to your best single show against your opponent's best. One great Saturday beats a week of steady Tuesdays — built for leagues whose members can't all give the game the same number of nights. Nobody's lineup changes, and everything else about the league works exactly as before.",
+    "highlights": [
+      "Enable it from your league's Settings tab before the season's first week, for 1,500 CC from the commissioner's own balance — the prize pool is untouched.",
+      "Showing up still matters: every show is another chance at a peak, and identical best shows fall to the fuller week's total.",
+      "Matchup cards, notifications, and pushes quote the two nights that decided the week.",
+      "Covers one season and clears at rollover, same terms as Caption Wars. The game guide's League Formats section explains both."
+    ]
+  },
+  {
+    "id": "2026-08-31-cross-class-matchups",
+    "date": "2026-08-31",
+    "title": "Mixed-class leagues: real matchups instead of automatic byes",
+    "category": "improvement",
+    "summary": "If you were the only director fielding your class in a league, every week handed you a bye — a free win — while everyone else earned theirs, and odd-sized classes dealt out more of the same. Now the directors a class can't seat are paired against each other across classes, and the week is decided fairly: each corps is measured against its own class field across the whole game, and the better class finish takes it. Your matchup card, your notifications, and the record book all describe those weeks in exactly those terms.",
+    "highlights": [
+      "Leftover directors from different classes now play each other instead of collecting automatic bye wins.",
+      "A cross-class week is decided by how each corps finished within its own class — a SoundSport run that leads its field beats a middling World Class one, whatever the raw totals say.",
+      "Matchup cards and notifications show the class finishes that decided the week; blowout and closest-call records ignore cross-class score gaps, which were never comparable.",
+      "Byes still exist when there is genuinely nobody left to play, and they rotate fairly, same as before."
+    ]
+  },
+  {
     "id": "2026-08-31-newsroom-in-review",
     "date": "2026-08-31",
     "title": "Your Newsroom now shows press releases that are still in review",

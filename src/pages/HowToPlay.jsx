@@ -45,7 +45,9 @@ const SECTIONS = [
   { id: 'season', label: 'Season Calendar', icon: Calendar },
   { id: 'economy', label: 'CorpsCoin', icon: Coins },
   { id: 'leagues', label: 'Leagues', icon: Users },
-  { id: 'captionWars', label: 'Caption Wars', icon: Swords },
+  // The id predates One-Night Slate and stays for deep links; the section
+  // covers both purchasable formats.
+  { id: 'captionWars', label: 'League Formats', icon: Swords },
   { id: 'podium', label: 'Podium Division', icon: Medal },
   { id: 'glossary', label: 'Glossary', icon: Book },
   { id: 'faq', label: 'FAQ', icon: HelpCircle },

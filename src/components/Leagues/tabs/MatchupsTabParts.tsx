@@ -42,6 +42,14 @@ export interface TabMatchup {
   winner?: string | null;
   scores?: Record<string, number>;
   captions?: CaptionsBlock;
+  /** Per-side classes on a cross-class matchup (the leftovers a class could
+   *  not seat, paired across classes and decided on class percentile). */
+  classes?: Record<string, string>;
+  crossClass?: boolean;
+  /** Each side's best single show, on a league running One-Night Slate. */
+  best?: Record<string, { score?: number; showName?: string | null } | undefined>;
+  /** Each side's weekly finish against its own class, 0–100. */
+  normalized?: Record<string, number>;
   /** Synthetic React key, attached when a week is flattened for render. */
   id?: string;
 }
@@ -586,6 +594,23 @@ const VersusStrip = memo(
     // SoundSport is a ratings-only format — a SoundSport matchup must show the
     // earned rating tiers, never the numeric scores.
     const isSoundSport = matchup.corpsClass === 'soundSport';
+    // Cross-class matchups (each side in its own class) are decided on the
+    // class percentile, so the percentile is the result and the raw totals are
+    // the supporting detail — same hierarchy Caption Wars uses for its tally.
+    const isCrossClass = Boolean(matchup.crossClass);
+    const homePct = p1_uid != null ? matchup.normalized?.[p1_uid] : undefined;
+    const awayPct = p2_uid != null ? matchup.normalized?.[p2_uid] : undefined;
+    const sideClassName = (uid: string | null) => {
+      const cls = uid ? matchup.classes?.[uid] : undefined;
+      return cls ? CORPS_CLASS_CONFIG[cls]?.name || cls : undefined;
+    };
+    // One side's best single show (One-Night Slate). SoundSport is ratings-
+    // only, so its best night renders as the earned tier, never a number.
+    const bestLabel = (uid: string | null) => {
+      const score = (uid && matchup.best?.[uid]?.score) || 0;
+      if (score <= 0) return '—';
+      return isSoundSport ? getSoundSportRating(score) : score.toFixed(1);
+    };
 
     return (
       <button
@@ -604,12 +629,22 @@ const VersusStrip = memo(
         <div className={`px-4 py-3 ${featured ? 'py-4' : ''}`}>
           {/* Class + Rivalry indicators */}
           <div className="flex items-center gap-2 mb-2">
-            {showClass && classConfig && (
+            {isCrossClass ? (
               <span
-                className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-bold uppercase ${classConfig.bgColor} ${classConfig.color} border ${classConfig.borderColor}`}
+                className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-bold uppercase bg-teal-500/15 text-teal-400 border border-teal-500/40"
+                title="Each corps is scored against its own class; the better class finish wins the week."
               >
-                {classConfig.name}
+                Cross-Class
               </span>
+            ) : (
+              showClass &&
+              classConfig && (
+                <span
+                  className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-bold uppercase ${classConfig.bgColor} ${classConfig.color} border ${classConfig.borderColor}`}
+                >
+                  {classConfig.name}
+                </span>
+              )
             )}
             {isRivalry && (
               <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase text-red-500">
@@ -642,10 +677,14 @@ const VersusStrip = memo(
                 >
                   {home.name}
                 </p>
-                {home.standing && (
-                  <p className="text-[10px] text-muted">
-                    {home.standing.wins}-{home.standing.losses}
-                  </p>
+                {isCrossClass && sideClassName(p1_uid) ? (
+                  <p className="text-[10px] text-muted truncate">{sideClassName(p1_uid)}</p>
+                ) : (
+                  home.standing && (
+                    <p className="text-[10px] text-muted">
+                      {home.standing.wins}-{home.standing.losses}
+                    </p>
+                  )
                 )}
               </div>
             </div>
@@ -666,6 +705,57 @@ const VersusStrip = memo(
                       {home.score.toFixed(0)}-{away.score.toFixed(0)}
                     </div>
                   )}
+                </div>
+              ) : matchup.completed && matchup.best ? (
+                /* One-Night Slate: the best single show is the result, the
+                   weekly totals are the supporting detail. */
+                <div>
+                  <div
+                    className={`flex items-center justify-center gap-1 font-bold ${
+                      isSoundSport ? 'text-[10px] uppercase' : 'text-sm font-data tabular-nums'
+                    }`}
+                  >
+                    <span
+                      className={
+                        homeWon ? 'text-green-400' : isTie ? 'text-secondary' : 'text-muted'
+                      }
+                    >
+                      {bestLabel(p1_uid)}
+                    </span>
+                    <span className="text-muted">-</span>
+                    <span
+                      className={
+                        awayWon ? 'text-green-400' : isTie ? 'text-secondary' : 'text-muted'
+                      }
+                    >
+                      {bestLabel(p2_uid)}
+                    </span>
+                  </div>
+                  <div className="text-[9px] text-muted uppercase">best show</div>
+                </div>
+              ) : isCrossClass && matchup.completed ? (
+                /* Decided on each side's finish against its own class — the
+                   percentile is the result, the raw totals are not comparable
+                   across classes and are omitted here. */
+                <div>
+                  <div className="flex items-center justify-center gap-1 text-sm font-bold font-data tabular-nums">
+                    <span
+                      className={
+                        homeWon ? 'text-green-400' : isTie ? 'text-secondary' : 'text-muted'
+                      }
+                    >
+                      {typeof homePct === 'number' ? `${Math.round(homePct)}%` : '—'}
+                    </span>
+                    <span className="text-muted">-</span>
+                    <span
+                      className={
+                        awayWon ? 'text-green-400' : isTie ? 'text-secondary' : 'text-muted'
+                      }
+                    >
+                      {typeof awayPct === 'number' ? `${Math.round(awayPct)}%` : '—'}
+                    </span>
+                  </div>
+                  <div className="text-[9px] text-muted uppercase">of own class</div>
                 </div>
               ) : matchup.completed || matchup.status === 'live' ? (
                 <div className="flex items-center justify-center gap-1">
@@ -714,10 +804,14 @@ const VersusStrip = memo(
                   >
                     {away.name}
                   </p>
-                  {away.standing && (
-                    <p className="text-[10px] text-muted">
-                      {away.standing.wins}-{away.standing.losses}
-                    </p>
+                  {isCrossClass && sideClassName(p2_uid) ? (
+                    <p className="text-[10px] text-muted truncate">{sideClassName(p2_uid)}</p>
+                  ) : (
+                    away.standing && (
+                      <p className="text-[10px] text-muted">
+                        {away.standing.wins}-{away.standing.losses}
+                      </p>
+                    )
                   )}
                 </div>
                 <div

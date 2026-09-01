@@ -52,6 +52,12 @@ interface SelectedMatchup {
   status?: string;
   corpsClass?: string;
   captions?: CaptionsBlock;
+  /** Cross-class matchup fields, passed through to the detail view. */
+  crossClass?: boolean;
+  classes?: Record<string, string>;
+  normalized?: Record<string, number>;
+  winner?: string | null;
+  completed?: boolean;
   isUserMatchup?: boolean;
 }
 
@@ -305,6 +311,9 @@ const LeagueDetailView = ({
               onMatchupClick={(matchup) => {
                 if (matchup) {
                   setSelectedMatchup({
+                    // Spread first so the stored verdict fields (winner,
+                    // crossClass, classes, normalized) travel with the row.
+                    ...matchup,
                     user1: matchup.user1 || '',
                     user2: matchup.user2 || '',
                     week: currentWeek,

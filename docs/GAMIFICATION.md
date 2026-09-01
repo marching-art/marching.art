@@ -377,9 +377,13 @@ do not reintroduce them to plans:
 - **Equipment / execution / morale / readiness** systems (the old fantasy stubs).
   _(Podium has its own rehearsal/condition and staff-market systems — those are a
   separate game, see [`PODIUM.md`](PODIUM.md).)_
-- **Alternate league formats** (Survivor / One-Night Slate / Pick'em / Playoff
-  Bracket).
-- **Cross-class normalized matchups** (mixed-class league pairing).
+- ~~**Alternate league formats**~~ — un-cut: **Caption Wars** and **One-Night
+  Slate** shipped as commissioner-purchased, season-pinned scoring formats
+  (docs/CAPTION_WARS_SPEC.md, docs/ONE_NIGHT_SLATE.md). Survivor, Pick'em and
+  Playoff Bracket remain undesigned.
+- ~~**Cross-class normalized matchups**~~ — un-cut and shipped: mixed-class
+  leagues pair their per-class leftovers across classes, decided on class
+  percentile (LEAGUES_AUDIT_AND_PLAN.md A8).
 - **Personalized AI narrative** ("director as protagonist" storylines). The AI
   news engine remains global/editorial — see [`INTEGRATIONS.md`](INTEGRATIONS.md).
 

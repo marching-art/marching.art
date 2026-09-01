@@ -658,8 +658,8 @@ champion is the director who won the league.
   fame, retired numbers, and cross-season rivalry records.
 - **Co-commissioners and league constitutions.** (C6) A rules document,
   vote-based settings changes, scheduled format locks.
-- **Cross-class normalized matchups** (A8) so a league doesn't have to be
-  single-class to feel fair.
+- ~~**Cross-class normalized matchups** (A8)~~ — done; see "Still outstanding"
+  at the end of Part 2.
 - **Pay down the debt** (F7): split the god-files, drop `@ts-nocheck`,
   consolidate `MatchupsTab`'s duplicate fetching onto `useLeagueDetail` and fix
   the dead `weeklyResults` state (F1) and the two-class flattening (F2).
@@ -756,11 +756,27 @@ carries the season (`fantasy_recaps/{seasonUid}`, `show_registrations/{seasonUid
 ## Still outstanding
 
 Everything below is the last of it. One item is operational and needs
-production credentials; the rest is a single known limitation.
+production credentials.
 
-- **A8 (real fix)** — cross-class _normalized_ scoring, so a mixed-class league
-  can rank on one comparable scale. The table is now honest about the limitation
-  rather than fixed of it.
+- ~~**A8 (real fix)**~~ — **done: cross-class matchups.** The per-class pairing
+  left real holes in a mixed league: the lone SoundSport director drew a
+  completed bye — an automatic win — every single week, and every odd-sized
+  class handed out another. The leftovers a class cannot seat are now paired
+  with each other ACROSS classes (`leagueHelpers.js pairLeagueWeek`), and the
+  week is decided on each corps' percentile against its own class field — the
+  figure the scorer already computes game-wide (`applyClassPercentiles`) —
+  because raw points are not comparable between classes. The decision rule
+  lives in ONE place (`leagueScoring.js decideHeadToHead`, shared by the
+  nightly resolution and the commissioner close). Cross-class matchups are
+  stored in the first director's class array with a per-side `classes` map, so
+  every existing reader keeps working; records land on each side's own class;
+  margin records and rivalry "close match" counts skip them (a cross-class
+  points margin measures nothing); notification/push copy quotes the
+  percentile finishes instead of a score line that would contradict the
+  verdict; and the client's provisional table now trusts a settled winner
+  rather than re-deriving one from raw points. In a Caption Wars league a
+  cross-class week also resolves on the percentile — raw caption numbers carry
+  the same scale problem.
 - ~~**F7**~~ — **done.** Every file under `components/Leagues` and the Leagues
   page is TypeScript; no `@ts-nocheck` remains in the league subsystem, and the
   repo-wide ratchet fell 207 → 188. The migration was mostly mechanical, but it
@@ -776,7 +792,13 @@ production credentials; the rest is a single known limitation.
 
   `settings.scoringFormat` came back with an implementation behind it, paired
   with the season uid it was bought for so a stale value can never switch a
-  league into a format nobody paid for. Survivor and Pick'em remain undesigned.
+  league into a format nobody paid for. **One-Night Slate** followed as the
+  second paid format (docs/ONE_NIGHT_SLATE.md): the week decided by each
+  director's best single show, through the same purchase flow and the same
+  shared decision rule (`leagueScoring.js decideHeadToHead`) — which the
+  commissioner's manual close now also uses, closing the gap where it resolved
+  every league on totals whatever format was bought. Survivor and Pick'em
+  remain undesigned.
 
 - **Consolation bracket** — ~~outstanding~~ shipped. Everyone below the finals
   cut runs the same race on championship week for a second, lesser title,

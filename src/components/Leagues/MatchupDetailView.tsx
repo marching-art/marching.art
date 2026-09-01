@@ -44,6 +44,7 @@ interface DayRecap {
     eventName?: string;
     results?: Array<{
       uid: string;
+      corpsClass?: string;
       totalScore?: number;
       geScore?: number;
       visualScore?: number;
@@ -70,6 +71,16 @@ interface DetailMatchup {
   status?: string;
   corpsClass?: string;
   captions?: CaptionsBlock;
+  /** Cross-class matchup: each side plays in its own class and the week is
+   *  decided on class percentile, not raw totals. Passed through from the
+   *  stored matchup so this view can never contradict the settled result. */
+  crossClass?: boolean;
+  classes?: Record<string, string>;
+  normalized?: Record<string, number>;
+  /** Each side's best single show, on a league running One-Night Slate. */
+  best?: Record<string, { score?: number; showName?: string | null } | undefined>;
+  winner?: string | null;
+  completed?: boolean;
 }
 
 interface MatchupDetailViewProps {
@@ -91,6 +102,25 @@ interface MatchupDetailViewProps {
   rivalry?: RivalryData | null;
   recaps?: DayRecap[] | null;
 }
+
+/** True when this recap result row belongs to `uid` for THIS matchup. On a
+ *  cross-class matchup each side is scored in its own class, so a director
+ *  fielding several classes must not have their other corps' shows summed in. */
+const resultCountsFor = (
+  matchup: DetailMatchup,
+  result: { uid?: string; corpsClass?: string },
+  uid: string
+) =>
+  result.uid === uid &&
+  (!matchup.classes?.[uid] || !result.corpsClass || result.corpsClass === matchup.classes[uid]);
+
+/** 1 -> "1st", 42 -> "42nd", 100 -> "100th". */
+const ordinal = (n: number) => {
+  const rem100 = n % 100;
+  if (rem100 >= 11 && rem100 <= 13) return `${n}th`;
+  const suffix = ['th', 'st', 'nd', 'rd'][n % 10] ?? 'th';
+  return `${n}${suffix}`;
+};
 
 const captionGroupScores = (result: {
   geScore?: number;
@@ -122,7 +152,8 @@ const MatchupDetailView = ({
   const [battleBreakdown, setBattleBreakdown] = useState<MatchupBattleBreakdown | null>(null);
   const [headToHead, setHeadToHead] = useState<ExtendedHeadToHead | null>(null);
   const [activeView, setActiveView] = useState<'battles' | 'overview' | 'captions' | 'rivalry'>(
-    'battles'
+    // No battle scoreboard on a cross-class matchup (see the effect below).
+    matchup.crossClass ? 'overview' : 'battles'
   );
 
   // Get user stats from standings
@@ -208,7 +239,7 @@ const MatchupDetailView = ({
             if (weekNum === matchup.week) {
               dayRecap.shows?.forEach((show) => {
                 show.results?.forEach((result) => {
-                  if (result.uid === matchup.user1) {
+                  if (resultCountsFor(matchup, result, matchup.user1)) {
                     score1 += result.totalScore || 0;
                     const showData = {
                       showId: show.showId || show.eventName || '',
@@ -229,7 +260,7 @@ const MatchupDetailView = ({
                     breakdown1.visualTotal += result.visualScore || 0;
                     breakdown1.musicTotal += result.musicScore || 0;
                   }
-                  if (result.uid === matchup.user2) {
+                  if (resultCountsFor(matchup, result, matchup.user2)) {
                     score2 += result.totalScore || 0;
                     const showData = {
                       showId: show.showId || show.eventName || '',
@@ -258,10 +289,10 @@ const MatchupDetailView = ({
             if (weekNum === (matchup.week ?? 0) - 1) {
               dayRecap.shows?.forEach((show) => {
                 show.results?.forEach((result) => {
-                  if (result.uid === matchup.user1) {
+                  if (resultCountsFor(matchup, result, matchup.user1)) {
                     prevWeekScore1 += result.totalScore || 0;
                   }
-                  if (result.uid === matchup.user2) {
+                  if (resultCountsFor(matchup, result, matchup.user2)) {
                     prevWeekScore2 += result.totalScore || 0;
                   }
                 });
@@ -273,7 +304,10 @@ const MatchupDetailView = ({
           setScoreBreakdown({ user1: breakdown1, user2: breakdown2 });
 
           // Calculate battle breakdown if we have data
-          if (user1Shows.length > 0 || user2Shows.length > 0) {
+          // Battle points compare raw caption numbers, which mean nothing
+          // between different classes — a cross-class matchup shows the
+          // percentile verdict instead of a battle scoreboard.
+          if (!matchup.crossClass && (user1Shows.length > 0 || user2Shows.length > 0)) {
             const user1Performance = createWeeklyPerformance(
               matchup.user1,
               week,
@@ -312,7 +346,7 @@ const MatchupDetailView = ({
               if (weekNum === week) {
                 dayRecap.shows?.forEach((show) => {
                   show.results?.forEach((result) => {
-                    if (result.uid === matchup.user1) {
+                    if (resultCountsFor(matchup, result, matchup.user1)) {
                       weekUser1Shows.push({
                         showId: show.showId || show.eventName || '',
                         showName: show.eventName || '',
@@ -321,7 +355,7 @@ const MatchupDetailView = ({
                         captions: captionGroupScores(result),
                       });
                     }
-                    if (result.uid === matchup.user2) {
+                    if (resultCountsFor(matchup, result, matchup.user2)) {
                       weekUser2Shows.push({
                         showId: show.showId || show.eventName || '',
                         showName: show.eventName || '',
@@ -336,8 +370,10 @@ const MatchupDetailView = ({
               if (weekNum === week - 1) {
                 dayRecap.shows?.forEach((show) => {
                   show.results?.forEach((result) => {
-                    if (result.uid === matchup.user1) weekPrevScore1 += result.totalScore || 0;
-                    if (result.uid === matchup.user2) weekPrevScore2 += result.totalScore || 0;
+                    if (resultCountsFor(matchup, result, matchup.user1))
+                      weekPrevScore1 += result.totalScore || 0;
+                    if (resultCountsFor(matchup, result, matchup.user2))
+                      weekPrevScore2 += result.totalScore || 0;
                   });
                 });
               }
@@ -383,9 +419,20 @@ const MatchupDetailView = ({
     processRecaps();
   }, [matchup, league?.id, recapsProp]);
 
-  const user1Leading = weeklyScores.user1 > weeklyScores.user2;
-  const user2Leading = weeklyScores.user2 > weeklyScores.user1;
-  const tied = weeklyScores.user1 === weeklyScores.user2 && weeklyScores.user1 > 0;
+  // A settled matchup's stored winner outranks anything recomputed from raw
+  // totals here: cross-class weeks are decided on class percentiles, Caption
+  // Wars on the category tally, One-Night Slate on the best single show.
+  const isCrossClass = Boolean(matchup.crossClass);
+  const settledWinner = matchup.completed ? matchup.winner : undefined;
+  const user1Leading = settledWinner
+    ? settledWinner === matchup.user1
+    : weeklyScores.user1 > weeklyScores.user2;
+  const user2Leading = settledWinner
+    ? settledWinner === matchup.user2
+    : weeklyScores.user2 > weeklyScores.user1;
+  const tied = settledWinner
+    ? settledWinner === 'tie'
+    : weeklyScores.user1 === weeklyScores.user2 && weeklyScores.user1 > 0;
   const scoreDiff = Math.abs(weeklyScores.user1 - weeklyScores.user2);
 
   // Calculate win probability
@@ -401,7 +448,8 @@ const MatchupDetailView = ({
     icon: React.ComponentType<{ className?: string }>;
     badge?: boolean;
   }> = [
-    { id: 'battles', label: 'Battles', icon: Swords },
+    // Battle points are a raw-caption comparison, undefined across classes.
+    ...(isCrossClass ? [] : [{ id: 'battles' as const, label: 'Battles', icon: Swords }]),
     { id: 'rivalry', label: 'Rivalry', icon: Flame, badge: (headToHead?.totalMatchups ?? 0) > 0 },
     { id: 'overview', label: 'Overview', icon: BarChart3 },
     { id: 'captions', label: 'Shows', icon: Trophy },
@@ -436,6 +484,29 @@ const MatchupDetailView = ({
         <Heading level="title" as="h1" className="text-center">
           Head-to-Head Matchup
         </Heading>
+
+        {isCrossClass && (
+          <div className="mt-3 border border-teal-500/40 bg-teal-500/10 px-3 py-2 text-center">
+            <p className="text-[10px] font-bold uppercase text-teal-400 mb-0.5">
+              Cross-Class Matchup
+            </p>
+            <p className="text-xs text-muted">
+              Each corps is scored against its own class this week — the better finish within their
+              own field wins, not the raw totals.
+              {matchup.completed &&
+                typeof matchup.normalized?.[matchup.user1] === 'number' &&
+                typeof matchup.normalized?.[matchup.user2] === 'number' && (
+                  <>
+                    {' '}
+                    {getDisplayName(matchup.user1)} finished in the{' '}
+                    {ordinal(Math.round(matchup.normalized[matchup.user1]))} percentile of their
+                    class, {getDisplayName(matchup.user2)} in the{' '}
+                    {ordinal(Math.round(matchup.normalized[matchup.user2]))} of theirs.
+                  </>
+                )}
+            </p>
+          </div>
+        )}
       </m.div>
 
       {/* Rivalry Card */}

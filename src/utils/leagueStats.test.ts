@@ -382,3 +382,79 @@ describe('multi-class members', () => {
     expect(byUid.a.losses).toBe(1);
   });
 });
+
+describe('cross-class matchups', () => {
+  const crossDay = (day: number, rows: Array<[string, string, number]>) => ({
+    offSeasonDay: day,
+    shows: [
+      {
+        results: rows.map(([uid, corpsClass, totalScore]) => ({ uid, corpsClass, totalScore })),
+      },
+    ],
+  });
+
+  it('trusts the settled winner over the raw score comparison', () => {
+    // a's World Class 85 loses to b's SoundSport 60 because the server decided
+    // the week on class percentiles. The provisional table must agree with the
+    // server, not re-litigate it from raw points.
+    const recaps = [
+      crossDay(1, [
+        ['a', 'worldClass', 85],
+        ['b', 'soundSport', 60],
+      ]),
+    ];
+    const members = ['a', 'b'];
+    const weekDoc = {
+      id: 'week-1',
+      worldClassMatchups: [
+        {
+          pair: ['a', 'b'] as [string, string],
+          classes: { a: 'worldClass', b: 'soundSport' },
+          crossClass: true,
+          completed: true,
+          winner: 'b',
+          scores: { a: 85, b: 60 },
+        },
+      ],
+    };
+    const standings = computeMemberStandings(
+      members,
+      buildWeeklyResults(recaps, members),
+      buildMatchupsByWeek([weekDoc], members, 1),
+      buildWeeklyClassResults(recaps, members)
+    );
+
+    const byUid = Object.fromEntries(standings.map((s) => [s.uid, s]));
+    expect(byUid.b.wins).toBe(1);
+    expect(byUid.a.losses).toBe(1);
+    expect(byUid.b.streakType).toBe('W');
+  });
+
+  it('scores each side of a cross-class matchup in its OWN class', () => {
+    // a fields two classes; only the worldClass run belongs to this matchup.
+    const recaps = [
+      crossDay(1, [
+        ['a', 'worldClass', 85],
+        ['a', 'soundSport', 40],
+        ['b', 'soundSport', 60],
+      ]),
+    ];
+    const members = ['a', 'b'];
+    const weekDoc = {
+      id: 'week-1',
+      worldClassMatchups: [
+        {
+          pair: ['a', 'b'] as [string, string],
+          classes: { a: 'worldClass', b: 'soundSport' },
+          crossClass: true,
+          completed: true,
+          winner: 'b',
+          scores: { a: 85, b: 60 },
+        },
+      ],
+    };
+    const matchups = buildMatchupsByWeek([weekDoc], members, 1);
+    expect(matchups[1][0].classes).toEqual({ a: 'worldClass', b: 'soundSport' });
+    expect(matchups[1][0].crossClass).toBe(true);
+  });
+});

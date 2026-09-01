@@ -10,6 +10,7 @@ const {
   weekDayRange,
   buildWeeklyScoreIndex,
   getWeekScore,
+  decideHeadToHead,
   participatingClassesByUid,
 } = require("./leagueScoring");
 
@@ -202,5 +203,77 @@ describe("participatingClassesByUid", () => {
     assert.deepEqual([...byUid.get("alice")].sort(), ["aClass", "worldClass"]);
     assert.deepEqual([...byUid.get("bob")], ["worldClass"]);
     assert.equal(byUid.has("absent"), false);
+  });
+});
+
+describe("decideHeadToHead", () => {
+  // Alice's World Class week is a middling 85 in a strong field; Bob's
+  // SoundSport 62 leads his. Raw points say Alice; the class fields say Bob.
+  const crossIndex = () =>
+    buildWeeklyScoreIndex([
+      day([
+        { uid: "alice", corpsClass: "worldClass", totalScore: 85 },
+        { uid: "wc2", corpsClass: "worldClass", totalScore: 90 },
+        { uid: "wc3", corpsClass: "worldClass", totalScore: 88 },
+        { uid: "bob", corpsClass: "soundSport", totalScore: 62 },
+        { uid: "ss2", corpsClass: "soundSport", totalScore: 55 },
+      ]),
+    ]).index;
+
+  test("same-class matchups are still decided on points", () => {
+    const { winner, crossClass } = decideHeadToHead(
+      { pair: ["alice", "wc2"] },
+      "worldClass",
+      crossIndex()
+    );
+    assert.equal(crossClass, false);
+    assert.equal(winner, "wc2");
+  });
+
+  test("cross-class matchups are decided on each side's class percentile", () => {
+    const decided = decideHeadToHead(
+      { pair: ["alice", "bob"], classes: { alice: "worldClass", bob: "soundSport" } },
+      "worldClass",
+      crossIndex()
+    );
+    assert.equal(decided.crossClass, true);
+    assert.equal(decided.p1Class, "worldClass");
+    assert.equal(decided.p2Class, "soundSport");
+    // Alice posted more raw points but finished last of three in her class;
+    // Bob led his field. The percentile, not the raw total, decides it.
+    assert.ok(decided.p1Week.score > decided.p2Week.score);
+    assert.equal(decided.winner, "bob");
+  });
+
+  test("sitting out a cross-class week is still a forfeit", () => {
+    const decided = decideHeadToHead(
+      { pair: ["alice", "ghost"], classes: { alice: "worldClass", ghost: "soundSport" } },
+      "worldClass",
+      crossIndex()
+    );
+    // Ghost never competed: 0th percentile against Alice's real week.
+    assert.equal(decided.winner, "alice");
+  });
+
+  test("two identical percentiles tie", () => {
+    // Both led their (solo) class fields: 100th percentile each.
+    const { index } = buildWeeklyScoreIndex([
+      day([
+        { uid: "alice", corpsClass: "worldClass", totalScore: 85 },
+        { uid: "bob", corpsClass: "soundSport", totalScore: 62 },
+      ]),
+    ]);
+    const decided = decideHeadToHead(
+      { pair: ["alice", "bob"], classes: { alice: "worldClass", bob: "soundSport" } },
+      "worldClass",
+      index
+    );
+    assert.equal(decided.winner, "tie");
+  });
+
+  test("a matchup with no classes map resolves in the array's class", () => {
+    const decided = decideHeadToHead({ pair: ["bob", "ss2"] }, "soundSport", crossIndex());
+    assert.equal(decided.crossClass, false);
+    assert.equal(decided.winner, "bob");
   });
 });

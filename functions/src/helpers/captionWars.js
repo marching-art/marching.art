@@ -26,6 +26,10 @@
 const SCORING_FORMATS = {
   TOTAL: "total",
   CAPTION_WARS: "captionWars",
+  // One-Night Slate: the week is decided by each director's best single show
+  // (helpers/oneNightSlate.js). Registered here because this module owns the
+  // format registry the purchase callable and the season guard read.
+  ONE_NIGHT: "oneNight",
 };
 
 /**
@@ -73,12 +77,26 @@ const CAPTION_CATEGORIES = [
  * @param {string} seasonUid - the season being resolved
  */
 function isCaptionWarsLeague(leagueData, seasonUid) {
+  return activeScoringFormat(leagueData, seasonUid) === SCORING_FORMATS.CAPTION_WARS;
+}
+
+/**
+ * The scoring format this league resolves on for THIS season — the one guard
+ * every format shares, so a stale `scoringFormat` value from a previous season
+ * (or an unknown value written by anything) can only ever fail back to the
+ * default. See isCaptionWarsLeague above for why both conditions are checked
+ * every time.
+ *
+ * @param {any} leagueData - the league document data
+ * @param {string} seasonUid - the season being resolved
+ * @returns {string} one of SCORING_FORMATS' values
+ */
+function activeScoringFormat(leagueData, seasonUid) {
   const settings = leagueData?.settings || {};
-  return (
-    settings.scoringFormat === SCORING_FORMATS.CAPTION_WARS &&
-    !!seasonUid &&
-    settings.scoringFormatSeasonUid === seasonUid
-  );
+  const format = settings.scoringFormat;
+  if (!format || format === SCORING_FORMATS.TOTAL) return SCORING_FORMATS.TOTAL;
+  if (!seasonUid || settings.scoringFormatSeasonUid !== seasonUid) return SCORING_FORMATS.TOTAL;
+  return Object.values(SCORING_FORMATS).includes(format) ? format : SCORING_FORMATS.TOTAL;
 }
 
 /**
@@ -158,6 +176,7 @@ module.exports = {
   CAPTION_WARS_SEASON_COST,
   CAPTION_CATEGORIES,
   isCaptionWarsLeague,
+  activeScoringFormat,
   resolveCaptionWars,
   captionsWonBy,
 };

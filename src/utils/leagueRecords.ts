@@ -19,6 +19,9 @@ export interface RecordMatchup {
   isBye?: boolean;
   scores?: Record<string, number>;
   normalized?: Record<string, number>;
+  /** Cross-class matchup: per-side classes, decided on class percentile. */
+  crossClass?: boolean;
+  classes?: Record<string, string>;
   /** Present only on leagues running Caption Wars. */
   captions?: CaptionsBlock;
 }
@@ -299,15 +302,17 @@ export function computeLeagueRecords(
       [p1, s1],
       [p2, s2],
     ] as Array<[string, number]>) {
+      // On a cross-class matchup each side's own class, not the array's.
+      const sideClass = matchup.classes?.[uid] ?? corpsClass;
       if (score > 0 && (!highestWeek || score > highestWeek.score)) {
-        highestWeek = { uid, score, week, corpsClass, seasonUid };
+        highestWeek = { uid, score, week, corpsClass: sideClass, seasonUid };
       }
       const percentile = matchup.normalized?.[uid];
       if (
         typeof percentile === 'number' &&
         (!bestClassFinish || percentile > bestClassFinish.percentile)
       ) {
-        bestClassFinish = { uid, score, week, corpsClass, percentile, seasonUid };
+        bestClassFinish = { uid, score, week, corpsClass: sideClass, percentile, seasonUid };
       }
     }
 
@@ -328,6 +333,10 @@ export function computeLeagueRecords(
     // put three views of one week in disagreement.
     const winnerUid = matchup.winner === p1 || matchup.winner === p2 ? matchup.winner : null;
     if (!winnerUid) continue;
+    // A cross-class week is decided on class percentiles; its raw points
+    // margin — in either direction — is not a margin record, the same way a
+    // caption-decided upset is not (below).
+    if (matchup.crossClass) continue;
     const loserUid = winnerUid === p1 ? p2 : p1;
     const winnerScore = matchup.scores?.[winnerUid] ?? 0;
     const loserScore = matchup.scores?.[loserUid] ?? 0;

@@ -26,6 +26,9 @@
  */
 
 const { logger } = require("firebase-functions/v2");
+// Both format modules are pure (no requires), so these cannot cycle.
+const { SCORING_FORMATS, resolveCaptionWars } = require("./captionWars");
+const { resolveOneNight } = require("./oneNightSlate");
 
 /**
  * One corps' week, as folded from the recap days.
@@ -38,6 +41,8 @@ const { logger } = require("firebase-functions/v2");
  * @property {number} ge - General Effect across the week (0–40 per show)
  * @property {number} visual - Visual across the week (0–30 per show)
  * @property {number} music - Music across the week (0–30 per show)
+ * @property {number} best - highest single-show total of the week
+ * @property {string|null} bestShowName - the show that posted it
  * @property {number} classPercentile - finish against this corps' own class, 0–100
  * @property {number} classFieldSize - how many corps that class fielded
  */
@@ -82,8 +87,18 @@ function buildWeeklyScoreIndex(dayDocs) {
           ge: 0,
           visual: 0,
           music: 0,
+          best: 0,
+          bestShowName: null,
         };
-        entry.score += Number(result.totalScore) || 0;
+        const showTotal = Number(result.totalScore) || 0;
+        entry.score += showTotal;
+        // The week's peak, for the One-Night Slate format (oneNightSlate.js):
+        // one comparison over data already in memory, same bargain as the
+        // caption groups below.
+        if (showTotal > entry.best) {
+          entry.best = showTotal;
+          entry.bestShowName = show.eventName || null;
+        }
         // The three caption groups the scorer already persists on every show
         // result (helpers/scoring.js): GE 0–40, Visual 0–30, Music 0–30. Summed
         // exactly like `score`, so competing twice counts twice in every
@@ -195,15 +210,81 @@ function getWeekScore(index, uid, corpsClass) {
       shows: 0,
       // Zero in every caption too, so a Caption Wars matchup against a director
       // who sat the week out is a 3-0 sweep rather than a comparison against
-      // undefined. Forfeiting a week forfeits every category.
+      // undefined. Forfeiting a week forfeits every category — and the best
+      // single show (One-Night Slate) along with it.
       ge: 0,
       visual: 0,
       music: 0,
+      best: 0,
+      bestShowName: null,
       // Did not compete: last in their field, by definition.
       classPercentile: 0,
       classFieldSize: 0,
     }
   );
+}
+
+/**
+ * Decide one head-to-head matchup from the week index — the ONE place the
+ * decision rule lives, shared by the nightly resolution
+ * (helpers/weeklyMatchups.js) and the commissioner's manual close
+ * (callable/leagues.js updateMatchupResults) so the two can never disagree
+ * about who won a week, whatever format the league runs.
+ *
+ * The order of precedence:
+ *
+ * 1. A CROSS-CLASS matchup (generated for the directors a class could not
+ *    seat — see leagueHelpers.js pairLeagueWeek) carries a per-side `classes`
+ *    map and is decided on each corps' percentile against ITS OWN class
+ *    field, UNDER EVERY FORMAT: raw totals, caption groups and best-single-
+ *    show numbers all carry the same cross-class scale problem (a ~90-point
+ *    World Class week and a ~60-point SoundSport week are not comparable).
+ *    Sitting the week out is 0th percentile, so showing up still beats a
+ *    forfeit; two forfeits (or two identical percentiles) tie.
+ * 2. Caption Wars decides same-class weeks best-of-three across GE, Visual
+ *    and Music (helpers/captionWars.js), returning the stored `captions`
+ *    block alongside the winner.
+ * 3. One-Night Slate decides same-class weeks on the best single show
+ *    (helpers/oneNightSlate.js), returning the stored `best` block.
+ * 4. The default: the weekly point totals, as always.
+ *
+ * @param {Object} matchup - stored matchup entry ({ pair, classes? })
+ * @param {string} corpsClass - the class array the matchup is stored under
+ * @param {Map<string, WeekScoreEntry>} index - the week's score index
+ * @param {string} [format] - a SCORING_FORMATS value; defaults to totals
+ * @returns {{p1: string, p2: string, p1Class: string, p2Class: string,
+ *   crossClass: boolean, p1Week: WeekScoreEntry, p2Week: WeekScoreEntry,
+ *   winner: string, captions: (Object|null), best: (Object|null)}}
+ *   winner is a uid or the string 'tie'
+ */
+function decideHeadToHead(matchup, corpsClass, index, format = SCORING_FORMATS.TOTAL) {
+  const [p1, p2] = matchup.pair;
+  const p1Class = matchup.classes?.[p1] || corpsClass;
+  const p2Class = matchup.classes?.[p2] || corpsClass;
+  const crossClass = p1Class !== p2Class;
+  const p1Week = getWeekScore(index, p1, p1Class);
+  const p2Week = getWeekScore(index, p2, p2Class);
+
+  let winner = "tie";
+  let captions = null;
+  let best = null;
+  if (crossClass) {
+    if (p1Week.classPercentile > p2Week.classPercentile) winner = p1;
+    else if (p2Week.classPercentile > p1Week.classPercentile) winner = p2;
+  } else if (format === SCORING_FORMATS.CAPTION_WARS) {
+    const resolved = resolveCaptionWars(p1, p2, p1Week, p2Week);
+    captions = resolved.captions;
+    winner = resolved.winner;
+  } else if (format === SCORING_FORMATS.ONE_NIGHT) {
+    const resolved = resolveOneNight(p1, p2, p1Week, p2Week);
+    best = resolved.best;
+    winner = resolved.winner;
+  } else {
+    if (p1Week.score > p2Week.score) winner = p1;
+    else if (p2Week.score > p1Week.score) winner = p2;
+  }
+
+  return { p1, p2, p1Class, p2Class, crossClass, p1Week, p2Week, winner, captions, best };
 }
 
 /**
@@ -231,5 +312,6 @@ module.exports = {
   buildWeeklyScoreIndex,
   fetchWeeklyScoreIndex,
   getWeekScore,
+  decideHeadToHead,
   participatingClassesByUid,
 };

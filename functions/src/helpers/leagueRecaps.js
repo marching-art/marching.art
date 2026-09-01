@@ -68,7 +68,9 @@ function detectRivalries(matchupHistory) {
         else if (matchup.winner === p2) record.p2Wins++;
         else record.ties++;
 
-        if (matchup.scores) {
+        // Cross-class matchups are decided on class percentiles, so their raw
+        // points margin says nothing about how close the week was.
+        if (matchup.scores && !matchup.crossClass) {
           const margin = Math.abs((matchup.scores[home] || 0) - (matchup.scores[away] || 0));
           if (margin < 5) record.closeMatches++;
         }
@@ -148,7 +150,9 @@ function generateWeeklyRecap(weekMatchups, standings, memberProfiles) {
       const score2 = matchup.scores[p2] || 0;
       const margin = Math.abs(score1 - score2);
 
-      if (margin < closestMargin && margin > 0) {
+      // A cross-class points margin is not a closeness measure — those weeks
+      // are decided on each side's class percentile, not the raw totals.
+      if (!matchup.crossClass && margin < closestMargin && margin > 0) {
         closestMargin = margin;
         recap.stats.closestMatch = {
           player1: memberProfiles[p1]?.displayName || p1,

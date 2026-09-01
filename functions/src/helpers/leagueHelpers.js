@@ -119,6 +119,138 @@ function smartPairMembers(members, standings, history = {}) {
 }
 
 /**
+ * Pair one week for a whole league: per-class pairing first, then a
+ * CROSS-CLASS round for the directors a class could not seat.
+ *
+ * In a mixed-class league the per-class pairing left real holes: the lone
+ * SoundSport director in a World Class league drew a completed bye — an
+ * automatic WIN — every single week, and every odd-sized class handed out
+ * another. A season of free wins is what made mixed leagues feel rigged
+ * (LEAGUES_AUDIT_AND_PLAN.md A8). Those leftovers are now paired with each
+ * other ACROSS classes instead, and the matchup is decided on each corps'
+ * standing against ITS OWN class field — the percentile the scorer already
+ * computes game-wide every week (leagueScoring.js applyClassPercentiles) —
+ * because raw points are not comparable between a ~90-point World Class week
+ * and a ~60-point SoundSport week.
+ *
+ * A cross-class matchup lives in the FIRST director's class array with a
+ * per-side `classes` map and `crossClass: true`, so every existing reader of
+ * `${class}Matchups` (resolution, standings rebuild, pairing history, recaps,
+ * pushes, the client) sees it without knowing anything new; only deciders and
+ * labels consult `classes`. Byes remain for whoever still has no possible
+ * opponent (odd leftover count, or their only counterpart is themself in
+ * another class).
+ *
+ * Single-class leagues are untouched: no leftovers cross, every array is
+ * exactly what smartPairMembers returned.
+ *
+ * @param {Object<string, string[]>} membersByClass - class -> directors fielding it
+ * @param {Object} standings - uid -> { wins, totalPoints, ... }
+ * @param {Object} [history] - prior-week context (see smartPairMembers)
+ * @param {string[]} corpsClasses - classes to pair, registry-derived by the caller
+ * @returns {Object<string, Array>} class -> matchup array, ready to store as
+ *   `${class}Matchups`
+ */
+function pairLeagueWeek(membersByClass, standings, history = {}, corpsClasses = []) {
+  /** @type {Object<string, Array>} */
+  const matchupsByClass = {};
+  /** @type {Array<{uid: string, corpsClass: string}>} */
+  const leftovers = [];
+
+  for (const corpsClass of corpsClasses) {
+    const classMatchups = smartPairMembers(membersByClass[corpsClass] || [], standings, history);
+    // Pull the would-be byes back out; smartPairMembers already picked WHO
+    // sits out fairly (fewest byes), so that fairness carries into who gets
+    // the cross-class matchup.
+    matchupsByClass[corpsClass] = classMatchups.filter((m) => !m.isBye);
+    for (const bye of classMatchups.filter((m) => m.isBye)) {
+      leftovers.push({ uid: bye.pair[0], corpsClass });
+    }
+  }
+
+  const { crossMatchups, unpaired } = pairAcrossClasses(leftovers, standings, history);
+  for (const matchup of crossMatchups) {
+    matchupsByClass[matchup.classes[matchup.pair[0]]].push(matchup);
+  }
+  for (const { uid, corpsClass } of unpaired) {
+    matchupsByClass[corpsClass].push({
+      pair: [uid, null],
+      winner: uid,
+      scores: null,
+      completed: true,
+      isBye: true,
+    });
+  }
+
+  return matchupsByClass;
+}
+
+/**
+ * Pair the per-class leftovers with each other. Same seeding and
+ * fewest-meetings walk as smartPairMembers, plus one rule it never needed: a
+ * director fielding two odd classes can be leftover twice, and must not be
+ * paired against themself.
+ *
+ * @param {Array<{uid: string, corpsClass: string}>} leftovers - at most one per class
+ * @returns {{crossMatchups: Array, unpaired: Array<{uid: string, corpsClass: string}>}}
+ */
+function pairAcrossClasses(leftovers, standings, history = {}) {
+  if (leftovers.length < 2) return { crossMatchups: [], unpaired: [...leftovers] };
+
+  const meetings = history.meetings || {};
+  const timesPlayed = (a, b) => (meetings[a] && meetings[a][b]) || 0;
+
+  const sorted = [...leftovers].sort((a, b) => {
+    const statsA = standings[a.uid] || {};
+    const statsB = standings[b.uid] || {};
+    if ((statsB.wins || 0) !== (statsA.wins || 0)) return (statsB.wins || 0) - (statsA.wins || 0);
+    if ((statsB.totalPoints || 0) !== (statsA.totalPoints || 0)) {
+      return (statsB.totalPoints || 0) - (statsA.totalPoints || 0);
+    }
+    const uidOrder = String(a.uid).localeCompare(String(b.uid));
+    if (uidOrder !== 0) return uidOrder;
+    return String(a.corpsClass).localeCompare(String(b.corpsClass));
+  });
+
+  const remaining = [...sorted];
+  const crossMatchups = [];
+  const unpaired = [];
+
+  while (remaining.length >= 2) {
+    const first = remaining.shift();
+    let bestIndex = -1;
+    let bestMeetings = Infinity;
+    for (let i = 0; i < remaining.length; i++) {
+      if (remaining[i].uid === first.uid) continue;
+      const played = timesPlayed(first.uid, remaining[i].uid);
+      if (played < bestMeetings) {
+        bestIndex = i;
+        bestMeetings = played;
+        if (played === 0) break;
+      }
+    }
+    if (bestIndex === -1) {
+      // Every remaining leftover is this same director in another class.
+      unpaired.push(first);
+      continue;
+    }
+    const second = remaining.splice(bestIndex, 1)[0];
+    crossMatchups.push({
+      pair: [first.uid, second.uid],
+      classes: { [first.uid]: first.corpsClass, [second.uid]: second.corpsClass },
+      crossClass: true,
+      winner: null,
+      scores: null,
+      completed: false,
+      isBye: false,
+    });
+  }
+  unpaired.push(...remaining);
+
+  return { crossMatchups, unpaired };
+}
+
+/**
  * Prior-week context for smartPairMembers, folded from a league's existing
  * `matchups/week-N` documents. Counts every completed or scheduled pairing, so
  * a week that has been generated but not yet resolved still steers the next
@@ -269,6 +401,8 @@ const invitationId = (leagueId, inviteeUid) => `${leagueId}_${inviteeUid}`;
 module.exports = {
   generateUniqueInviteCode,
   smartPairMembers,
+  pairLeagueWeek,
+  pairAcrossClasses,
   buildPairingHistory,
   recordPairingsInHistory,
   createLeagueActivity,

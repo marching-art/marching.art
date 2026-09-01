@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered when functions checkJs landed (functions/tsconfig.json); remove when this file is typed or cleaned up
 /**
  * Podium Class scoring/rehearsal engine — PURE functions only.
  *
@@ -95,7 +94,7 @@ function bandValueAtPercentile(band, pct) {
  * and (k, d0) come from the archetype whose fitted L is nearest that target
  * (higher challenge -> later, slower-certain curves by construction of the
  * archetype set).
- * @returns {{L: number, k: number, d0: number}}
+ * @returns {{L: number, k: number, d0: number, norm: number}}
  */
 function curveForChallenge(caption, challenge, curves, cfg) {
   const day49 = curves.bands[caption][48];

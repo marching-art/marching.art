@@ -100,3 +100,79 @@ describe("buildMatchupEntries", () => {
     assert.match(entries[0].message, /a director/);
   });
 });
+
+describe("cross-class matchup copy", () => {
+  test("names the class-percentile finishes instead of the raw score line", () => {
+    const entries = buildMatchupEntries(names, {
+      ...baseArgs,
+      pairs: [
+        {
+          player1: "alice",
+          player2: "bob",
+          player1Score: 85, // more raw points…
+          player2Score: 62,
+          player1Normalized: 33, // …but a worse week against her own class
+          player2Normalized: 100,
+          player1Class: "worldClass",
+          player2Class: "soundSport",
+          winner: "bob",
+          corpsClass: "worldClass",
+        },
+      ],
+    });
+
+    const alice = entries.find((e) => e.uid === "alice");
+    const bob = entries.find((e) => e.uid === "bob");
+    assert.match(bob.message, /cross-class/);
+    assert.match(bob.message, /100th percentile/);
+    assert.match(alice.message, /33rd .*of theirs|33rd of theirs/);
+    // The raw score line would contradict the verdict — it must not appear.
+    assert.doesNotMatch(bob.message, /85\.000/);
+    assert.doesNotMatch(alice.message, /62\.000/);
+  });
+
+  test("same-class pairs keep the score line even when class fields are present", () => {
+    const entries = buildMatchupEntries(names, {
+      ...baseArgs,
+      pairs: [
+        {
+          player1: "alice",
+          player2: "bob",
+          player1Score: 90,
+          player2Score: 80,
+          player1Class: "worldClass",
+          player2Class: "worldClass",
+          winner: "alice",
+          corpsClass: "worldClass",
+        },
+      ],
+    });
+    const alice = entries.find((e) => e.uid === "alice");
+    assert.match(alice.message, /90\.000 – 80\.000/);
+    assert.doesNotMatch(alice.message, /cross-class/);
+  });
+});
+
+describe("one-night slate matchup copy", () => {
+  test("quotes the best-show line the week was decided on", () => {
+    const entries = buildMatchupEntries(names, {
+      ...baseArgs,
+      pairs: [
+        {
+          player1: "alice",
+          player2: "bob",
+          player1Score: 162, // the fuller week…
+          player2Score: 85,
+          player1Best: 82,
+          player2Best: 85, // …but bob's single night was better
+          winner: "bob",
+          corpsClass: "worldClass",
+        },
+      ],
+    });
+    const bob = entries.find((e) => e.uid === "bob");
+    assert.match(bob.message, /best show 85\.000 – 82\.000/);
+    // The weekly totals would read as a 162-85 blowout the other way.
+    assert.doesNotMatch(bob.message, /162\.000/);
+  });
+});

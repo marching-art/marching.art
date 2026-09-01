@@ -42,8 +42,10 @@ const SUBMISSION_STATUS = {
     label: 'In review',
     detail: 'Waiting for an admin to review it.',
     icon: Clock,
-    textClass: 'text-amber-400',
-    bgClass: 'bg-amber-500/10',
+    // The status token, not a raw amber utility — gold/amber is reserved for
+    // brand + reward (docs/DESIGN_SYSTEM.md §4; the design census enforces it).
+    textClass: 'text-warning',
+    bgClass: 'bg-warning/10',
   },
   scheduled: {
     label: 'Scheduled',

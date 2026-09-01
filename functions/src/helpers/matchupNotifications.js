@@ -19,6 +19,17 @@ const { paths } = require("./paths");
 const { computeRankDrops } = require("./leagueStandings");
 const { createUserNotifications } = require("./userNotifications");
 
+/** 1 -> "1st", 42 -> "42nd", 100 -> "100th". */
+function ordinal(n) {
+  const rem100 = n % 100;
+  if (rem100 >= 11 && rem100 <= 13) return `${n}th`;
+  const rem10 = n % 10;
+  if (rem10 === 1) return `${n}st`;
+  if (rem10 === 2) return `${n}nd`;
+  if (rem10 === 3) return `${n}rd`;
+  return `${n}th`;
+}
+
 /** One participant's view of a resolved head-to-head. */
 function buildResultEntry(params) {
   const {
@@ -29,23 +40,49 @@ function buildResultEntry(params) {
     outcome, // 'win' | 'loss' | 'tie'
     week,
     corpsClass,
+    crossClass = false,
+    userPercentile,
+    opponentPercentile,
+    userBest,
+    opponentBest,
     leagueId,
     leagueName,
     seasonUid,
   } = params;
 
-  const scoreLine = `${userScore.toFixed(3)} – ${opponentScore.toFixed(3)}`;
+  // A cross-class matchup is decided on each corps' percentile against its own
+  // class, not raw points (leagueScoring.js decideHeadToHead) — leading with
+  // the raw score line there would routinely contradict the verdict it
+  // announces, so the copy names the finishes that actually decided it.
+  const percentLine =
+    crossClass && typeof userPercentile === "number" && typeof opponentPercentile === "number"
+      ? `you finished in the ${ordinal(Math.round(userPercentile))} percentile of your class, ` +
+        `they in the ${ordinal(Math.round(opponentPercentile))} of theirs`
+      : null;
+  // On a One-Night Slate week the best single shows decided it, so those are
+  // the numbers the copy quotes — the weekly totals could contradict the
+  // verdict they announce.
+  const scoreLine =
+    typeof userBest === "number" && typeof opponentBest === "number"
+      ? `best show ${userBest.toFixed(3)} – ${opponentBest.toFixed(3)}`
+      : `${userScore.toFixed(3)} – ${opponentScore.toFixed(3)}`;
   let title;
   let message;
   if (outcome === "win") {
     title = "You won your matchup!";
-    message = `You beat ${opponentName} in your Week ${week} matchup, ${scoreLine}.`;
+    message = percentLine
+      ? `You beat ${opponentName} in your Week ${week} cross-class matchup — ${percentLine}.`
+      : `You beat ${opponentName} in your Week ${week} matchup, ${scoreLine}.`;
   } else if (outcome === "loss") {
     title = "Matchup result";
-    message = `You lost to ${opponentName} in your Week ${week} matchup, ${scoreLine}.`;
+    message = percentLine
+      ? `You lost to ${opponentName} in your Week ${week} cross-class matchup — ${percentLine}.`
+      : `You lost to ${opponentName} in your Week ${week} matchup, ${scoreLine}.`;
   } else {
     title = "Matchup result";
-    message = `Your Week ${week} matchup vs ${opponentName} ended in a tie, ${scoreLine}.`;
+    message = percentLine
+      ? `Your Week ${week} cross-class matchup vs ${opponentName} ended level — ${percentLine}.`
+      : `Your Week ${week} matchup vs ${opponentName} ended in a tie, ${scoreLine}.`;
   }
 
   return {
@@ -97,7 +134,12 @@ function buildMatchupEntries(nameByUid, { pairs, previousStandings, newStandings
     const winner = pair.winner; // a uid, or 'tie'
     const outcome1 = winner === "tie" ? "tie" : winner === p1 ? "win" : "loss";
     const outcome2 = winner === "tie" ? "tie" : winner === p2 ? "win" : "loss";
-    const common = { week, corpsClass: pair.corpsClass, leagueId, leagueName, seasonUid };
+    // Decided on class percentiles rather than points when the two sides
+    // fielded different classes (leagueScoring.js decideHeadToHead).
+    const crossClass = Boolean(
+      pair.player1Class && pair.player2Class && pair.player1Class !== pair.player2Class
+    );
+    const common = { week, corpsClass: pair.corpsClass, crossClass, leagueId, leagueName, seasonUid };
 
     entries.push(
       buildResultEntry({
@@ -106,6 +148,10 @@ function buildMatchupEntries(nameByUid, { pairs, previousStandings, newStandings
         opponentName: nameOf(p2),
         userScore: s1,
         opponentScore: s2,
+        userPercentile: pair.player1Normalized,
+        opponentPercentile: pair.player2Normalized,
+        userBest: pair.player1Best,
+        opponentBest: pair.player2Best,
         outcome: outcome1,
       })
     );
@@ -116,6 +162,10 @@ function buildMatchupEntries(nameByUid, { pairs, previousStandings, newStandings
         opponentName: nameOf(p1),
         userScore: s2,
         opponentScore: s1,
+        userPercentile: pair.player2Normalized,
+        opponentPercentile: pair.player1Normalized,
+        userBest: pair.player2Best,
+        opponentBest: pair.player1Best,
         outcome: outcome2,
       })
     );

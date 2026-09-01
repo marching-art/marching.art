@@ -523,7 +523,7 @@ export const setCoCommissioner = createCallable<
  * docs/CAPTION_WARS_SPEC.md §6.
  */
 export const setLeagueScoringFormat = createCallable<
-  { leagueId: string; format: 'total' | 'captionWars' },
+  { leagueId: string; format: 'total' | 'captionWars' | 'oneNight' },
   { success: boolean; charged: number; format: string; message: string }
 >('setLeagueScoringFormat');
 export const transferCommissioner = createCallable<

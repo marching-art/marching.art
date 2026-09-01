@@ -7,6 +7,7 @@
 import { CAPTIONS as CAPTION_DEFS } from '../data/captions';
 import { REGISTRATION_LOCK_WEEKS } from '../utils/classRegistry';
 import { CAPTION_CATEGORIES, CAPTION_WARS_SEASON_COST } from '../utils/captionWars';
+import { ONE_NIGHT_SEASON_COST } from '../utils/oneNightSlate';
 import {
   LEAGUE_WEEKLY_WIN_CC,
   LEAGUE_POOL_ANTE_CC,
@@ -425,6 +426,29 @@ export const CAPTION_WARS_PURCHASE = [
   {
     title: 'One season, no refunds',
     desc: 'It does not renew. The rollover puts the league back on standard scoring, and a commissioner who wants it again buys it again. Turning it off early is free but does not refund.',
+  },
+];
+
+/** One-Night Slate, stated the way a director meets it. Costs and purchase
+ *  terms match Caption Wars' except the price (utils/oneNightSlate.ts). */
+export const ONE_NIGHT_COST = ONE_NIGHT_SEASON_COST;
+
+export const ONE_NIGHT_RULES = [
+  {
+    title: 'Your best night decides the week',
+    desc: "Only your highest-scoring single show is compared against your opponent's highest. One great Saturday beats a week of steady Tuesdays.",
+  },
+  {
+    title: 'Showing up still matters',
+    desc: 'Every show you attend is another chance at a peak, and if your best nights tie, the higher weekly total takes the week — the fuller week breaks the tie. Sitting the week out is still a forfeit.',
+  },
+  {
+    title: 'Your lineup never changes',
+    desc: 'Same eight captions, same game. Only the reading of the week is different — the matchup card shows the two nights that decided it.',
+  },
+  {
+    title: 'Same purchase terms as Caption Wars',
+    desc: `${ONE_NIGHT_SEASON_COST.toLocaleString()} CC from the commissioner's own balance, one season, preseason only, prize pool untouched, no refunds.`,
   },
 ];
 

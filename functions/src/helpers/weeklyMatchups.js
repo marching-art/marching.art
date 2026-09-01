@@ -20,10 +20,10 @@ const { processAllInPages } = require("./firestorePaging");
 const { generateLeagueRecapsForWeek } = require("./leagueRecaps");
 const {
   fetchWeeklyScoreIndex,
-  getWeekScore,
+  decideHeadToHead,
   participatingClassesByUid,
 } = require("./leagueScoring");
-const { isCaptionWarsLeague, resolveCaptionWars, captionsWonBy } = require("./captionWars");
+const { activeScoringFormat, captionsWonBy } = require("./captionWars");
 const {
   weeklyXpToken,
   weeklyWinToken,
@@ -115,8 +115,8 @@ async function processWeeklyMatchups(week, seasonData, db, { force = false } = {
     // Which format decides this league's weeks. Checked per league and pinned
     // to the season it was bought for, so a league that never opted in — or
     // whose opt-in belongs to a previous season — resolves on totals exactly as
-    // it always has. See helpers/captionWars.js.
-    const captionWars = isCaptionWarsLeague(leagueDoc.data(), seasonData.seasonUid);
+    // it always has. See helpers/captionWars.js activeScoringFormat.
+    const scoringFormat = activeScoringFormat(leagueDoc.data(), seasonData.seasonUid);
     // Resolved pairs for the standings/current doc — same shape the
     // commissioner callable feeds updateStandings, so the automatic weekly
     // close and a manual resolution produce identical standings.
@@ -176,28 +176,29 @@ async function processWeeklyMatchups(week, seasonData, db, { force = false } = {
         // THIS week's total across every show the corps attended — not the
         // stale "latest show" number. A director who did not compete scores 0
         // with 0 shows, which is a real result (a forfeited week), so showing
-        // up now beats sitting out.
-        const p1_week = getWeekScore(weekScores, p1_uid, corpsClass);
-        const p2_week = getWeekScore(weekScores, p2_uid, corpsClass);
+        // up now beats sitting out. Each side is read in ITS OWN class: a
+        // cross-class matchup (leagueHelpers.js pairLeagueWeek) carries a
+        // per-side `classes` map and is decided on class percentile rather
+        // than raw points — see leagueScoring.js decideHeadToHead.
+        const decided = decideHeadToHead(matchup, corpsClass, weekScores, scoringFormat);
+        const { p1Class, p2Class, p1Week: p1_week, p2Week: p2_week } = decided;
         const p1_score = p1_week.score;
         const p2_score = p2_week.score;
 
-        // Best-of-three across the caption groups, or the single comparison of
-        // weekly totals. Either way this produces one winner uid (or a tie),
-        // and everything below this point — the record increment, the award
-        // tokens, the weekly-win bonus, the standings pair — is identical.
-        let winnerUid = null;
-        let captions = null;
-        if (captionWars) {
-          const resolved = resolveCaptionWars(p1_uid, p2_uid, p1_week, p2_week);
-          captions = resolved.captions;
-          winnerUid = resolved.winner === "tie" ? null : resolved.winner;
-        } else {
-          if (p1_score > p2_score) winnerUid = p1_uid;
-          if (p2_score > p1_score) winnerUid = p2_uid;
-        }
+        // Caption best-of-three, best single show, class percentile
+        // (cross-class), or the plain comparison of weekly totals — the
+        // format-aware rule lives in ONE place (leagueScoring.js
+        // decideHeadToHead). Whatever decided it, everything below this point
+        // — the record increment, the award tokens, the weekly-win bonus, the
+        // standings pair — is identical.
+        const winnerUid = decided.winner === "tie" ? null : decided.winner;
+        const captions = decided.captions;
+        const best = decided.best;
 
-        const seasonRecordPath = `seasons.${seasonData.seasonUid}.records.${corpsClass}`;
+        // Per side, so a cross-class win lands on the class the director
+        // actually fielded, not the array the matchup happened to be stored in.
+        const p1RecordPath = `seasons.${seasonData.seasonUid}.records.${p1Class}`;
+        const p2RecordPath = `seasons.${seasonData.seasonUid}.records.${p2Class}`;
         const increment = admin.firestore.FieldValue.increment(1);
 
         if (p1_profile?.ref && p2_profile?.ref) {
@@ -206,8 +207,8 @@ async function processWeeklyMatchups(week, seasonData, db, { force = false } = {
           // any matchup whose `completed` flag didn't land) cannot re-increment
           // a record that already applied. Keyed per uid so each side is
           // independently guarded. `force` bypasses the guard for admin reprocess.
-          const p1RecToken = matchupRecordToken(seasonData.seasonUid, week, leagueDoc.id, corpsClass, p1_uid);
-          const p2RecToken = matchupRecordToken(seasonData.seasonUid, week, leagueDoc.id, corpsClass, p2_uid);
+          const p1RecToken = matchupRecordToken(seasonData.seasonUid, week, leagueDoc.id, p1Class, p1_uid);
+          const p2RecToken = matchupRecordToken(seasonData.seasonUid, week, leagueDoc.id, p2Class, p2_uid);
           const writeP1 = force || !hasAwardToken(p1_profile.data, p1RecToken);
           const writeP2 = force || !hasAwardToken(p2_profile.data, p2RecToken);
           let p1Delta = null;
@@ -225,14 +226,14 @@ async function processWeeklyMatchups(week, seasonData, db, { force = false } = {
           if (writeP1) {
             winnerBatch.set(
               p1_profile.ref,
-              { [seasonRecordPath]: { [p1Delta]: increment }, ...awardTokenWrite(p1RecToken) },
+              { [p1RecordPath]: { [p1Delta]: increment }, ...awardTokenWrite(p1RecToken) },
               { merge: true }
             );
           }
           if (writeP2) {
             winnerBatch.set(
               p2_profile.ref,
-              { [seasonRecordPath]: { [p2Delta]: increment }, ...awardTokenWrite(p2RecToken) },
+              { [p2RecordPath]: { [p2Delta]: increment }, ...awardTokenWrite(p2RecToken) },
               { merge: true }
             );
           }
@@ -248,7 +249,10 @@ async function processWeeklyMatchups(week, seasonData, db, { force = false } = {
           // record but not the bonus would skip the unpaid bonus.
           if (winnerUid) {
             const winner = winnerUid === p1_uid ? p1_profile : p2_profile;
-            const winToken = weeklyWinToken(seasonData.seasonUid, week, leagueDoc.id, corpsClass);
+            // The winner's OWN class, so a cross-class win is tokenized and
+            // described in the class they actually fielded.
+            const winnerClass = winnerUid === p1_uid ? p1Class : p2Class;
+            const winToken = weeklyWinToken(seasonData.seasonUid, week, leagueDoc.id, winnerClass);
             if (force || !hasAwardToken(winner.data, winToken)) {
               winnerBatch.set(
                 winner.ref,
@@ -263,8 +267,8 @@ async function processWeeklyMatchups(week, seasonData, db, { force = false } = {
               addCoinHistoryEntryToBatch(winnerBatch, db, winnerUid, {
                 type: TRANSACTION_TYPES.LEAGUE_WIN,
                 amount: WEEKLY_LEAGUE_WIN_REWARD,
-                description: `Week ${week} ${corpsClass} matchup win in ${leagueDoc.data().name || "your league"}`,
-                corpsClass,
+                description: `Week ${week} ${winnerClass} matchup win in ${leagueDoc.data().name || "your league"}`,
+                corpsClass: winnerClass,
                 timestamp: new Date(),
               });
             }
@@ -288,11 +292,13 @@ async function processWeeklyMatchups(week, seasonData, db, { force = false } = {
             [p1_uid]: p1_week.classPercentile,
             [p2_uid]: p2_week.classPercentile,
           },
-          // Only present on leagues running Caption Wars. `scores` above still
-          // holds the weekly TOTAL in both formats, so points-for/against, the
-          // percentile and the record book keep meaning the same thing across a
-          // league that changed format between seasons.
+          // Only present on leagues running the matching format. `scores`
+          // above still holds the weekly TOTAL in every format, so
+          // points-for/against, the percentile and the record book keep
+          // meaning the same thing across a league that changed format
+          // between seasons.
           ...(captions ? { captions } : {}),
+          ...(best ? { best } : {}),
           winner: winnerUid ?? "tie",
           completed: true,
         };
@@ -305,6 +311,18 @@ async function processWeeklyMatchups(week, seasonData, db, { force = false } = {
           player2Score: p2_score,
           player1Normalized: p1_week.classPercentile,
           player2Normalized: p2_week.classPercentile,
+          // Per-side classes so the notification copy can tell a cross-class
+          // week (decided on percentile) from a normal one (decided on points).
+          player1Class: p1Class,
+          player2Class: p2Class,
+          // Best single shows, on a One-Night Slate league — the numbers the
+          // week was actually decided on, for the notification copy.
+          ...(best
+            ? {
+                player1Best: best[p1_uid]?.score ?? 0,
+                player2Best: best[p2_uid]?.score ?? 0,
+              }
+            : {}),
           ...(captions
             ? {
                 player1Captions: captionsWonBy(captions, p1_uid),

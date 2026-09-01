@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered when functions checkJs landed (functions/tsconfig.json); remove when this file is typed or cleaned up
 // Gemini client service for news generation: lazy client init, structured
 // JSON content generation with parse safety, the banned-phrase/hallucination
 // fact-check guard, and drum-corps-grounded image generation. Extracted
@@ -317,6 +316,7 @@ ${IMAGE_NEGATIVE_PROMPT}
 You are an expert drum corps photojournalist. Generate intimate, close-up, field-level photographs of DCI drum corps performers as described above. Always use shallow depth of field, show only 2-6 performers filling the frame, and capture raw emotion and detail.`;
 
     // Multimodal request: prompt text plus any reference images.
+    /** @type {Array<{text: string} | {inlineData: {mimeType: string, data: string}}>} */
     const parts = [{ text: fullPrompt }];
     for (const ref of referenceImages) {
       parts.push({ inlineData: { mimeType: ref.mimeType, data: ref.data } });
