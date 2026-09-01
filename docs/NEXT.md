@@ -8,13 +8,11 @@ burns an hour to conclude "everything's about covered." Don't. If you ship,
 cut, or discover something, edit THIS file in the same PR — that's the whole
 maintenance contract.
 
-_Last updated: 2026-09-01._
+_Last updated: 2026-09-01 (program pages shipped)._
 
 ## In progress
 
-- **Corps program pages** (corps identity, roadmap `in_progress`): a public,
-  shareable per-corps page — uniform, show concept, season history — on the
-  existing `/d/**` SSR + share-card infrastructure.
+_(nothing — pick from the bets below)_
 
 ## Product bets (owner-ranked; pick deliberately, they're design-heavy)
 
@@ -55,7 +53,9 @@ ts-nocheck:next` ranks the cheapest. One per substantive task is the
 
 ## Recently shipped (context, newest first — prune when stale)
 
-- 2026-09-01: docs-honesty pass; ts-nocheck 106 → 97.
+- 2026-09-01: **corps program pages** shipped (`/d/{username}/{class-slug}`
+  SSR pages + OG cards + profile links); docs-honesty pass; NEXT.md created;
+  ts-nocheck 106 → 96.
 - 2026-08-31: cross-class matchups (audit A8 closed — leagues audit fully
   done); One-Night Slate league format; commissioner close unified onto the
   shared decision rule; `/styleguide` dev-only; root `sharp` dropped;

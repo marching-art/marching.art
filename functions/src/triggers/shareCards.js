@@ -30,13 +30,18 @@ const {
   buildScoresCardSvg,
   buildChampionCardSvg,
   buildDirectorCardSvg,
+  buildCorpsCardSvg,
   buildUniformCardSvg,
   buildShareHtml,
   parseOgPath,
   parseSharePath,
   clamp,
 } = require("../helpers/shareCards");
-const { isProfilePrivate, pickPublicProfile } = require("../helpers/publicProfilePages");
+const {
+  isProfilePrivate,
+  pickPublicProfile,
+  pickPublicProgram,
+} = require("../helpers/publicProfilePages");
 const { resolveDirectorProfile } = require("./publicProfilePages");
 const { CLASS_LABELS, aggregateNightlyStandings } = require("../helpers/scoreDrop");
 const { paths } = require("../helpers/paths");
@@ -134,6 +139,25 @@ exports.getOgCardHttp = onRequest(
             profile: pickPublicProfile(resolved.data),
             username: resolved.data.username,
           });
+        }
+      } else if (route.type === "corps") {
+        // Backs the OG image on /d/{username}/{classSlug}. Same privacy rule
+        // as the director card: private profiles get no card, and only the
+        // program allowlist's fields reach the SVG (plus the raw equipped
+        // uniform snapshot, whose every color uniformGlyph validates).
+        const resolved = await resolveDirectorProfile(db, route.username);
+        if (resolved && !isProfilePrivate(resolved.data)) {
+          const program = pickPublicProgram(resolved.data, route.classKey);
+          if (program) {
+            svg = buildCorpsCardSvg({
+              corpsName: program.corpsName,
+              classKey: route.classKey,
+              displayName: pickPublicProfile(resolved.data).displayName,
+              username: resolved.data.username,
+              showName: program.showConcept?.showName || undefined,
+              uniform: resolved.data.corps?.[route.classKey]?.uniform || undefined,
+            });
+          }
         }
       } else if (route.type === "uniform") {
         const codeDoc = await fetchUniformCode(db, route.code);

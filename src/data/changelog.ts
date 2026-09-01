@@ -121,7 +121,7 @@ export const ROADMAP: RoadmapItem[] = [
     id: 'corps-identity',
     title: 'Deeper corps identity & cosmetics',
     description:
-      'The Uniform Studio, Design Exchange, Showcase, and the first design houses have landed — next up is more ways to make your corps unmistakably yours beyond the uniform, like program pages and cosmetic flair.',
+      'The Uniform Studio, Design Exchange, Showcase, design houses, and public program pages have landed — next up is more cosmetic flair beyond the uniform.',
     status: 'in_progress',
   },
   {

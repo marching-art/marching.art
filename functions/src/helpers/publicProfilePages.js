@@ -20,7 +20,7 @@
 // allowlisting, and escaping pin down in unit tests.
 
 const { CLASS_LABELS } = require("./scoreDrop");
-const { SITE_URL, escapeHtml, clamp } = require("./shareCards");
+const { SITE_URL, escapeHtml, clamp, CLASS_SLUGS, SLUG_BY_CLASS } = require("./shareCards");
 const { buildPageShell } = require("./resultsPages");
 const { colorwayStrip } = require("./uniformValidation");
 
@@ -32,20 +32,31 @@ const PROFILE_CLASS_ORDER = ["worldClass", "openClass", "aClass", "soundSport"];
 // 3-15 chars, letters/digits/underscore. Anything else 404s before Firestore.
 const USERNAME_PATTERN = /^[A-Za-z0-9_]{3,15}$/;
 
+// The program-page URL slugs (CLASS_SLUGS / SLUG_BY_CLASS) are imported from
+// shareCards.js above — one definition serves both the page router here and
+// the OG-card parser there.
+
 /**
  * Parse a /d request path.
  *
+ * Two shapes: /d/{username} (director profile) and /d/{username}/{classSlug}
+ * (that corps' program page). An unknown slug is a 404, not the director page
+ * — one URL must never render two different documents.
+ *
  * @param {string} path
- * @returns {{username: string} | null}
+ * @returns {{username: string, classKey?: string} | null}
  */
 function parseDirectorPath(path) {
   const parts = String(path || "")
     .split("/")
     .filter(Boolean);
-  if (parts.length !== 2 || parts[0] !== "d") return null;
+  if ((parts.length !== 2 && parts.length !== 3) || parts[0] !== "d") return null;
   const username = parts[1];
   if (!USERNAME_PATTERN.test(username)) return null;
-  return { username };
+  if (parts.length === 2) return { username };
+  const classKey = CLASS_SLUGS[parts[2]];
+  if (!classKey) return null;
+  return { username, classKey };
 }
 
 /**
@@ -240,11 +251,20 @@ function buildDirectorPageHtml({ username, profile }) {
         .join("");
       return `<td>${swatches} ${escapeHtml(clamp(uniform.name, 40))}</td>`;
     };
+    // Corps name links to its program page (/d/{username}/{slug}) — the
+    // per-corps public surface with the show, the look, and season history.
+    const corpsCell = (entry) => {
+      const name = escapeHtml(clamp(entry.corpsName, 60));
+      const slug = SLUG_BY_CLASS[entry.classKey];
+      return slug
+        ? `<a href="${SITE_URL}/d/${encodeURIComponent(username)}/${slug}">${name}</a>`
+        : name;
+    };
     const rows = corpsEntries
       .map(
         (entry) => `<tr>
 <td>${escapeHtml(entry.classLabel)}</td>
-<td>${escapeHtml(clamp(entry.corpsName, 60))}</td>
+<td>${corpsCell(entry)}</td>
 ${uniformCell(entry.uniform)}
 </tr>`
       )
@@ -322,14 +342,241 @@ ${sections.join("\n")}
   });
 }
 
+// -----------------------------------------------------------------------------
+// PROGRAM PAGES — /d/{username}/{classSlug}
+// -----------------------------------------------------------------------------
+// The per-corps page: the show, the look, and the record. Same privacy
+// posture as the director page, plus one more rule inherited from the public
+// results pages: SoundSport never exposes numeric scores, so a SoundSport
+// program page lists seasons and shows attended with no numbers at all.
+
+/** How many archived seasons the program page lists, newest first. */
+const PROGRAM_HISTORY_LIMIT = 10;
+
+/**
+ * Reduce one corps entry to EXACTLY what its public program page shows.
+ * Returns null when the director fields no corps in this class — the caller
+ * 404s. Lineups, show picks, and weekly scores never pass this boundary
+ * (same anti-lineup-harvesting posture as everything public).
+ *
+ * @param {Object} profileData Raw profile doc data.
+ * @param {string} classKey
+ * @returns {{
+ *   corpsName: string,
+ *   showConcept: {showName: string, theme: string, musicSource: string, drillStyle: string} | null,
+ *   uniform: {name: string, colors: string[]} | null,
+ *   uniformGuard: {name: string, colors: string[]} | null,
+ *   seasons: Array<{seasonName: string, corpsName: string, totalSeasonScore: number,
+ *     placement: number|null, showsAttended: number}>,
+ * } | null}
+ */
+function pickPublicProgram(profileData, classKey) {
+  const corps = profileData?.corps?.[classKey];
+  const corpsName = corps && typeof corps.corpsName === "string" ? corps.corpsName.trim() : "";
+  if (!corpsName) return null;
+
+  const concept = corps.showConcept;
+  const conceptField = (value) => (typeof value === "string" ? clamp(value.trim(), 80) : "");
+  const showConcept =
+    concept && typeof concept === "object" && (conceptField(concept.showName) || conceptField(concept.theme))
+      ? {
+          showName: conceptField(concept.showName),
+          theme: conceptField(concept.theme),
+          musicSource: conceptField(concept.musicSource),
+          drillStyle: conceptField(concept.drillStyle),
+        }
+      : null;
+
+  const history = Array.isArray(corps.seasonHistory) ? corps.seasonHistory : [];
+  const seasons = history
+    .filter((row) => row && typeof row === "object")
+    // Stored oldest-first (rollover pushes); shown newest-first.
+    .slice(-PROGRAM_HISTORY_LIMIT)
+    .reverse()
+    .map((row) => ({
+      seasonName: typeof row.seasonName === "string" ? clamp(row.seasonName, 60) : "",
+      corpsName: typeof row.corpsName === "string" ? clamp(row.corpsName, 60) : "",
+      totalSeasonScore: Number(row.totalSeasonScore) || 0,
+      placement: Number.isFinite(Number(row.placement)) && row.placement ? Number(row.placement) : null,
+      showsAttended: Number(row.showsAttended) || 0,
+    }));
+
+  return {
+    corpsName: clamp(corpsName, 60),
+    showConcept,
+    uniform: pickPublicUniform(corps.uniform),
+    uniformGuard: pickPublicUniform(corps.uniformGuard),
+    seasons,
+  };
+}
+
+/** Inline swatch strip for a validated color triple. */
+function swatchStrip(colors) {
+  return colors
+    .map(
+      (hex) =>
+        `<span style="display:inline-block;width:14px;height:14px;border:1px solid #333333;background:${hex};margin-right:3px;vertical-align:middle;"></span>`
+    )
+    .join("");
+}
+
+/** "3rd" / "12th" — placement ordinal for the history table. */
+function placementLabel(placement) {
+  if (!placement) return "—";
+  const rem100 = placement % 100;
+  const suffix =
+    rem100 >= 11 && rem100 <= 13 ? "th" : (["th", "st", "nd", "rd"][placement % 10] ?? "th");
+  return `${placement}${suffix}`;
+}
+
+/**
+ * Full public program page for one corps.
+ *
+ * @param {Object} params
+ * @param {string} params.username  Canonical username (as stored on the profile).
+ * @param {Object} params.profile   RAW profile doc data — allowlisted in here.
+ * @param {string} params.classKey
+ * @returns {string | null} null when the director fields no corps in this class.
+ */
+function buildProgramPageHtml({ username, profile, classKey }) {
+  const program = pickPublicProgram(profile, classKey);
+  if (!program) return null;
+  const view = pickPublicProfile(profile);
+  const classLabel = CLASS_LABELS[classKey] || classKey;
+  const slug = SLUG_BY_CLASS[classKey];
+  const canonicalPath = `/d/${username}/${slug}`;
+  const isSoundSport = classKey === "soundSport";
+
+  const sections = [];
+
+  if (program.showConcept) {
+    const c = program.showConcept;
+    const detailRows = [
+      ["Theme", c.theme],
+      ["Music", c.musicSource],
+      ["Drill", c.drillStyle],
+    ]
+      .filter(([, value]) => value)
+      .map(
+        ([label, value]) => `<tr>
+<td>${escapeHtml(label)}</td>
+<td>${escapeHtml(value)}</td>
+</tr>`
+      )
+      .join("\n");
+    sections.push(`<h2>This Season's Program</h2>
+${c.showName ? `<p><strong>“${escapeHtml(c.showName)}”</strong></p>` : ""}
+${detailRows ? `<div class="scroll"><table><tbody>\n${detailRows}\n</tbody></table></div>` : ""}`);
+  }
+
+  const lookRow = (label, look) =>
+    look
+      ? `<tr>
+<td>${escapeHtml(label)}</td>
+<td>${swatchStrip(look.colors)} ${escapeHtml(clamp(look.name, 40))}</td>
+</tr>`
+      : "";
+  const lookRows = [lookRow("Corps", program.uniform), lookRow("Color guard", program.uniformGuard)]
+    .filter(Boolean)
+    .join("\n");
+  if (lookRows) {
+    sections.push(`<h2>The Look</h2>
+<div class="scroll"><table>
+<thead><tr><th>Uniform</th><th>Design</th></tr></thead>
+<tbody>
+${lookRows}
+</tbody>
+</table></div>`);
+  }
+
+  if (program.seasons.length > 0) {
+    // SoundSport is participation-focused: seasons and shows, never numbers —
+    // the same rule the public results pages follow.
+    const rows = program.seasons
+      .map(
+        (row) => `<tr>
+<td>${escapeHtml(row.seasonName || "—")}</td>
+<td>${escapeHtml(row.corpsName || program.corpsName)}</td>
+${
+  isSoundSport
+    ? `<td class="num">${escapeHtml(String(row.showsAttended))}</td>`
+    : `<td class="num total">${row.totalSeasonScore.toFixed(3)}</td>
+<td>${escapeHtml(placementLabel(row.placement))}</td>
+<td class="num">${escapeHtml(String(row.showsAttended))}</td>`
+}
+</tr>`
+      )
+      .join("\n");
+    sections.push(`<h2>Season History</h2>
+<div class="scroll"><table>
+<thead><tr><th>Season</th><th>Corps</th>${
+      isSoundSport
+        ? "<th class=\"num\">Shows</th>"
+        : "<th class=\"num\">Score</th><th>Placement</th><th class=\"num\">Shows</th>"
+    }</tr></thead>
+<tbody>
+${rows}
+</tbody>
+</table></div>
+${isSoundSport ? '<p class="sub">SoundSport is participation-focused — ensembles earn ratings, never numeric scores.</p>' : ""}`);
+  }
+
+  const descriptionParts = [
+    `${program.corpsName} is a ${classLabel} fantasy drum corps on marching.art, directed by ${view.displayName} (@${username}).`,
+  ];
+  if (program.showConcept?.showName) {
+    descriptionParts.push(`This season's program: “${program.showConcept.showName}”.`);
+  }
+  if (program.seasons.length > 0 && !isSoundSport) {
+    const best = program.seasons.reduce((a, b) => (b.totalSeasonScore > a.totalSeasonScore ? b : a));
+    if (best.totalSeasonScore > 0) {
+      descriptionParts.push(`Best season: ${best.totalSeasonScore.toFixed(3)} (${best.seasonName}).`);
+    }
+  }
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "PerformingGroup",
+    name: program.corpsName,
+    url: `${SITE_URL}${canonicalPath}`,
+    member: {
+      "@type": "Person",
+      name: clamp(view.displayName, 80),
+      alternateName: username,
+      url: `${SITE_URL}/d/${username}`,
+    },
+  };
+
+  return buildPageShell({
+    title: `${program.corpsName} — ${classLabel} Fantasy Drum Corps | marching.art`,
+    description: clamp(descriptionParts.join(" "), 250),
+    canonicalPath,
+    ogImage: `${SITE_URL}/api/og/corps/${encodeURIComponent(username)}/${slug}.png`,
+    jsonLd,
+    bodyHtml: `<div class="kicker">Fantasy Drum Corps · ${escapeHtml(classLabel)}</div>
+<h1>${escapeHtml(program.corpsName)}</h1>
+<p class="sub">Directed by <a href="${SITE_URL}/d/${encodeURIComponent(username)}">${escapeHtml(
+      clamp(view.displayName, 80)
+    )}</a> (@${escapeHtml(username)})</p>
+${sections.join("\n")}
+<div class="nav"><a href="${SITE_URL}/d/${encodeURIComponent(username)}">Director profile</a>
+<a href="${SITE_URL}/results">Latest results</a></div>
+<a class="open-in-app" href="${SITE_URL}/profile/@${encodeURIComponent(username)}">Open in marching.art</a>`,
+  });
+}
+
 module.exports = {
   PROFILE_CLASS_ORDER,
   USERNAME_PATTERN,
+  CLASS_SLUGS,
+  SLUG_BY_CLASS,
   parseDirectorPath,
   isProfilePrivate,
   pickPublicProfile,
+  pickPublicProgram,
   listPublicCorps,
   memberSinceYear,
   buildDirectorPageHtml,
+  buildProgramPageHtml,
   buildPrivateDirectorPageHtml,
 };

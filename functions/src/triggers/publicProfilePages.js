@@ -19,7 +19,9 @@ const {
   parseDirectorPath,
   isProfilePrivate,
   buildDirectorPageHtml,
+  buildProgramPageHtml,
   buildPrivateDirectorPageHtml,
+  SLUG_BY_CLASS,
 } = require("../helpers/publicProfilePages");
 
 /**
@@ -115,23 +117,45 @@ exports.getPublicProfilePageHttp = onRequest(
 
       // One canonical URL per director: the stored username's exact casing.
       if (resolved.data.username !== route.username) {
+        const suffix = route.classKey ? `/${SLUG_BY_CLASS[route.classKey]}` : "";
         res.set("Cache-Control", "public, max-age=300, s-maxage=3600");
-        res.redirect(301, `/d/${encodeURIComponent(resolved.data.username)}`);
+        res.redirect(301, `/d/${encodeURIComponent(resolved.data.username)}${suffix}`);
         return;
       }
 
       if (isProfilePrivate(resolved.data)) {
         res.set("Content-Type", "text/html; charset=utf-8");
         // Short-cache the stub so flipping visibility back on shows up fast.
+        // Program URLs get the same stub: a private profile hides its corps too.
         res.set("Cache-Control", "public, max-age=300, s-maxage=3600");
         res.status(200).send(buildPrivateDirectorPageHtml({ username: resolved.data.username }));
         return;
       }
 
-      const html = buildDirectorPageHtml({
-        username: resolved.data.username,
-        profile: resolved.data,
-      });
+      // Program page (/d/{username}/{classSlug}) or the director profile.
+      const html = route.classKey
+        ? buildProgramPageHtml({
+            username: resolved.data.username,
+            profile: resolved.data,
+            classKey: route.classKey,
+          })
+        : buildDirectorPageHtml({
+            username: resolved.data.username,
+            profile: resolved.data,
+          });
+
+      if (!html) {
+        // Real username, but no corps in this class — a proper 404 so
+        // crawlers drop the URL if the director retires out of the class.
+        sendErrorPage(res, 404, {
+          title: "Corps Not Found | marching.art",
+          heading: "No corps in this class",
+          message: `@${resolved.data.username} doesn't currently field a corps in this class.`,
+          cacheControl: "public, max-age=300, s-maxage=3600",
+        });
+        return;
+      }
+
       res.set("Content-Type", "text/html; charset=utf-8");
       res.set("Cache-Control", PROFILE_CACHE_CONTROL);
       res.status(200).send(html);
