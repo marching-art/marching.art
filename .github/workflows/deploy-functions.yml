@@ -327,13 +327,16 @@ jobs:
           export GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa-key.json
           trap 'rm -f /tmp/sa-key.json' EXIT
 
-          # 1) Ship Firestore rules first (one cheap operation). Rules live in
-          #    firestore.rules (wired in firebase.json) so security-rule changes
-          #    actually deploy — functions alone would leave them stale.
+          # 1) Ship Firestore + Storage rules first (one cheap operation). Both
+          #    live in the repo (firestore.rules / storage.rules, wired in
+          #    firebase.json) so security-rule changes actually deploy —
+          #    functions alone would leave them stale. `storage` was missing
+          #    here until 2026-09: storage.rules was a trigger path that never
+          #    shipped, so the bucket ran on whatever the console last had.
           #    firestore:indexes is intentionally NOT included: `--force` would
           #    delete any console-managed indexes missing from
           #    firestore.indexes.json.
-          firebase deploy --only firestore:rules --force --project marching-art
+          firebase deploy --only firestore:rules,storage --force --project marching-art
 
           # 2) Deploy the functions named by the deploy plan (see the "Compute
           #    deploy targets" step): the changed set on a push, everything on
@@ -635,7 +638,7 @@ jobs:
       - name: Install Firebase CLI
         run: npm install -g firebase-tools
 
-      - name: Deploy Firestore rules
+      - name: Deploy Firestore + Storage rules
         env:
           GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
         run: |
@@ -643,4 +646,4 @@ jobs:
           export GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa-key.json
           trap 'rm -f /tmp/sa-key.json' EXIT
 
-          firebase deploy --only firestore:rules --force --project marching-art
+          firebase deploy --only firestore:rules,storage --force --project marching-art
