@@ -18,18 +18,15 @@ import { useAuth } from '../../context/AuthContext';
 import { Heading } from '../ui';
 
 // Import constants
-import { ALL_CLASSES, POINT_LIMITS, getCorpsClassName, formatSeasonName } from './constants';
-
-// =============================================================================
-// CLASS SELECTION TABLE DATA
-// =============================================================================
-
-const CLASS_DATA = [
-  { id: 'worldClass', name: 'World Class', budget: 150, difficulty: 'Elite', reqLevel: 6 },
-  { id: 'openClass', name: 'Open Class', budget: 120, difficulty: 'Advanced', reqLevel: 5 },
-  { id: 'aClass', name: 'A Class', budget: 60, difficulty: 'Intermediate', reqLevel: 4 },
-  { id: 'soundSport', name: 'SoundSport', budget: 90, difficulty: 'Entry', reqLevel: 0 },
-];
+import {
+  ALL_CLASSES,
+  POINT_LIMITS,
+  getCorpsClassName,
+  formatSeasonName,
+  // Budget + unlock level per class, derived from the class registry (never a
+  // local literal again — see constants.js CLASS_TABLE).
+  CLASS_TABLE as CLASS_DATA,
+} from './constants';
 
 // =============================================================================
 // MAIN CORPS REGISTRATION COMPONENT

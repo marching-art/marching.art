@@ -20,6 +20,7 @@ const { processAllInPages } = require("../helpers/firestorePaging");
 const { FANTASY_CLASSES } = require("../helpers/classRegistry");
 const { buildScoreDropPushes } = require("../helpers/scoreDrop");
 const { getLineupLockContext, buildLineupLockPushes } = require("../helpers/lineupReminders");
+const { buildStreakAtRiskPushes, MIN_STREAK_TO_NUDGE } = require("../helpers/streakReminders");
 const { createUserNotifications } = require("../helpers/userNotifications");
 const { discordAnnouncementsWebhookUrl, postOnce } = require("../helpers/discord");
 const { buildLineupLockPayload } = require("../helpers/seasonAnnounce");
@@ -721,5 +722,102 @@ exports.takeTheFieldPushJob = onSchedule(
     await ledgerRef.set({ seasonUid: seasonId, sentKeys }, { merge: true });
 
     logger.info(`[take-the-field] ${pushes.length} imminent slots, ${totalSent} pushes sent.`);
+  }
+);
+
+// =============================================================================
+// STREAK AT RISK (7 PM ET daily)
+// =============================================================================
+
+/**
+ * Evening nudge for directors whose login streak is alive but unclaimed
+ * today. The streak-broken email is a post-mortem; this is the warning that
+ * was missing — and the one moment a Streak Freeze is worth offering.
+ * helpers/streakReminders decides who qualifies; this job only pages the
+ * candidates (recent claim + meaningful streak) and delivers: an inbox entry
+ * for everyone, a push for those who enabled it.
+ */
+exports.streakAtRiskPushJob = onSchedule(
+  {
+    schedule: "every day 19:00",
+    timeZone: "America/New_York",
+    timeoutSeconds: 540,
+    memory: "256MiB",
+    cpu: 1,
+  },
+  async () => {
+    logger.info("Running streak-at-risk push job");
+    const db = admin.firestore();
+    const now = new Date();
+    // Candidates: claimed within the last two days (the alive-streak window)
+    // with a streak worth keeping. Same shape and index as
+    // streakBrokenEmailJob's query; paged the same way (startAfter, no explicit
+    // orderBy — the inequality field orders it).
+    const twoDaysAgo = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000);
+    const PAGE = 500;
+    const PARALLEL_LIMIT = 25;
+    let lastDoc = null;
+    let candidates = 0;
+    let nudged = 0;
+    let pushed = 0;
+
+    try {
+      for (;;) {
+        let query = db
+          .collectionGroup("profile")
+          .where("engagement.lastLogin", ">=", twoDaysAgo)
+          .where("engagement.loginStreak", ">=", MIN_STREAK_TO_NUDGE)
+          .select("engagement", "username")
+          .limit(PAGE);
+        if (lastDoc) query = query.startAfter(lastDoc);
+        const snapshot = await query.get();
+        if (snapshot.empty) break;
+        lastDoc = snapshot.docs[snapshot.docs.length - 1];
+        candidates += snapshot.docs.length;
+
+        const profiles = snapshot.docs.map((doc) => ({
+          uid: doc.ref.parent.parent?.id,
+          ...doc.data(),
+        }));
+        const pushes = buildStreakAtRiskPushes(profiles, now);
+        nudged += pushes.length;
+
+        // Inbox first — it reaches directors who never enabled push.
+        await createUserNotifications(
+          db,
+          pushes.map((push) => ({
+            uid: push.uid,
+            type: "streak_at_risk",
+            title: push.title,
+            message: push.body,
+            link: push.url,
+            dedupeKey: push.dedupeKey,
+          }))
+        );
+
+        for (let i = 0; i < pushes.length; i += PARALLEL_LIMIT) {
+          const chunk = pushes.slice(i, i + PARALLEL_LIMIT);
+          const results = await Promise.allSettled(
+            chunk.map((push) =>
+              sendPushNotification(
+                push.uid,
+                { title: push.title, body: push.body, url: push.url },
+                PUSH_TYPES.STREAK_AT_RISK,
+                { streak: String(push.streak) }
+              )
+            )
+          );
+          pushed += results.filter((r) => r.status === "fulfilled" && r.value).length;
+        }
+
+        if (snapshot.docs.length < PAGE) break;
+      }
+      logger.info(
+        `Streak-at-risk job complete: ${candidates} candidates, ${nudged} nudged, ${pushed} pushes delivered`
+      );
+    } catch (error) {
+      logger.error("Error in streak-at-risk push job:", error);
+      throw error;
+    }
   }
 );

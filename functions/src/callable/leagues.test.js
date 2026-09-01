@@ -73,6 +73,12 @@ function makeFakeDb(docs = new Map()) {
           writes.push({ type: "update", path: ref.path, data });
         },
         set(ref, data) {
+          // Persist like ref.set() does, so read-back flows work — including
+          // the rate-budget doc (helpers/rateLimit runs inside the
+          // transaction now). Budget writes are filtered out of the write
+          // assertions by collection name below.
+          docs.set(ref.path, data);
+          if (/^(rate_|leagueChatRate)/.test(String(ref.path))) return;
           writes.push({ type: "set", path: ref.path, data });
         },
       };

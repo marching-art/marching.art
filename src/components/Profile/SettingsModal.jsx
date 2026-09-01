@@ -122,6 +122,7 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
     tradeProposal: true,
     showReminder: true,
     lineupReminder: true,
+    streakReminder: true,
   });
   const [pushSupported, setPushSupported] = useState(false);
   const [pushPermission, setPushPermission] = useState('default');
@@ -198,6 +199,7 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
           tradeProposal: push.tradeProposal ?? true,
           showReminder: push.showReminder ?? true,
           lineupReminder: push.lineupReminder ?? true,
+          streakReminder: push.streakReminder ?? true,
         });
       }
     } catch (error) {
@@ -693,6 +695,14 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
                         description="Before caption changes lock"
                         checked={pushPrefs.lineupReminder}
                         onChange={(e) => updatePushPref('lineupReminder', e.target.checked)}
+                      />
+                    </div>
+                    <div className="px-3">
+                      <Toggle
+                        label="Streak at Risk"
+                        description="Evening nudge before an unclaimed streak breaks"
+                        checked={pushPrefs.streakReminder}
+                        onChange={(e) => updatePushPref('streakReminder', e.target.checked)}
                       />
                     </div>
                     <div className="px-3">

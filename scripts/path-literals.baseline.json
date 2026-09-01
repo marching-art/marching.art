@@ -8,6 +8,7 @@
     "functions/src/scripts/migrateSeasonHistoryDetail.js": 2,
     "functions/src/scripts/stripLeagueInviteCodes.js": 1,
     "functions/src/triggers/emailTriggers.js": 2,
-    "functions/src/triggers/pushTriggers.js": 2
+    "functions/src/triggers/pushTriggers.js": 2,
+    "functions/src/triggers/profileMirror.js": 1
   }
 }

@@ -4,7 +4,6 @@ const { getDb } = require("../config");
 const { assertAuth, assertWriteBudget } = require("../helpers/callableGuards");
 const { loadHistoricalYears } = require("../helpers/historicalScores");
 const { logger } = require("firebase-functions/v2");
-const { analyzeLineupTrends } = require("../helpers/captionAnalytics");
 const { getCaptionChangeWindow, isDayScoresProcessed } = require("../helpers/captionWindows");
 const { FANTASY_CLASSES, ENABLED_CLASSES, POINT_CAPS } = require("../helpers/classRegistry");
 const {
@@ -689,55 +688,6 @@ exports.getHotCorps = onCall({ cors: true }, async (request) => {
   } catch (error) {
     logger.error("Error calculating hot corps:", error);
     return { success: true, hotCorps: {} };
-  }
-});
-
-/**
- * Get caption trend analytics for a lineup
- * Returns trend indicators without exposing raw scores
- */
-exports.getLineupAnalytics = onCall({ cors: true }, async (request) => {
-  assertAuth(request);
-
-  const { corpsClass } = request.data;
-  const uid = request.auth.uid;
-
-  const validClasses = FANTASY_CLASSES;
-  if (!validClasses.includes(corpsClass)) {
-    throw new HttpsError("invalid-argument", "Invalid corps class specified.");
-  }
-
-  const db = getDb();
-
-  try {
-    // Get user's lineup — field-masked; nothing else on the (large) profile
-    // doc is consumed here.
-    const [profileDoc] = await db.getAll(db.doc(paths.userProfile(uid)), {
-      fieldMask: [`corps.${corpsClass}.lineup`],
-    });
-    if (!profileDoc.exists) {
-      throw new HttpsError("not-found", "User profile not found.");
-    }
-
-    const profileData = profileDoc.data();
-    const lineup = profileData.corps?.[corpsClass]?.lineup;
-
-    if (!lineup) {
-      return { success: true, analytics: {} };
-    }
-
-    // Get current day from season
-    const seasonDoc = await db.doc("game-settings/season").get();
-    const currentDay = seasonDoc.exists ? (seasonDoc.data().currentDay || 1) : 1;
-
-    // Analyze trends
-    const analytics = await analyzeLineupTrends(lineup, currentDay);
-
-    return { success: true, analytics };
-  } catch (error) {
-    logger.error(`Failed to get lineup analytics for user ${uid}:`, error);
-    if (error instanceof HttpsError) throw error;
-    throw new HttpsError("internal", "Could not retrieve lineup analytics.");
   }
 });
 

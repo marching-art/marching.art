@@ -17,6 +17,7 @@ const PUSH_TYPES = {
   SHOW_REMINDER: "show_reminder",
   LINEUP_REMINDER: "lineup_reminder",
   PERFORMANCE: "performance", // "your corps takes the field" (real-time running order)
+  STREAK_AT_RISK: "streak_at_risk", // evening nudge before an unclaimed streak breaks
 };
 
 // Preference field mapping
@@ -29,6 +30,7 @@ const PUSH_PREFERENCE_MAP = {
   [PUSH_TYPES.SHOW_REMINDER]: "showReminder",
   [PUSH_TYPES.LINEUP_REMINDER]: "lineupReminder",
   [PUSH_TYPES.PERFORMANCE]: "performance",
+  [PUSH_TYPES.STREAK_AT_RISK]: "streakReminder",
 };
 
 /**

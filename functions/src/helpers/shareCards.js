@@ -184,7 +184,7 @@ const DIRECTOR_CARD_CLASS_ORDER = ["worldClass", "openClass", "aClass", "soundSp
 /**
  * Director-profile card for the public /d/{username} pages.
  *
- * IMPORTANT: `profile` must already be reduced to getPublicProfile's field
+ * IMPORTANT: `profile` must already be reduced to pickPublicProfile's field
  * allowlist by the caller (helpers/publicProfilePages.pickPublicProfile) —
  * this builder only reads allowlisted fields, but keeping the reduction at
  * the call boundary means a new field here can't silently widen exposure.

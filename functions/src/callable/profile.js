@@ -324,67 +324,6 @@ exports.updateEmail = onCall({ cors: true }, async (request) => {
 });
 
 /**
- * Get public profile for a user
- * @param {Object} data
- * @param {string} data.userId - The user ID to get profile for
- */
-exports.getPublicProfile = onCall({ cors: true }, async (request) => {
-  const { userId } = request.data;
-
-  if (!userId) {
-    throw new HttpsError("invalid-argument", "User ID is required.");
-  }
-
-  logger.info(`Fetching public profile for user ${userId}`);
-
-  try {
-    const db = getDb();
-    const profileRef = db.doc(paths.userProfile(userId));
-    const profileDoc = await profileRef.get();
-
-    if (!profileDoc.exists) {
-      throw new HttpsError("not-found", "Profile not found.");
-    }
-
-    const profileData = profileDoc.data();
-
-    // Return only public fields
-    return {
-      displayName: profileData.displayName || 'Unknown Director',
-      location: profileData.location || '',
-      bio: profileData.bio || '',
-      favoriteCorps: profileData.favoriteCorps || '',
-      xp: profileData.xp || 0,
-      xpLevel: profileData.xpLevel || 1,
-      achievements: profileData.achievements || [],
-      stats: profileData.stats || {
-        seasonsPlayed: 0,
-        championships: 0,
-        topTenFinishes: 0,
-        leagueWins: 0,
-      },
-      // Contribution counts drive the public writer tier (src/utils/writerTier.js).
-      // Only the counts are exposed — not emails or other article metadata.
-      articleStats: {
-        approvedCount: profileData.articleStats?.approvedCount || 0,
-        pressReleaseCount: profileData.articleStats?.pressReleaseCount || 0,
-      },
-      createdAt: profileData.createdAt,
-      corps: profileData.corps || {}
-    };
-
-  } catch (error) {
-    logger.error(`Error fetching public profile for user ${userId}:`, error);
-
-    if (error instanceof HttpsError) {
-      throw error;
-    }
-
-    throw new HttpsError("internal", "Failed to fetch profile. Please try again.");
-  }
-});
-
-/**
  * Delete user account and all associated data
  * This permanently deletes the user's account from Firebase Auth
  * and removes all their data from Firestore

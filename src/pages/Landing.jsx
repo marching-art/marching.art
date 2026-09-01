@@ -45,6 +45,7 @@ import { useYoutubeSearch } from '../hooks/useYoutubeSearch';
 import { useFirstVisit } from '../hooks/useFirstVisit';
 import { useSEO } from '../hooks/useSEO';
 import { resolveAuthRedirect } from '../hooks/useAuthRedirect';
+import { peekPendingRedirect, clearPendingRedirect } from '../lib/pendingRedirect';
 
 // =============================================================================
 // LANDING PAGE COMPONENT
@@ -61,7 +62,9 @@ const Landing = () => {
   const location = useLocation();
   // Set only when ProtectedRoute redirected here from a route the visitor was
   // actually trying to reach; null on an ordinary visit to the home page.
-  const redirectAfterAuth = location.state?.from ? resolveAuthRedirect(location.state.from) : null;
+  const redirectAfterAuth = location.state?.from
+    ? resolveAuthRedirect(location.state.from)
+    : peekPendingRedirect();
 
   // Signed-in home surfaces the director's next show as the primary action.
   // Data comes straight from the global stores (already listening app-wide) —
@@ -157,7 +160,10 @@ const Landing = () => {
       // Signing in from the home page normally keeps you on the home page (it
       // becomes the signed-in home). The exception is arriving here because
       // ProtectedRoute bounced you off a deep link — then finish the trip.
-      if (redirectAfterAuth) navigate(redirectAfterAuth, { replace: true });
+      if (redirectAfterAuth) {
+        clearPendingRedirect();
+        navigate(redirectAfterAuth, { replace: true });
+      }
     } catch (err) {
       console.error('Login error:', err);
       switch (err.code) {
@@ -379,6 +385,7 @@ const Landing = () => {
                           </button>
                           <Link
                             to="/register"
+                            state={location.state?.from ? { from: location.state.from } : undefined}
                             className="flex-1 min-h-[44px] h-11 border border-line text-muted font-bold text-sm uppercase tracking-wider flex items-center justify-center hover:border-line-strong hover:text-white active:scale-[0.98] transition-all duration-150 press-feedback rounded-none"
                           >
                             Register

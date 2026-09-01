@@ -34,7 +34,6 @@ async function createUserLeagueNotification(db, recipientUid, notification) {
 // document, standings, and profile.leagueIds stay consistent with every other
 // code path.
 
-
 /**
  * How long a pending invitation stands. Long enough to survive a holiday,
  * short enough that a stale offer doesn't outlive the league that sent it.
@@ -347,43 +346,6 @@ exports.respondToLeagueInvitation = onCall({ cors: true }, async (request) => {
   }
 
   return { success: true, accepted: true };
-});
-
-exports.rescindLeagueInvitation = onCall({ cors: true }, async (request) => {
-  assertAuth(request);
-  const { leagueId, inviteeUid } = request.data || {};
-  const uid = request.auth.uid;
-  if (!leagueId || !inviteeUid) {
-    throw new HttpsError("invalid-argument", "leagueId and inviteeUid are required.");
-  }
-
-  const db = getDb();
-
-  // Abuse throttle (shared league bucket) — far above any human rate.
-  await assertWriteBudget(db, uid, "leagueSocial", { max: 40 });
-
-  const leagueRef = db.doc(paths.league(leagueId));
-  const invitationRef = db.doc(
-    paths.leagueInvitation(invitationId(leagueId, inviteeUid))
-  );
-
-  const leagueDoc = await leagueRef.get();
-  if (!leagueDoc.exists) throw new HttpsError("not-found", "League not found.");
-  if (!isLeagueCommissioner(leagueDoc.data(), uid)) {
-    throw new HttpsError("permission-denied", "Only a league commissioner can rescind invitations.");
-  }
-
-  const invitationDoc = await invitationRef.get();
-  if (!invitationDoc.exists) throw new HttpsError("not-found", "Invitation not found.");
-  if (invitationDoc.data().status !== 'pending') {
-    throw new HttpsError("failed-precondition", "Only pending invitations can be rescinded.");
-  }
-
-  await invitationRef.update({
-    status: 'rescinded',
-    respondedAt: admin.firestore.FieldValue.serverTimestamp(),
-  });
-  return { success: true };
 });
 
 module.exports.INVITATION_TTL_MS = INVITATION_TTL_MS;

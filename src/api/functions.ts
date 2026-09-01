@@ -22,9 +22,10 @@ export * from './podium';
 export const checkUsername = createCallable<{ username: string }, { available: boolean }>(
   'checkUsername'
 );
-export const createUserProfile = createCallable<{ username: string; displayName?: string }, void>(
-  'createUserProfile'
-);
+export const createUserProfile = createCallable<
+  { username: string; displayName?: string; birthDate?: string | null },
+  void
+>('createUserProfile');
 export const setUserRole = createCallable<
   { email: string; makeAdmin: boolean },
   { message: string }
@@ -49,7 +50,6 @@ export const getUserRankings = createCallable<{ uid: string }, unknown>('getUser
 export const updateProfileCF = createCallable<{ displayName?: string; bio?: string }, void>(
   'updateProfile'
 );
-export const getPublicProfile = createCallable<{ uid: string }, unknown>('getPublicProfile');
 export const updateUsername = createCallable<{ username: string }, { success: boolean }>(
   'updateUsername'
 );

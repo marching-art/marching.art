@@ -52,7 +52,6 @@ const {
   setUserRole,
   getShowRegistrations,
   getUserRankings,
-  migrateUserProfiles,
   createUserProfile,
   fixProfileFields,
 } = require("./src/callable/users");
@@ -63,7 +62,6 @@ const {
   selectUserShows,
   saveShowConcept,
   setEncoreDecline,
-  getLineupAnalytics,
   getHotCorps,
 } = require("./src/callable/lineups");
 const {
@@ -168,7 +166,6 @@ const { claimLadderTier } = require("./src/callable/seasonLadder");
 const {
   inviteDirectorToLeague,
   respondToLeagueInvitation,
-  rescindLeagueInvitation,
 } = require("./src/callable/leagueInvitations");
 const {
   sendCommentNotification,
@@ -195,7 +192,6 @@ const {
   updateProfile,
   updateUsername,
   updateEmail,
-  getPublicProfile,
   deleteAccount,
 } = require("./src/callable/profile");
 const {
@@ -247,17 +243,14 @@ const { retentionStatsJob } = require("./src/scheduled/retentionStats");
 const { integrityStatsJob } = require("./src/scheduled/integrityStats");
 const {
   scheduledRivalsUpdate,
-  updateRivalsNow,
 } = require("./src/scheduled/rivalsComputation");
 const {
   scheduledScheduleWeather,
   scheduledScheduleWeatherEvening,
-  refreshScheduleWeatherNow,
 } = require("./src/scheduled/scheduleWeather");
 const {
   scheduledScheduleRunningOrder,
   scheduledScheduleRunningOrderEvening,
-  refreshScheduleRunningOrderNow,
 } = require("./src/scheduled/scheduleRunningOrder");
 const {
   weeklyDigestEmailJob,
@@ -270,6 +263,7 @@ const {
   scoreDropPushJob,
   lineupLockReminderPushJob,
   takeTheFieldPushJob,
+  streakAtRiskPushJob,
 } = require("./src/scheduled/pushNotifications");
 const {
   autoPublishScheduledSubmissions,
@@ -316,6 +310,8 @@ const { announceArticleToDiscord } = require("./src/triggers/newsDiscord");
 const { getOgCardHttp, getShareHttp } = require("./src/triggers/shareCards");
 const { getResultsPageHttp } = require("./src/triggers/resultsPages");
 const { getPublicProfilePageHttp } = require("./src/triggers/publicProfilePages");
+const { reportClientErrorHttp } = require("./src/triggers/clientErrors");
+const { onProfileDataWritten } = require("./src/triggers/profileMirror");
 const {
   onProfileCreated,
   onStreakMilestoneReached,
@@ -326,7 +322,6 @@ const {
 } = require("./src/triggers/pushTriggers");
 const {
   generateCorpsAvatar,
-  regenerateAllAvatars,
   setCorpsAvatarFromUrl,
   adminModerateCorpsAvatar,
 } = require("./src/triggers/avatarGeneration");
@@ -352,7 +347,6 @@ module.exports = {
   selectUserShows,
   saveShowConcept,
   setEncoreDecline,
-  getLineupAnalytics,
   getHotCorps,
   createLeague,
   joinLeague,
@@ -380,7 +374,6 @@ module.exports = {
   deleteLeagueMessage,
   inviteDirectorToLeague,
   respondToLeagueInvitation,
-  rescindLeagueInvitation,
   sendCommentNotification,
   deleteComment,
   reportComment,
@@ -404,10 +397,8 @@ module.exports = {
   updateProfile,
   updateUsername,
   updateEmail,
-  getPublicProfile,
   deleteAccount,
   manualTrigger,
-  migrateUserProfiles,
   createUserProfile,
   startNewOffSeason,
   startNewLiveSeason,
@@ -482,17 +473,14 @@ module.exports = {
 
   // Rivals
   scheduledRivalsUpdate,
-  updateRivalsNow,
 
-  // Schedule weather (scheduled + admin refresh)
+  // Schedule weather (scheduled)
   scheduledScheduleWeather,
   scheduledScheduleWeatherEvening,
-  refreshScheduleWeatherNow,
 
-  // Schedule running order — real-field live slots (scheduled + admin refresh)
+  // Schedule running order — real-field live slots (scheduled)
   scheduledScheduleRunningOrder,
   scheduledScheduleRunningOrderEvening,
-  refreshScheduleRunningOrderNow,
 
   // League Automation (scheduled)
   generateWeeklyMatchups,
@@ -555,6 +543,13 @@ module.exports = {
   // pages, so a director's identity is a shareable, indexable URL instead of
   // living behind the auth wall.
   getPublicProfilePageHttp,
+  // Backs the /api/errors rewrite (both hosts): same-origin intake for the
+  // client error reporter (src/lib/errorReporter.ts). Each report becomes a
+  // structured logger.error entry, which Cloud Error Reporting groups.
+  reportClientErrorHttp,
+  // Mirrors profile/data into profile/public (helpers/publicProfileMirror):
+  // the field-allowlisted view league rosters and other directors read.
+  onProfileDataWritten,
 
   // Article Management (Admin)
   listAllArticles,
@@ -585,6 +580,7 @@ module.exports = {
   scoreDropPushJob,
   lineupLockReminderPushJob,
   takeTheFieldPushJob,
+  streakAtRiskPushJob,
 
   // Push Triggers
   onLeagueMemberJoined,
@@ -619,7 +615,6 @@ module.exports = {
 
   // Avatar Generation
   generateCorpsAvatar,
-  regenerateAllAvatars,
   setCorpsAvatarFromUrl,
   adminModerateCorpsAvatar,
 

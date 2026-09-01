@@ -10,6 +10,7 @@ const assert = require("node:assert/strict");
 const {
   anonymizeResultEntries,
   anonymizeRecapDay,
+  isErasureRewrite,
   anonymizeStandingsDoc,
   anonymizeFantasyStandingsDoc,
   anonymizeChampionsDoc,
@@ -143,5 +144,35 @@ describe("anonymizeResultEntries", () => {
 
   test("non-array input is a no-op", () => {
     assert.equal(anonymizeResultEntries(undefined, "u1"), false);
+  });
+});
+
+describe("isErasureRewrite", () => {
+  test("a recap rewrite stamps erasureRewriteAt, and the stamp identifies it", () => {
+    const before = {
+      offSeasonDay: 12,
+      shows: [{ results: [{ uid: "u1", displayName: "gone", totalScore: 80 }] }],
+    };
+    const after = JSON.parse(JSON.stringify(before));
+    assert.equal(anonymizeRecapDay(after, "u1"), true);
+    assert.equal(typeof after.erasureRewriteAt, "string");
+    assert.equal(isErasureRewrite(before, after), true);
+  });
+
+  test("a scoring write is not an erasure: no stamp, or an unchanged old stamp", () => {
+    const base = { offSeasonDay: 12, shows: [] };
+    assert.equal(isErasureRewrite(base, { ...base, shows: [{ results: [] }] }), false);
+    const stamped = { ...base, erasureRewriteAt: "2026-08-01T00:00:00.000Z" };
+    assert.equal(isErasureRewrite(stamped, { ...stamped, shows: [{ results: [] }] }), false);
+  });
+
+  test("a create is never an erasure rewrite", () => {
+    assert.equal(isErasureRewrite(undefined, { erasureRewriteAt: "x" }), false);
+  });
+
+  test("an untouched doc is not rewritten and gets no stamp", () => {
+    const data = { shows: [{ results: [{ uid: "other", displayName: "stays" }] }] };
+    assert.equal(anonymizeRecapDay(data, "u1"), false);
+    assert.equal(data.erasureRewriteAt, undefined);
   });
 });

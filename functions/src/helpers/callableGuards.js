@@ -173,14 +173,25 @@ async function assertAuthWithBudget(db, request, key, opts = {}) {
  *
  * @param {FirebaseFirestore.Firestore} db
  * @param {string} uid - The (already authenticated) caller.
+ * @param {FirebaseFirestore.Firestore} db
+ * @param {string} uid
+ * @param {Object|null} [preloadedProfile] The caller's profile data when the
+ *   callable already read it (null = no profile doc); omit to read it here.
  * @throws {HttpsError} permission-denied when the account is restricted.
  */
-async function assertNotRestricted(db, uid) {
+async function assertNotRestricted(db, uid, preloadedProfile) {
   const { paths } = require("./paths");
   let restricted = false;
   try {
-    const snap = await db.doc(paths.userProfile(uid)).get();
-    restricted = snap.exists && snap.data()?.moderation?.restricted === true;
+    // Callers that already hold the profile doc pass it to save the read.
+    const data =
+      preloadedProfile !== undefined
+        ? preloadedProfile
+        : await db
+            .doc(paths.userProfile(uid))
+            .get()
+            .then((snap) => (snap.exists ? snap.data() : null));
+    restricted = data?.moderation?.restricted === true;
   } catch {
     return; // fail open — never block on a read failure
   }

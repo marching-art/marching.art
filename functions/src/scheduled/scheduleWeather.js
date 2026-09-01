@@ -18,12 +18,10 @@
 // leaves that competition's existing weather untouched.
 
 const { onSchedule } = require("firebase-functions/v2/scheduler");
-const { onCall } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
 const { getShowtimeWeather, SHOWTIME_HOUR, FORECAST_HORIZON_DAYS } = require("../helpers/weather");
 const { cleanLocation } = require("../helpers/newsArticleShared");
-const { assertAdmin } = require("../helpers/callableGuards");
 
 const DAY_MS = 86400000;
 
@@ -183,8 +181,3 @@ exports.scheduledScheduleWeatherEvening = onSchedule(
     logger.info("Completed evening schedule-weather refresh", result);
   }
 );
-
-exports.refreshScheduleWeatherNow = onCall({ cors: true, timeoutSeconds: 300, cpu: 1 }, async (request) => {
-  assertAdmin(request);
-  return enrichScheduleWeatherLogic(getDb());
-});

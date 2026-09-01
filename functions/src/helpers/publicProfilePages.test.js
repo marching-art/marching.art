@@ -51,7 +51,7 @@ describe("isProfilePrivate", () => {
 });
 
 describe("pickPublicProfile", () => {
-  test("drops every field outside the getPublicProfile allowlist", () => {
+  test("drops every field outside the public-profile allowlist", () => {
     const picked = pickPublicProfile({
       displayName: "Chris",
       corpsCoin: 999999,

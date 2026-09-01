@@ -18,11 +18,9 @@
 
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { paths } = require("../helpers/paths");
-const { onCall } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
 const { getDb } = require("../config");
-const { assertAdmin } = require("../helpers/callableGuards");
 const { ENABLED_CLASSES } = require("../helpers/classRegistry");
 const { processAllInPages } = require("../helpers/firestorePaging");
 
@@ -310,18 +308,8 @@ exports.scheduledRivalsUpdate = onSchedule(
   },
 );
 
-exports.updateRivalsNow = onCall({ cors: true }, async (request) => {
-  // Admin custom claim, like every other privileged callable. This used to
-  // gate on profile.role — a profile field, i.e. a client-adjacent input —
-  // instead of the claim only the Admin SDK can set.
-  assertAdmin(request);
-  const result = await updateRivalsLogic();
-  return { success: true, ...result };
-});
-
 module.exports = {
   scheduledRivalsUpdate: exports.scheduledRivalsUpdate,
-  updateRivalsNow: exports.updateRivalsNow,
   // Exported for unit tests.
   bucketFor,
   indexCorpsByBucket,

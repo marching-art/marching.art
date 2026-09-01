@@ -1,5 +1,79 @@
 [
   {
+    "id": "2026-09-01-age-gate-and-privacy",
+    "date": "2026-09-01",
+    "title": "Sign-up asks for your date of birth; privacy policy refreshed",
+    "category": "improvement",
+    "summary": "Creating an account now asks for your date of birth once, to confirm you're old enough to play. It's kept private and never appears on your profile. The privacy policy has been rewritten to describe everything the game actually does with your information today — generated avatars and articles, the community Discord, notifications, and the fair-play checks that keep leagues and votes honest.",
+    "highlights": [
+      "Existing accounts aren't asked anything.",
+      "Read the updated policy at /privacy."
+    ]
+  },
+  {
+    "id": "2026-09-01-onboarding-between-seasons",
+    "date": "2026-09-01",
+    "title": "You can finish signing up between seasons",
+    "category": "fix",
+    "summary": "Creating an account while no season was open told you to check your connection and try again, forever. Onboarding now recognizes the gap: found your corps today and draft your captions the day the season opens.",
+    "highlights": []
+  },
+  {
+    "id": "2026-09-01-streak-at-risk-nudge",
+    "date": "2026-09-01",
+    "title": "A heads-up before your streak breaks",
+    "category": "feature",
+    "summary": "If you've kept a login streak going and haven't checked in by the evening, the game now tells you before the day rolls over — not the morning after. The nudge lands in your inbox, and as a push if you've enabled them, and opens your streak panel where a Streak Freeze can cover a night you'll miss.",
+    "highlights": [
+      "Only fires for streaks worth keeping, and never when a freeze already has you covered.",
+      "Turn the push off under Settings → Push Notifications → Streak at Risk; the inbox note stays."
+    ]
+  },
+  {
+    "id": "2026-09-01-exchange-save-rewards-established",
+    "date": "2026-09-01",
+    "title": "Exchange save rewards count saves from established directors",
+    "category": "balance",
+    "summary": "Creators still earn CorpsCoin every time another director saves their design from the Design Exchange, but a save from a brand-new account no longer pays out — the director still gets the design, and the save still counts on the entry. This closes the one way a handful of fresh sign-ups could mint coin without playing.",
+    "highlights": [
+      "Nothing changes for the saver: the design lands in your wardrobe either way.",
+      "Restricted accounts can no longer save from the Exchange at all."
+    ]
+  },
+  {
+    "id": "2026-09-01-studio-exchange-in-explore",
+    "date": "2026-09-01",
+    "title": "Uniform Studio and Design Exchange join the Explore menu",
+    "category": "improvement",
+    "summary": "The Studio and the Exchange — where the monthly Showcase vote and the Weekly Design Brief live — were only reachable through a dashboard card and a single link inside the Studio. Both now sit in the Explore menu on desktop and in the More sheet on mobile, next to the Shop, Achievements, and Records.",
+    "highlights": [
+      "Explore → Uniform Studio opens your wardrobe and the editor.",
+      "Explore → Design Exchange opens the gallery, the Showcase, and this week's Brief."
+    ]
+  },
+  {
+    "id": "2026-09-01-invite-links-survive-signup",
+    "date": "2026-09-01",
+    "title": "Shared links now survive creating an account",
+    "category": "fix",
+    "summary": "Open a league invite link, a director's profile, or any other page that needs an account, and you'll land there after you sign in or sign up — including after finishing onboarding as a brand-new director. Invite links used to be the one thing that got lost for the exact people they were sent to.",
+    "highlights": [
+      "League invite links open the join dialog with the code filled in, even for someone who had to register first.",
+      "Works from the home page sign-in, the login page, and the register page alike."
+    ]
+  },
+  {
+    "id": "2026-09-01-registration-unlock-levels",
+    "date": "2026-09-01",
+    "title": "Registration screens show the real class unlock levels",
+    "category": "fix",
+    "summary": "The corps registration table and the new-corps dialog were quoting the wrong director levels for locked classes, so you could be told a class was yours and then find it still locked. Both now read the same unlock levels the game actually enforces.",
+    "highlights": [
+      "World Class, Open Class, and A Class each show the level that really unlocks them.",
+      "The point budgets shown per class come from the same source as the lineup builder."
+    ]
+  },
+  {
     "id": "2026-09-01-corps-program-pages",
     "date": "2026-09-01",
     "title": "Every corps now has a public program page",

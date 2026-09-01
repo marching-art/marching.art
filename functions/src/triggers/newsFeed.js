@@ -495,6 +495,11 @@ exports.getNewsFeedHttp = onRequest(
           fromCache: true,
           cacheAge: cached.cacheAge,
         });
+        // Without this return, a HIT fell through into the miss path below:
+        // the collectionGroup query + per-article count()s ran anyway, the
+        // cache doc was rewritten, and res.set() then threw
+        // ERR_HTTP_HEADERS_SENT on every request. The cache never saved a read.
+        return;
       }
 
       // Cache miss - fetch from Firestore

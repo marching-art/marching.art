@@ -21,6 +21,10 @@ const routeImports: Record<string, () => Promise<unknown>> = {
   '/shop': () => import('../pages/Shop'),
   '/achievements': () => import('../pages/Achievements'),
   '/records': () => import('../pages/Records'),
+  '/studio': () => import('../pages/Studio'),
+  '/exchange': () => import('../pages/Exchange'),
+  '/guide': () => import('../pages/HowToPlay'),
+  '/updates': () => import('../pages/Updates'),
 };
 
 /**

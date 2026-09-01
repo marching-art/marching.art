@@ -273,6 +273,10 @@ export const paths = {
   users: () => `artifacts/${DATA_NAMESPACE}/users`,
   user: (uid: string) => `artifacts/${DATA_NAMESPACE}/users/${uid}`,
   userProfile: (uid: string) => `artifacts/${DATA_NAMESPACE}/users/${uid}/profile/data`,
+  // Public projection of the profile, maintained server-side
+  // (functions/src/triggers/profileMirror.js): what any signed-in director may
+  // read about another director. Never carries lineups or picks.
+  userProfilePublic: (uid: string) => `artifacts/${DATA_NAMESPACE}/users/${uid}/profile/public`,
   userPrivate: (uid: string) => `artifacts/${DATA_NAMESPACE}/users/${uid}/private/data`,
   userCorps: (uid: string, corpsClass: string) =>
     `artifacts/${DATA_NAMESPACE}/users/${uid}/corps/${corpsClass}`,

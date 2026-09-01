@@ -6,7 +6,7 @@
 // an OG card, and a sitemap entry.
 //
 // Privacy rules honored here:
-//   - The page renders ONLY the fields the getPublicProfile callable's
+//   - The page renders ONLY the fields the pickPublicProfile allowlist's
 //     allowlist returns (callable/profile.js). pickPublicProfile mirrors that
 //     allowlist field for field; anything else on the profile doc (email
 //     never lives there, but settings, corpsCoin, engagement, etc. do) is
@@ -63,7 +63,8 @@ function parseDirectorPath(path) {
  * Whether the director opted out of the public page. Only an explicit
  * 'members' setting hides the page — the field is optional and profiles
  * default to public, matching the world-readable profile/data doc and the
- * getPublicProfile callable (which has no visibility gate at all).
+ * former getPublicProfile callable (deleted 2026-09: it was unauthenticated,
+ * had no visibility gate, and no client called it).
  *
  * @param {Object | null | undefined} profileData Raw profile doc data.
  * @returns {boolean}
@@ -73,8 +74,8 @@ function isProfilePrivate(profileData) {
 }
 
 /**
- * Reduce a raw profile doc to EXACTLY the fields the getPublicProfile
- * callable returns (same defaults, same shapes). This is the single privacy
+ * Reduce a raw profile doc to EXACTLY the public field set (same defaults,
+ * same shapes as the former getPublicProfile callable returned). This is the single privacy
  * boundary for the SSR page: nothing below this function ever sees the raw
  * doc, so a new profile field is private here by default exactly as it is in
  * the callable.

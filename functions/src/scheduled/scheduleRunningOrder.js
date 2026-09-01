@@ -19,11 +19,9 @@
 // best-effort: a show we can't build (no registrations, no date) is left as-is.
 
 const { onSchedule } = require("firebase-functions/v2/scheduler");
-const { onCall } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
 const { paths } = require("../helpers/paths");
-const { assertAdmin } = require("../helpers/callableGuards");
 const { RANKED_CLASSES } = require("../helpers/classRegistry");
 const { MODEL_VERSION } = require("../helpers/scheduleModel");
 const { buildShowRunningOrder } = require("../helpers/showRunningOrder");
@@ -406,8 +404,3 @@ exports.scheduledScheduleRunningOrderEvening = onSchedule(
     logger.info("Completed evening running-order refresh", result);
   }
 );
-
-exports.refreshScheduleRunningOrderNow = onCall({ cors: true, timeoutSeconds: 300, cpu: 1 }, async (request) => {
-  assertAdmin(request);
-  return enrichScheduleRunningOrdersLogic(getDb());
-});

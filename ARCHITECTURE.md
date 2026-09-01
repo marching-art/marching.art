@@ -80,6 +80,9 @@ centralized — never hand-write path strings:
 ```
 users/{uid}/profile/data          # The main profile: xp, level, corpsCoin, unlockedClasses,
                                   #   cosmetics, trophies, lifetimeStats, seasonLadder, streak…
+users/{uid}/profile/public        # Server-mirrored public projection of profile/data (identity,
+                                  #   progression, trophies, corps minus lineups/picks) — what
+                                  #   league rosters and other directors read (triggers/profileMirror.js)
 users/{uid}/private/data          # Private user data
 users/{uid}/corps/{class}         # Registered corps per fantasy class (lineup, selectedShows)
 users/{uid}/corpsCoinHistory/{id} # CorpsCoin ledger (subcollection — every transaction, typed;
@@ -225,13 +228,14 @@ Firestore/Auth triggers: `scoreProcessing.js`, `scheduleProcessing.js`,
 The same folder also holds the `onRequest` endpoints behind the hosting
 rewrites — the public, crawlable, auth-free surface:
 
-| Route                     | Function             | Source            | Serves                                                             |
-| ------------------------- | -------------------- | ----------------- | ------------------------------------------------------------------ |
-| `/api/news`               | `getNewsFeedHttp`    | `newsFeed.js`     | The news feed JSON (cached in `news_feed_cache`)                   |
-| `/sitemap.xml`            | `getSitemapHttp`     | `sitemap.js`      | A live sitemap built from Firestore (seasons, champions, articles) |
-| `/api/og/**`              | `getOgCardHttp`      | `shareCards.js`   | Dynamic OG share-card images (live score / champion)               |
-| `/share/**`               | `getShareHttp`       | `shareCards.js`   | Share landing pages carrying those OG tags                         |
-| `/results`, `/results/**` | `getResultsPageHttp` | `resultsPages.js` | Server-rendered season and per-day standings, styled like the site |
+| Route                     | Function                | Source            | Serves                                                                             |
+| ------------------------- | ----------------------- | ----------------- | ---------------------------------------------------------------------------------- |
+| `/api/news`               | `getNewsFeedHttp`       | `newsFeed.js`     | The news feed JSON (cached in `news_feed_cache`)                                   |
+| `/sitemap.xml`            | `getSitemapHttp`        | `sitemap.js`      | A live sitemap built from Firestore (seasons, champions, articles)                 |
+| `/api/og/**`              | `getOgCardHttp`         | `shareCards.js`   | Dynamic OG share-card images (live score / champion)                               |
+| `/share/**`               | `getShareHttp`          | `shareCards.js`   | Share landing pages carrying those OG tags                                         |
+| `/results`, `/results/**` | `getResultsPageHttp`    | `resultsPages.js` | Server-rendered season and per-day standings, styled like the site                 |
+| `/api/errors`             | `reportClientErrorHttp` | `clientErrors.js` | Same-origin intake for the client error reporter → Cloud Logging / Error Reporting |
 
 Plus `bmacWebhook` (HMAC-verified Buy Me a Coffee membership events).
 

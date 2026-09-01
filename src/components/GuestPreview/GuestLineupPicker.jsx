@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 /**
  * GuestLineupPicker - Lightweight caption draft modal for Guest Preview Mode
  *
@@ -15,6 +14,22 @@ import { X, Check, Sparkles } from 'lucide-react';
 
 const STARTER_BUDGET = 90; // SOUNDSPORT_POINT_LIMIT — the budget onboarding drafts under
 
+/**
+ * @typedef {{ corpsName: string, sourceYear: number|string, points: number }} PickerCorps
+ * @typedef {{ id: string, fullName?: string }} PickerCaption
+ */
+
+/**
+ * @param {{
+ *   isOpen: boolean,
+ *   caption: PickerCaption | null,
+ *   availableCorps: PickerCorps[],
+ *   lineup: Record<string, string> | null | undefined,
+ *   onSelect: (captionId: string, value: string) => void,
+ *   onClose: () => void,
+ *   onComplete: () => void,
+ * }} props
+ */
 const GuestLineupPicker = ({
   isOpen,
   caption,
@@ -35,6 +50,7 @@ const GuestLineupPicker = ({
   // Replacing the current pick refunds its cost
   const remainingPoints = STARTER_BUDGET - usedPoints + currentPoints;
 
+  /** @param {string} corpsName */
   const isCorpsUsed = (corpsName) =>
     Object.entries(lineup || {}).some(
       ([capId, val]) => capId !== caption.id && val && val.startsWith(corpsName + '|')
@@ -42,6 +58,7 @@ const GuestLineupPicker = ({
 
   const sortedCorps = [...availableCorps].sort((a, b) => b.points - a.points);
 
+  /** @param {PickerCorps} corps */
   const handlePick = (corps) => {
     onSelect(caption.id, `${corps.corpsName}|${corps.sourceYear}|${corps.points}`);
   };

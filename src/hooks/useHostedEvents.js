@@ -11,7 +11,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { collection, getDocs, orderBy, query } from 'firebase/firestore';
 import { db } from '../api';
 import { getShowRegistrations } from '../api/functions';
-import { getProfile } from '../api/profile';
+import { getPublicProfile } from '../api/profile';
 import { getCorpsClassOrderIndex } from '../utils/corps';
 
 /**
@@ -63,7 +63,7 @@ export function useHostedEvents(seasonUid) {
         await Promise.all(
           missing.map(async (uid) => {
             try {
-              const profile = await getProfile(uid);
+              const profile = await getPublicProfile(uid);
               if (profile?.username) names.set(uid, profile.username);
             } catch {
               /* decorative — leave the "a director" fallback for this event */
@@ -138,7 +138,7 @@ export function useHostedShowRegistrations({ enabled, show, hostedEvent }) {
             missing.map(async (uid) => {
               if (!uid) return;
               try {
-                const profile = await getProfile(uid);
+                const profile = await getPublicProfile(uid);
                 if (profile?.username) names.set(uid, profile.username);
               } catch {
                 /* decorative — leave this attendee without an @handle */

@@ -28,6 +28,13 @@ const {
 } = require("../helpers/leagueHelpers");
 const { getCurrentSeasonWeek } = require("../helpers/gameDay");
 const { processAllInPages } = require("../helpers/firestorePaging");
+
+// Every league job below pages through the whole leagues collection. The page
+// stays large (few round trips) but each league's callback issues its own
+// burst of reads (a getAll over up to 50 member profiles, standings, the
+// matchup collection), so the number of leagues in flight at once is bounded
+// separately — 500 concurrent leagues meant thousands of simultaneous reads.
+const LEAGUE_CONCURRENCY = 20;
 const { detectRivalries, generateLeagueRecapsForWeek } = require("../helpers/leagueRecaps");
 const { isLeagueCommissioner } = require("../helpers/leaguePermissions");
 const {
@@ -231,7 +238,7 @@ exports.generateWeeklyMatchups = onSchedule(
           logger.error(`Error processing league ${leagueDoc.id}:`, leagueError);
           return { error: { leagueId: leagueDoc.id, error: leagueError.message } };
         }
-      });
+      }, { concurrency: LEAGUE_CONCURRENCY });
 
       for (const result of leagueResults) {
         if (result.error) errors.push(result.error);
@@ -356,7 +363,7 @@ exports.updateLeagueRivalries = onSchedule(
           logger.error(`Error updating rivalries for league ${leagueDoc.id}:`, leagueError);
           return { skipped: true };
         }
-      });
+      }, { concurrency: LEAGUE_CONCURRENCY });
 
       rivalriesUpdated = rivalryResults.filter(r => r.updated).length;
 
@@ -571,7 +578,7 @@ exports.refreshLeagueActivityJob = onSchedule(
         logger.error(`Failed to refresh activity for league ${leagueDoc.id}:`, error);
         return { error: error.message };
       }
-    });
+    }, { concurrency: LEAGUE_CONCURRENCY });
 
     logger.info(
       `League activity refresh complete: ${leaguesUpdated} leagues updated, ` +

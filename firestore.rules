@@ -260,15 +260,31 @@ function profileTextCapsOk(keys) {
 match /artifacts/{appId}/users/{userId} {
   allow list: if isAdmin();
 
-  // Profile data is public to read (leaderboards and public profiles).
+  // Profile data is readable by any signed-in director (league rosters, the
+  // in-app profile page). It is NOT world-readable: the doc carries the
+  // caption lineup, weekly show picks, and open prediction picks, and the
+  // unauthenticated surfaces that need a director (the SSR /d/ pages, share
+  // cards, results pages) are served by Cloud Functions through a field
+  // allowlist (helpers/publicProfilePages.js). Bulk enumeration is closed
+  // separately: the `profile` collection-group rule below is admin-only.
   // Owners may update cosmetic/preference fields (corps details, settings,
   // display name, engagement, etc.) but NOT the protected
   // economy/progression fields (including the challenges ledger) — those
   // change only via Cloud Functions.
   // Creation is owned by the createUserProfile callable, which atomically
   // reserves the username server-side.
+  // The public projection of the profile (functions/src/triggers/
+  // profileMirror.js): identity, progression, trophies, and the corps map
+  // minus lineups/picks. Server-written only. Once every profile has a
+  // mirror (scripts/backfillPublicProfiles.js), profile/data below can go
+  // owner/admin-only and this becomes the ONLY cross-director read.
+  match /profile/public {
+    allow read: if isAuthenticated();
+    allow write: if false; // Backend only (mirror trigger + backfill)
+  }
+
   match /profile/data {
-    allow read: if true;
+    allow read: if isAuthenticated();
     allow create, delete: if isAdmin();
     allow update: if isAdmin() ||
       (isOwner(userId) && !touchesProtectedProfileFields() &&
@@ -389,9 +405,14 @@ match /{path=**}/private/{docId} {
   allow read: if isAdmin();
 }
 
-// Collection group query for profiles (needed for leaderboards/dashboard)
+// Collection group query for profiles — admin panel only. This used to be
+// `isAuthenticated()`, which let any signed-in account list EVERY profile doc
+// in one unconstrained query (lineups, picks, settings, moderation state for
+// the whole player base, billed per doc). Leaderboards read precomputed
+// `leaderboard/*` docs and league rosters fetch members by document path, so
+// no non-admin client needs the group query.
 match /{path=**}/profile/{docId} {
-  allow read: if isAuthenticated();
+  allow read: if isAdmin();
 }
 
 // --- UNIFORM CODES ---
@@ -790,8 +811,13 @@ match /activeLineups/{lineupKey} {
   allow read, write: if false; // Backend only
 }
 
+// Username → uid lookup. Single-document gets only: `read` would also grant
+// `list`, and listing this collection hands out the full username → uid map
+// for every director (the key to their profile doc, comments, and season
+// detail). Every client consumer resolves one exact username.
 match /usernames/{username} {
-  allow read: if true;
+  allow get: if true;
+  allow list: if false;
   allow write: if false; // Backend only
 }
 

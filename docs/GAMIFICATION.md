@@ -227,7 +227,11 @@ Given_ from an early XP class unlock) and can never be bought.
   Hall / trophy case reads server-owned `profile.trophies.*`.
 - **Login streaks** — server-authoritative (`claimDailyLogin`), with milestones
   at 3/7/14/30/60/100 days (XP + CC + a free freeze at 30). A **streak freeze**
-  (300 CC) protects the streak; surfaced in the Shop and streak modal.
+  (300 CC) protects the streak; surfaced in the Shop and streak modal. An
+  evening nudge (`streakAtRiskPushJob`, 7 PM ET — inbox entry for everyone,
+  push for opt-ins) warns a director whose streak is alive but unclaimed
+  today and deep-links to the streak panel; the streak-broken email remains
+  the morning-after post-mortem.
 - **Season Reward Ladder** — a single free track, **12 tiers, ~1,650 CC total**,
   plus the ladder-exclusive **Laureate** title at the cap
   (`seasonLadder.js`). Progress is the XP you earn _this season_

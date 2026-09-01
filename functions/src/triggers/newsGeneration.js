@@ -16,6 +16,7 @@ const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
 const { defineSecret } = require("firebase-functions/params");
 const { getDb } = require("../config");
+const { isErasureRewrite } = require("../helpers/accountErasure");
 const {
   generateAllArticles,
   generateNightlyRecap,
@@ -447,6 +448,10 @@ exports.onFantasyRecapUpdated = onDocumentWritten(
     timeoutSeconds: 540,
     memory: "1GiB",
     cpu: 1,
+    // One nightly recap at a time is the real workload; a burst of recap
+    // writes (an account erasure sweeping every archived day, a backfill)
+    // must never fan out into a fleet of 1 GiB generators.
+    maxInstances: 2,
     secrets: [geminiApiKey, cloudinaryCloudName, cloudinaryApiKey, cloudinaryApiSecret, brevoApiKey],
   },
   async (event) => {
@@ -458,6 +463,15 @@ exports.onFantasyRecapUpdated = onDocumentWritten(
       // Only process if document was created or updated (not deleted)
       if (!afterData) {
         logger.info("Document deleted, skipping news generation");
+        return;
+      }
+
+      // An account erasure rewrites every archived day doc it touches
+      // (helpers/accountErasure.js) — identity fields only, no new scores.
+      // Bail before any read so a deletion costs one cheap invocation per
+      // doc instead of a possible regeneration.
+      if (isErasureRewrite(event.data?.before?.data(), afterData)) {
+        logger.info("Recap write was an erasure rewrite, skipping news generation");
         return;
       }
 

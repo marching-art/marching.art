@@ -1,5 +1,6 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { paths } = require("../helpers/paths");
+const { checkBirthDate, MIN_AGE_YEARS } = require("../helpers/ageGate");
 const { logger } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
 const { getDb } = require("../config");
@@ -74,11 +75,31 @@ exports.createUserProfile = onCall({ cors: true }, async (request) => {
   // Abuse throttle (shared profile bucket) — far above any human rate.
   await assertWriteBudget(getDb(), uid, "profile", { max: 60, windowMs: 10 * 60 * 1000 });
 
-  const { username, displayName } = request.data;
+  const { username, displayName, birthDate } = request.data;
   const { email } = request.auth.token;
 
   if (!username) {
     throw new HttpsError("invalid-argument", "Username is required for profile creation.");
+  }
+  // Age screening (helpers/ageGate): the sign-up form collects a date of
+  // birth and validates it client-side; this is the authoritative check and
+  // the record. Optional so older clients / retries without the stash still
+  // create the profile — a missing date is recorded as "not attested", never
+  // as "attested".
+  let ageAttestation = null;
+  if (birthDate !== undefined && birthDate !== null && birthDate !== "") {
+    const check = checkBirthDate(birthDate);
+    if (!check.ok) {
+      // JSDoc unions don't narrow on the `ok` literal under checkJs; `in` does.
+      if (!("reason" in check) || check.reason === "invalid") {
+        throw new HttpsError("invalid-argument", "Please enter a valid date of birth.");
+      }
+      throw new HttpsError(
+        "failed-precondition",
+        `You must be at least ${MIN_AGE_YEARS} years old to play marching.art.`
+      );
+    }
+    ageAttestation = { birthDate: check.birthDate, attestedAt: new Date().toISOString() };
   }
   const trimmedUsername = username.trim();
   if (trimmedUsername.length < 3 || trimmedUsername.length > 15 || !/^[a-zA-Z0-9_]+$/.test(trimmedUsername)) {
@@ -157,6 +178,8 @@ exports.createUserProfile = onCall({ cors: true }, async (request) => {
 
       t.set(userPrivateRef, {
         email: email,
+        // Owner-only: the date of birth never reaches the public profile doc.
+        ...(ageAttestation ? { ageAttestation } : {}),
       });
 
       t.set(usernameRef, { uid: uid });
@@ -386,81 +409,6 @@ exports.getUserRankings = onCall({ cors: true }, async (request) => {
     totalPlayers: allPlayerScores.length,
     totalScore: myTotalScore,
   };
-});
-
-exports.migrateUserProfiles = onCall({ cors: true, timeoutSeconds: 540, memory: "512MiB", cpu: 1 }, async (request) => {
-  assertAdmin(request);
-
-  const db = getDb();
-  let migratedCount = 0;
-  let errorCount = 0;
-  let scannedCount = 0;
-
-  try {
-    // The inequality filter needs its own leading orderBy; processAllInPages
-    // appends the documentId orderBy that makes its cursor paging stable.
-    const profilesQuery = db.collectionGroup("profile")
-      .where("corpsName", "!=", null)
-      .orderBy("corpsName");
-
-    let batch = db.batch();
-    let batchCount = 0;
-
-    await processAllInPages(profilesQuery, 300, async (doc) => {
-      scannedCount++;
-      const oldProfile = doc.data();
-
-      if (oldProfile.corps) return;
-
-      try {
-        const newProfileData = {
-          corps: {
-            worldClass: {
-              corpsName: oldProfile.corpsName,
-              lineup: oldProfile.lineup || {},
-              totalSeasonScore: oldProfile.totalSeasonScore || 0,
-              selectedShows: oldProfile.selectedShows || {},
-              weeklyTrades: oldProfile.weeklyTrades || { used: 0 },
-              lastScoredDay: oldProfile.lastScoredDay || 0,
-              lineupKey: oldProfile.lineupKey,
-            },
-          },
-          migratedAt: new Date(),
-        };
-
-        batch.update(doc.ref, newProfileData);
-        migratedCount++;
-        batchCount++;
-
-        if (batchCount >= 400) {
-          const committing = batch;
-          batch = db.batch();
-          batchCount = 0;
-          await committing.commit();
-        }
-      } catch (error) {
-        logger.error(`Error migrating profile ${doc.id}:`, error);
-        errorCount++;
-      }
-    });
-
-    if (scannedCount === 0) {
-      return { success: true, message: "No profiles need migration." };
-    }
-
-    if (batchCount > 0) {
-      await batch.commit();
-    }
-
-    return {
-      success: true,
-      message: `Migration completed: ${migratedCount} profiles migrated, ${errorCount} errors`,
-    };
-  } catch (error) {
-    logger.error("Migration failed:", error);
-    if (error instanceof HttpsError) throw error;
-    throw new HttpsError("internal", "Migration failed.");
-  }
 });
 
 // NOTE: dailyXPCheckIn and awardXP used to live here. Both were orphaned —
