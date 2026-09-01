@@ -53,6 +53,13 @@ function makeFakeDb(docs = new Map()) {
           writes.push({ type: "update", path: ref.path, data });
         },
         set(ref, data, options) {
+          // Rate-budget bookkeeping (helpers/rateLimit) runs inside the
+          // transaction now; persist it out of band so budget writes never
+          // count against the callable's own write assertions.
+          if (String(ref.path).startsWith("rate_")) {
+            docs.set(ref.path, data);
+            return;
+          }
           writes.push({ type: "set", path: ref.path, data, options });
         },
       };
