@@ -29,7 +29,8 @@ exports.onProfileDataWritten = onDocumentWritten(
     const { namespace, userId } = event.params;
     // Only the live namespace is mirrored (the path helpers are bound to it);
     // a frozen legacy namespace never receives profile writes anyway.
-    if (!paths.users().startsWith(`artifacts/${namespace}/`)) return;
+    const liveNamespace = paths.users().split("/")[1];
+    if (namespace !== liveNamespace) return;
     const before = event.data?.before?.exists ? event.data.before.data() : null;
     const after = event.data?.after?.exists ? event.data.after.data() : null;
     const publicRef = getDb().doc(paths.userProfilePublic(userId));
