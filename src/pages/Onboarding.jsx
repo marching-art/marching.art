@@ -4,6 +4,7 @@
 import React, { useState, useEffect, useMemo, startTransition } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { consumePendingRedirect } from '../lib/pendingRedirect';
+import { takeStashedBirthDate, clearStashedBirthDate } from '../utils/ageGate';
 import { m, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Check, ArrowLeft, Music, PartyPopper, XCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -108,8 +109,11 @@ const Onboarding = () => {
       // reading it always failed with permission-denied and corps never loaded.
       const season = await getSeasonData();
       if (!season || !season.seasonUid) {
-        console.error('[Onboarding] No active season found in game-settings/season');
-        setSeasonStatus('error');
+        // Not a failure: the game is between seasons (rollover in progress,
+        // or no season configured yet). Telling the director to "check
+        // their connection" here looped them on Retry forever.
+        console.warn('[Onboarding] No active season in game-settings/season — between seasons');
+        setSeasonStatus('none');
         return;
       }
 
@@ -133,16 +137,21 @@ const Onboarding = () => {
     [corpsQuery.data]
   );
 
-  // 'loading' | 'ready' | 'error' — drives the step-3 corps list vs retry UI.
-  // An empty corpsValues doc counts as an error, same as before.
+  // 'loading' | 'ready' | 'none' | 'error' — drives the step-3 corps list vs
+  // the between-seasons notice vs the retry UI. An empty corpsValues doc
+  // counts as an error, same as before; 'none' is a season gap, which lets
+  // the director found their corps now and draft when the season opens.
   const dataStatus =
-    seasonStatus === 'error' ||
-    corpsQuery.isError ||
-    (corpsQuery.isSuccess && corpsQuery.data.length === 0)
-      ? 'error'
-      : corpsQuery.isSuccess
-        ? 'ready'
-        : 'loading';
+    seasonStatus === 'none'
+      ? 'none'
+      : seasonStatus === 'error' ||
+          corpsQuery.isError ||
+          (corpsQuery.isSuccess && corpsQuery.data.length === 0)
+        ? 'error'
+        : corpsQuery.isSuccess
+          ? 'ready'
+          : 'loading';
+  const betweenSeasons = dataStatus === 'none';
 
   // Retry re-fetches whichever half failed (season doc and/or corps values).
   const { refetch: refetchCorpsValues } = corpsQuery;
@@ -308,7 +317,7 @@ const Onboarding = () => {
   const isLineupValid = isLineupComplete && getLineupPoints() <= SOUNDSPORT_POINT_LIMIT;
 
   const handleSubmit = async () => {
-    if (!isLineupValid) {
+    if (!betweenSeasons && !isLineupValid) {
       toast.error('Please complete your lineup within the point budget');
       trackBlocked(isLineupComplete ? 'lineup_over_budget' : 'lineup_incomplete');
       return;
@@ -330,7 +339,11 @@ const Onboarding = () => {
       await createUserProfile({
         username: formData.username.trim().toLowerCase(),
         displayName: formData.displayName.trim(),
+        // Date of birth from the sign-up form (utils/ageGate) — recorded on
+        // the owner-only private doc; absent on an older client.
+        birthDate: takeStashedBirthDate(),
       });
+      clearStashedBirthDate();
 
       // Layer on the onboarding-specific data. Writing to the owner's own
       // profile doc is permitted by security rules; merge so we don't clobber
@@ -429,7 +442,11 @@ const Onboarding = () => {
       await createUserProfile({
         username: formData.username.trim().toLowerCase(),
         displayName: formData.displayName.trim(),
+        // Date of birth from the sign-up form (utils/ageGate) — recorded on
+        // the owner-only private doc; absent on an older client.
+        birthDate: takeStashedBirthDate(),
       });
+      clearStashedBirthDate();
 
       // Onboarding-specific fields. Deliberately no `corps.soundSport` (the
       // director chose Podium) and no `isFirstVisit` — the fantasy first-visit
@@ -668,6 +685,25 @@ const Onboarding = () => {
                         currentCaptionIndex={currentCaptionIndex}
                         setCurrentCaptionIndex={setCurrentCaptionIndex}
                       />
+                    ) : dataStatus === 'none' ? (
+                      <div className="text-center py-8">
+                        <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-interactive/10 border border-interactive/30 mb-3">
+                          <Music className="w-6 h-6 text-interactive" />
+                        </div>
+                        <p className="text-white text-sm font-semibold mb-1">
+                          The next season hasn't opened yet
+                        </p>
+                        <p className="text-muted text-xs mb-4">
+                          Found your corps now — you'll draft your eight captions the day the season
+                          opens and the corps list goes live.
+                        </p>
+                        <button
+                          onClick={retryDataLoad}
+                          className="h-9 px-4 border border-line text-muted text-xs font-bold uppercase tracking-wider rounded-none hover:border-line-strong hover:text-white"
+                        >
+                          Check again
+                        </button>
+                      </div>
                     ) : dataStatus === 'error' ? (
                       <div className="text-center py-8">
                         <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-red-500/10 border border-red-500/30 mb-3">
@@ -773,7 +809,7 @@ const Onboarding = () => {
                 /* SoundSport branch finish */
                 <button
                   onClick={handleSubmit}
-                  disabled={loading || !isLineupValid}
+                  disabled={loading || (!isLineupValid && !betweenSeasons)}
                   className="flex-1 px-6 py-3 bg-interactive text-white rounded-none hover:bg-interactive-hover transition-colors font-bold uppercase tracking-wider flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? (
@@ -792,7 +828,7 @@ const Onboarding = () => {
             </div>
 
             {/* Skip lineup option */}
-            {currentStepId === 'lineup' && !isLineupComplete && (
+            {currentStepId === 'lineup' && !isLineupComplete && availableCorps.length > 0 && (
               <button
                 onClick={() => {
                   // Exact fill: all remaining captions with distinct corps,

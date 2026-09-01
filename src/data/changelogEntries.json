@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026-09-01-age-gate-and-privacy",
+    "date": "2026-09-01",
+    "title": "Sign-up asks for your date of birth; privacy policy refreshed",
+    "category": "improvement",
+    "summary": "Creating an account now asks for your date of birth once, to confirm you're old enough to play. It's kept private and never appears on your profile. The privacy policy has been rewritten to describe everything the game actually does with your information today — generated avatars and articles, the community Discord, notifications, and the fair-play checks that keep leagues and votes honest.",
+    "highlights": [
+      "Existing accounts aren't asked anything.",
+      "Read the updated policy at /privacy."
+    ]
+  },
+  {
+    "id": "2026-09-01-onboarding-between-seasons",
+    "date": "2026-09-01",
+    "title": "You can finish signing up between seasons",
+    "category": "fix",
+    "summary": "Creating an account while no season was open told you to check your connection and try again, forever. Onboarding now recognizes the gap: found your corps today and draft your captions the day the season opens.",
+    "highlights": []
+  },
+  {
     "id": "2026-09-01-streak-at-risk-nudge",
     "date": "2026-09-01",
     "title": "A heads-up before your streak breaks",

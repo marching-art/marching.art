@@ -12,6 +12,12 @@ import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import { useBodyScroll } from '../hooks/useBodyScroll';
 import { useFirstVisit } from '../hooks/useFirstVisit';
+import {
+  checkBirthDate,
+  latestEligibleBirthDate,
+  stashBirthDate,
+  MIN_AGE_YEARS,
+} from '../utils/ageGate';
 import { useSEO } from '../hooks/useSEO';
 import { Heading } from '../components/ui';
 
@@ -46,6 +52,7 @@ const Register = () => {
     email: '',
     password: '',
     displayName: '',
+    birthDate: '',
     acceptTerms: false,
   });
 
@@ -61,6 +68,18 @@ const Register = () => {
 
     if (formData.password.length < 8) {
       setError('Password must be at least 8 characters long');
+      return false;
+    }
+
+    // The Terms require directors to be at least 13; this is the one place
+    // that actually asks (utils/ageGate — the server re-checks and records it).
+    const age = checkBirthDate(formData.birthDate);
+    if (!age.ok) {
+      setError(
+        age.reason === 'underage'
+          ? `You must be at least ${MIN_AGE_YEARS} years old to create an account.`
+          : 'Please enter your date of birth.'
+      );
       return false;
     }
 
@@ -86,6 +105,9 @@ const Register = () => {
     try {
       if (!signUp) throw new Error('Auth is unavailable. Please reload.');
       await signUp(formData.email, formData.password, formData.displayName.trim());
+      // Onboarding hands this to createUserProfile, which records the
+      // attestation on the owner-only private doc.
+      stashBirthDate(formData.birthDate);
       markAsReturning();
       toast.success('Account created successfully!');
       startTransition(() => {
@@ -192,6 +214,31 @@ const Register = () => {
                       autoComplete="name"
                     />
                   </div>
+                </div>
+
+                {/* Date of birth — the Terms' 13+ floor, asked once, recorded server-side */}
+                <div>
+                  <label
+                    htmlFor="register-birthdate"
+                    className="block text-xs font-bold text-muted uppercase tracking-wider mb-1.5"
+                  >
+                    Date of Birth
+                  </label>
+                  <input
+                    id="register-birthdate"
+                    type="date"
+                    className="w-full h-12 px-4 bg-background border border-line rounded-none text-base text-white placeholder-muted focus:outline-none focus:border-interactive disabled:opacity-50 [color-scheme:dark]"
+                    value={formData.birthDate}
+                    onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })}
+                    max={latestEligibleBirthDate()}
+                    required
+                    disabled={loading}
+                    autoComplete="bday"
+                    aria-describedby="register-birthdate-help"
+                  />
+                  <p id="register-birthdate-help" className="mt-1 text-[11px] text-muted">
+                    You must be at least {MIN_AGE_YEARS}. Never shown on your profile.
+                  </p>
                 </div>
 
                 {/* Email Field */}

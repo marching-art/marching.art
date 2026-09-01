@@ -32,20 +32,6 @@ Effort: S ≤ half a day, M ≤ two days, L = a week.
    owner-only subcollection (touches scoring reads — larger). Decide (a) vs
    (b) before building; (a) is the smaller diff but adds a trigger per
    profile write. (M–L)
-2. **P1 · No age gate, stale privacy policy** — `Register.jsx:56-72`
-   validates email/password/name/terms only, while Terms §(`Terms.jsx:66`)
-   asserts 13+ for an audience that skews high-school. `Privacy.jsx:22` is
-   dated January 2026 and omits FCM tokens, Discord republication
-   (`triggers/newsDiscord.js`), Gemini image generation, retention
-   analytics, and the alt-account clustering in
-   `helpers/integrityStats.js`; no retention periods, legal basis, or CCPA
-   notice. Add a DOB field and record the attestation; one rewrite pass
-   listing each processor + purpose + retention. (M)
-3. **P1 · Onboarding dead-ends during a season gap** —
-   `Onboarding.jsx:105-112` maps a missing/rolling-over season doc to
-   "Check your connection" and a Retry loop. Split "no active season" from
-   "fetch failed"; show next start date and a skip-lineup path that still
-   creates the profile. (M)
 
 ## Audit backlog — P2/P3 by area (pick alongside a bet; batch the S ones)
 
@@ -383,6 +369,12 @@ Effort: S ≤ half a day, M ≤ two days, L = a week.
 
 ## Recently shipped (context, newest first — prune when stale)
 
+- 2026-09-01: audit fixes 16 + 18 — sign-up asks for a date of birth
+  (client + server `ageGate` with a parity test; attestation recorded on the
+  private doc), Privacy policy rewritten for today's processors, generated
+  content, Discord republication, integrity checks, retention, GDPR/CCPA;
+  onboarding distinguishes "between seasons" from a fetch failure and lets
+  the director found a corps without a lineup.
 - 2026-09-01: audit fix 17 — `deploy-functions.yml` has a queued (never
   cancelled) concurrency group.
 - 2026-09-01: audit fix 15 — `streakAtRiskPushJob` (7 PM ET): inbox entry
