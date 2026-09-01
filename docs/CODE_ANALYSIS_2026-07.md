@@ -1,5 +1,10 @@
 # marching.art — Full Code Analysis & Improvement Plan (July 2026)
 
+> **HISTORICAL RECORD.** Every finding in this document has been actioned
+> (the one open deferral, the App Check flip, is tracked in
+> [NEXT.md](NEXT.md) with everything else current). Kept for its reasoning,
+> not as a queue.
+
 A seven-track review of the entire codebase: frontend architecture, Cloud
 Functions backend structure/correctness, a functions security sweep (all 130
 callables + 6 HTTP endpoints), a rules/client security review, a cost &

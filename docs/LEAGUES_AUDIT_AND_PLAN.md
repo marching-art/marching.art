@@ -1,5 +1,10 @@
 # Leagues — Audit and Clubhouse Plan
 
+> **HISTORICAL RECORD.** Every finding and phase in this document has landed
+> (A8, the last one, closed 2026-08-31); the one operational leftover — the
+> stale-matchup archive script — is tracked in [NEXT.md](NEXT.md). Kept for
+> its reasoning, not as a queue.
+
 A full read of the league system: every defect found, ranked by how much it
 hurts, followed by a phased plan to turn leagues from "a tab that exists" into
 the clubhouse the game's enthusiasts actually live in.
