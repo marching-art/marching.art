@@ -141,6 +141,14 @@ describe('BottomNav', () => {
     renderNav();
     fireEvent.click(screen.getByRole('button', { name: 'More' }));
     const sheet = screen.getByRole('navigation', { name: 'More destinations' });
+    expect(within(sheet).getByRole('link', { name: 'Uniform Studio' })).toHaveAttribute(
+      'href',
+      '/studio'
+    );
+    expect(within(sheet).getByRole('link', { name: 'Design Exchange' })).toHaveAttribute(
+      'href',
+      '/exchange'
+    );
     expect(within(sheet).getByRole('link', { name: 'Shop' })).toHaveAttribute('href', '/shop');
     expect(within(sheet).getByRole('link', { name: 'Achievements' })).toHaveAttribute(
       'href',

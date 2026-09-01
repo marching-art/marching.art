@@ -32,45 +32,38 @@ Effort: S ≤ half a day, M ≤ two days, L = a week.
    owner-only subcollection (touches scoring reads — larger). Decide (a) vs
    (b) before building; (a) is the smaller diff but adds a trigger per
    profile write. (M–L)
-2. **P1 · Studio and Exchange are in no navigation surface** —
-   `src/utils/exploreLinks.ts`, `BottomNav.tsx` MORE_ITEMS, and
-   `Layout/SiteLinksMenu.jsx` contain neither; `/exchange` (home of the
-   monthly Showcase vote and the Weekly Design Brief) is reachable from one
-   link inside `Studio.tsx:551`. August's biggest feature investment is
-   unlisted. Add both to `GAME_LINKS`; surface Showcase/Brief deadlines in
-   the Director's Report. (S)
-3. **P1 · Exchange save rewards are the one mint faucet driven by other
+2. **P1 · Exchange save rewards are the one mint faucet driven by other
    accounts and it skips `assertNotRestricted`** —
    `functions/src/callable/designExchange.js` pays 10 CC per unique save up
    to 100/day; `showcase.js:93,222`, `dailyPredictions.js:66`,
    `leaguePools.js:33` all gate on restriction, this doesn't. A watchlisted
    save-ring keeps minting. Add the guard; count only saves from accounts
    older than N days. (S)
-4. **P1 · `deleteAccount` fans out into the 1 GiB Gemini news trigger** —
+3. **P1 · `deleteAccount` fans out into the 1 GiB Gemini news trigger** —
    `helpers/accountErasure.js:164-186` rewrites every `fantasy_recaps` day
    doc across all seasons; each write fires `onFantasyRecapUpdated`
    (`triggers/newsGeneration.js:441`, 1 GiB, 540 s, no `maxInstances`) and
    any day whose generation once failed regenerates five articles. Bail
    unless scoring-relevant fields changed; add `maxInstances`. (M)
-5. **P1 · `leagueAutomation` processes 500 leagues concurrently** —
+4. **P1 · `leagueAutomation` processes 500 leagues concurrently** —
    `scheduled/leagueAutomation.js:114,323,540` use the page size as the
    concurrency limit (`helpers/firestorePaging.js:32`), each league doing a
    50-profile `getAll`, a standings read, and a full matchup-collection
    read. Decouple page size from concurrency (~20); read only the weeks
    pairing needs. (M)
-6. **P1 · Offline lineup queue deletes the user's save on any online
+5. **P1 · Offline lineup queue deletes the user's save on any online
    failure** — `src/lib/offlineLineupQueue.ts:85-96` treats every error
    while `navigator.onLine` is true as a final verdict, including cold-start
    timeouts and `unavailable`. Dequeue only on decisive codes
    (`invalid-argument`, `failed-precondition`, `permission-denied`,
    `not-found`). (S)
-7. **P1 · Streaks get a post-mortem email but never a warning** —
+6. **P1 · Streaks get a post-mortem email but never a warning** —
    `scheduled/emailNotifications.js:552` mails after the streak dies; no
    streak push type exists (`helpers/pushService.js:11-19`). The 300 CC
    streak freeze (`engagementRewards.js:26`) is never offered when it
    matters. Evening at-risk push for `loginStreak >= 3` unclaimed, deep
    linked to the streak modal. (M)
-8. **P1 · No age gate, stale privacy policy** — `Register.jsx:56-72`
+7. **P1 · No age gate, stale privacy policy** — `Register.jsx:56-72`
    validates email/password/name/terms only, while Terms §(`Terms.jsx:66`)
    asserts 13+ for an audience that skews high-school. `Privacy.jsx:22` is
    dated January 2026 and omits FCM tokens, Discord republication
@@ -79,16 +72,16 @@ Effort: S ≤ half a day, M ≤ two days, L = a week.
    `helpers/integrityStats.js`; no retention periods, legal basis, or CCPA
    notice. Add a DOB field and record the attestation; one rewrite pass
    listing each processor + purpose + retention. (M)
-9. **P1 · Functions deploy has no concurrency guard** —
+8. **P1 · Functions deploy has no concurrency guard** —
    `deploy-functions.yml` (unlike `ci.yml:19`, `deploy-hosting.yml:32`)
    lets two `main` pushes run overlapping `firebase deploy --force` and race
    the `functions-deploy/*` tag that is also the incremental baseline. Add
    `concurrency: { group: deploy-functions, cancel-in-progress: false }`. (S)
-10. **P1 · Onboarding dead-ends during a season gap** —
-    `Onboarding.jsx:105-112` maps a missing/rolling-over season doc to
-    "Check your connection" and a Retry loop. Split "no active season" from
-    "fetch failed"; show next start date and a skip-lineup path that still
-    creates the profile. (M)
+9. **P1 · Onboarding dead-ends during a season gap** —
+   `Onboarding.jsx:105-112` maps a missing/rolling-over season doc to
+   "Check your connection" and a Retry loop. Split "no active season" from
+   "fetch failed"; show next start date and a skip-lineup path that still
+   creates the profile. (M)
 
 ## Audit backlog — P2/P3 by area (pick alongside a bet; batch the S ones)
 
@@ -273,6 +266,9 @@ Effort: S ≤ half a day, M ≤ two days, L = a week.
   `rescindLeagueInvitation` callable had no UI and was deleted (git history
   `b49f583^`); if wanted, ship it with a sent-invites list on the league
   Settings tab. (S)
+- **P2** Showcase vote and Weekly Design Brief deadlines are visible only on
+  `/exchange`; add a Director's Report row when a deadline is within ~48h
+  (needs the showcase/brief state hooks the Exchange cards already use). (M)
 - **P3** `Schedule.jsx:247-270` off-season empty state has no date/CTA and a
   hard-coded `'2025'`; Podium has no nav entry (`ControlBar.jsx:147`); invite
   copy toasts can print `Code: undefined` (`Leagues/tabs/SettingsTab.tsx:241`). (S)
@@ -423,6 +419,9 @@ Effort: S ≤ half a day, M ≤ two days, L = a week.
 
 ## Recently shipped (context, newest first — prune when stale)
 
+- 2026-09-01: audit fix 10 — Uniform Studio + Design Exchange added to the
+  shared Explore links (desktop menu, signed-in header, mobile More sheet);
+  prefetch map covers `/studio`, `/exchange`, `/guide`, `/updates`.
 - 2026-09-01: audit fix 9 — deep links survive the whole auth funnel: the
   bounced route is stashed per tab (`lib/pendingRedirect`), honored by the
   landing sign-in, `/login`, `/register`, and consumed at onboarding

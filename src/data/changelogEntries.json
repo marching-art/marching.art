@@ -1,5 +1,16 @@
 [
   {
+    "id": "2026-09-01-studio-exchange-in-explore",
+    "date": "2026-09-01",
+    "title": "Uniform Studio and Design Exchange join the Explore menu",
+    "category": "improvement",
+    "summary": "The Studio and the Exchange — where the monthly Showcase vote and the Weekly Design Brief live — were only reachable through a dashboard card and a single link inside the Studio. Both now sit in the Explore menu on desktop and in the More sheet on mobile, next to the Shop, Achievements, and Records.",
+    "highlights": [
+      "Explore → Uniform Studio opens your wardrobe and the editor.",
+      "Explore → Design Exchange opens the gallery, the Showcase, and this week's Brief."
+    ]
+  },
+  {
     "id": "2026-09-01-invite-links-survive-signup",
     "date": "2026-09-01",
     "title": "Shared links now survive creating an account",
