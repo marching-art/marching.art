@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // =============================================================================
 // GAME GUIDE - THE COMPLETE, COHESIVE HOW-TO-PLAY DOCUMENT (/guide)
 // =============================================================================
@@ -75,16 +74,22 @@ const SECTION_GROUPS = [
 const SECTION_BY_ID = Object.fromEntries(SECTIONS.map((s) => [s.id, s]));
 
 const HowToPlay = () => {
+  /** @type {React.MutableRefObject<HTMLDivElement | null>} */
   const scrollRef = useRef(null);
+  /** @type {React.MutableRefObject<Record<string, HTMLElement>>} */
   const sectionRefs = useRef({});
   const [activeId, setActiveId] = useState(SECTIONS[0].id);
   const [searchQuery, setSearchQuery] = useState('');
   const query = searchQuery.trim();
   const searching = query.length >= 2;
 
-  const setSectionRef = (id) => (el) => {
-    if (el) sectionRefs.current[id] = el;
-  };
+  /** @param {string} id */
+  const setSectionRef =
+    (id) =>
+    /** @param {HTMLElement | null} el */
+    (el) => {
+      if (el) sectionRefs.current[id] = el;
+    };
 
   // Scroll-spy: highlight whichever section is nearest the top of the viewport.
   useEffect(() => {
@@ -108,20 +113,23 @@ const HowToPlay = () => {
     return () => observer.disconnect();
   }, [searching]);
 
-  const scrollToSection = useCallback((id) => {
-    setSearchQuery('');
-    setActiveId(id);
-    // Defer so the section list is mounted again after leaving search mode.
-    requestAnimationFrame(() => {
-      const root = scrollRef.current;
-      const el = sectionRefs.current[id];
-      if (root && el) {
-        const top =
-          el.getBoundingClientRect().top - root.getBoundingClientRect().top + root.scrollTop;
-        root.scrollTo({ top: Math.max(0, top - 8), behavior: 'smooth' });
-      }
-    });
-  }, []);
+  const scrollToSection = useCallback(
+    /** @param {string} id */ (id) => {
+      setSearchQuery('');
+      setActiveId(id);
+      // Defer so the section list is mounted again after leaving search mode.
+      requestAnimationFrame(() => {
+        const root = scrollRef.current;
+        const el = sectionRefs.current[id];
+        if (root && el) {
+          const top =
+            el.getBoundingClientRect().top - root.getBoundingClientRect().top + root.scrollTop;
+          root.scrollTo({ top: Math.max(0, top - 8), behavior: 'smooth' });
+        }
+      });
+    },
+    []
+  );
 
   return (
     <div className="flex flex-col h-full">
