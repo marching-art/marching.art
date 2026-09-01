@@ -29,7 +29,19 @@ function stampServiceWorker() {
 }
 
 // https://vitejs.dev/config/
+// Release identifier for error reports (src/lib/errorReporter.ts). CI and
+// Vercel both expose the commit SHA under their own names; an explicit
+// VITE_APP_VERSION still wins so a local build can label itself.
+const APP_VERSION =
+  process.env.VITE_APP_VERSION ||
+  process.env.GITHUB_SHA ||
+  process.env.VERCEL_GIT_COMMIT_SHA ||
+  'dev';
+
 export default defineConfig({
+  define: {
+    'import.meta.env.VITE_APP_VERSION': JSON.stringify(APP_VERSION.slice(0, 12)),
+  },
   plugins: [
     react({
       // Include .js files for JSX transformation (CRA compatibility)

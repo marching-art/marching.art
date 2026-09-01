@@ -9,11 +9,21 @@
 // This module gives one funnel — `reportError` — plus global `error` /
 // `unhandledrejection` listeners. It is intentionally vendor-neutral: if
 // `VITE_ERROR_REPORTING_ENDPOINT` is set, structured payloads are POSTed there
-// (Sentry tunnel, a logging endpoint, whatever); if not, it degrades to
-// `console.error` only, so the default build behaves exactly as before and
-// nothing external is contacted.
+// (Sentry tunnel, a logging endpoint, whatever). Production builds default to
+// the same-origin `/api/errors` rewrite (functions/src/triggers/clientErrors.js
+// → Cloud Logging → Error Reporting), which the CSP's connect-src 'self'
+// already allows. Set the variable to `off` to disable delivery entirely; dev
+// and test builds stay console-only so nothing external is ever contacted.
+//
+// `VITE_APP_VERSION` is stamped at build time from the commit SHA (see
+// vite.config.js `define`), so every report carries the release it came from.
 
-const ENDPOINT = import.meta.env.VITE_ERROR_REPORTING_ENDPOINT || '';
+const DEFAULT_PROD_ENDPOINT = '/api/errors';
+const configuredEndpoint = import.meta.env.VITE_ERROR_REPORTING_ENDPOINT;
+const ENDPOINT =
+  configuredEndpoint === 'off'
+    ? ''
+    : configuredEndpoint || (import.meta.env.PROD ? DEFAULT_PROD_ENDPOINT : '');
 const RELEASE = import.meta.env.VITE_APP_VERSION || 'dev';
 
 export interface ErrorContext {

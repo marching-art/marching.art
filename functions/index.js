@@ -316,6 +316,7 @@ const { announceArticleToDiscord } = require("./src/triggers/newsDiscord");
 const { getOgCardHttp, getShareHttp } = require("./src/triggers/shareCards");
 const { getResultsPageHttp } = require("./src/triggers/resultsPages");
 const { getPublicProfilePageHttp } = require("./src/triggers/publicProfilePages");
+const { reportClientErrorHttp } = require("./src/triggers/clientErrors");
 const {
   onProfileCreated,
   onStreakMilestoneReached,
@@ -555,6 +556,10 @@ module.exports = {
   // pages, so a director's identity is a shareable, indexable URL instead of
   // living behind the auth wall.
   getPublicProfilePageHttp,
+  // Backs the /api/errors rewrite (both hosts): same-origin intake for the
+  // client error reporter (src/lib/errorReporter.ts). Each report becomes a
+  // structured logger.error entry, which Cloud Error Reporting groups.
+  reportClientErrorHttp,
 
   // Article Management (Admin)
   listAllArticles,

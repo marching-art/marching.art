@@ -32,31 +32,12 @@ Effort: S ≤ half a day, M ≤ two days, L = a week.
    owner-only subcollection (touches scoring reads — larger). Decide (a) vs
    (b) before building; (a) is the smaller diff but adds a trigger per
    profile write. (M–L)
-2. **P1 · `storage.rules` has never been deployed** — no workflow or script
-   runs `firebase deploy --only storage` (`deploy-functions.yml:336,646` are
-   `firestore:rules` only), though the file is a deploy-trigger path and
-   ARCHITECTURE.md says it ships. The bucket runs whatever the console last
-   had. Change both steps to `--only firestore:rules,storage`. (S)
-3. **P1 · The CSP blocks App Check, so the enforcement flip can never go
-   green** — `firebase.json:88` / `vercel.json:63` `script-src` lacks
-   `https://www.google.com https://www.gstatic.com`, `frame-src` lacks
-   `https://www.google.com`, `connect-src` lacks
-   `https://content-firebaseappcheck.googleapis.com`, while
-   `src/api/client.ts:103` initializes `ReCaptchaV3Provider` and
-   `deploy-hosting.yml:82` ships the site key. Attestation fails silently
-   today; the console metrics the ops item below waits on stay empty. (S)
-4. **P1 · Production error reporting ships disabled** —
-   `src/lib/errorReporter.ts:31` returns unless `VITE_ERROR_REPORTING_ENDPOINT`
-   is set, and `deploy-hosting.yml:74-82` passes neither it nor
-   `VITE_APP_VERSION` (every report would be `release: 'dev'`). Add both to
-   the build env and the endpoint origin to `connect-src` in both hosting
-   configs (parity check enforces the pair). (S)
-5. **P1 · Rate budget is read-then-write, so N parallel calls all pass** —
+2. **P1 · Rate budget is read-then-write, so N parallel calls all pass** —
    `functions/src/helpers/rateLimit.js:21-44` reads `count`, then `set`s; a
    burst of 200 concurrent calls consumes one unit. With App Check off this
    is the only throttle on economy/podium/comment callables. Wrap in
    `db.runTransaction`, keep the fail-open catch. (S)
-6. **P1 · `getPublicProfile` is unauthenticated, returns the whole `corps`
+3. **P1 · `getPublicProfile` is unauthenticated, returns the whole `corps`
    map, and has no caller** — `functions/src/callable/profile.js:331-383`
    (no `assertAuth`/`assertDocId`/privacy check; handler reads `userId`,
    the dead client wrapper at `src/api/functions.ts:52` sends `uid`). Delete
@@ -66,58 +47,58 @@ Effort: S ≤ half a day, M ≤ two days, L = a week.
    `refreshScheduleRunningOrderNow`, `adminRemoveExchangeDesign`,
    `regenerateAllAvatars`) — each is a Cloud Run service. Delete or wire
    into Admin (`rescindLeagueInvitation` is a real functional gap). (S)
-7. **P1 · Class unlock levels are hard-coded wrong on the registration
+4. **P1 · Class unlock levels are hard-coded wrong on the registration
    screens** — `SeasonSetupWizard.jsx:28-31` and
    `modals/CorpsRegistrationModal.jsx:12-15` say World/Open/A unlock at
    6/5/4; `classRegistry.json` says 10/5/3. The wizard promises World Class
    at level 6 and then refuses it. Derive from `UNLOCK_LEVELS_GATED`
    (`Dashboard/sections/constants.js:26` already does). (S)
-8. **P1 · League invite deep links are dropped for exactly the people they
+5. **P1 · League invite deep links are dropped for exactly the people they
    target** — `ProtectedRoute` stores `state.from` (`App.jsx:117`) and only
    Landing's inline sign-in honors it; the Register link (`Landing.jsx:381`)
    passes no state, `Register.jsx:92` hard-codes `/onboarding`, and
    `Onboarding.jsx:532` hard-codes `/dashboard`. A new user opening
    `/leagues?join=CODE` lands on the dashboard with the code gone. Thread
    `from` through Register → Onboarding and auto-apply a pending `join`. (M)
-9. **P1 · Studio and Exchange are in no navigation surface** —
+6. **P1 · Studio and Exchange are in no navigation surface** —
    `src/utils/exploreLinks.ts`, `BottomNav.tsx` MORE_ITEMS, and
    `Layout/SiteLinksMenu.jsx` contain neither; `/exchange` (home of the
    monthly Showcase vote and the Weekly Design Brief) is reachable from one
    link inside `Studio.tsx:551`. August's biggest feature investment is
    unlisted. Add both to `GAME_LINKS`; surface Showcase/Brief deadlines in
    the Director's Report. (S)
-10. **P1 · Exchange save rewards are the one mint faucet driven by other
-    accounts and it skips `assertNotRestricted`** —
-    `functions/src/callable/designExchange.js` pays 10 CC per unique save up
-    to 100/day; `showcase.js:93,222`, `dailyPredictions.js:66`,
-    `leaguePools.js:33` all gate on restriction, this doesn't. A watchlisted
-    save-ring keeps minting. Add the guard; count only saves from accounts
-    older than N days. (S)
-11. **P1 · `deleteAccount` fans out into the 1 GiB Gemini news trigger** —
-    `helpers/accountErasure.js:164-186` rewrites every `fantasy_recaps` day
-    doc across all seasons; each write fires `onFantasyRecapUpdated`
-    (`triggers/newsGeneration.js:441`, 1 GiB, 540 s, no `maxInstances`) and
-    any day whose generation once failed regenerates five articles. Bail
-    unless scoring-relevant fields changed; add `maxInstances`. (M)
-12. **P1 · `leagueAutomation` processes 500 leagues concurrently** —
-    `scheduled/leagueAutomation.js:114,323,540` use the page size as the
-    concurrency limit (`helpers/firestorePaging.js:32`), each league doing a
-    50-profile `getAll`, a standings read, and a full matchup-collection
-    read. Decouple page size from concurrency (~20); read only the weeks
-    pairing needs. (M)
-13. **P1 · Offline lineup queue deletes the user's save on any online
+7. **P1 · Exchange save rewards are the one mint faucet driven by other
+   accounts and it skips `assertNotRestricted`** —
+   `functions/src/callable/designExchange.js` pays 10 CC per unique save up
+   to 100/day; `showcase.js:93,222`, `dailyPredictions.js:66`,
+   `leaguePools.js:33` all gate on restriction, this doesn't. A watchlisted
+   save-ring keeps minting. Add the guard; count only saves from accounts
+   older than N days. (S)
+8. **P1 · `deleteAccount` fans out into the 1 GiB Gemini news trigger** —
+   `helpers/accountErasure.js:164-186` rewrites every `fantasy_recaps` day
+   doc across all seasons; each write fires `onFantasyRecapUpdated`
+   (`triggers/newsGeneration.js:441`, 1 GiB, 540 s, no `maxInstances`) and
+   any day whose generation once failed regenerates five articles. Bail
+   unless scoring-relevant fields changed; add `maxInstances`. (M)
+9. **P1 · `leagueAutomation` processes 500 leagues concurrently** —
+   `scheduled/leagueAutomation.js:114,323,540` use the page size as the
+   concurrency limit (`helpers/firestorePaging.js:32`), each league doing a
+   50-profile `getAll`, a standings read, and a full matchup-collection
+   read. Decouple page size from concurrency (~20); read only the weeks
+   pairing needs. (M)
+10. **P1 · Offline lineup queue deletes the user's save on any online
     failure** — `src/lib/offlineLineupQueue.ts:85-96` treats every error
     while `navigator.onLine` is true as a final verdict, including cold-start
     timeouts and `unavailable`. Dequeue only on decisive codes
     (`invalid-argument`, `failed-precondition`, `permission-denied`,
     `not-found`). (S)
-14. **P1 · Streaks get a post-mortem email but never a warning** —
+11. **P1 · Streaks get a post-mortem email but never a warning** —
     `scheduled/emailNotifications.js:552` mails after the streak dies; no
     streak push type exists (`helpers/pushService.js:11-19`). The 300 CC
     streak freeze (`engagementRewards.js:26`) is never offered when it
     matters. Evening at-risk push for `loginStreak >= 3` unclaimed, deep
     linked to the streak modal. (M)
-15. **P1 · No age gate, stale privacy policy** — `Register.jsx:56-72`
+12. **P1 · No age gate, stale privacy policy** — `Register.jsx:56-72`
     validates email/password/name/terms only, while Terms §(`Terms.jsx:66`)
     asserts 13+ for an audience that skews high-school. `Privacy.jsx:22` is
     dated January 2026 and omits FCM tokens, Discord republication
@@ -126,12 +107,12 @@ Effort: S ≤ half a day, M ≤ two days, L = a week.
     `helpers/integrityStats.js`; no retention periods, legal basis, or CCPA
     notice. Add a DOB field and record the attestation; one rewrite pass
     listing each processor + purpose + retention. (M)
-16. **P1 · Functions deploy has no concurrency guard** —
+13. **P1 · Functions deploy has no concurrency guard** —
     `deploy-functions.yml` (unlike `ci.yml:19`, `deploy-hosting.yml:32`)
     lets two `main` pushes run overlapping `firebase deploy --force` and race
     the `functions-deploy/*` tag that is also the incremental baseline. Add
     `concurrency: { group: deploy-functions, cancel-in-progress: false }`. (S)
-17. **P1 · Onboarding dead-ends during a season gap** —
+14. **P1 · Onboarding dead-ends during a season gap** —
     `Onboarding.jsx:105-112` maps a missing/rolling-over season doc to
     "Check your connection" and a Retry loop. Split "no active season" from
     "fetch failed"; show next start date and a skip-lineup path that still
@@ -432,9 +413,9 @@ Effort: S ≤ half a day, M ≤ two days, L = a week.
 
 ## Operational — owner only, standing until done
 
-- **Flip App Check enforcement**: blocked on the "Fix first" CSP item (the CSP blocks
-  attestation). After that lands, check Firebase console → App Check
-  metrics for Functions; once real traffic shows verified, flip the literal
+- **Flip App Check enforcement**: the CSP fix that was blocking attestation
+  shipped 2026-09-01 (needs a hosting deploy). Once live, check Firebase
+  console → App Check metrics for Functions; once real traffic shows verified, flip the literal
   in `functions/index.js` (`enforceAppCheck: false → true`) and run a full
   deploy. Flipping blind locks out clients on stale cached bundles.
 - **Unfreeze stale league matchups** (production credentials required):
@@ -466,6 +447,11 @@ Effort: S ≤ half a day, M ≤ two days, L = a week.
 
 ## Recently shipped (context, newest first — prune when stale)
 
+- 2026-09-01: audit fixes 3–5 — `storage.rules` now deploys with the
+  Firestore rules; CSP admits reCAPTCHA/App Check on both hosts; production
+  error reports go to a new same-origin `/api/errors` function
+  (`triggers/clientErrors.js` → Cloud Logging → Error Reporting) with the
+  commit SHA stamped as the release.
 - 2026-09-01: audit fix 2 (enumeration half) — `profile/data` read now
   requires auth; the `profile` collection group is admin-only (league rosters
   fetch members by path); `usernames` is get-only, never listable. 7 new
