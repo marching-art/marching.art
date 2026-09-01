@@ -10,10 +10,15 @@ import * as profileApi from '../api/profile';
 /**
  * Hook to fetch and cache a user's profile
  */
-export function useProfile(uid: string | undefined) {
+export function useProfile(uid: string | undefined, options: { publicView?: boolean } = {}) {
+  // `publicView` reads the server-mirrored projection (another director's
+  // profile as the game lets you see it); the raw doc is for the owner.
+  const publicView = options.publicView === true;
   return useQuery({
-    queryKey: queryKeys.profile(uid || ''),
-    queryFn: () => profileApi.getProfile(uid!),
+    queryKey: publicView
+      ? [...queryKeys.profile(uid || ''), 'public']
+      : queryKeys.profile(uid || ''),
+    queryFn: () => (publicView ? profileApi.getPublicProfile(uid!) : profileApi.getProfile(uid!)),
     enabled: !!uid,
     staleTime: 2 * 60 * 1000, // Profile data stays fresh for 2 minutes
   });

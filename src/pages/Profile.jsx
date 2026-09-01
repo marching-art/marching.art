@@ -135,7 +135,17 @@ const Profile = () => {
   }, [searchParams, isOwnProfile, setSearchParams]);
 
   const profileUserId = isUsernameParam ? resolvedUid : userId || user?.uid;
-  const { data: profile, isLoading, error, isError, refetch } = useProfile(profileUserId);
+  // Own profile: the raw doc (settings, wallet, lineups). Anyone else: the
+  // server-mirrored public projection — never their lineup or picks.
+  const {
+    data: profile,
+    isLoading,
+    error,
+    isError,
+    refetch,
+  } = useProfile(profileUserId, {
+    publicView: !isOwnProfile,
+  });
 
   // When viewing someone else's profile, check whether the current user
   // commissions any league so we know whether to show the Invite button.

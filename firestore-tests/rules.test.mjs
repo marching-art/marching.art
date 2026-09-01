@@ -1624,6 +1624,26 @@ await check(
   )
 );
 
+const publicProfilePath = `artifacts/${APP}/users/${ALICE}/profile/public`;
+await testEnv.withSecurityRulesDisabled(async (ctx) => {
+  await setDoc(doc(ctx.firestore(), publicProfilePath), { username: 'alice', xp: 50 });
+});
+
+await check(
+  'signed-in third party can read another director profile/public (the mirror)',
+  assertSucceeds(getDoc(doc(mallory(), publicProfilePath)))
+);
+
+await check(
+  'unauthenticated visitor cannot read profile/public',
+  assertFails(getDoc(doc(testEnv.unauthenticatedContext().firestore(), publicProfilePath)))
+);
+
+await check(
+  'owner cannot write profile/public (server-mirrored only)',
+  assertFails(updateDoc(doc(authed(), publicProfilePath), { xp: 999999 }))
+);
+
 await testEnv.withSecurityRulesDisabled(async (ctx) => {
   await setDoc(doc(ctx.firestore(), 'usernames/alice'), { uid: ALICE });
   await setDoc(doc(ctx.firestore(), 'usernames/bob'), { uid: 'bob-uid' });

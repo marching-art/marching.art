@@ -311,6 +311,7 @@ const { getOgCardHttp, getShareHttp } = require("./src/triggers/shareCards");
 const { getResultsPageHttp } = require("./src/triggers/resultsPages");
 const { getPublicProfilePageHttp } = require("./src/triggers/publicProfilePages");
 const { reportClientErrorHttp } = require("./src/triggers/clientErrors");
+const { onProfileDataWritten } = require("./src/triggers/profileMirror");
 const {
   onProfileCreated,
   onStreakMilestoneReached,
@@ -546,6 +547,9 @@ module.exports = {
   // client error reporter (src/lib/errorReporter.ts). Each report becomes a
   // structured logger.error entry, which Cloud Error Reporting groups.
   reportClientErrorHttp,
+  // Mirrors profile/data into profile/public (helpers/publicProfileMirror):
+  // the field-allowlisted view league rosters and other directors read.
+  onProfileDataWritten,
 
   // Article Management (Admin)
   listAllArticles,

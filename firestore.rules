@@ -273,6 +273,16 @@ match /artifacts/{appId}/users/{userId} {
   // change only via Cloud Functions.
   // Creation is owned by the createUserProfile callable, which atomically
   // reserves the username server-side.
+  // The public projection of the profile (functions/src/triggers/
+  // profileMirror.js): identity, progression, trophies, and the corps map
+  // minus lineups/picks. Server-written only. Once every profile has a
+  // mirror (scripts/backfillPublicProfiles.js), profile/data below can go
+  // owner/admin-only and this becomes the ONLY cross-director read.
+  match /profile/public {
+    allow read: if isAuthenticated();
+    allow write: if false; // Backend only (mirror trigger + backfill)
+  }
+
   match /profile/data {
     allow read: if isAuthenticated();
     allow create, delete: if isAdmin();

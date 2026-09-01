@@ -461,13 +461,12 @@ function chunk<T>(items: T[], size: number): T[][] {
  * Fetch the profile documents for a set of league members, keyed by uid.
  * Members without a profile document are omitted.
  *
- * Profiles are fetched one document at a time by path (bounded concurrency).
- * This used to batch through a `profile` collection-group query filtered on
- * documentId(), but that query only works if the collection-group rule is
- * open to every signed-in user — which is the same rule that let any account
- * list EVERY profile in the database. The group rule is admin-only now, and
- * the per-document `profile/data` rule (any signed-in director) is all a
- * roster needs.
+ * Profiles are fetched one document at a time by path (bounded concurrency),
+ * from the server-mirrored public projection (`profile/public`). This used to
+ * batch through a `profile` collection-group query filtered on documentId(),
+ * but that query only works if the collection-group rule is open to every
+ * signed-in user — the same rule that let any account list EVERY profile in
+ * the database. The group rule is admin-only now.
  */
 export async function getMemberProfiles(
   memberUids: string[]
@@ -480,7 +479,12 @@ export async function getMemberProfiles(
     await Promise.all(
       batch.map(async (uid) => {
         try {
-          const profileDoc = await getDoc(doc(db, paths.userProfile(uid)));
+          // The public mirror (never lineups/picks); the raw doc only as a
+          // fallback for profiles not yet backfilled.
+          let profileDoc = await getDoc(doc(db, paths.userProfilePublic(uid)));
+          if (!profileDoc.exists()) {
+            profileDoc = await getDoc(doc(db, paths.userProfile(uid)));
+          }
           if (profileDoc.exists()) {
             profiles[uid] = projectMemberProfile(profileDoc.data());
           }

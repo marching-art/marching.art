@@ -21,6 +21,9 @@ const paths = {
   users: () => `artifacts/${ns()}/users`,
   user: (uid) => `artifacts/${ns()}/users/${uid}`,
   userProfile: (uid) => `artifacts/${ns()}/users/${uid}/profile/data`,
+  // Public projection of the profile (triggers/profileMirror.js) — what any
+  // signed-in director may read about another director.
+  userProfilePublic: (uid) => `artifacts/${ns()}/users/${uid}/profile/public`,
   userPrivate: (uid) => `artifacts/${ns()}/users/${uid}/private/data`,
   userCorps: (uid, corpsClass) => `artifacts/${ns()}/users/${uid}/corps/${corpsClass}`,
   // Per-season detail (full caption lineup + week-by-week show picks) split off

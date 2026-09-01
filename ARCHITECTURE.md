@@ -80,6 +80,9 @@ centralized — never hand-write path strings:
 ```
 users/{uid}/profile/data          # The main profile: xp, level, corpsCoin, unlockedClasses,
                                   #   cosmetics, trophies, lifetimeStats, seasonLadder, streak…
+users/{uid}/profile/public        # Server-mirrored public projection of profile/data (identity,
+                                  #   progression, trophies, corps minus lineups/picks) — what
+                                  #   league rosters and other directors read (triggers/profileMirror.js)
 users/{uid}/private/data          # Private user data
 users/{uid}/corps/{class}         # Registered corps per fantasy class (lineup, selectedShows)
 users/{uid}/corpsCoinHistory/{id} # CorpsCoin ledger (subcollection — every transaction, typed;

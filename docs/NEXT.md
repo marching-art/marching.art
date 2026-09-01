@@ -20,18 +20,8 @@ Every item below was verified in source on `776cb43`. Severity: P0 = live
 exposure or a crash on a hot path; P1 = real defect players/ops hit today.
 Effort: S ≤ half a day, M ≤ two days, L = a week.
 
-1. **P1 · Lineups and picks still live in a doc every signed-in director can
-   read** — the enumeration half of this is closed (see Recently shipped),
-   but `profile/data` still carries `corps.{class}.lineup`, `selectedShows`,
-   and `predictions`, and `docs/CAPTION_WARS_SPEC.md` §7 treats lineups as
-   secret from opponents. Rules cannot hide fields, so this needs a data
-   move: either (a) a `users/{uid}/profile/public` mirror projected by a
-   Firestore trigger with an explicit allowlist (every field the
-   other-director profile view and league rosters render), with
-   `profile/data` going owner/admin-only; or (b) moving lineup/picks into an
-   owner-only subcollection (touches scoring reads — larger). Decide (a) vs
-   (b) before building; (a) is the smaller diff but adds a trigger per
-   profile write. (M–L)
+_(all 18 actioned — see Recently shipped; the lineup-privacy flip is now an
+ops step below)_
 
 ## Audit backlog — P2/P3 by area (pick alongside a bet; batch the S ones)
 
@@ -340,6 +330,20 @@ Effort: S ≤ half a day, M ≤ two days, L = a week.
   console → App Check metrics for Functions; once real traffic shows verified, flip the literal
   in `functions/index.js` (`enforceAppCheck: false → true`) and run a full
   deploy. Flipping blind locks out clients on stale cached bundles.
+- **Flip lineup privacy** (production credentials required; two steps, in
+  order). The public mirror (`profile/public`, `triggers/profileMirror.js`)
+  ships with the next functions deploy and the client already reads it, but
+  profiles that predate the trigger have no mirror until they are next
+  written. (1) `cd functions && node src/scripts/backfillPublicProfiles.js
+--dry-run`, then `--commit`. (2) In `firestore.rules`, change
+  `match /profile/data { allow read: if isAuthenticated();` to
+  `allow read: if isOwner(userId) || isAdmin();`, update the two
+  `profile/data` read assertions in `firestore-tests/rules.test.mjs`
+  (third-party read must now FAIL), drop the raw-doc fallbacks in
+  `src/api/profile.ts getPublicProfile` and `src/api/leagues.ts
+getMemberProfiles`, and add a changelog entry ("your lineup is now private
+  to you"). Until (2) lands, lineups remain readable by any signed-in
+  director, as before.
 - **Unfreeze stale league matchups** (production credentials required):
   `node functions/src/scripts/archiveStaleLeagueMatchups.js --dry-run`, read
   the output, then `--commit`.
@@ -369,6 +373,12 @@ Effort: S ≤ half a day, M ≤ two days, L = a week.
 
 ## Recently shipped (context, newest first — prune when stale)
 
+- 2026-09-01: audit fix 1 (mirror half) — `profile/public` projection
+  (`helpers/publicProfileMirror.js`, allowlist + corps denylist, tests),
+  `onProfileDataWritten` trigger, `backfillPublicProfiles.js`, rules + rules
+  tests, and every cross-director client read (`useProfile` public view,
+  league rosters, hosted-event names) now prefers the mirror. The rules flip
+  is the ops item above.
 - 2026-09-01: audit fixes 16 + 18 — sign-up asks for a date of birth
   (client + server `ageGate` with a parity test; attestation recorded on the
   private doc), Privacy policy rewritten for today's processors, generated
