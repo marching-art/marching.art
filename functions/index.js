@@ -263,6 +263,7 @@ const {
   scoreDropPushJob,
   lineupLockReminderPushJob,
   takeTheFieldPushJob,
+  streakAtRiskPushJob,
 } = require("./src/scheduled/pushNotifications");
 const {
   autoPublishScheduledSubmissions,
@@ -575,6 +576,7 @@ module.exports = {
   scoreDropPushJob,
   lineupLockReminderPushJob,
   takeTheFieldPushJob,
+  streakAtRiskPushJob,
 
   // Push Triggers
   onLeagueMemberJoined,

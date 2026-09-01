@@ -32,13 +32,7 @@ Effort: S ≤ half a day, M ≤ two days, L = a week.
    owner-only subcollection (touches scoring reads — larger). Decide (a) vs
    (b) before building; (a) is the smaller diff but adds a trigger per
    profile write. (M–L)
-2. **P1 · Streaks get a post-mortem email but never a warning** —
-   `scheduled/emailNotifications.js:552` mails after the streak dies; no
-   streak push type exists (`helpers/pushService.js:11-19`). The 300 CC
-   streak freeze (`engagementRewards.js:26`) is never offered when it
-   matters. Evening at-risk push for `loginStreak >= 3` unclaimed, deep
-   linked to the streak modal. (M)
-3. **P1 · No age gate, stale privacy policy** — `Register.jsx:56-72`
+2. **P1 · No age gate, stale privacy policy** — `Register.jsx:56-72`
    validates email/password/name/terms only, while Terms §(`Terms.jsx:66`)
    asserts 13+ for an audience that skews high-school. `Privacy.jsx:22` is
    dated January 2026 and omits FCM tokens, Discord republication
@@ -47,12 +41,12 @@ Effort: S ≤ half a day, M ≤ two days, L = a week.
    `helpers/integrityStats.js`; no retention periods, legal basis, or CCPA
    notice. Add a DOB field and record the attestation; one rewrite pass
    listing each processor + purpose + retention. (M)
-4. **P1 · Functions deploy has no concurrency guard** —
+3. **P1 · Functions deploy has no concurrency guard** —
    `deploy-functions.yml` (unlike `ci.yml:19`, `deploy-hosting.yml:32`)
    lets two `main` pushes run overlapping `firebase deploy --force` and race
    the `functions-deploy/*` tag that is also the incremental baseline. Add
    `concurrency: { group: deploy-functions, cancel-in-progress: false }`. (S)
-5. **P1 · Onboarding dead-ends during a season gap** —
+4. **P1 · Onboarding dead-ends during a season gap** —
    `Onboarding.jsx:105-112` maps a missing/rolling-over season doc to
    "Check your connection" and a Retry loop. Split "no active season" from
    "fetch failed"; show next start date and a skip-lineup path that still
@@ -394,6 +388,10 @@ Effort: S ≤ half a day, M ≤ two days, L = a week.
 
 ## Recently shipped (context, newest first — prune when stale)
 
+- 2026-09-01: audit fix 15 — `streakAtRiskPushJob` (7 PM ET): inbox entry
+  - opt-out push for directors whose streak is alive but unclaimed, deep
+    linked to the now-routed `/dashboard?panel=streak`; Settings toggle;
+    changelog + GAMIFICATION note.
 - 2026-09-01: audit fix 14 — the offline lineup queue keeps a save on
   transient replay failures (timeouts, `unavailable`, `internal`), dequeuing
   only on a decisive backend code or after five tries; 6 new tests.

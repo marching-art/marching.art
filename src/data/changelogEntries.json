@@ -1,5 +1,16 @@
 [
   {
+    "id": "2026-09-01-streak-at-risk-nudge",
+    "date": "2026-09-01",
+    "title": "A heads-up before your streak breaks",
+    "category": "feature",
+    "summary": "If you've kept a login streak going and haven't checked in by the evening, the game now tells you before the day rolls over — not the morning after. The nudge lands in your inbox, and as a push if you've enabled them, and opens your streak panel where a Streak Freeze can cover a night you'll miss.",
+    "highlights": [
+      "Only fires for streaks worth keeping, and never when a freeze already has you covered.",
+      "Turn the push off under Settings → Push Notifications → Streak at Risk; the inbox note stays."
+    ]
+  },
+  {
     "id": "2026-09-01-exchange-save-rewards-established",
     "date": "2026-09-01",
     "title": "Exchange save rewards count saves from established directors",

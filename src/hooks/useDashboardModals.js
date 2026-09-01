@@ -33,7 +33,9 @@ import { useModalRoute } from './useModalRoute';
  * no caller anywhere in the app, so nothing could open it. A URL gives the
  * help menu and the mobile More sheet something to link to.
  */
-export const DASHBOARD_PANELS = ['lineup', 'concept', 'register', 'quickstart'];
+// `streak` is routed so a push/inbox deep link (/dashboard?panel=streak) can
+// open the streak panel with the freeze offer directly.
+export const DASHBOARD_PANELS = ['lineup', 'concept', 'register', 'quickstart', 'streak'];
 
 /**
  * @param {{ uid: string }} user
@@ -103,7 +105,12 @@ export function useDashboardModals(user, dashboardData, podiumContext = {}) {
   const [retiring, setRetiring] = useState(false);
   const [transferring, setTransferring] = useState(false);
   const [classToPurchase, setClassToPurchase] = useState(/** @type {string|null} */ (null));
-  const [showStreakModal, setShowStreakModal] = useState(false);
+  const showStreakModal = modalRoute.isOpen('streak');
+  /** @type {(next: boolean) => void} */
+  const setShowStreakModal = useCallback(
+    (next) => (next ? openPanel('streak') : closePanel()),
+    [openPanel, closePanel]
+  );
   const [showWalletModal, setShowWalletModal] = useState(false);
 
   // Handle navigation state for class purchase (from header Buy button)
