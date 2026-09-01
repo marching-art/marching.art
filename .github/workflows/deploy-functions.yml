@@ -96,6 +96,16 @@ on:
         default: false
         type: boolean
 
+# Never let two deploys run at once. A pair of pushes to main that both touch
+# functions/** used to run overlapping `firebase deploy --force` against
+# production and race the functions-deploy/* tag that the next incremental
+# deploy diffs against (so it could mis-scope itself). Queue, never cancel:
+# a deploy that is half-way through must finish, and the queued one then
+# deploys the newer ref on top of it.
+concurrency:
+  group: deploy-functions
+  cancel-in-progress: false
+
 jobs:
   # Gate: every deploy path that ships function code must pass the functions
   # test suite (same commands as the CI "functions" job) on the exact ref

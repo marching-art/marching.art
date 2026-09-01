@@ -41,12 +41,7 @@ Effort: S ≤ half a day, M ≤ two days, L = a week.
    `helpers/integrityStats.js`; no retention periods, legal basis, or CCPA
    notice. Add a DOB field and record the attestation; one rewrite pass
    listing each processor + purpose + retention. (M)
-3. **P1 · Functions deploy has no concurrency guard** —
-   `deploy-functions.yml` (unlike `ci.yml:19`, `deploy-hosting.yml:32`)
-   lets two `main` pushes run overlapping `firebase deploy --force` and race
-   the `functions-deploy/*` tag that is also the incremental baseline. Add
-   `concurrency: { group: deploy-functions, cancel-in-progress: false }`. (S)
-4. **P1 · Onboarding dead-ends during a season gap** —
+3. **P1 · Onboarding dead-ends during a season gap** —
    `Onboarding.jsx:105-112` maps a missing/rolling-over season doc to
    "Check your connection" and a Retry loop. Split "no active season" from
    "fetch failed"; show next start date and a skip-lineup path that still
@@ -388,6 +383,8 @@ Effort: S ≤ half a day, M ≤ two days, L = a week.
 
 ## Recently shipped (context, newest first — prune when stale)
 
+- 2026-09-01: audit fix 17 — `deploy-functions.yml` has a queued (never
+  cancelled) concurrency group.
 - 2026-09-01: audit fix 15 — `streakAtRiskPushJob` (7 PM ET): inbox entry
   - opt-out push for directors whose streak is alive but unclaimed, deep
     linked to the now-routed `/dashboard?panel=streak`; Settings toggle;
