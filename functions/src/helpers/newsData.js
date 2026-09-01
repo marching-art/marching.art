@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered when functions checkJs landed (functions/tsconfig.json); remove when this file is typed or cleaned up
 // Data layer for news generation: caption labels, Firestore fetch helpers
 // (active corps, time-locked historical scores, fantasy recaps, show context),
 // and the score/trend math built on the fetched data. Extracted verbatim from
@@ -621,14 +620,6 @@ function calculateTrendData(historicalData, reportDay, activeCorps) {
 
   return trends;
 }
-
-
-/**
- * Get comparative narrative between two corps' trends
- * @param {Object} trend1 - First corps trend
- * @param {Object} trend2 - Second corps trend
- * @returns {string} Comparative narrative
- */
 
 
 function identifyCaptionLeaders(dayScores, trendData) {

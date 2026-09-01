@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered when functions checkJs landed (functions/tsconfig.json); remove when this file is typed or cleaned up
 /**
  * News Generation Triggers
  *
@@ -786,6 +785,13 @@ async function fetchPreviousScores(db, year) {
 
 /**
  * Save generated content to the legacy NewsHub collection
+ */
+/**
+ * @param {FirebaseFirestore.Firestore} db
+ * @param {{category: string, date: any, content: any, metadata: any,
+ *   offSeasonDay?: number, imageResult?: any}} article - `imageResult` and
+ *   `offSeasonDay` are optional: an image is fetched when none is passed, and
+ *   live-season articles carry no off-season day.
  */
 async function saveToNewsHubLegacy(db, { category, date, content, metadata, offSeasonDay, imageResult }) {
   const newsHubRef = db.collection("news_hub");

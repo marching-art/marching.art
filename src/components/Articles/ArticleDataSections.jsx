@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Structured data panels for the full-article view (standings, top performers,
 // insights, trending corps). Fantasy buy/hold/sell picks are rendered separately
 // by RecommendationCards in pages/Article.jsx. Extracted from pages/Article.jsx.
@@ -6,6 +5,15 @@
 import { Trophy, Flame, BookOpen } from 'lucide-react';
 import { TrendingBadge } from '../Landing/NewsFeedBadges';
 
+/**
+ * @typedef {Object} ArticleData
+ * @property {Array<{rank: number, corps: string, total: number|string, change?: number|string}>} [standings]
+ * @property {Array<{corpsName?: string, corps?: string, score: number|string, director?: string, highlight?: string}>} [topPerformers]
+ * @property {Array<{metric: string, finding: string, implication: string}>} [insights]
+ * @property {Array<{corps: string, direction: string, reason?: string}>} [trendingCorps]
+ */
+
+/** @param {{article: ArticleData}} props */
 const ArticleDataSections = ({ article }) => (
   <>
     {/* Standings Data */}
@@ -34,9 +42,9 @@ const ArticleDataSections = ({ article }) => (
                 </span>
                 {item.change !== undefined && (
                   <span
-                    className={`text-xs font-data ${item.change >= 0 ? 'text-green-500' : 'text-red-500'}`}
+                    className={`text-xs font-data ${Number(item.change) >= 0 ? 'text-green-500' : 'text-red-500'}`}
                   >
-                    {item.change >= 0 ? '+' : ''}
+                    {Number(item.change) >= 0 ? '+' : ''}
                     {typeof item.change === 'number' ? item.change.toFixed(3) : item.change}
                   </span>
                 )}
@@ -99,7 +107,7 @@ const ArticleDataSections = ({ article }) => (
         panel here to avoid a dead double-render. */}
 
     {/* Trending Corps */}
-    {article.trendingCorps?.length > 0 && (
+    {article.trendingCorps && article.trendingCorps.length > 0 && (
       <div className="bg-surface-sunken border border-line p-5 mb-8">
         <h3 className="text-xs font-bold text-muted uppercase tracking-wider mb-4">
           Trending Corps

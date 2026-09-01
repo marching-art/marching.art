@@ -23,10 +23,10 @@ the live code; findings below are deduplicated, cross-checked, and ranked.
 >    it is a console-metrics decision, not a code change: enforcing before
 >    real traffic shows as verified locks out every client still running a
 >    cached bundle. The rollout steps are in ARCHITECTURE.md.
-> 2. **Sharding `historical_scores/{year}`** into a subcollection. The 1 MiB
->    cliff is now instrumented instead — the merge measures the serialized
->    size and raises an ops alert past ~700 KB — so the migration can be
->    scheduled deliberately rather than run against live scoring.
+> 2. ~~**Sharding `historical_scores/{year}`**~~ — since done: the events live
+>    in a `historical_scores/{year}/events/` subcollection
+>    (helpers/historicalScores.js), so the 1 MiB cliff is gone. Only the App
+>    Check flip above remains open from this review.
 >
 > Post-change verification: 1,252 functions tests, 676 frontend tests, 104
 > rules-emulator tests, both typechecks, all eight ratchets, and the
