@@ -4,12 +4,38 @@
 import { getCorpsClassName } from '../../utils/corps';
 import { formatSeasonName } from '../../utils/season';
 import { CAPTIONS as CAPTION_DEFS } from '../../data/captions';
+import { POINT_CAPS, UNLOCK_LEVELS_ALL } from '../../utils/classRegistry';
 
 // Re-export for backwards compatibility
 export { getCorpsClassName, formatSeasonName };
 
 // Valid classes in hierarchy order (World → Open → A → SoundSport)
 export const ALL_CLASSES = ['worldClass', 'openClass', 'aClass', 'soundSport'];
+
+// Presentation-only difficulty labels for the registration table.
+/** @type {Record<string, string>} */
+const CLASS_DIFFICULTY = {
+  worldClass: 'Elite',
+  openClass: 'Advanced',
+  aClass: 'Intermediate',
+  soundSport: 'Entry',
+};
+
+/**
+ * The class table both registration screens (SeasonSetupWizard and
+ * CorpsRegistrationModal) render. Budget and unlock level come from the
+ * class registry — both screens used to carry their own literal copies, and
+ * those copies drifted (they promised World Class at Level 6 while the
+ * registry gated it at 10, and A Class at 4 instead of 3), so a director was
+ * told a class was theirs and then refused it.
+ */
+export const CLASS_TABLE = ALL_CLASSES.map((id) => ({
+  id,
+  name: getCorpsClassName(id),
+  budget: POINT_CAPS[id],
+  difficulty: CLASS_DIFFICULTY[id],
+  reqLevel: UNLOCK_LEVELS_ALL[id] ?? 0,
+}));
 
 // Registration lock levels by class
 export const REGISTRATION_LOCKS = {

@@ -1,7 +1,9 @@
 // @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Tests for SeasonSetupWizard constants
+import registry from '../../config/classRegistry.json';
 import {
   ALL_CLASSES,
+  CLASS_TABLE,
   REGISTRATION_LOCKS,
   POINT_LIMITS,
   CLASS_NAMES,
@@ -12,6 +14,31 @@ import {
 } from './constants';
 
 describe('SeasonSetupWizard constants', () => {
+  describe('CLASS_TABLE', () => {
+    test('unlock levels and budgets come from the class registry, in hierarchy order', () => {
+      expect(CLASS_TABLE.map((c) => c.id)).toEqual(ALL_CLASSES);
+      for (const cls of CLASS_TABLE) {
+        expect(cls.reqLevel).toBe(registry.classes[cls.id].unlockLevel);
+        expect(cls.budget).toBe(registry.classes[cls.id].pointCap);
+      }
+    });
+
+    test('keeps the display names the registration screens always showed', () => {
+      expect(CLASS_TABLE.map((c) => c.name)).toEqual([
+        'World Class',
+        'Open Class',
+        'A Class',
+        'SoundSport',
+      ]);
+      expect(CLASS_TABLE.map((c) => c.difficulty)).toEqual([
+        'Elite',
+        'Advanced',
+        'Intermediate',
+        'Entry',
+      ]);
+    });
+  });
+
   describe('ALL_CLASSES', () => {
     test('contains all 4 classes in hierarchy order', () => {
       expect(ALL_CLASSES).toHaveLength(4);

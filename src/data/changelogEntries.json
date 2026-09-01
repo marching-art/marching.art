@@ -1,5 +1,16 @@
 [
   {
+    "id": "2026-09-01-registration-unlock-levels",
+    "date": "2026-09-01",
+    "title": "Registration screens show the real class unlock levels",
+    "category": "fix",
+    "summary": "The corps registration table and the new-corps dialog were quoting the wrong director levels for locked classes, so you could be told a class was yours and then find it still locked. Both now read the same unlock levels the game actually enforces.",
+    "highlights": [
+      "World Class, Open Class, and A Class each show the level that really unlocks them.",
+      "The point budgets shown per class come from the same source as the lineup builder."
+    ]
+  },
+  {
     "id": "2026-09-01-corps-program-pages",
     "date": "2026-09-01",
     "title": "Every corps now has a public program page",

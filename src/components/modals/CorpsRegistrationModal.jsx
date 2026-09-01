@@ -7,13 +7,11 @@ import { Lock, Check, X } from 'lucide-react';
 import Portal from '../Portal';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
+import { CLASS_TABLE } from '../SeasonSetupWizard/constants';
 
-const CLASSES = [
-  { id: 'worldClass', name: 'World Class', budget: '150 pts', reqLevel: 6 },
-  { id: 'openClass', name: 'Open Class', budget: '120 pts', reqLevel: 5 },
-  { id: 'aClass', name: 'A Class', budget: '60 pts', reqLevel: 4 },
-  { id: 'soundSport', name: 'SoundSport', budget: '90 pts', reqLevel: 0 },
-];
+// Budget + unlock level per class come from the class registry via the shared
+// table (a local literal copy here once drifted from the real gates).
+const CLASSES = CLASS_TABLE.map((cls) => ({ ...cls, budget: `${cls.budget} pts` }));
 
 /**
  * @param {{
