@@ -8,7 +8,7 @@ burns an hour to conclude "everything's about covered." Don't. If you ship,
 cut, or discover something, edit THIS file in the same PR — that's the whole
 maintenance contract.
 
-_Last updated: 2026-09-01 (full-site audit folded in; nothing actioned yet)._
+_Last updated: 2026-09-01 (working through "Fix first" in order)._
 
 ## In progress
 
@@ -20,12 +20,6 @@ Every item below was verified in source on `776cb43`. Severity: P0 = live
 exposure or a crash on a hot path; P1 = real defect players/ops hit today.
 Effort: S ≤ half a day, M ≤ two days, L = a week.
 
-1. **P0 · `/api/news` cache HIT falls through into the miss path** —
-   `functions/src/triggers/newsFeed.js:490-498` has no `return` after
-   `res.json(...)`, so every cache hit still runs the `collectionGroup`
-   query + one `.count()` per article, rewrites the cache doc, then throws
-   `ERR_HTTP_HEADERS_SENT` (logged as an error on every request). One-line
-   fix; the cache has never actually saved a read. (S)
 2. **P0 · Profile read surface leaks lineups and enables enumeration** —
    `firestore.rules:270` `profile/data` is `allow read: if true` and carries
    `corps.{class}.lineup`, `selectedShows`, and `predictions`, which
@@ -438,7 +432,7 @@ Effort: S ≤ half a day, M ≤ two days, L = a week.
 
 ## Operational — owner only, standing until done
 
-- **Flip App Check enforcement**: blocked on "Fix first" #4 (the CSP blocks
+- **Flip App Check enforcement**: blocked on the "Fix first" CSP item (the CSP blocks
   attestation). After that lands, check Firebase console → App Check
   metrics for Functions; once real traffic shows verified, flip the literal
   in `functions/index.js` (`enforceAppCheck: false → true`) and run a full
@@ -446,7 +440,7 @@ Effort: S ≤ half a day, M ≤ two days, L = a week.
 - **Unfreeze stale league matchups** (production credentials required):
   `node functions/src/scripts/archiveStaleLeagueMatchups.js --dry-run`, read
   the output, then `--commit`.
-- **Deploy `storage.rules` once** after "Fix first" #3 wires it into the
+- **Deploy `storage.rules` once** after the "Fix first" storage-rules item wires it into the
   workflow; confirm in the console that the bucket no longer runs the
   permissive defaults.
 - **Prune dead Firestore indexes** in the console after the
@@ -472,6 +466,8 @@ Effort: S ≤ half a day, M ≤ two days, L = a week.
 
 ## Recently shipped (context, newest first — prune when stale)
 
+- 2026-09-01: audit fix 1 — `/api/news` cache HIT now returns (regression
+  test added); ts-nocheck 96 → 95.
 - 2026-09-01: **full-site audit** (rules, backend, frontend, CI, product,
   legal) folded into this file — 18 P0/P1 items in "Fix first", ~70 P2/P3
   by area. Baseline at audit time: typecheck clean, lint 0 errors / 13

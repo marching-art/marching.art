@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered when functions checkJs landed (functions/tsconfig.json); remove when this file is typed or cleaned up
 /**
  * Podium Class Firestore layout + state hydration (Phase 2).
  *
@@ -386,7 +385,12 @@ async function loadScheduleLocations(db, seasonData) {
   return locations;
 }
 
-/** All auto-attended competition days for a corps (majors + championships). */
+/**
+ * All auto-attended competition days for a corps (majors + championships).
+ * @param {string} uid
+ * @param {string} seasonUid
+ * @param {{ division?: string, easternAssignments?: Record<string, number> }} [opts]
+ */
 function autoDaysFor(uid, seasonUid, { division, easternAssignments } = {}) {
   return [
     28,
@@ -634,6 +638,8 @@ function spendByCategory(budget) {
  * returns to the primary CorpsCoin wallet — a corps operating account is swept
  * back to its parent at archival, never left to vanish. Line items reconcile:
  * committed + earned - spent === refunded.
+ * @param {any} state
+ * @param {{ seasonUid?: string|null, seasonIndex?: number|null }} [opts]
  */
 function buildSeasonFinancialReport(state, { seasonUid, seasonIndex } = {}) {
   const budget = (state && state.budget) || initBudget();
