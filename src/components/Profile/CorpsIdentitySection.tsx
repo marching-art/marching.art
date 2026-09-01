@@ -21,7 +21,19 @@ import type { EquippedUniform, UniformColorway } from '../../types/uniform';
 interface CorpsIdentitySectionProps {
   corps: Record<string, CorpsData | undefined> | undefined;
   isOwnProfile: boolean;
+  /** Enables the public program-page links; without a username there is no
+   *  public page to link to. */
+  username?: string | null;
 }
+
+// Mirrors SLUG_BY_CLASS in functions/src/helpers/shareCards.js — the public
+// program-page URLs (/d/{username}/{slug}). Explicit, never derived.
+const PROGRAM_SLUGS: Record<string, string> = {
+  worldClass: 'world-class',
+  openClass: 'open-class',
+  aClass: 'a-class',
+  soundSport: 'soundsport',
+};
 
 interface IdentityCard {
   /** Unique card key — `${classKey}` or `${classKey}-alt`. */
@@ -44,7 +56,11 @@ function Swatch({ hex, label }: { hex: string; label: string }) {
   );
 }
 
-export default function CorpsIdentitySection({ corps, isOwnProfile }: CorpsIdentitySectionProps) {
+export default function CorpsIdentitySection({
+  corps,
+  isOwnProfile,
+  username,
+}: CorpsIdentitySectionProps) {
   const cards: IdentityCard[] = useMemo(() => {
     const out: IdentityCard[] = [];
     for (const classKey of PROFILE_CORPS_CLASS_ORDER) {
@@ -174,6 +190,30 @@ export default function CorpsIdentitySection({ corps, isOwnProfile }: CorpsIdent
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {/* Public program pages — one per corps, server-rendered outside the
+            SPA (plain anchors, not <Link>: /d/** has no React route). The
+            page unfurls in chats, so this is the corps' shareable home. */}
+        {username && cards.length > 0 && (
+          <div className="px-3 pb-3 flex flex-wrap items-center gap-2">
+            <span className="text-[9px] font-bold uppercase tracking-wider text-muted">
+              Program pages
+            </span>
+            {[...new Map(cards.map((card) => [card.classKey, card])).values()].map((card) =>
+              PROGRAM_SLUGS[card.classKey] ? (
+                <a
+                  key={card.classKey}
+                  href={`/d/${encodeURIComponent(username)}/${PROGRAM_SLUGS[card.classKey]}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[10px] font-bold text-interactive hover:text-white border border-line px-2 py-0.5"
+                >
+                  {card.corpsName} ↗
+                </a>
+              ) : null
+            )}
           </div>
         )}
       </Section>

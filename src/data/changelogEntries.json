@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-09-01-corps-program-pages",
+    "date": "2026-09-01",
+    "title": "Every corps now has a public program page",
+    "category": "feature",
+    "summary": "Your corps has a home on the open web: a shareable program page with its show concept, its uniform looks, and its season-by-season record — no account needed to view it. Send the link anywhere and it unfurls with a card in your corps' own colors, drawn from your equipped uniform. Find the links in the Corps Identity section of your profile; your director page links to them too.",
+    "highlights": [
+      "One page per corps at marching.art/d/your-username/your-class, alongside your existing public director page.",
+      "Shows this season's program (title, theme, music, drill), your corps and guard looks with their colorways, and up to ten seasons of history with scores and placements.",
+      "Shared links unfurl with a program card in your uniform's palette, show title included.",
+      "Same privacy rules as your director page: a private profile hides its program pages, lineups never appear, and SoundSport pages stay ratings-only with no numeric scores."
+    ]
+  },
+  {
     "id": "2026-08-31-one-night-slate",
     "date": "2026-08-31",
     "title": "One-Night Slate: a league format where your best show decides the week",

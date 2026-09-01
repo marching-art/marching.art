@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // JourneyPanel - First Season Journey quest line
 // Walks a new director through every core mechanic, one step at a time, with
 // server-validated XP + CorpsCoin rewards per step. Completion lives in
@@ -32,6 +31,7 @@ import { getJourneySteps, JOURNEY_STEPS } from '../../../utils/journeyProgress';
 
 // How each shared step is presented here: its icon, and the shortcut offered
 // while it is still out of reach. Keyed by the step ids in journeyProgress.
+/** @type {Record<string, {icon: React.ComponentType<{className?: string}>, action: {type: string, label: string, to?: string} | null}>} */
 const STEP_PRESENTATION = {
   full_lineup: { icon: Music, action: { type: 'lineup', label: 'Edit Lineup' } },
   register_shows: {
@@ -46,8 +46,9 @@ const STEP_PRESENTATION = {
   finish_season: { icon: Flag, action: null },
 };
 
-const JourneyPanel = memo(({ profile, resultCount, onEditLineup, onSetConcept }) => {
-  const [claiming, setClaiming] = useState(null); // stepId being claimed
+/** @param {{profile: any, resultCount?: number, onEditLineup?: () => void, onSetConcept?: () => void}} props */
+const JourneyPanelInner = ({ profile, resultCount = 0, onEditLineup, onSetConcept }) => {
+  const [claiming, setClaiming] = useState(/** @type {string|null} */ (null)); // stepId being claimed
 
   const steps = useMemo(
     () =>
@@ -63,6 +64,7 @@ const JourneyPanel = memo(({ profile, resultCount, onEditLineup, onSetConcept })
   // The journey is finished — retire the panel
   if (!profile || doneCount === JOURNEY_STEPS.length) return null;
 
+  /** @param {{id: string, title: string}} step */
   const handleClaim = async (step) => {
     setClaiming(step.id);
     try {
@@ -75,7 +77,7 @@ const JourneyPanel = memo(({ profile, resultCount, onEditLineup, onSetConcept })
         if (result.data.coinAwarded > 0) showCoinGain(result.data.coinAwarded);
       }
     } catch (error) {
-      toast.error(error.message || 'Could not complete step');
+      toast.error(error instanceof Error ? error.message : 'Could not complete step');
     } finally {
       setClaiming(null);
     }
@@ -96,7 +98,7 @@ const JourneyPanel = memo(({ profile, resultCount, onEditLineup, onSetConcept })
         if (claim.data.coinAwarded > 0) showCoinGain(claim.data.coinAwarded);
       }
     } catch (error) {
-      toast.error(error.message || 'Could not join the rookie league');
+      toast.error(error instanceof Error ? error.message : 'Could not join the rookie league');
     } finally {
       setClaiming(null);
     }
@@ -175,7 +177,7 @@ const JourneyPanel = memo(({ profile, resultCount, onEditLineup, onSetConcept })
               {!step.done && !step.claimable && (
                 <div className="ml-8 mt-1 flex items-center justify-between gap-2">
                   <p className="text-[10px] text-muted">{step.description}</p>
-                  {step.action?.type === 'link' && (
+                  {step.action?.type === 'link' && step.action.to && (
                     <Link
                       to={step.action.to}
                       className="text-[10px] font-bold text-interactive hover:text-interactive-hover whitespace-nowrap"
@@ -216,8 +218,9 @@ const JourneyPanel = memo(({ profile, resultCount, onEditLineup, onSetConcept })
       </div>
     </div>
   );
-});
+};
 
+const JourneyPanel = memo(JourneyPanelInner);
 JourneyPanel.displayName = 'JourneyPanel';
 
 export default JourneyPanel;

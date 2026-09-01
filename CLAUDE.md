@@ -3,6 +3,16 @@
 Guidance Claude Code loads automatically each session. Keep it short; link out
 for detail.
 
+## "What's next?" is answered by docs/NEXT.md — not by re-auditing
+
+[docs/NEXT.md](docs/NEXT.md) is the living backlog: current priorities, the
+owner-only ops items, and the evergreen ratchets. When asked what to work on,
+read it and pick — do NOT re-survey the historical audit docs
+(`SITE_DEEP_DIVE_2026-07.md`, `CODE_ANALYSIS_2026-07.md`,
+`LEAGUES_AUDIT_AND_PLAN.md`); everything ranked in them has been actioned and
+they exist as records, not queues. The contract that keeps this true: whenever
+you ship, cut, or discover work, update NEXT.md **in the same PR**.
+
 ## Formatting is automatic — don't fight it
 
 Prettier runs on staged files via the `.githooks/pre-commit` hook (wired up by

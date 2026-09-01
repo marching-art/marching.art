@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered when functions checkJs landed (functions/tsconfig.json); remove when this file is typed or cleaned up
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { paths } = require("../helpers/paths");
 const { logger } = require("firebase-functions/v2");
@@ -637,7 +636,7 @@ const purchaseStreakFreeze = onCall({ cors: true }, async (request) => {
         : null;
 
       if (lastFreezePurchase) {
-        const daysSinceFreeze = (now - lastFreezePurchase) / (1000 * 60 * 60 * 24);
+        const daysSinceFreeze = (now.getTime() - lastFreezePurchase.getTime()) / (1000 * 60 * 60 * 24);
         if (daysSinceFreeze < 7) {
           const daysRemaining = Math.ceil(7 - daysSinceFreeze);
           throw new HttpsError(
@@ -729,7 +728,7 @@ const getStreakStatus = onCall({ cors: true }, async (request) => {
     // Calculate streak status
     const hasActiveFreeze = streakFreezeUntil && now < streakFreezeUntil;
     const freezeCooldownDays = lastFreezePurchase
-      ? Math.max(0, 7 - Math.floor((now - lastFreezePurchase) / (1000 * 60 * 60 * 24)))
+      ? Math.max(0, 7 - Math.floor((now.getTime() - lastFreezePurchase.getTime()) / (1000 * 60 * 60 * 24)))
       : 0;
     const canPurchaseFreeze = freezeCooldownDays === 0 && !hasActiveFreeze;
 
@@ -737,7 +736,7 @@ const getStreakStatus = onCall({ cors: true }, async (request) => {
     let hoursUntilAtRisk = null;
     let isAtRisk = false;
     if (lastLogin) {
-      const hoursSinceLogin = (now - lastLogin) / (1000 * 60 * 60);
+      const hoursSinceLogin = (now.getTime() - lastLogin.getTime()) / (1000 * 60 * 60);
       if (hoursSinceLogin >= 18 && hoursSinceLogin < 24) {
         isAtRisk = true;
         hoursUntilAtRisk = 24 - hoursSinceLogin;

@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered when functions checkJs landed (functions/tsconfig.json); remove when this file is typed or cleaned up
 /**
  * NewsGenerationService - Gemini AI + Imagen Integration for DCI Recaps
  *
@@ -58,7 +57,6 @@ const {
   getScoresForDay,
   applyScheduleLocations,
   calculateTrendData,
-  identifyCaptionLeaders,
 } = require("./newsData");
 const {
   initializeGemini,
@@ -220,7 +218,6 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay, onArti
     // Trend/caption/brief data is derived entirely from the DCI day scores and is
     // only consumed by Articles 1–4; skip it when there are no DCI scores.
     const trendData = hasDciScores ? calculateTrendData(historicalData, reportDay, activeCorps) : {};
-    const captionLeaders = hasDciScores ? identifyCaptionLeaders(dayScores, trendData) : {};
 
     // Field-relative season context (percentile strength per caption family vs
     // the whole field this season). One extra read; degrades to {} when the
@@ -299,17 +296,17 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay, onArti
     if (hasDciScores) {
       // Article 1: DCI DAILY - Today's competition results with score breakdown
       await persist(await generateDciDailyArticle({
-        reportDay, dayScores, trendData, seasonContext, activeCorps, showContext, competitionContext, db, ledger, brief, isLiveSeason
+        reportDay, dayScores, trendData, seasonContext, showContext, competitionContext, ledger, brief, isLiveSeason
       }));
 
       // Article 2: DCI FEATURE - Single corps season progress spotlight
       await persist(await generateDciFeatureArticle({
-        reportDay, dayScores, trendData, seasonContext, activeCorps, showContext, competitionContext, db, ledger, brief, isLiveSeason
+        reportDay, dayScores, trendData, seasonContext, showContext, competitionContext, db, ledger, brief, isLiveSeason
       }));
 
       // Article 3: DCI RECAP - Pure caption deep-dive (GE, Visual, Music). Descriptive, not prescriptive.
       await persist(await generateDciRecapArticle({
-        reportDay, dayScores, trendData, seasonContext, captionLeaders, activeCorps, showContext, competitionContext, db, ledger, brief, isLiveSeason
+        reportDay, dayScores, trendData, seasonContext, showContext, competitionContext, ledger, brief, isLiveSeason
       }));
 
       // Article 4: the Podium Report daily power rankings (decision 31) take
@@ -333,7 +330,7 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay, onArti
       } else {
         // FANTASY MARKET REPORT - Owns buy/hold/sell picks for the day (descriptive caption analysis already done in Article 3).
         await persist(await generateFantasyRecapArticle({
-          reportDay, dayScores, trendData, seasonContext, activeCorps, showContext, competitionContext, db, ledger, brief, isLiveSeason
+          reportDay, dayScores, trendData, seasonContext, activeCorps, competitionContext, ledger, brief, isLiveSeason
         }));
       }
     }

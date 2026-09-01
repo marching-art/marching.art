@@ -383,6 +383,55 @@ function buildUniformCardSvg({ codeDoc, code }) {
 }
 
 // -----------------------------------------------------------------------------
+// CORPS PROGRAM CARD
+// -----------------------------------------------------------------------------
+
+/**
+ * Program-page card for /d/{username}/{classSlug}: the corps name, its
+ * director, this season's show title, and — when the corps has an equipped
+ * uniform — the same flat-lay glyph the uniform cards draw, in the corps'
+ * own palette.
+ *
+ * @param {Object} params
+ * @param {string} params.corpsName
+ * @param {string} params.classKey
+ * @param {string} params.displayName  Director's display name.
+ * @param {string} params.username     Canonical username.
+ * @param {string} [params.showName]   This season's program title, if set.
+ * @param {Object} [params.uniform]    Raw equipped-uniform snapshot
+ *   (colorway + figure); every color is validated inside uniformGlyph.
+ * @returns {string | null}
+ */
+function buildCorpsCardSvg({ corpsName, classKey, displayName, username, showName, uniform }) {
+  if (!corpsName || !username) return null;
+  const classLabel = CLASS_LABELS[classKey] || classKey;
+  const cw = (uniform && uniform.colorway) || {};
+  const swatches = [
+    firstHex(cw.primary, "#6d1a26"),
+    firstHex(cw.secondary, "#d9a41c"),
+    firstHex(cw.accent, "#ece2cc"),
+  ]
+    .map(
+      (hex, i) =>
+        `<rect x="${80 + i * 96}" y="330" width="84" height="84" fill="${hex}" stroke="${COLORS.line}" stroke-width="1"/>`
+    )
+    .join("\n  ");
+
+  return `<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="630" fill="${COLORS.background}"/>
+  <rect x="0" y="0" width="1200" height="6" fill="${COLORS.accent}"/>
+  <text x="80" y="86" font-family="${FONT_STACK}" font-size="30" font-weight="bold" fill="${COLORS.accent}">marching.art</text>
+  <text x="80" y="118" font-family="${FONT_STACK}" font-size="18" letter-spacing="3" fill="${COLORS.muted}">FANTASY DRUM CORPS · ${escapeXml(String(classLabel).toUpperCase())}</text>
+  <text x="80" y="190" font-family="${FONT_STACK}" font-size="54" font-weight="bold" fill="${COLORS.text}">${escapeXml(clamp(corpsName, 26))}</text>
+  <text x="80" y="234" font-family="${FONT_STACK}" font-size="26" fill="${COLORS.muted}">directed by ${escapeXml(clamp(displayName || "a director", 30))} · @${escapeXml(username)}</text>
+  ${showName ? `<text x="80" y="290" font-family="${FONT_STACK}" font-size="30" font-style="italic" fill="${COLORS.text}">“${escapeXml(clamp(showName, 40))}”</text>` : ""}
+  ${swatches}
+  ${uniform ? uniformGlyph(uniform, 900, 90) : ""}
+  <text x="80" y="608" font-family="${FONT_STACK}" font-size="20" fill="${COLORS.muted}">marching.art/d/${escapeXml(username)}/${escapeXml(SLUG_BY_CLASS[classKey] || "")}</text>
+</svg>`;
+}
+
+// -----------------------------------------------------------------------------
 // SHARE PAGE HTML
 // -----------------------------------------------------------------------------
 
@@ -446,16 +495,34 @@ const isValidClassKey = (value) => Object.prototype.hasOwnProperty.call(CLASS_LA
 // Username shape enforced by the updateUsername callable (callable/profile.js).
 const USERNAME_SEGMENT = /^[A-Za-z0-9_]{3,15}$/;
 
+// URL slugs for the per-corps program pages (/d/{username}/{slug} and their
+// /api/og/corps/** cards). Defined HERE, not in publicProfilePages.js, because
+// that module imports from this one and the slugs are needed on both sides —
+// an explicit map, not derived from class keys, so a class-registry rename can
+// never silently move every public program URL.
+const CLASS_SLUGS = {
+  "world-class": "worldClass",
+  "open-class": "openClass",
+  "a-class": "aClass",
+  soundsport: "soundSport",
+};
+/** classKey -> slug (inverse of CLASS_SLUGS). */
+const SLUG_BY_CLASS = Object.fromEntries(
+  Object.entries(CLASS_SLUGS).map(([slug, key]) => [key, slug])
+);
+
 /**
  * Parse an /api/og request path into a card descriptor.
  * Shapes: /api/og/scores/{seasonUid}/{day}/{classKey}.png
  *         /api/og/champion/{seasonId}/{classKey}.png
  *         /api/og/director/{username}.png
+ *         /api/og/corps/{username}/{classSlug}.png
  *
  * @param {string} path
  * @returns {{type: 'scores', seasonUid: string, day: number, classKey: string}
  *   | {type: 'champion', seasonId: string, classKey: string}
  *   | {type: 'director', username: string}
+ *   | {type: 'corps', username: string, classKey: string}
  *   | {type: 'uniform', code: string}
  *   | null}
  */
@@ -487,6 +554,13 @@ function parseOgPath(path) {
     const username = parts[3].replace(/\.png$/, "");
     if (!USERNAME_SEGMENT.test(username)) return null;
     return { type: "director", username };
+  }
+
+  if (kind === "corps" && parts.length === 5) {
+    const username = parts[3];
+    const classKey = CLASS_SLUGS[parts[4].replace(/\.png$/, "")];
+    if (!USERNAME_SEGMENT.test(username) || !classKey) return null;
+    return { type: "corps", username, classKey };
   }
 
   if (kind === "uniform" && parts.length === 4) {
@@ -547,10 +621,13 @@ function parseSharePath(path) {
 
 module.exports = {
   SITE_URL,
+  CLASS_SLUGS,
+  SLUG_BY_CLASS,
   buildCardSvg,
   buildScoresCardSvg,
   buildChampionCardSvg,
   buildDirectorCardSvg,
+  buildCorpsCardSvg,
   buildUniformCardSvg,
   buildShareHtml,
   parseOgPath,

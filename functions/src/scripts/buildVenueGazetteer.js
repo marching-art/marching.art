@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered when functions checkJs landed (functions/tsconfig.json); remove when this file is typed or cleaned up
 /**
  * Podium Phase 0.1 — Venue Gazetteer builder.
  *
@@ -172,6 +171,7 @@ function foldAccents(s) {
 }
 
 // City-name alias rewrites tried during matching (both directions where listed).
+/** @type {Array<[RegExp, string]>} */
 const CITY_ALIASES = [
   [/\bsaint\b/, "st"],
   [/\bst\b/, "saint"],
@@ -333,6 +333,8 @@ async function main() {
 
   let allCities;
   try {
+    // @ts-expect-error -- optional dev-only dependency, installed ad hoc
+    // (npm install --no-save), so it ships no type declarations here.
     allCities = require("all-the-cities");
   } catch {
     console.error(
@@ -556,6 +558,8 @@ async function main() {
   // the tz-lookup dev dependency; if it's absent, keep the geocode-only build
   // rather than fail — a follow-up `node src/scripts/venueTimezones.js` stamps it.
   try {
+    // @ts-expect-error -- optional dev-only dependency, installed ad hoc
+    // (npm install --no-save), so it ships no type declarations here.
     const tzLookup = require("tz-lookup");
     const { enrichVenuesWithTimezones } = require("./venueTimezones");
     const { stats: tzStats, reviews } = enrichVenuesWithTimezones(output, tzLookup);

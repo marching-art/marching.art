@@ -269,3 +269,60 @@ describe("buildShareHtml", () => {
     assert.ok(html.includes("desc &amp; &lt;more&gt;"));
   });
 });
+
+describe("corps program card", () => {
+  const { buildCorpsCardSvg, parseOgPath: parseOg } = require("./shareCards");
+
+  test("parseOgPath accepts /api/og/corps/{username}/{slug}.png", () => {
+    assert.deepEqual(parseOg("/api/og/corps/alice/world-class.png"), {
+      type: "corps",
+      username: "alice",
+      classKey: "worldClass",
+    });
+    assert.deepEqual(parseOg("/api/og/corps/Rohn_99/soundsport.png"), {
+      type: "corps",
+      username: "Rohn_99",
+      classKey: "soundSport",
+    });
+  });
+
+  test("parseOgPath rejects unknown slugs and bad usernames", () => {
+    assert.equal(parseOg("/api/og/corps/alice/worldClass.png"), null);
+    assert.equal(parseOg("/api/og/corps/alice/nope.png"), null);
+    assert.equal(parseOg("/api/og/corps/a!/world-class.png"), null);
+    assert.equal(parseOg("/api/og/corps/alice.png"), null);
+  });
+
+  test("renders the corps, director, show title and program URL — escaped", () => {
+    const svg = buildCorpsCardSvg({
+      corpsName: 'Aurora <Vanguard> & Co',
+      classKey: "worldClass",
+      displayName: "Alice",
+      username: "alice",
+      showName: "Beneath the Static",
+      uniform: { colorway: { primary: "#112233", secondary: "#445566", accent: "#778899" } },
+    });
+    assert.ok(svg.includes("Aurora &lt;Vanguard&gt; &amp; Co"));
+    assert.ok(!svg.includes("<Vanguard>"));
+    assert.ok(svg.includes("Beneath the Static"));
+    assert.ok(svg.includes("marching.art/d/alice/world-class"));
+    // The design's own palette drives the swatches.
+    assert.ok(svg.includes("#112233"));
+  });
+
+  test("a corps with no uniform still gets a card, on fallback colors", () => {
+    const svg = buildCorpsCardSvg({
+      corpsName: "Plain Corps",
+      classKey: "aClass",
+      displayName: "Bob",
+      username: "bob",
+    });
+    assert.ok(svg.includes("Plain Corps"));
+    assert.ok(svg.includes("A CLASS"));
+  });
+
+  test("no corps name or username -> no card", () => {
+    assert.equal(buildCorpsCardSvg({ corpsName: "", classKey: "aClass", username: "b" }), null);
+    assert.equal(buildCorpsCardSvg({ corpsName: "X", classKey: "aClass", username: "" }), null);
+  });
+});

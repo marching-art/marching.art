@@ -215,3 +215,122 @@ describe("buildPrivateDirectorPageHtml", () => {
     assert.equal(html.includes("<b>x</b>"), false);
   });
 });
+
+// -----------------------------------------------------------------------------
+// PROGRAM PAGES
+// -----------------------------------------------------------------------------
+
+const { pickPublicProgram, buildProgramPageHtml, CLASS_SLUGS } = require("./publicProfilePages");
+
+const programProfile = () => ({
+  displayName: "Alice Director",
+  username: "alice",
+  email: "leak@example.com",
+  corps: {
+    worldClass: {
+      corpsName: "Aurora Vanguard",
+      showConcept: {
+        showName: "Beneath the Static",
+        theme: "Metamorphosis & Transformation",
+        musicSource: "Original composition",
+        drillStyle: "Classic symmetric",
+      },
+      uniform: { name: "Home look", colorway: { primary: "#112233", secondary: "#445566", accent: "#778899" } },
+      lineup: { GE1: "secret pick" },
+      selectedShows: { 1: ["show"] },
+      seasonHistory: [
+        { seasonName: "s_2025_a", corpsName: "Aurora", totalSeasonScore: 71.2, placement: 12, showsAttended: 9 },
+        { seasonName: "s_2026_b", corpsName: "Aurora Vanguard", totalSeasonScore: 84.5, placement: 3, showsAttended: 11 },
+      ],
+    },
+    soundSport: {
+      corpsName: "Static Cling",
+      seasonHistory: [
+        { seasonName: "s_2026_b", corpsName: "Static Cling", totalSeasonScore: 61.0, placement: null, showsAttended: 6 },
+      ],
+    },
+  },
+});
+
+describe("parseDirectorPath program shapes", () => {
+  test("accepts every known class slug", () => {
+    for (const [slug, classKey] of Object.entries(CLASS_SLUGS)) {
+      assert.deepEqual(parseDirectorPath(`/d/alice/${slug}`), { username: "alice", classKey });
+    }
+  });
+
+  test("an unknown slug is a 404, never the director page", () => {
+    assert.equal(parseDirectorPath("/d/alice/worldClass"), null);
+    assert.equal(parseDirectorPath("/d/alice/nonsense"), null);
+    assert.equal(parseDirectorPath("/d/alice/world-class/extra"), null);
+  });
+});
+
+describe("pickPublicProgram", () => {
+  test("returns null when the class fields no corps", () => {
+    assert.equal(pickPublicProgram(programProfile(), "openClass"), null);
+    assert.equal(pickPublicProgram({}, "worldClass"), null);
+    assert.equal(pickPublicProgram(null, "worldClass"), null);
+  });
+
+  test("lineups and show picks never pass the boundary", () => {
+    const program = pickPublicProgram(programProfile(), "worldClass");
+    const serialized = JSON.stringify(program);
+    assert.ok(!serialized.includes("secret pick"));
+    assert.ok(!serialized.includes("selectedShows"));
+    assert.ok(!serialized.includes("leak@example.com"));
+  });
+
+  test("season history is newest-first and score/placement survive", () => {
+    const program = pickPublicProgram(programProfile(), "worldClass");
+    assert.equal(program.seasons.length, 2);
+    assert.equal(program.seasons[0].seasonName, "s_2026_b");
+    assert.equal(program.seasons[0].placement, 3);
+    assert.equal(program.seasons[1].totalSeasonScore, 71.2);
+  });
+
+  test("a malformed show concept drops rather than rendering junk", () => {
+    const profile = programProfile();
+    profile.corps.worldClass.showConcept = { theme: 12345 };
+    const program = pickPublicProgram(profile, "worldClass");
+    assert.equal(program.showConcept, null);
+  });
+});
+
+describe("buildProgramPageHtml", () => {
+  test("renders the show, the look, and the record — escaped", () => {
+    const profile = programProfile();
+    profile.corps.worldClass.corpsName = 'Aurora <script>alert(1)</script>';
+    const html = buildProgramPageHtml({ username: "alice", profile, classKey: "worldClass" });
+    assert.ok(html.includes("&lt;script&gt;"));
+    assert.ok(!html.includes("<script>alert"));
+    assert.ok(html.includes("Beneath the Static"));
+    assert.ok(html.includes("84.500"));
+    assert.ok(html.includes('/d/alice/world-class'));
+    assert.ok(html.includes("/api/og/corps/alice/world-class.png"));
+  });
+
+  test("returns null for a class with no corps, so the route 404s", () => {
+    assert.equal(
+      buildProgramPageHtml({ username: "alice", profile: programProfile(), classKey: "aClass" }),
+      null
+    );
+  });
+
+  test("SoundSport pages carry no numeric scores at all", () => {
+    const html = buildProgramPageHtml({
+      username: "alice",
+      profile: programProfile(),
+      classKey: "soundSport",
+    });
+    assert.ok(html.includes("Static Cling"));
+    assert.ok(!html.includes("61.0"));
+    assert.ok(html.includes("participation-focused"));
+  });
+
+  test("the director page links each corps to its program page", () => {
+    const html = buildDirectorPageHtml({ username: "alice", profile: programProfile() });
+    assert.ok(html.includes("/d/alice/world-class"));
+    assert.ok(html.includes("/d/alice/soundsport"));
+  });
+});

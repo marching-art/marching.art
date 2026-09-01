@@ -1,5 +1,9 @@
 # marching.art — Site Deep Dive & Recommendations (July 2026)
 
+> **HISTORICAL RECORD.** Every recommendation and follow-up in this document
+> has shipped. It is kept for its reasoning, not as a queue — current
+> priorities live in [NEXT.md](NEXT.md).
+
 A full audit of the site across six dimensions — frontend architecture, backend
 Cloud Functions, security, performance/cost, testing/CI, and product/engagement —
 followed by five recommendations expected to produce substantial improvement.

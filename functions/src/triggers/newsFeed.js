@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered when functions checkJs landed (functions/tsconfig.json); remove when this file is typed or cleaned up
 // News feed callables: cached daily/recent news retrieval, engagement data,
 // and the public HTTP feed endpoint. Extracted verbatim from
 // triggers/newsGeneration.js.
@@ -101,7 +100,7 @@ function getNewsCacheKey(category, limit) {
 
 /**
  * Get cached news feed if valid
- * @returns {Object|null} Cached data or null if expired/missing
+ * @returns {Promise<Object|null>} Cached data or null if expired/missing
  */
 async function getCachedNewsFeed(db, cacheKey) {
   try {
@@ -453,8 +452,10 @@ exports.getNewsFeedHttp = onRequest(
 
     // Parse query parameters. Unknown categories are coerced to "all" (null)
     // rather than 400ing so cached/CDN'd links with junk params still serve.
+    // (Express query values can be arrays/objects; only a plain string counts.)
     const limit = clampLimit(req.query.limit, { fallback: 10, max: 50 });
-    const category = VALID_NEWS_CATEGORIES.has(req.query.category) ? req.query.category : null;
+    const rawCategory = typeof req.query.category === "string" ? req.query.category : "";
+    const category = VALID_NEWS_CATEGORIES.has(rawCategory) ? rawCategory : null;
 
     const cacheKey = getNewsCacheKey(category, limit);
 
@@ -486,7 +487,7 @@ exports.getNewsFeedHttp = onRequest(
         res.set("X-Cache-Status", "HIT");
         res.set("X-Cache-Age", String(cached.cacheAge));
 
-        return res.json({
+        res.json({
           success: true,
           news: cached.news,
           hasMore: cached.hasMore,
@@ -563,7 +564,7 @@ exports.getNewsFeedHttp = onRequest(
       res.set("Cache-Control", "public, max-age=120, s-maxage=600, stale-while-revalidate=1800, stale-if-error=86400");
       res.set("X-Cache-Status", "MISS");
 
-      return res.json({
+      res.json({
         success: true,
         news: resultArticles,
         hasMore,
@@ -576,7 +577,7 @@ exports.getNewsFeedHttp = onRequest(
       // Don't cache errors
       res.set("Cache-Control", "no-store");
 
-      return res.status(500).json({
+      res.status(500).json({
         success: false,
         error: "Failed to fetch news feed",
       });

@@ -305,6 +305,10 @@ function endOfDay(state, day, opts, cfg) {
  * not by the cap. Callers that hold a start-of-day snapshot pass it as
  * `staminaForCap`; the nightly processor omits it (its cap is computed once,
  * before any of the day's blocks run, so live stamina already IS start-of-day).
+ *
+ * @param {any} state
+ * @param {{isShowDay: boolean, isSpringTraining: boolean, staminaForCap?: number}} day
+ * @param {any} cfg
  */
 function blocksAvailable(state, { isShowDay, isSpringTraining, staminaForCap }, cfg) {
   let blocks = isShowDay

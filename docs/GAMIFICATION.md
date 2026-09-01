@@ -389,8 +389,16 @@ do not reintroduce them to plans:
 
 ## Still open (valid backlog)
 
-Genuinely unbuilt but still on the table: per-5-level cosmetic unlocks and a
-fully-wired level-up celebration; expanded Shop tiers (uniform palettes/emblems,
-avatar-regeneration pricing); season report cards / personal-best comparisons;
-living retirement monuments beyond plaques; a broader dynasty meta-achievement
-set.
+Genuinely unbuilt but still on the table — tracked, with everything else
+current, in [NEXT.md](NEXT.md) (update that file when one ships): per-5-level
+cosmetic unlocks; expanded Shop tiers (uniform palettes/emblems,
+avatar-regeneration pricing); living retirement monuments beyond plaques; a
+broader dynasty meta-achievement set.
+
+Verified built since this list was written (September 2026 audit): the
+level-up celebration is fully wired (`LevelUpCelebration.tsx`, fired from
+`dailyLoginPayoff.js` when a claim reports levels gained, with class-unlock
+callouts); season report cards / personal-best comparisons are substantially
+covered by the season-end recap modal (`SeasonRecapModal.jsx`, incl.
+`newBestSeason`), the dashboard `SeasonScorecard`, and the `/corps-history`
+page (per-season chart, totals, best-season figures).

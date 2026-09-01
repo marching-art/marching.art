@@ -614,7 +614,11 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
       {/* ================================================================== */}
       {/* CORPS IDENTITY — equipped uniforms per corps (Uniform Studio) */}
       {/* ================================================================== */}
-      <CorpsIdentitySection corps={profile.corps} isOwnProfile={isOwnProfile} />
+      <CorpsIdentitySection
+        corps={profile.corps}
+        isOwnProfile={isOwnProfile}
+        username={profile.username || null}
+      />
 
       {/* ================================================================== */}
       {/* CONTENT GRID - Compact 3-column */}
