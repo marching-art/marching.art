@@ -73,4 +73,39 @@ describe("processAllInPages", () => {
     });
     assert.ok(maxInFlight <= 100, `max concurrency ${maxInFlight} should be <= pageSize`);
   });
+
+  test("concurrency bounds how many callbacks run at once within a page", async () => {
+    const items = mkItems(45);
+    let inFlight = 0;
+    let peak = 0;
+    const results = await processAllInPages(
+      fakeCollection(items),
+      500,
+      async (doc) => {
+        inFlight++;
+        peak = Math.max(peak, inFlight);
+        await new Promise((r) => setTimeout(r, 1));
+        inFlight--;
+        return doc.id;
+      },
+      { concurrency: 10 }
+    );
+    assert.equal(results.length, 45, "every doc still processed");
+    assert.deepEqual(results, items.map((d) => d.id), "order preserved");
+    assert.ok(peak <= 10, `peak in-flight ${peak} exceeded concurrency 10`);
+    assert.ok(peak >= 2, "chunks still run in parallel");
+  });
+
+  test("without a concurrency option a page fans out all at once (historical behaviour)", async () => {
+    const items = mkItems(30);
+    let inFlight = 0;
+    let peak = 0;
+    await processAllInPages(fakeCollection(items), 500, async () => {
+      inFlight++;
+      peak = Math.max(peak, inFlight);
+      await new Promise((r) => setTimeout(r, 1));
+      inFlight--;
+    });
+    assert.equal(peak, 30);
+  });
 });

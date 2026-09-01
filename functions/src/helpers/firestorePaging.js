@@ -11,15 +11,25 @@ const admin = require("firebase-admin");
  * awaiting each page's processing before fetching the next so at most `pageSize`
  * documents are in flight at once (bounded parallelism and memory).
  *
+ * `concurrency` bounds how many `processDoc` calls run at once WITHIN a page.
+ * It defaults to the page size (the historical behaviour: a page of 500 fans
+ * out 500 at once), which is fine for a projection but not for a callback
+ * that itself issues a burst of reads — the league jobs do a 50-profile
+ * getAll, a standings read, and a matchup-collection read per league, so a
+ * 500-league page meant thousands of simultaneous reads inside a 512 MiB
+ * function. Those callers pass a small concurrency and keep the large page.
+ *
  * @template T
  * @param {FirebaseFirestore.CollectionReference|FirebaseFirestore.Query} collectionRef
- * @param {number} pageSize - Documents per page (also the max concurrency).
+ * @param {number} pageSize - Documents per page.
  * @param {(doc: FirebaseFirestore.QueryDocumentSnapshot) => Promise<T>} processDoc
+ * @param {{ concurrency?: number }} [options]
  * @returns {Promise<T[]>} Results from processDoc, in document-id order.
  */
-async function processAllInPages(collectionRef, pageSize, processDoc) {
+async function processAllInPages(collectionRef, pageSize, processDoc, options = {}) {
   const results = [];
   let cursor = null;
+  const concurrency = Math.max(1, Math.min(pageSize, options.concurrency || pageSize));
 
   // Order by document id so pagination is stable and startAfter is well-defined.
   for (;;) {
@@ -29,8 +39,11 @@ async function processAllInPages(collectionRef, pageSize, processDoc) {
     const snap = await query.get();
     if (snap.empty) break;
 
-    const pageResults = await Promise.all(snap.docs.map((doc) => processDoc(doc)));
-    results.push(...pageResults);
+    for (let i = 0; i < snap.docs.length; i += concurrency) {
+      const chunk = snap.docs.slice(i, i + concurrency);
+      const chunkResults = await Promise.all(chunk.map((doc) => processDoc(doc)));
+      results.push(...chunkResults);
+    }
 
     // A short page means we've reached the end; stop before an empty round-trip.
     if (snap.docs.length < pageSize) break;
