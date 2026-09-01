@@ -9,8 +9,9 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { Download, Flag, Heart, Loader2, Palette, Store } from 'lucide-react';
+import { Download, Flag, Heart, Loader2, Palette, ShieldOff, Store } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useProfileStore } from '../store/profileStore';
 import UniformFigure from '../components/uniform/UniformFigure';
 import DesignBriefCard from '../components/uniform/DesignBriefCard';
 import ShowcaseCard from '../components/uniform/ShowcaseCard';
@@ -19,6 +20,7 @@ import {
   likeExchangeDesign,
   listExchange,
   reportExchangeDesign,
+  adminRemoveExchangeDesign,
   saveExchangeDesign,
   unpublishUniformDesign,
   type ExchangeEntry,
@@ -39,6 +41,8 @@ function EntryCard({
   onSave,
   onReport,
   onUnpublish,
+  onAdminRemove,
+  isAdmin,
   busy,
 }: {
   entry: ExchangeEntry;
@@ -48,6 +52,8 @@ function EntryCard({
   onSave: (entry: ExchangeEntry) => void;
   onReport: (entry: ExchangeEntry) => void;
   onUnpublish: (entry: ExchangeEntry) => void;
+  onAdminRemove: (entry: ExchangeEntry) => void;
+  isAdmin: boolean;
   busy: string | null;
 }) {
   const mine = viewerUid === entry.creatorUid;
@@ -118,6 +124,22 @@ function EntryCard({
             <Flag className="w-3 h-3" />
           </button>
         )}
+        {isAdmin && !mine && (
+          <button
+            type="button"
+            onClick={() => onAdminRemove(entry)}
+            disabled={busy !== null}
+            title="Admin: take this entry down"
+            aria-label={`Take down ${entry.designName} (admin)`}
+            className="px-2 py-1.5 border border-danger/60 text-danger rounded-none hover:bg-danger/10 disabled:opacity-40"
+          >
+            {busy === `admin-${entry.id}` ? (
+              <Loader2 className="w-3 h-3 animate-spin" />
+            ) : (
+              <ShieldOff className="w-3 h-3" />
+            )}
+          </button>
+        )}
       </div>
     </div>
   );
@@ -130,6 +152,7 @@ export default function Exchange() {
   });
   const { user } = useAuth() || {};
   const uid = user?.uid || null;
+  const isAdmin = useProfileStore((state) => state.isAdmin);
 
   const [sort, setSort] = useState<ExchangeSort>('new');
   const [entries, setEntries] = useState<ExchangeEntry[]>([]);
@@ -200,6 +223,26 @@ export default function Exchange() {
       toast.success(result.data.message);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Couldn't send the report.");
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const doAdminRemove = async (entry: ExchangeEntry) => {
+    if (
+      !window.confirm(
+        `Take down "${entry.designName}" by ${entry.creatorName}? This cannot be undone.`
+      )
+    ) {
+      return;
+    }
+    setBusy(`admin-${entry.id}`);
+    try {
+      const result = await adminRemoveExchangeDesign({ entryId: entry.id });
+      toast.success(result.data.message);
+      setEntries((prev) => prev.filter((e) => e.id !== entry.id));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Couldn't take that entry down.");
     } finally {
       setBusy(null);
     }
@@ -285,6 +328,8 @@ export default function Exchange() {
                 onSave={doSave}
                 onReport={doReport}
                 onUnpublish={doUnpublish}
+                onAdminRemove={doAdminRemove}
+                isAdmin={isAdmin}
                 busy={busy}
               />
             ))}

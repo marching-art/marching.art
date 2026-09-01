@@ -78,3 +78,8 @@ export const reportExchangeDesign = createCallable<
   { entryId: string; reason?: string },
   { message: string }
 >('reportExchangeDesign');
+
+/** Admin takedown of any gallery entry (moderation; likes/saves/reports go with it). */
+export const adminRemoveExchangeDesign = createCallable<{ entryId: string }, { message: string }>(
+  'adminRemoveExchangeDesign'
+);

@@ -52,7 +52,6 @@ const {
   setUserRole,
   getShowRegistrations,
   getUserRankings,
-  migrateUserProfiles,
   createUserProfile,
   fixProfileFields,
 } = require("./src/callable/users");
@@ -63,7 +62,6 @@ const {
   selectUserShows,
   saveShowConcept,
   setEncoreDecline,
-  getLineupAnalytics,
   getHotCorps,
 } = require("./src/callable/lineups");
 const {
@@ -168,7 +166,6 @@ const { claimLadderTier } = require("./src/callable/seasonLadder");
 const {
   inviteDirectorToLeague,
   respondToLeagueInvitation,
-  rescindLeagueInvitation,
 } = require("./src/callable/leagueInvitations");
 const {
   sendCommentNotification,
@@ -195,7 +192,6 @@ const {
   updateProfile,
   updateUsername,
   updateEmail,
-  getPublicProfile,
   deleteAccount,
 } = require("./src/callable/profile");
 const {
@@ -247,17 +243,14 @@ const { retentionStatsJob } = require("./src/scheduled/retentionStats");
 const { integrityStatsJob } = require("./src/scheduled/integrityStats");
 const {
   scheduledRivalsUpdate,
-  updateRivalsNow,
 } = require("./src/scheduled/rivalsComputation");
 const {
   scheduledScheduleWeather,
   scheduledScheduleWeatherEvening,
-  refreshScheduleWeatherNow,
 } = require("./src/scheduled/scheduleWeather");
 const {
   scheduledScheduleRunningOrder,
   scheduledScheduleRunningOrderEvening,
-  refreshScheduleRunningOrderNow,
 } = require("./src/scheduled/scheduleRunningOrder");
 const {
   weeklyDigestEmailJob,
@@ -327,7 +320,6 @@ const {
 } = require("./src/triggers/pushTriggers");
 const {
   generateCorpsAvatar,
-  regenerateAllAvatars,
   setCorpsAvatarFromUrl,
   adminModerateCorpsAvatar,
 } = require("./src/triggers/avatarGeneration");
@@ -353,7 +345,6 @@ module.exports = {
   selectUserShows,
   saveShowConcept,
   setEncoreDecline,
-  getLineupAnalytics,
   getHotCorps,
   createLeague,
   joinLeague,
@@ -381,7 +372,6 @@ module.exports = {
   deleteLeagueMessage,
   inviteDirectorToLeague,
   respondToLeagueInvitation,
-  rescindLeagueInvitation,
   sendCommentNotification,
   deleteComment,
   reportComment,
@@ -405,10 +395,8 @@ module.exports = {
   updateProfile,
   updateUsername,
   updateEmail,
-  getPublicProfile,
   deleteAccount,
   manualTrigger,
-  migrateUserProfiles,
   createUserProfile,
   startNewOffSeason,
   startNewLiveSeason,
@@ -483,17 +471,14 @@ module.exports = {
 
   // Rivals
   scheduledRivalsUpdate,
-  updateRivalsNow,
 
-  // Schedule weather (scheduled + admin refresh)
+  // Schedule weather (scheduled)
   scheduledScheduleWeather,
   scheduledScheduleWeatherEvening,
-  refreshScheduleWeatherNow,
 
-  // Schedule running order — real-field live slots (scheduled + admin refresh)
+  // Schedule running order — real-field live slots (scheduled)
   scheduledScheduleRunningOrder,
   scheduledScheduleRunningOrderEvening,
-  refreshScheduleRunningOrderNow,
 
   // League Automation (scheduled)
   generateWeeklyMatchups,
@@ -624,7 +609,6 @@ module.exports = {
 
   // Avatar Generation
   generateCorpsAvatar,
-  regenerateAllAvatars,
   setCorpsAvatarFromUrl,
   adminModerateCorpsAvatar,
 

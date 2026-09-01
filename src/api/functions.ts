@@ -49,7 +49,6 @@ export const getUserRankings = createCallable<{ uid: string }, unknown>('getUser
 export const updateProfileCF = createCallable<{ displayName?: string; bio?: string }, void>(
   'updateProfile'
 );
-export const getPublicProfile = createCallable<{ uid: string }, unknown>('getPublicProfile');
 export const updateUsername = createCallable<{ username: string }, { success: boolean }>(
   'updateUsername'
 );

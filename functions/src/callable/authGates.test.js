@@ -37,7 +37,6 @@ const CALLABLES = [
   ["lineups", "selectUserShows", "unauthenticated"],
   ["lineups", "saveShowConcept", "unauthenticated"],
   ["lineups", "getHotCorps", "unauthenticated"],
-  ["lineups", "getLineupAnalytics", "unauthenticated"],
   ["lineups", "getActiveLineupKeys", "unauthenticated"],
   ["lineups", "validateLineup", "unauthenticated"],
   ["registerCorps", "registerCorps", "unauthenticated"],
@@ -45,7 +44,6 @@ const CALLABLES = [
   ["users", "createUserProfile", "unauthenticated"],
   ["users", "getShowRegistrations", "unauthenticated"],
   ["users", "getUserRankings", "unauthenticated"],
-  ["users", "migrateUserProfiles", "unauthenticated"],
   ["users", "fixProfileFields", "unauthenticated"],
   ["profile", "updateProfile", "unauthenticated"],
   ["profile", "updateUsername", "unauthenticated"],
@@ -63,7 +61,6 @@ const CALLABLES = [
   ["prestige", "purchaseHallBanner", "unauthenticated"],
   ["leagueInvitations", "inviteDirectorToLeague", "unauthenticated"],
   ["leagueInvitations", "respondToLeagueInvitation", "unauthenticated"],
-  ["leagueInvitations", "rescindLeagueInvitation", "unauthenticated"],
   ["dailyOps", "claimDailyLogin", "unauthenticated"],
   ["dailyOps", "purchaseStreakFreeze", "unauthenticated"],
   ["dailyOps", "getStreakStatus", "unauthenticated"],
@@ -75,9 +72,6 @@ const PUBLIC_BY_DESIGN = {
   "users.checkUsername":
     "username availability is checked during registration, before sign-in; " +
     "validates input and reads only the public usernames lookup collection",
-  "profile.getPublicProfile":
-    "public profile pages are world-readable by design (mirrors the " +
-    "Firestore rules' public read on profile docs)",
   "youtube.searchYoutubeVideo":
     "anonymous visitors may read the video CACHE for public Landing/Article " +
     "embeds, but only signed-in users may trigger billed API searches — " +
@@ -110,7 +104,6 @@ describe("callable auth gates", () => {
   test("public-by-design list is documented and minimal", () => {
     // If a callable is meant to be public, it must be justified here.
     assert.deepEqual(Object.keys(PUBLIC_BY_DESIGN).sort(), [
-      "profile.getPublicProfile",
       "users.checkUsername",
       "youtube.searchYoutubeVideo",
     ]);

@@ -9,7 +9,13 @@ vi.mock('../context/AuthContext', () => ({
 // keeps this file about the gallery.
 vi.mock('../components/uniform/DesignBriefCard', () => ({ default: () => null }));
 vi.mock('../components/uniform/ShowcaseCard', () => ({ default: () => null }));
+// Admin state is read from the profile store; flip `adminState.isAdmin` per test.
+const adminState = { isAdmin: false };
+vi.mock('../store/profileStore', () => ({
+  useProfileStore: (selector: (s: { isAdmin: boolean }) => unknown) => selector(adminState),
+}));
 vi.mock('../api/designExchange', () => ({
+  adminRemoveExchangeDesign: vi.fn().mockResolvedValue({ data: { message: 'Entry removed.' } }),
   listExchange: vi.fn(),
   fetchMyLikes: vi.fn().mockResolvedValue(new Set()),
   likeExchangeDesign: vi.fn().mockResolvedValue({ data: { liked: true } }),
@@ -21,7 +27,12 @@ vi.mock('../api/designExchange', () => ({
 }));
 
 import Exchange from './Exchange';
-import { listExchange, likeExchangeDesign, saveExchangeDesign } from '../api/designExchange';
+import {
+  adminRemoveExchangeDesign,
+  listExchange,
+  likeExchangeDesign,
+  saveExchangeDesign,
+} from '../api/designExchange';
 
 const ENTRY = {
   id: 'creator_d1',
@@ -79,6 +90,30 @@ describe('Exchange page', () => {
     fireEvent.click(screen.getByRole('button', { name: /Save · 2/ }));
     await waitFor(() => expect(saveExchangeDesign).toHaveBeenCalledWith({ entryId: 'creator_d1' }));
     expect(await screen.findByRole('button', { name: /Save · 3/ })).toBeInTheDocument();
+  });
+
+  it('hides the admin takedown from directors and offers it to admins', async () => {
+    vi.mocked(listExchange).mockResolvedValue([ENTRY]);
+    adminState.isAdmin = false;
+    const { unmount } = renderExchange();
+    await screen.findByText('Finals Look');
+    expect(screen.queryByRole('button', { name: /Take down/ })).not.toBeInTheDocument();
+    unmount();
+
+    adminState.isAdmin = true;
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    try {
+      renderExchange();
+      const takedown = await screen.findByRole('button', { name: /Take down Finals Look/ });
+      fireEvent.click(takedown);
+      await waitFor(() =>
+        expect(adminRemoveExchangeDesign).toHaveBeenCalledWith({ entryId: 'creator_d1' })
+      );
+      await waitFor(() => expect(screen.queryByText('Finals Look')).not.toBeInTheDocument());
+    } finally {
+      confirmSpy.mockRestore();
+      adminState.isAdmin = false;
+    }
   });
 
   it('shows the empty state with a path to the Studio', async () => {
