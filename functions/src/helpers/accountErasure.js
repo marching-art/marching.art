@@ -70,7 +70,25 @@ function anonymizeRecapDay(data, uid) {
   for (const show of data.shows) {
     if (anonymizeResultEntries(show?.results, uid)) changed = true;
   }
+  // Stamp the rewrite so the recap trigger (triggers/newsGeneration.js
+  // onFantasyRecapUpdated) can tell an erasure from a scoring write: one
+  // deletion sweeps every archived day doc, and each rewrite used to wake the
+  // 1 GiB Gemini generator — regenerating five articles for any day whose
+  // news had never published.
+  if (changed) data.erasureRewriteAt = new Date().toISOString();
   return changed;
+}
+
+/**
+ * True when a recap day write was an erasure rewrite (see anonymizeRecapDay)
+ * rather than a scoring write — i.e. only the identity credit changed.
+ * @param {Object|undefined} before Previous doc data (undefined on create).
+ * @param {Object|undefined} after New doc data.
+ */
+function isErasureRewrite(before, after) {
+  if (!before || !after) return false;
+  const stamp = after.erasureRewriteAt;
+  return typeof stamp === "string" && stamp !== before.erasureRewriteAt;
 }
 
 /**
@@ -216,6 +234,7 @@ async function eraseDirectorFromResults(db, uid) {
 module.exports = {
   anonymizeResultEntries,
   anonymizeRecapDay,
+  isErasureRewrite,
   anonymizeStandingsDoc,
   anonymizeFantasyStandingsDoc,
   anonymizeChampionsDoc,
