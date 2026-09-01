@@ -22,6 +22,7 @@ const {
   assertAuth,
   assertAdmin,
   assertWriteBudget,
+  assertNotRestricted,
 } = require("../helpers/callableGuards");
 const {
   addCoinHistoryEntryToTransaction,
@@ -42,6 +43,30 @@ const ENTRY_ID_RE = /^[A-Za-z0-9_-]{1,160}$/;
 /** Creator reward per unique save, and the per-creator daily faucet cap. */
 const EXCHANGE_SAVE_REWARD = 10;
 const EXCHANGE_DAILY_CAP = 100;
+/**
+ * A save only pays the creator when the saver's account is at least this old.
+ * The Exchange is the one mint faucet driven by OTHER accounts' actions, so a
+ * ring of fresh alts saving one design was minting up to the daily cap with
+ * nothing but sign-ups (FMA_LESSONS.md §3). The copy itself is never gated —
+ * a brand-new director still gets the design; the creator just isn't paid for
+ * that save. Profiles without a createdAt (pre-dating the field) count as old.
+ */
+const EXCHANGE_MIN_SAVER_AGE_DAYS = 3;
+const EXCHANGE_MIN_SAVER_AGE_MS = EXCHANGE_MIN_SAVER_AGE_DAYS * 24 * 60 * 60 * 1000;
+
+/**
+ * @param {Object|null|undefined} profile Saver profile data.
+ * @param {number} [now]
+ */
+function saverAccountOldEnough(profile, now = Date.now()) {
+  const raw = profile?.createdAt;
+  if (!raw) return true;
+  const created =
+    typeof raw?.toDate === "function" ? raw.toDate() : new Date(raw?.seconds ? raw.seconds * 1000 : raw);
+  const t = created.getTime();
+  if (!Number.isFinite(t)) return true;
+  return now - t >= EXCHANGE_MIN_SAVER_AGE_MS;
+}
 
 /** Max designs one director can have published at once. */
 const MAX_PUBLISHED_PER_USER = 10;
@@ -193,6 +218,12 @@ const saveExchangeDesign = onCall({ cors: true }, async (request) => {
   const db = getDb();
   await assertWriteBudget(db, uid, "designExchange");
 
+  // One profile read serves the restriction guard (a watchlisted account
+  // cannot feed the creator faucet), the pack gate, and the payout age gate.
+  const saverProfileDoc = await db.doc(paths.userProfile(uid)).get();
+  const saverProfile = saverProfileDoc.exists ? saverProfileDoc.data() : null;
+  await assertNotRestricted(db, uid, saverProfile);
+
   const entryRef = db.doc(paths.exchangeEntry(entryId));
   const entryDoc = await entryRef.get();
   if (!entryDoc.exists) {
@@ -203,8 +234,7 @@ const saveExchangeDesign = onCall({ cors: true }, async (request) => {
   // Pack gate: a copy is a wardrobe write like any other — keeping a gated
   // design requires its pack (helpers/uniformEntitlements).
   if (missingPacksFor(entry.design && entry.design.figure, undefined).length > 0) {
-    const saverProfile = await db.doc(paths.userProfile(uid)).get();
-    const owned = saverProfile.exists ? saverProfile.data().cosmetics?.owned : undefined;
+    const owned = saverProfile ? saverProfile.cosmetics?.owned : undefined;
     const missing = missingPacksFor(entry.design.figure, owned);
     if (missing.length > 0) {
       throw new HttpsError("failed-precondition", missingPacksMessage(missing));
@@ -246,10 +276,11 @@ const saveExchangeDesign = onCall({ cors: true }, async (request) => {
     const [saveDoc, entryNow] = await Promise.all([tx.get(saveRef), tx.get(entryRef)]);
     if (saveDoc.exists || !entryNow.exists) return 0; // repeat save / entry gone
     const selfSave = entry.creatorUid === uid;
+    const eligibleSaver = !selfSave && saverAccountOldEnough(saverProfile);
     let pay = 0;
     let payoutDoc = null;
     let creatorDoc = null;
-    if (!selfSave) {
+    if (eligibleSaver) {
       [payoutDoc, creatorDoc] = await Promise.all([
         tx.get(payoutRef),
         tx.get(creatorProfileRef),
@@ -333,5 +364,7 @@ module.exports = {
   // constants exported for tests
   EXCHANGE_SAVE_REWARD,
   EXCHANGE_DAILY_CAP,
+  EXCHANGE_MIN_SAVER_AGE_DAYS,
+  saverAccountOldEnough,
   MAX_PUBLISHED_PER_USER,
 };

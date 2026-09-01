@@ -1,5 +1,16 @@
 [
   {
+    "id": "2026-09-01-exchange-save-rewards-established",
+    "date": "2026-09-01",
+    "title": "Exchange save rewards count saves from established directors",
+    "category": "balance",
+    "summary": "Creators still earn CorpsCoin every time another director saves their design from the Design Exchange, but a save from a brand-new account no longer pays out — the director still gets the design, and the save still counts on the entry. This closes the one way a handful of fresh sign-ups could mint coin without playing.",
+    "highlights": [
+      "Nothing changes for the saver: the design lands in your wardrobe either way.",
+      "Restricted accounts can no longer save from the Exchange at all."
+    ]
+  },
+  {
     "id": "2026-09-01-studio-exchange-in-explore",
     "date": "2026-09-01",
     "title": "Uniform Studio and Design Exchange join the Explore menu",

@@ -21,7 +21,9 @@ const {
   adminRemoveExchangeDesign,
   EXCHANGE_SAVE_REWARD,
   EXCHANGE_DAILY_CAP,
+  EXCHANGE_MIN_SAVER_AGE_DAYS,
   MAX_PUBLISHED_PER_USER,
+  saverAccountOldEnough,
 } = require("./designExchange");
 
 const NS = process.env.DATA_NAMESPACE;
@@ -353,6 +355,57 @@ describe("saveExchangeDesign", () => {
     );
     assert.ok(copy, "owned pack unlocks the copy");
     assert.equal(copy[1].figure.iridescent, true);
+  });
+
+  test("a restricted account cannot save (no copy, no payout)", async () => {
+    const docs = new Map([
+      [entryPath("creator_d1"), { ...ENTRY }],
+      [profilePath("creator"), { username: "MaestroMax", corpsCoin: 100 }],
+      [profilePath("alt"), { username: "Alt", moderation: { restricted: true } }],
+    ]);
+    const { db, writes } = makeFakeDb(docs);
+    setDbForTesting(db);
+
+    await assert.rejects(
+      saveExchangeDesign.run(authedRequest("alt", { entryId: "creator_d1" })),
+      (err) => err.code === "permission-denied"
+    );
+    assert.equal(
+      [...docs.keys()].find((p) => p.startsWith(`artifacts/${NS}/users/alt/wardrobe/`)),
+      undefined
+    );
+    assert.equal(writes.find((w) => w.path === profilePath("creator")), undefined);
+  });
+
+  test("a brand-new account's save copies and counts but pays nothing", async () => {
+    const docs = new Map([
+      [entryPath("creator_d1"), { ...ENTRY }],
+      [profilePath("creator"), { username: "MaestroMax", corpsCoin: 100 }],
+      [profilePath("fresh"), { username: "Fresh", createdAt: new Date().toISOString() }],
+    ]);
+    const { db, writes } = makeFakeDb(docs);
+    setDbForTesting(db);
+
+    await saveExchangeDesign.run(authedRequest("fresh", { entryId: "creator_d1" }));
+    assert.ok([...docs.keys()].find((p) => p.startsWith(`artifacts/${NS}/users/fresh/wardrobe/`)));
+    assert.equal(incrementOf(docs.get(entryPath("creator_d1")).saves), 1);
+    assert.equal(
+      writes.find((w) => w.type === "update" && w.path === profilePath("creator")),
+      undefined,
+      "no payout for a save from a days-old account"
+    );
+  });
+
+  test("an established account's save pays; missing createdAt counts as established", () => {
+    const now = Date.parse("2026-09-01T12:00:00Z");
+    const days = (n) => new Date(now - n * 24 * 60 * 60 * 1000).toISOString();
+    assert.equal(saverAccountOldEnough({ createdAt: days(EXCHANGE_MIN_SAVER_AGE_DAYS + 1) }, now), true);
+    assert.equal(saverAccountOldEnough({ createdAt: days(EXCHANGE_MIN_SAVER_AGE_DAYS - 1) }, now), false);
+    assert.equal(saverAccountOldEnough({ createdAt: { seconds: (now - 30 * 86400000) / 1000 } }, now), true);
+    assert.equal(saverAccountOldEnough({ createdAt: { toDate: () => new Date(now) } }, now), false);
+    assert.equal(saverAccountOldEnough({}, now), true);
+    assert.equal(saverAccountOldEnough(null, now), true);
+    assert.equal(saverAccountOldEnough({ createdAt: "garbage" }, now), true);
   });
 
   test("saving your own entry copies but pays nothing", async () => {

@@ -32,38 +32,31 @@ Effort: S ≤ half a day, M ≤ two days, L = a week.
    owner-only subcollection (touches scoring reads — larger). Decide (a) vs
    (b) before building; (a) is the smaller diff but adds a trigger per
    profile write. (M–L)
-2. **P1 · Exchange save rewards are the one mint faucet driven by other
-   accounts and it skips `assertNotRestricted`** —
-   `functions/src/callable/designExchange.js` pays 10 CC per unique save up
-   to 100/day; `showcase.js:93,222`, `dailyPredictions.js:66`,
-   `leaguePools.js:33` all gate on restriction, this doesn't. A watchlisted
-   save-ring keeps minting. Add the guard; count only saves from accounts
-   older than N days. (S)
-3. **P1 · `deleteAccount` fans out into the 1 GiB Gemini news trigger** —
+2. **P1 · `deleteAccount` fans out into the 1 GiB Gemini news trigger** —
    `helpers/accountErasure.js:164-186` rewrites every `fantasy_recaps` day
    doc across all seasons; each write fires `onFantasyRecapUpdated`
    (`triggers/newsGeneration.js:441`, 1 GiB, 540 s, no `maxInstances`) and
    any day whose generation once failed regenerates five articles. Bail
    unless scoring-relevant fields changed; add `maxInstances`. (M)
-4. **P1 · `leagueAutomation` processes 500 leagues concurrently** —
+3. **P1 · `leagueAutomation` processes 500 leagues concurrently** —
    `scheduled/leagueAutomation.js:114,323,540` use the page size as the
    concurrency limit (`helpers/firestorePaging.js:32`), each league doing a
    50-profile `getAll`, a standings read, and a full matchup-collection
    read. Decouple page size from concurrency (~20); read only the weeks
    pairing needs. (M)
-5. **P1 · Offline lineup queue deletes the user's save on any online
+4. **P1 · Offline lineup queue deletes the user's save on any online
    failure** — `src/lib/offlineLineupQueue.ts:85-96` treats every error
    while `navigator.onLine` is true as a final verdict, including cold-start
    timeouts and `unavailable`. Dequeue only on decisive codes
    (`invalid-argument`, `failed-precondition`, `permission-denied`,
    `not-found`). (S)
-6. **P1 · Streaks get a post-mortem email but never a warning** —
+5. **P1 · Streaks get a post-mortem email but never a warning** —
    `scheduled/emailNotifications.js:552` mails after the streak dies; no
    streak push type exists (`helpers/pushService.js:11-19`). The 300 CC
    streak freeze (`engagementRewards.js:26`) is never offered when it
    matters. Evening at-risk push for `loginStreak >= 3` unclaimed, deep
    linked to the streak modal. (M)
-7. **P1 · No age gate, stale privacy policy** — `Register.jsx:56-72`
+6. **P1 · No age gate, stale privacy policy** — `Register.jsx:56-72`
    validates email/password/name/terms only, while Terms §(`Terms.jsx:66`)
    asserts 13+ for an audience that skews high-school. `Privacy.jsx:22` is
    dated January 2026 and omits FCM tokens, Discord republication
@@ -72,12 +65,12 @@ Effort: S ≤ half a day, M ≤ two days, L = a week.
    `helpers/integrityStats.js`; no retention periods, legal basis, or CCPA
    notice. Add a DOB field and record the attestation; one rewrite pass
    listing each processor + purpose + retention. (M)
-8. **P1 · Functions deploy has no concurrency guard** —
+7. **P1 · Functions deploy has no concurrency guard** —
    `deploy-functions.yml` (unlike `ci.yml:19`, `deploy-hosting.yml:32`)
    lets two `main` pushes run overlapping `firebase deploy --force` and race
    the `functions-deploy/*` tag that is also the incremental baseline. Add
    `concurrency: { group: deploy-functions, cancel-in-progress: false }`. (S)
-9. **P1 · Onboarding dead-ends during a season gap** —
+8. **P1 · Onboarding dead-ends during a season gap** —
    `Onboarding.jsx:105-112` maps a missing/rolling-over season doc to
    "Check your connection" and a Retry loop. Split "no active season" from
    "fetch failed"; show next start date and a skip-lineup path that still
@@ -419,6 +412,10 @@ Effort: S ≤ half a day, M ≤ two days, L = a week.
 
 ## Recently shipped (context, newest first — prune when stale)
 
+- 2026-09-01: audit fix 11 — Exchange saves check `assertNotRestricted` and
+  only pay the creator when the saver's account is a few days old (copy and
+  counter unaffected); `assertNotRestricted` accepts a preloaded profile.
+  Changelog (balance) entry added.
 - 2026-09-01: audit fix 10 — Uniform Studio + Design Exchange added to the
   shared Explore links (desktop menu, signed-in header, mobile More sheet);
   prefetch map covers `/studio`, `/exchange`, `/guide`, `/updates`.
