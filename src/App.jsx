@@ -20,7 +20,12 @@ import GameShell from './components/Layout/GameShell';
 import PublicShell from './components/Layout/PublicShell';
 import RouteAnalytics from './components/RouteAnalytics';
 import { useSEO } from './hooks/useSEO';
-import { useAuthRedirectTarget } from './hooks/useAuthRedirect';
+import { useAuthRedirectTarget, resolveAuthRedirect } from './hooks/useAuthRedirect';
+import {
+  rememberPendingRedirect,
+  peekPendingRedirect,
+  clearPendingRedirect,
+} from './lib/pendingRedirect';
 import { useAppBootstrap } from './hooks/useAppBootstrap';
 import { useProfileStore } from './store/profileStore';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
@@ -108,6 +113,21 @@ const ProtectedRoute = ({ children, requireProfile = true }) => {
   const profileLoading = useProfileStore((state) => state.loading);
   const profileUid = useProfileStore((state) => state._currentUid);
   const profileError = useProfileStore((state) => state.error);
+
+  // Deep-link preservation across the auth funnel (lib/pendingRedirect):
+  // stash the attempted route when a signed-out visitor is bounced, and forget
+  // it once a signed-in, onboarded director actually reaches it.
+  useEffect(() => {
+    if (loading) return;
+    if (!user) {
+      rememberPendingRedirect(resolveAuthRedirect(location));
+      return;
+    }
+    if (profile) {
+      const here = `${location.pathname}${location.search}${location.hash}`;
+      if (peekPendingRedirect() === here) clearPendingRedirect();
+    }
+  }, [loading, user, profile, location]);
 
   if (loading) {
     return <LoadingScreen />;

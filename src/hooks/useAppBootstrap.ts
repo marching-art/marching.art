@@ -27,6 +27,7 @@ import { useSeasonStore } from '../store/seasonStore';
 import { useScheduleStore } from '../store/scheduleStore';
 import { useProfileStore } from '../store/profileStore';
 import { initOfflineLineupReplay } from '../lib/offlineLineupQueue';
+import { clearPendingRedirect } from '../lib/pendingRedirect';
 
 /**
  * Mount every app-wide listener and daily-loop side effect. Call once, from
@@ -73,6 +74,7 @@ export function useAppBootstrap(user: User | null | undefined): void {
       // subsequent sign-in with a different account can't briefly see the
       // previous account's cached reads.
       queryClient.clear();
+      clearPendingRedirect();
     }
     return () => {
       // Only cleanup on unmount, not on user change (handled above)

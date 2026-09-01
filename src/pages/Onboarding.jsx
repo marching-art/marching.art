@@ -3,6 +3,7 @@
 // Streamlined 3-step onboarding: Welcome+Name, Create Corps, Draft Lineup
 import React, { useState, useEffect, useMemo, startTransition } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { consumePendingRedirect } from '../lib/pendingRedirect';
 import { m, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Check, ArrowLeft, Music, PartyPopper, XCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -528,13 +529,17 @@ const Onboarding = () => {
 
   const handleCelebrationComplete = () => {
     toast.success("Welcome to marching.art! Here's 100 CorpsCoin to get started!");
+    // A director who arrived on a shared deep link (a league invite, a
+    // profile) and had to create an account first lands there, not on the
+    // dashboard — see lib/pendingRedirect.
+    const target = consumePendingRedirect() || '/dashboard';
     startTransition(() => {
-      navigate('/dashboard');
+      navigate(target);
     });
   };
 
   // One-tap rookie league placement from the celebration screen. The join
-  // runs in the background — head to the dashboard either way.
+  // runs in the background — head onward either way.
   const handleJoinRookieLeague = () => {
     joinRookieLeague()
       .then((result) => {

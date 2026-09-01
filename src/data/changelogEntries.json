@@ -1,5 +1,16 @@
 [
   {
+    "id": "2026-09-01-invite-links-survive-signup",
+    "date": "2026-09-01",
+    "title": "Shared links now survive creating an account",
+    "category": "fix",
+    "summary": "Open a league invite link, a director's profile, or any other page that needs an account, and you'll land there after you sign in or sign up — including after finishing onboarding as a brand-new director. Invite links used to be the one thing that got lost for the exact people they were sent to.",
+    "highlights": [
+      "League invite links open the join dialog with the code filled in, even for someone who had to register first.",
+      "Works from the home page sign-in, the login page, and the register page alike."
+    ]
+  },
+  {
     "id": "2026-09-01-registration-unlock-levels",
     "date": "2026-09-01",
     "title": "Registration screens show the real class unlock levels",

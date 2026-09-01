@@ -1,13 +1,14 @@
 // =============================================================================
 // POST-AUTH REDIRECT TARGET
 // =============================================================================
-// ProtectedRoute has always stored the attempted location as `state.from` when
-// it bounces a signed-out visitor, but nothing ever read it: /login and
-// /register hard-coded a redirect to /dashboard, so a shared deep link (a
-// league invite, a profile, a specific scores tab) was silently discarded the
-// moment the user had to sign in.
+// ProtectedRoute stores the attempted location as `state.from` when it bounces
+// a signed-out visitor AND stashes the resolved path in sessionStorage
+// (lib/pendingRedirect). Router state covers one hop (the inline sign-in);
+// the stash covers the multi-page Register → Onboarding funnel that used to
+// drop every shared deep link for exactly the people it targeted.
 
 import { useLocation } from 'react-router-dom';
+import { peekPendingRedirect } from '../lib/pendingRedirect';
 
 const DEFAULT_TARGET = '/dashboard';
 
@@ -40,10 +41,15 @@ export function resolveAuthRedirect(from) {
   return `${pathname}${from?.search || ''}${from?.hash || ''}`;
 }
 
-/** The path to send the user to once they are authenticated. */
+/**
+ * The path to send the user to once they are authenticated: the route they
+ * were bounced from (router state, one hop) or the pending deep link stashed
+ * in sessionStorage (survives Register → Onboarding — see lib/pendingRedirect).
+ */
 export function useAuthRedirectTarget() {
   const location = useLocation();
-  return resolveAuthRedirect(location.state?.from);
+  if (location.state?.from) return resolveAuthRedirect(location.state.from);
+  return peekPendingRedirect() || DEFAULT_TARGET;
 }
 
 export default useAuthRedirectTarget;
