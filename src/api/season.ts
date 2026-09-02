@@ -14,6 +14,7 @@ import {
   Unsubscribe,
 } from 'firebase/firestore';
 import { db, paths, withErrorHandling } from './client';
+import { mergeHistoricalEventLists } from '../utils/historicalEvents';
 import type { SeasonData, Show, CorpsClass, DayRecap, ShowWithResults } from '../types';
 
 // =============================================================================
@@ -329,26 +330,11 @@ export async function getDciDataDoc(docId: string): Promise<DocumentData | null>
 }
 
 /**
- * Union a year's not-yet-migrated legacy `data` array with its sharded
- * `events` subcollection, the sharded copy winning on an (eventName, date)
- * conflict. Mirrors the backend's mergeEventLists so the client sees the same
- * events regardless of migration state.
- */
-function mergeHistoricalEventLists(legacy: DocumentData[], sub: DocumentData[]): DocumentData[] {
-  const keyOf = (e: DocumentData): string => {
-    const ms = new Date(e.date).getTime();
-    return Number.isNaN(ms) ? `${e.eventName} raw:${String(e.date)}` : `${e.eventName} ${ms}`;
-  };
-  const byKey = new Map<string, DocumentData>();
-  for (const e of legacy) byKey.set(keyOf(e), e);
-  for (const e of sub) byKey.set(keyOf(e), e);
-  return [...byKey.values()];
-}
-
-/**
  * Fetch the scraped event array for a single year from historical_scores.
  * Reads the per-event `events` subcollection (the current sharded format) and
- * unions it with any legacy in-array events. Returns [] if the year has none.
+ * unions it with any legacy in-array events, in chronological order (a
+ * subcollection read comes back by hashed document id, not by date). Returns
+ * [] if the year has none.
  */
 export async function getHistoricalScoresForYear(year: string | number): Promise<DocumentData[]> {
   const [yearSnap, eventsSnap] = await Promise.all([
