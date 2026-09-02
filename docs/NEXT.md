@@ -8,7 +8,7 @@ burns an hour to conclude "everything's about covered." Don't. If you ship,
 cut, or discover something, edit THIS file in the same PR — that's the whole
 maintenance contract.
 
-_Last updated: 2026-09-01 (working through "Fix first" in order)._
+_Last updated: 2026-09-02 (audit backlog: security-rules batch shipped)._
 
 ## In progress
 
@@ -30,40 +30,13 @@ ops step below)_
 - **P2** `firestore.rules:270-276` owner profile update has no
   `affectedKeys().hasOnly([...])` allowlist — arbitrary junk keys up to the
   1 MiB doc cap, served world-readable. (M)
-- **P2** `firestore.rules:299` comment `update` has no diff guard: author can
-  rewrite `authorUid` or add unbounded text; `rules.test.mjs:751` tests only
-  the happy path. (S)
-- **P2** `firestore.rules:328-331` `private/**` owner write is unvalidated
-  (holds `email`, FCM tokens). Restrict to the keys the client writes. (S)
-- **P2** `firestore.rules:856-859` `{path=**}/articles` is an
-  unauthenticated global collection-group read+list. Scope to `news_hub`. (S)
-- **P2** `firestore.rules:212-219` `directorInfo.specialties` /
-  `yearsDirecting` have no size/type check on a public doc. (S)
-- **P2** Rules paths with **zero** regression tests in
-  `firestore-tests/rules.test.mjs`: `supporters` (PII), `seasonDetail`,
-  `podium-fan/ballots`, `hosted-events`, `admin-stats`, `usernames`,
-  `game-settings`, `users/{uid}/podium/**`, all three collection-group
-  rules. One positive + one negative each. (M)
-- **P2** `submitPrediction` (`callable/dailyPredictions.js:46-48`) accepts an
-  unbounded `pick` string and an unchecked `corpsClass` straight into the hot
-  profile doc. Validate against `PREDICTION_QUESTIONS` and the registry. (S)
-- **P2** Client-supplied ids interpolated into paths without `assertDocId`:
-  `callable/leagues.js:231,376,473`, `leaguePools.js:25`,
-  `podiumJoint.js:105,175`. (S)
 - **P2** SSRF: `triggers/avatarGeneration.js:77-100` follows redirects to any
   host (metadata endpoint, RFC1918) with four distinct error strings as an
   oracle. Reject private ranges per hop; collapse errors. (M)
-- **P2** `getRecentNews` (`triggers/newsFeed.js:180-355`) is unauthenticated
-  and any `startAfter` bypasses the cache; `new Date("garbage")` throws
-  `internal`. Validate; budget the paginated branch. (S)
 - **P3** `firestore.rules:475-478,619-622,642-645,807-826` season/config docs
   are client-writable by admin with no field validation — a stolen admin
   session rewrites the season clock from a console. Route through
   callables. (M)
-- **P3** `checkUsername` (`callable/users.js:50-68`) is an unauthenticated,
-  unthrottled existence oracle. (S)
-- **P3** `castFanFavoriteVote` (`callable/podiumFan.js:53-99`) skips
-  `assertNotRestricted` unlike every other ballot surface. (S)
 - **P3** `directorInfo.profileVisibility === 'members'` is honored only by
   the SSR `/d/` page (`helpers/publicProfilePages.js:72`), not by rules —
   don't ship a toggle until it is. (S)
@@ -356,10 +329,11 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
 
 ## Evergreen ratchets (any session, any size)
 
-- `@ts-nocheck` paydown — **97 files** at
+- `@ts-nocheck` paydown — **91 files** at
   last update; `npm run ts-nocheck:next` ranks the cheapest (no free wins
-  left; cheapest is 4 errors in `helpers/podium/store.js`). One per
-  substantive task is the CLAUDE.md habit; batches welcome.
+  left; cheapest is 10 errors in `Articles/ArticleSidebarAuth.jsx` and
+  `scripts/buildPodiumCurves.js`). One per substantive task is the CLAUDE.md
+  habit; batches welcome.
 - Frontend coverage floor upward — actual is ~29% statements against a
   15.9% floor; raise the floor to within a point of actual whenever it's
   touched (functions are held to 70/80/85).
@@ -373,6 +347,17 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
 
 ## Recently shipped (context, newest first — prune when stale)
 
+- 2026-09-02: audit backlog, security-rules batch (all S items + the rules
+  test-coverage M): comment edits are body-only and bounded; `private/**`
+  owner writes are limited to the FCM token keys (no delete); the `articles`
+  collection group is scoped to `news_hub` (get by path, list by
+  `isPublished`); `directorInfo.yearsDirecting`/`specialties` are typed and
+  capped; `submitPrediction` validates pick + class against the canonical
+  sets; `assertDocId` on every interpolated league/pool/joint id;
+  `getRecentNews` rejects bad cursors as `invalid-argument` and budgets the
+  cursored branch per uid/IP; `checkUsername` needs auth + the profile
+  budget; `castFanFavoriteVote` honors restriction. 42 new rules tests (190
+  total), 13 new functions tests. ts-nocheck → 91.
 - 2026-09-01: audit fix 1 (mirror half) — `profile/public` projection
   (`helpers/publicProfileMirror.js`, allowlist + corps denylist, tests),
   `onProfileDataWritten` trigger, `backfillPublicProfiles.js`, rules + rules

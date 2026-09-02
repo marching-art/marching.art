@@ -215,7 +215,23 @@ function directorInfoCapsOk(info) {
                          'socialLinks', 'acceptingLeagueInvites', 'profileVisibility']) &&
     info.get('bio', '') is string && info.get('bio', '').size() < 2000 &&
     info.get('credentials', '') is string && info.get('credentials', '').size() < 500 &&
+    yearsDirectingOk(info.get('yearsDirecting', null)) &&
+    specialtiesOk(info.get('specialties', [])) &&
     socialLinksOk(info.get('socialLinks', {}));
+}
+
+// yearsDirecting: the edit modal writes null (cleared) or a number; nothing
+// above a human lifetime is a real value.
+function yearsDirectingOk(years) {
+  return years == null || (years is number && years >= 0 && years <= 100);
+}
+
+// specialties: a short list of short labels (the modal offers a fixed chip
+// set). Rules can't iterate, so the joined length bounds every element at
+// once; join() only evaluates on all-string lists, so a non-string element
+// fails closed.
+function specialtiesOk(list) {
+  return list is list && list.size() <= 20 && list.join('').size() < 600;
 }
 
 function socialLinkOk(links, key) {
@@ -251,6 +267,20 @@ function profileTextCapsOk(keys) {
     textFieldOk(keys, 'location', 200) &&
     textFieldOk(keys, 'favoriteCorps', 200) &&
     directorInfoOk(keys);
+}
+
+// private/{doc}: the owner-writable keys and their shapes (see the rule
+// below). A token is a bounded string or null (removal); the stamp is an ISO
+// string.
+function privateKeysOk(keys) {
+  return keys.hasOnly(['fcmToken', 'fcmTokenUpdatedAt']) &&
+    (!('fcmToken' in request.resource.data) ||
+      request.resource.data.fcmToken == null ||
+      (request.resource.data.fcmToken is string &&
+        request.resource.data.fcmToken.size() < 1000)) &&
+    (!('fcmTokenUpdatedAt' in request.resource.data) ||
+      (request.resource.data.fcmTokenUpdatedAt is string &&
+        request.resource.data.fcmTokenUpdatedAt.size() < 64));
 }
 
 // --- USER DATA ---
@@ -312,7 +342,15 @@ match /artifacts/{appId}/users/{userId} {
   match /comments/{commentId} {
     allow read: if true;
     allow create: if false; // Backend only
-    allow update: if isAuthenticated() && request.auth.uid == resource.data.authorUid;
+    // An author may edit only the comment body: attribution (authorUid),
+    // timestamps, and any other key are frozen, and the body stays bounded
+    // (comments are world-readable).
+    allow update: if isAuthenticated() && request.auth.uid == resource.data.authorUid &&
+      request.resource.data.diff(resource.data).affectedKeys()
+        .hasOnly(['text', 'updatedAt', 'edited']) &&
+      request.resource.data.text is string &&
+      request.resource.data.text.size() > 0 &&
+      request.resource.data.text.size() < 2000;
     allow delete: if isAuthenticated() &&
       (request.auth.uid == userId || request.auth.uid == resource.data.authorUid || isAdmin());
   }
@@ -341,9 +379,18 @@ match /artifacts/{appId}/users/{userId} {
   // admin. This must be declared explicitly because Firestore rules are
   // additive: the broad catch-all below would otherwise expose it to every
   // authenticated user.
+  // The only client write is the FCM token (api/pushNotifications.ts
+  // saveFcmToken / removeFcmToken); everything else on this doc — email,
+  // the age-gate attestation — is server-written, so an owner may touch
+  // nothing but those two keys and may never delete the doc.
   match /private/{document=**} {
     allow read: if isOwner(userId) || isAdmin();
-    allow write: if isOwner(userId) || isAdmin();
+    allow create: if isAdmin() ||
+      (isOwner(userId) && privateKeysOk(request.resource.data.keys()));
+    allow update: if isAdmin() ||
+      (isOwner(userId) &&
+        privateKeysOk(request.resource.data.diff(resource.data).affectedKeys()));
+    allow delete: if isAdmin();
   }
 
   // All other user subcollections (like corps data, staff rosters, etc.)
@@ -877,10 +924,16 @@ match /news_hub/{seasonId}/community/{articleId} {
   allow write: if false; // Backend only
 }
 
-// Collection group rule for articles - enables direct URL access and collection group queries
-// This allows reading any document in any 'articles' subcollection regardless of parent path
+// Collection group rule for articles — the director-articles query
+// (src/api/directorArticles.ts) reads `articles` across every season's days.
+// Scoped to the news_hub tree: an unscoped group rule would make ANY
+// subcollection named `articles`, anywhere, world-readable and listable.
+// `path` is only bound for single-document gets (a group query spans every
+// prefix), so lists are scoped by data instead: the only client group query
+// filters `isPublished == true`, which unpublished drafts anywhere lack.
 match /{path=**}/articles/{articleId} {
-  allow read: if true;
+  allow get: if path[0] == 'news_hub';
+  allow list: if resource.data.isPublished == true;
   allow write: if false; // Backend only
 }
 

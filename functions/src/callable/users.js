@@ -49,8 +49,15 @@ exports.setUserRole = onCall({ cors: true }, async (request) => {
 });
 
 exports.checkUsername = onCall({ cors: true }, async (request) => {
-  const { username } = request.data;
-  if (!username || username.length < 3 || username.length > 15) {
+  // Both callers (onboarding, the username prompt) run signed in, so the
+  // existence check is no longer an anonymous, unthrottled oracle over the
+  // username → uid map: it needs an account and draws from the shared
+  // profile budget (far above the debounced human rate).
+  const uid = assertAuth(request);
+  await assertWriteBudget(getDb(), uid, "profile", { max: 60, windowMs: 10 * 60 * 1000 });
+
+  const { username } = request.data || {};
+  if (typeof username !== "string" || username.length < 3 || username.length > 15) {
     throw new HttpsError("invalid-argument",
       "Username must be between 3 and 15 characters.");
   }

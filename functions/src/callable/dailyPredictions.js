@@ -7,8 +7,10 @@ const { calculateXPUpdates, seasonBaselineStamp } = require("../helpers/xpCalcul
 const { addCoinHistoryEntryToTransaction } = require("../helpers/economy");
 const { assertAuth, assertWriteBudget, assertNotRestricted } = require("../helpers/callableGuards");
 const { getGameDay } = require("../helpers/dailyChallenges");
+const { isClassEnabled } = require("../helpers/classRegistry");
 const {
   PREDICTION_QUESTIONS,
+  PREDICTION_PICKS,
   SCORE_FREE_QUESTION_IDS,
   fetchRecentResultsForClass,
   deriveQuestionThreshold,
@@ -43,11 +45,13 @@ const submitPrediction = onCall({ cors: true }, async (request) => {
   if (!PREDICTION_QUESTIONS.some((q) => q.id === questionId)) {
     throw new HttpsError("invalid-argument", "Unknown prediction question.");
   }
-  if (!pick || typeof pick !== "string") {
-    throw new HttpsError("invalid-argument", "A pick is required.");
+  // Both strings land verbatim in the hot profile doc's predictions bucket,
+  // so they are validated against the canonical sets — never stored raw.
+  if (!PREDICTION_PICKS.has(pick)) {
+    throw new HttpsError("invalid-argument", "Unknown prediction pick.");
   }
-  if (!corpsClass || typeof corpsClass !== "string") {
-    throw new HttpsError("invalid-argument", "A corpsClass is required.");
+  if (typeof corpsClass !== "string" || !isClassEnabled(corpsClass)) {
+    throw new HttpsError("invalid-argument", "Unknown corps class.");
   }
   // SoundSport is a ratings-only format — its numeric scores are never shown,
   // so it only gets the placement-based questions (medal + improvement),

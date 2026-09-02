@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered when functions checkJs landed (functions/tsconfig.json); remove when this file is typed or cleaned up
 /**
  * Email Service for marching.art
  * Handles all outbound email communications via Brevo (formerly Sendinblue)
@@ -74,7 +73,7 @@ function getBrevoClient() {
  * @param {string} options.to - Recipient email
  * @param {string} options.subject - Email subject
  * @param {string} options.html - HTML content
- * @param {string} options.text - Plain text content (optional)
+ * @param {string} [options.text] - Plain text content (optional; derived from the HTML when omitted)
  * @param {string} options.emailType - Type of email for tracking
  * @returns {Promise<boolean>} - Success status
  */
