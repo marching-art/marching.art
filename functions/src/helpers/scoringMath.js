@@ -172,10 +172,11 @@ function simpleLinearRegression(data) {
  * retry with a looser matcher when the strict one finds nothing (see
  * getRealisticCaptionScore).
  *
- * @param {Array<Object>} yearData - historical_scores/{year}.data events.
+ * @param {Array<Object>} yearData - historical_scores/{year} events.
  * @param {string} caption
  * @param {(rowCorps: string) => boolean} matches
- * @returns {Array<[number, number]>} [offSeasonDay, score] pairs.
+ * @returns {Array<[number, number]>} [offSeasonDay, score] pairs, ascending
+ *   by day whatever order the events came in.
  */
 function collectCaptionDataPoints(yearData, caption, matches) {
   /** @type {Array<[number, number]>} */
@@ -194,7 +195,7 @@ function collectCaptionDataPoints(yearData, caption, matches) {
     }
   }
 
-  return dataPoints;
+  return dataPoints.sort((a, b) => a[0] - b[0]);
 }
 
 function getRealisticCaptionScore(corpsName, sourceYear, caption, currentDay, historicalData) {
@@ -493,15 +494,21 @@ function seededUnitValue(seed) {
  * Effect — a perfect sheet no corps has ever earned. This model produces
  * none, on the same holdout.
  *
- * @param {Array<[number, number]>} dataPoints - [competitionDay, score] pairs,
- *   ascending by day.
+ * @param {Array<[number, number]>} rawDataPoints - [competitionDay, score]
+ *   pairs, in any order. Sorted here, because the model reads the corps' first
+ *   and last real results off the ends of the list: fed the events in the
+ *   sharded archive's document-id (hash) order, it treated a random mid-season
+ *   show as the season's end, extrapolated a night inside the corps' real tour
+ *   as if it were weeks outside it, and swung a caption by up to two points —
+ *   the 2026 Overture "my music score is 4.5 off my dashboard" report.
  * @param {number} targetDay - The competition day to project.
  * @param {string} [seed] - Stable seed for the jitter; "" disables jitter.
  * @returns {number} A score in [0, CAPTION_MAX).
  */
-function projectCaptionScore(dataPoints, targetDay, seed = "") {
-  if (!dataPoints || dataPoints.length === 0) return 0;
+function projectCaptionScore(rawDataPoints, targetDay, seed = "") {
+  if (!rawDataPoints || rawDataPoints.length === 0) return 0;
 
+  const dataPoints = [...rawDataPoints].sort((a, b) => a[0] - b[0]);
   const scores = dataPoints.map(([, y]) => y);
   const best = Math.max(...scores);
   const worst = Math.min(...scores);

@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // src/components/Admin/ScoresSpreadsheet.jsx
 // Admin spreadsheet view of reference scores for the current season
 // Shows selected corps by point value (25-1) with scores across dates
@@ -11,9 +10,21 @@ import { CAPTION_IDS } from '../../data/captions';
 import { competitionDayToDate } from '../../utils/competitionCalendar';
 import { Heading } from '../ui';
 
-// Caption tabs (canonical caption set)
-const INDIVIDUAL_CAPTIONS = CAPTION_IDS;
+// Caption tabs (canonical caption set). Widened to string[] so the active-tab
+// string (which may also name an aggregate tab) can be tested against it.
+const INDIVIDUAL_CAPTIONS = /** @type {readonly string[]} */ (CAPTION_IDS);
 
+/**
+ * One row of the dci-data corpsValues array.
+ * @typedef {{ corpsName: string, sourceYear: string | number, points: number }} CorpsValue
+ */
+
+/** A caption id -> score map off one scored row (e.g. { GE1: 18.2, B: 17.1 }). */
+/** @typedef {Record<string, number | undefined>} CaptionMap */
+
+/** @typedef {import('firebase/firestore').DocumentData} DocumentData */
+
+/** @type {Array<{ id: string, label: string, calculate: (c: CaptionMap) => number }>} */
 const AGGREGATE_TABS = [
   {
     id: 'total',
@@ -56,7 +67,12 @@ const getFantasyDateFormatted = (seasonStartDate, dayNumber, springTrainingDays 
   return `${date.getDate()}-${monthStr}`;
 };
 
-// Get cell background color based on score value (heatmap)
+/**
+ * Cell background for the score heatmap.
+ * @param {number | null | undefined} value
+ * @param {number} maxPossible
+ * @returns {string}
+ */
 const getCellBgColor = (value, maxPossible) => {
   if (!value || value === 0) return '';
   const percentage = value / maxPossible;
@@ -69,10 +85,12 @@ const getCellBgColor = (value, maxPossible) => {
 
 const ScoresSpreadsheet = () => {
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [seasonData, setSeasonData] = useState(null);
-  const [corpsValues, setCorpsValues] = useState([]);
-  const [historicalData, setHistoricalData] = useState({});
+  const [error, setError] = useState(/** @type {string | null} */ (null));
+  const [seasonData, setSeasonData] = useState(/** @type {DocumentData | null} */ (null));
+  const [corpsValues, setCorpsValues] = useState(/** @type {CorpsValue[]} */ ([]));
+  const [historicalData, setHistoricalData] = useState(
+    /** @type {Record<string, DocumentData[]>} */ ({})
+  );
   const [activeTab, setActiveTab] = useState('GE1');
   const [scrollPosition, setScrollPosition] = useState(0);
 
@@ -95,7 +113,7 @@ const ScoresSpreadsheet = () => {
         if (!corpsData) {
           throw new Error(`Corps data not found: ${season.dataDocId}`);
         }
-        const corps = corpsData.corpsValues || [];
+        const corps = /** @type {CorpsValue[]} */ (corpsData.corpsValues || []);
 
         // Sort by points descending (25 -> 1)
         const sortedCorps = [...corps].sort((a, b) => b.points - a.points);
@@ -111,7 +129,7 @@ const ScoresSpreadsheet = () => {
         setLoading(false);
       } catch (err) {
         console.error('Error fetching scores data:', err);
-        setError(err.message);
+        setError(err instanceof Error ? err.message : String(err));
         setLoading(false);
       }
     };
@@ -156,12 +174,22 @@ const ScoresSpreadsheet = () => {
     return Array.from(datesMap.values()).sort((a, b) => a.day - b.day);
   }, [historicalData, seasonStartDate, springTrainingDays]);
 
-  // Get score for a specific corps on a specific day
+  /**
+   * A corps' real caption score on a competition day, or null if it didn't
+   * compete (or the caption wasn't scored) that day.
+   * @param {string} corpsName
+   * @param {string | number} sourceYear
+   * @param {number} day
+   * @param {string} caption
+   * @returns {number | null}
+   */
   const getScore = (corpsName, sourceYear, day, caption) => {
     const yearData = historicalData[sourceYear] || [];
     for (const event of yearData) {
       if (event.offSeasonDay === day) {
-        const scoreData = event.scores?.find((s) => s.corps === corpsName);
+        const scoreData = event.scores?.find(
+          (/** @type {{ corps: string, captions?: CaptionMap }} */ s) => s.corps === corpsName
+        );
         if (scoreData && scoreData.captions) {
           return scoreData.captions[caption] || null;
         }
@@ -170,12 +198,21 @@ const ScoresSpreadsheet = () => {
     return null;
   };
 
-  // Get aggregate score for a specific corps on a specific day
+  /**
+   * An aggregate (total / GE / music / visual) of a corps' real captions on a day.
+   * @param {string} corpsName
+   * @param {string | number} sourceYear
+   * @param {number} day
+   * @param {(c: CaptionMap) => number} calculateFn
+   * @returns {number | null}
+   */
   const getAggregateScore = (corpsName, sourceYear, day, calculateFn) => {
     const yearData = historicalData[sourceYear] || [];
     for (const event of yearData) {
       if (event.offSeasonDay === day) {
-        const scoreData = event.scores?.find((s) => s.corps === corpsName);
+        const scoreData = event.scores?.find(
+          (/** @type {{ corps: string, captions?: CaptionMap }} */ s) => s.corps === corpsName
+        );
         if (scoreData && scoreData.captions) {
           return calculateFn(scoreData.captions);
         }

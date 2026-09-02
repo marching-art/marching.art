@@ -1,5 +1,16 @@
 [
   {
+    "id": "2026-09-02-projected-caption-scores-order",
+    "date": "2026-09-02",
+    "title": "Projected caption scores are back in line with your dashboard",
+    "category": "fix",
+    "summary": "Since late August, on nights when one of your source corps had no real result to use, its projected caption score could land a point or two away from what the corps had actually been scoring — a music lineup showing 25.5 on the dashboard could post a 21 in the recap. The projection now reads the corps' season in the right order again, so a projected night sits between the corps' neighbouring real results, with only the tiny nightly variation it has always had.",
+    "highlights": [
+      "Real results were never affected: a night your source corps actually competed always used the published score.",
+      "Live seasons are unaffected — every night there is scored from that day's real sheets."
+    ]
+  },
+  {
     "id": "2026-09-02-clearer-errors-and-recovery",
     "date": "2026-09-02",
     "title": "Clearer error messages, and pages that recover on their own",

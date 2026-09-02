@@ -8,7 +8,7 @@ burns an hour to conclude "everything's about covered." Don't. If you ship,
 cut, or discover something, edit THIS file in the same PR — that's the whole
 maintenance contract.
 
-_Last updated: 2026-09-02 (audit backlog: security-rules + frontend-correctness batches shipped)._
+_Last updated: 2026-09-02 (projected-score ordering regression fixed; audit backlog: security-rules + frontend-correctness batches shipped)._
 
 ## In progress
 
@@ -262,6 +262,18 @@ ops step below)_
 
 ## Operational — owner only, standing until done
 
+- **Re-score the Overture nights scored on hash-ordered history (days 19–23,
+  2026-08-27 → 08-31).** The `historical_scores` sharding (a103c8f) returned a
+  year's events in document-id order; the projection model read its season
+  anchors off the list ends and swung projected captions by up to ±2 points
+  (a director with Cadets 2013 ×3 in music posted 21 vs. the 25.5 their
+  dashboard showed). Fixed at the read layer and in the model (this PR);
+  every projected caption from those five nights is still wrong in
+  `fantasy_recaps`, standings and the caption ledger. Decide whether to
+  reprocess them with the admin force-rescore (it rewrites recaps, coin and
+  XP awards are ledger-idempotent) or leave them and announce; either way
+  reply to the Discord report. Real-score nights (day 22 for Cadets 2013)
+  were never affected.
 - **Flip App Check enforcement**: the CSP fix that was blocking attestation
   shipped 2026-09-01 (needs a hosting deploy). Once live, check Firebase
   console → App Check metrics for Functions; once real traffic shows verified, flip the literal
@@ -319,6 +331,13 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
 
 ## Recently shipped (context, newest first — prune when stale)
 
+- 2026-09-02: projected caption scores no longer depend on archive order —
+  `historicalScores.mergeEventLists` (server) and `utils/historicalEvents`
+  (client) return every year chronologically, and `projectCaptionScore` sorts
+  its own input, with an order-independence suite over the real 2013/2019
+  corpus (`scoringMath.order.test.js`). Root cause of the 2026-09-01 Discord
+  "music score 4.5 off my dashboard" report; re-score decision is the ops
+  item above.
 - 2026-09-02: audit backlog, frontend-correctness batch: `PageErrorBoundary`
   resets on path change and every public/auth/onboarding route has a
   boundary; `import.meta.env.DEV` replaces the client's only `process.env`;

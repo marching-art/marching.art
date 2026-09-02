@@ -11,7 +11,9 @@ const crypto = require("crypto");
 // (O(1), no whole-array read-modify-write, structurally immune to the 1 MiB
 // cap). Reads still get a whole-year array — no reader ever wants one event
 // without the year (confirmed across every call site) — via loadHistoricalYear,
-// which UNIONS the sharded docs with any legacy in-array events so it stays
+// which UNIONS the sharded docs with any legacy in-array events, in
+// chronological order (the array format's implicit guarantee, which a
+// subcollection read does not give on its own), so it stays
 // correct before, during, and after the one-time migration
 // (scripts/migrateHistoricalScoresToSubcollection.js). Once migration clears a
 // year's legacy `data`, that year is served purely from the subcollection.
@@ -74,15 +76,50 @@ function eventMatchKey(event) {
 }
 
 /**
+ * Chronological event order: by date, then competition day, then name.
+ *
+ * The legacy in-array format was appended to in scrape order, so every reader
+ * could (and several silently did) rely on a year's events arriving in date
+ * order. A subcollection `.get()` returns documents by id, and event ids are
+ * content hashes — effectively random with respect to date. The projection
+ * model in scoringMath.js reads a corps' first and last real result off the
+ * ends of its point list, so hash order made it extrapolate a mid-season night
+ * from a random anchor and swing a caption by two full points. The read layer
+ * therefore restores the order the array format guaranteed.
+ *
+ * Unparseable dates sort last, then by competition day; a stable tiebreak on
+ * name keeps the order deterministic across reads.
+ *
+ * @param {Object} a
+ * @param {Object} b
+ * @returns {number}
+ */
+function compareEventsChronologically(a, b) {
+  const aMs = eventInstant(a?.date);
+  const bMs = eventInstant(b?.date);
+  const aValid = !Number.isNaN(aMs);
+  const bValid = !Number.isNaN(bMs);
+  if (aValid && bValid && aMs !== bMs) return aMs - bMs;
+  if (aValid !== bValid) return aValid ? -1 : 1;
+
+  const aDay = typeof a?.offSeasonDay === "number" ? a.offSeasonDay : -Infinity;
+  const bDay = typeof b?.offSeasonDay === "number" ? b.offSeasonDay : -Infinity;
+  if (aDay !== bDay) return aDay - bDay;
+
+  return String(a?.eventName ?? "").localeCompare(String(b?.eventName ?? ""));
+}
+
+/**
  * Union two event lists on (name, date) identity, with `subEvents` (the sharded,
  * authoritative copy) winning over `legacyEvents` (the pre-migration in-array
- * copy) for any event present in both.
+ * copy) for any event present in both. The result is in chronological order
+ * regardless of how either input was ordered (see compareEventsChronologically).
  */
 function mergeEventLists(legacyEvents, subEvents) {
   const byKey = new Map();
   for (const e of legacyEvents || []) byKey.set(eventMatchKey(e), e);
   for (const e of subEvents || []) byKey.set(eventMatchKey(e), e);
-  return [...byKey.values()];
+  return [...byKey.values()].sort(compareEventsChronologically);
 }
 
 /**
@@ -269,6 +306,7 @@ module.exports = {
   historicalEventsRef,
   eventDocId,
   eventMatchKey,
+  compareEventsChronologically,
   mergeEventLists,
   mergeScoresInto,
   mergeEventIntoHistoricalScores,

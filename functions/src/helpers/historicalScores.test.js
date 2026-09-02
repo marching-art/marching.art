@@ -249,6 +249,43 @@ describe("loadHistoricalYear (union read)", () => {
     const { db } = makeDb();
     assert.deepEqual(await loadHistoricalYear(db, 1999), []);
   });
+
+  test("returns events in chronological order whatever order the subcollection yields", async () => {
+    // Subcollection reads come back by document id — a content hash, so
+    // effectively random with respect to date. The legacy array was appended
+    // in scrape order, and the projection model depended on that (see
+    // scoringMath.order.test.js), so the read layer must restore it.
+    const dates = ["2024-07-20", "2024-06-22", "2024-08-10", "2024-07-01", "2024-06-30"];
+    const events = {};
+    dates.forEach((date, i) => {
+      const ev = event({ eventName: `Show ${i}`, date, offSeasonDay: i });
+      events[eventDocId(ev.eventName, date)] = ev;
+    });
+    // Also a legacy row that predates every sharded one.
+    const legacy = [event({ eventName: "Opener", date: "2024-06-20", offSeasonDay: -1 })];
+    const { db } = makeDb({ 2024: { legacy, events } });
+
+    const loaded = await loadHistoricalYear(db, 2024);
+    assert.deepEqual(
+      loaded.map((e) => e.date),
+      ["2024-06-20", "2024-06-22", "2024-06-30", "2024-07-01", "2024-07-20", "2024-08-10"]
+    );
+  });
+
+  test("mergeEventLists sorts unparseable dates last and breaks ties by day then name", () => {
+    const merged = mergeEventLists(
+      [
+        { eventName: "B", date: "not a date", offSeasonDay: 5 },
+        { eventName: "Z", date: "2024-07-04", offSeasonDay: 3 },
+      ],
+      [
+        { eventName: "A", date: "not a date either", offSeasonDay: 5 },
+        { eventName: "Y", date: "2024-07-04", offSeasonDay: 3 },
+        { eventName: "Early", date: "2024-07-04", offSeasonDay: 2 },
+      ]
+    );
+    assert.deepEqual(merged.map((e) => e.eventName), ["Early", "Y", "Z", "A", "B"]);
+  });
 });
 
 describe("loadHistoricalYears / loadAllHistoricalYears", () => {
