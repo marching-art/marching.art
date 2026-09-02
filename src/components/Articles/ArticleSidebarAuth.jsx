@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // =============================================================================
 // ARTICLE SIDEBAR AUTH - Login or User Dashboard widget for the Article page
 // =============================================================================
@@ -28,7 +27,10 @@ import { useAuth } from '../../context/AuthContext';
 import { useProfileStore } from '../../store/profileStore';
 
 const ArticleSidebarAuth = () => {
-  const { user, signIn, signOut } = useAuth();
+  // The article pages render outside AuthProvider in some routes, so the
+  // context can be null; treat that as signed-out.
+  const auth = useAuth();
+  const user = auth?.user;
   const profile = useProfileStore((state) => state.profile);
 
   // Auth form state
@@ -39,24 +41,27 @@ const ArticleSidebarAuth = () => {
 
   const handleSignOut = async () => {
     try {
-      await signOut();
+      await auth?.signOut();
       toast.success('Signed out successfully');
     } catch {
       toast.error('Failed to sign out');
     }
   };
 
+  /** @param {React.FormEvent<HTMLFormElement>} e */
   const handleAuthSubmit = async (e) => {
     e.preventDefault();
+    if (!auth) return;
     setAuthError('');
     setAuthLoading(true);
 
     try {
-      await signIn(email, password);
+      await auth.signIn(email, password);
       toast.success('Welcome back!');
     } catch (err) {
       console.error('Login error:', err);
-      switch (err.code) {
+      const code = /** @type {{ code?: string }} */ (err ?? {}).code;
+      switch (code) {
         // Email enumeration protection collapses user-not-found and
         // wrong-password into a single invalid-credential error
         case 'auth/invalid-credential':
@@ -91,7 +96,7 @@ const ArticleSidebarAuth = () => {
       <div className="p-4 border-b border-line">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-interactive flex items-center justify-center text-white font-bold text-sm">
-            {profile?.displayName?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || 'D'}
+            {(profile?.displayName || user.email || 'D').charAt(0).toUpperCase()}
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-sm font-bold text-white truncate">
@@ -107,21 +112,21 @@ const ArticleSidebarAuth = () => {
             <div className="flex items-center gap-1.5">
               <Zap className="w-3.5 h-3.5 text-purple-500" />
               <span className="text-xs text-muted">Level</span>
-              <span className="text-sm font-bold text-white">{profile.xpLevel || 1}</span>
+              <span className="text-sm font-bold text-white">{Number(profile.xpLevel || 1)}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <Trophy className="w-3.5 h-3.5 text-interactive" />
               <span className="text-xs text-muted">XP</span>
               <span className="text-sm font-bold text-white font-data tabular-nums">
-                {profile.xp?.toLocaleString() || 0}
+                {Number(profile.xp || 0).toLocaleString()}
               </span>
             </div>
-            {profile.engagement?.loginStreak > 0 && (
+            {(profile.engagement?.loginStreak ?? 0) > 0 && (
               <div className="flex items-center gap-1.5">
                 <Flame className="w-3.5 h-3.5 text-orange-500" />
                 <span className="text-xs text-muted">Streak</span>
                 <span className="text-sm font-bold text-orange-500 font-data tabular-nums">
-                  {profile.engagement.loginStreak}
+                  {profile.engagement?.loginStreak}
                 </span>
               </div>
             )}

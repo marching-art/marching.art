@@ -284,19 +284,27 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
 - **Unfreeze stale league matchups** (production credentials required):
   `node functions/src/scripts/archiveStaleLeagueMatchups.js --dry-run`, read
   the output, then `--commit`.
-- **Deploy `storage.rules` once** after the "Fix first" storage-rules item wires it into the
-  workflow; confirm in the console that the bucket no longer runs the
-  permissive defaults.
+- **Confirm the default Storage bucket exists.** The 2026-09-02 deploy
+  failed with "Firebase Storage has not been set up" — the project has never
+  had a bucket, so `storage.rules` has never applied to anything. CI now
+  provisions the bucket itself (`scripts/deployStorageRules.mjs`) and only
+  degrades to a workflow **warning** if the deploy service account lacks
+  `firebasestorage.defaultBucket.create`. Check the next Deploy Cloud
+  Functions run: a `::notice::` names the created bucket (set the
+  `VITE_FIREBASE_STORAGE_BUCKET` secret to it); a `::warning::` means click
+  "Get Started" at console.firebase.google.com/project/marching-art/storage
+  or grant the SA the Firebase Admin role, then re-run with
+  `deploy_target=rules-only`.
 - **Prune dead Firestore indexes** in the console after the
   `firestore.indexes.json` cleanup (indexes are deliberately not deployed
   from CI).
 
 ## Evergreen ratchets (any session, any size)
 
-- `@ts-nocheck` paydown — **90 files** at
+- `@ts-nocheck` paydown — **89 files** at
   last update; `npm run ts-nocheck:next` ranks the cheapest (no free wins
-  left; cheapest is 10 errors in `Articles/ArticleSidebarAuth.jsx` and
-  `scripts/buildPodiumCurves.js`). One per substantive task is the CLAUDE.md
+  left; cheapest is 10 errors in `Dashboard/sections/DailyChallenges.jsx`
+  and `modals/ShowConceptModal.jsx`). One per substantive task is the CLAUDE.md
   habit; batches welcome.
 - Frontend coverage floor upward — actual is ~29% statements against a
   15.9% floor; raise the floor to within a point of actual whenever it's
@@ -373,6 +381,11 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
 - 2026-09-01: audit fix 8 — both registration screens derive class budgets
   and unlock levels from the class registry (`CLASS_TABLE`), with a test
   pinning them to the JSON; changelog entry added.
+- 2026-09-02: Deploy Cloud Functions no longer dies when the project has no
+  default Storage bucket: `storage.rules` ships through
+  `scripts/deployStorageRules.mjs`, which creates the bucket via the Storage
+  REST API (the console "Get Started" call) and warns instead of failing
+  if it can't. `ProfileDoc.displayName` is typed; ts-nocheck 90 → 89.
 - 2026-09-01: audit fix 7 — eight caller-less callables deleted
   (`getPublicProfile`, `getLineupAnalytics`, `rescindLeagueInvitation`,
   `migrateUserProfiles`, `updateRivalsNow`, `refreshScheduleWeatherNow`,
