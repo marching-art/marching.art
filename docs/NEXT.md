@@ -296,16 +296,14 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
 - **Unfreeze stale league matchups** (production credentials required):
   `node functions/src/scripts/archiveStaleLeagueMatchups.js --dry-run`, read
   the output, then `--commit`.
-- **Confirm the default Storage bucket exists.** The 2026-09-02 deploy
-  failed with "Firebase Storage has not been set up" — the project has never
-  had a bucket, so `storage.rules` has never applied to anything. CI now
-  provisions the bucket itself (`scripts/deployStorageRules.mjs`) and only
-  degrades to a workflow **warning** if the deploy service account lacks
-  `firebasestorage.defaultBucket.create`. Check the next Deploy Cloud
-  Functions run: a `::notice::` names the created bucket (set the
-  `VITE_FIREBASE_STORAGE_BUCKET` secret to it); a `::warning::` means click
-  "Get Started" at console.firebase.google.com/project/marching-art/storage
-  or grant the SA the Firebase Admin role, then re-run with
+- **Set the `VITE_FIREBASE_STORAGE_BUCKET` repository secret to
+  `marching.art`** (the domain-verified GCS bucket; the project has no
+  Firebase default bucket). `firebase.json`, `mediaService.js` and the env
+  examples already name it. On the next Deploy Cloud Functions run,
+  `scripts/deployStorageRules.mjs` links the bucket to Firebase and ships
+  `storage.rules`; if it prints a `::warning::` instead, use "Import bucket"
+  on console.firebase.google.com/project/marching-art/storage or grant the
+  deploy SA the Firebase Admin role, then re-run with
   `deploy_target=rules-only`.
 - **Prune dead Firestore indexes** in the console after the
   `firestore.indexes.json` cleanup (indexes are deliberately not deployed
@@ -400,11 +398,13 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
 - 2026-09-01: audit fix 8 — both registration screens derive class budgets
   and unlock levels from the class registry (`CLASS_TABLE`), with a test
   pinning them to the JSON; changelog entry added.
-- 2026-09-02: Deploy Cloud Functions no longer dies when the project has no
-  default Storage bucket: `storage.rules` ships through
-  `scripts/deployStorageRules.mjs`, which creates the bucket via the Storage
-  REST API (the console "Get Started" call) and warns instead of failing
-  if it can't. `ProfileDoc.displayName` is typed; ts-nocheck 90 → 89.
+- 2026-09-02: Deploy Cloud Functions no longer dies on the missing Firebase
+  default bucket. Storage now targets the domain-verified `marching.art`
+  bucket: named in `firebase.json` (array form, so the CLI skips the
+  default-bucket lookup), used by `mediaService.js` uploads, and linked to
+  Firebase by `scripts/deployStorageRules.mjs` (REST `addFirebase`) before
+  the rules deploy — which warns instead of failing if it can't.
+  `ProfileDoc.displayName` is typed; ts-nocheck 90 → 89.
 - 2026-09-01: audit fix 7 — eight caller-less callables deleted
   (`getPublicProfile`, `getLineupAnalytics`, `rescindLeagueInvitation`,
   `migrateUserProfiles`, `updateRivalsNow`, `refreshScheduleWeatherNow`,

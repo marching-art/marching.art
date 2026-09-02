@@ -24,6 +24,14 @@ const admin = require("firebase-admin");
 // `cloudinarySecrets` into its `secrets` option instead of re-deriving the
 // three names, which is how the submission publish paths silently ended up
 // without them and fell through to the Firebase Storage fallback.
+// The project's Storage bucket. The project has no Firebase *default*
+// bucket (it was never provisioned), so the Admin SDK's `bucket()` default —
+// FIREBASE_CONFIG.storageBucket, i.e. "<project>.appspot.com" — does not
+// exist. Instead a domain-named GCS bucket is linked to Firebase; keep this
+// in sync with the `storage[].bucket` entry in firebase.json and the
+// VITE_FIREBASE_STORAGE_BUCKET build secret.
+const STORAGE_BUCKET = process.env.STORAGE_BUCKET || "marching.art";
+
 const cloudinaryCloudName = defineSecret("CLOUDINARY_CLOUD_NAME");
 const cloudinaryApiKey = defineSecret("CLOUDINARY_API_KEY");
 const cloudinaryApiSecret = defineSecret("CLOUDINARY_API_SECRET");
@@ -93,7 +101,7 @@ async function uploadToFirebaseStorage(base64Data, options = {}) {
   } = options;
 
   try {
-    const bucket = admin.storage().bucket();
+    const bucket = admin.storage().bucket(STORAGE_BUCKET);
 
     // Parse base64 data URL
     let imageBuffer;
