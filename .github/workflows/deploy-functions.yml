@@ -344,12 +344,12 @@ jobs:
           #    included: `--force` would delete any console-managed indexes
           #    missing from firestore.indexes.json.
           firebase deploy --only firestore:rules --force --project marching-art
-          #    storage.rules goes through a wrapper because `firebase deploy
-          #    --only storage` hard-fails on a project with no default bucket
-          #    (2026-09-02: "Firebase Storage has not been set up"). The
-          #    wrapper provisions the bucket via the Storage REST API when it
-          #    is missing, and degrades to a workflow warning (not a failed
-          #    deploy) if the service account is not allowed to.
+          #    storage.rules goes through a wrapper because this project has
+          #    no Firebase default bucket (2026-09-02: "Firebase Storage has
+          #    not been set up" killed the deploy). Rules target the
+          #    domain-named bucket in firebase.json instead; the wrapper links
+          #    it to Firebase via the Storage REST API if needed and degrades
+          #    to a workflow warning (not a failed deploy) if it cannot.
           node scripts/deployStorageRules.mjs
 
           # 2) Deploy the functions named by the deploy plan (see the "Compute
@@ -661,6 +661,6 @@ jobs:
           trap 'rm -f /tmp/sa-key.json' EXIT
 
           firebase deploy --only firestore:rules --force --project marching-art
-          # Provisions the default bucket if missing, then deploys storage.rules
-          # (see the script header for the degrade-to-warning behaviour).
+          # Links the firebase.json bucket to Firebase if needed, then deploys
+          # storage.rules (see the script header for degrade-to-warning).
           node scripts/deployStorageRules.mjs

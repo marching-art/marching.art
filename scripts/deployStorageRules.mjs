@@ -1,32 +1,36 @@
 #!/usr/bin/env node
-// Deploys storage.rules to production, provisioning the project's default
-// Cloud Storage bucket first if it has never been set up.
+// Deploys storage.rules to production, first making sure the bucket named in
+// firebase.json is linked to Firebase.
 //
-// Why this exists: `firebase deploy --only storage` hard-fails on a project
-// whose Storage console page has never had "Get Started" clicked ("Firebase
-// Storage has not been set up on project ..."). On 2026-09-02 that took the
-// whole Cloud Functions deploy down with it. The console button is just a
-// call to the Cloud Storage for Firebase REST API's
-// projects.defaultBucket.create method, so this script makes the same call
-// non-interactively with the deploy service account, then deploys the rules.
+// Why this exists: the project has no Firebase *default* bucket (it was
+// never provisioned), and `firebase deploy --only storage` hard-fails on that
+// ("Firebase Storage has not been set up on project ...") — which took the
+// whole Cloud Functions deploy down on 2026-09-02. Instead, a domain-named
+// Cloud Storage bucket (`marching.art`, domain-verified) is used. Two things
+// have to be true for the rules to deploy against it:
+//
+//   1. firebase.json's `storage` entry is an ARRAY with an explicit `bucket`.
+//      The CLI only looks up the default bucket for the object form; with an
+//      explicit bucket it releases the ruleset straight to that bucket.
+//   2. The bucket is linked to Firebase (what the console's "Import bucket"
+//      does). A plain GCS bucket is not visible to the Firebase Rules
+//      service, so the release would fail. This script performs the link via
+//      the Cloud Storage for Firebase REST API (projects.buckets.addFirebase)
+//      using the deploy service account; the call is idempotent.
 //
 // Outcomes:
-//   - bucket exists (or was just created)  → deploy storage.rules; exit 1 if
+//   - bucket linked (already, or just now) → deploy storage.rules; exit 1 if
 //     that deploy itself fails (a real error).
-//   - bucket missing and the service account may not create it (403), or the
-//     project is not eligible (400/412) → emit a GitHub Actions warning and
-//     exit 0. Skipping is safe: with no bucket there is nothing the rules
-//     could be protecting, and Firestore rules have already shipped by the
-//     time this runs. The warning names the one-time fix for the owner.
+//   - bucket cannot be linked (service account lacks permission, bucket does
+//     not exist) → emit a GitHub Actions warning naming the fix and exit 0,
+//     so Firestore rules and functions still ship. Skipping is safe: an
+//     unlinked bucket is not reachable through Firebase Storage at all.
 //
 // Env:
 //   GOOGLE_APPLICATION_CREDENTIALS  path to the deploy service-account key
 //   FIREBASE_PROJECT                project id (default: marching-art)
-//   STORAGE_BUCKET_LOCATION         location for a newly created bucket
-//                                   (default: US-CENTRAL1, same region as
-//                                   the Cloud Functions)
-//   STORAGE_RULES_SKIP_DEPLOY=1     ensure the bucket only; don't run
-//                                   `firebase deploy` (for local checks)
+//   STORAGE_RULES_SKIP_DEPLOY=1     link only; don't run `firebase deploy`
+//                                   (for local checks)
 //
 // Usage (see .github/workflows/deploy-functions.yml):
 //   node scripts/deployStorageRules.mjs
@@ -34,10 +38,12 @@
 import { createSign } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import path from 'node:path';
 
 const PROJECT = process.env.FIREBASE_PROJECT || 'marching-art';
-const LOCATION = (process.env.STORAGE_BUCKET_LOCATION || 'US-CENTRAL1').toUpperCase();
-const DEFAULT_BUCKET_URL = `https://firebasestorage.googleapis.com/v1beta/projects/${PROJECT}/defaultBucket`;
+const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const API_ROOT = `https://firebasestorage.googleapis.com/v1beta/projects/${PROJECT}`;
 const CONSOLE_URL = `https://console.firebase.google.com/project/${PROJECT}/storage`;
 const IS_GITHUB = Boolean(process.env.GITHUB_ACTIONS);
 
@@ -45,6 +51,24 @@ const IS_GITHUB = Boolean(process.env.GITHUB_ACTIONS);
 function warn(msg) {
   // `::warning::` surfaces in the run summary + annotations on GitHub.
   console.error(IS_GITHUB ? `::warning::${msg}` : `WARNING: ${msg}`);
+}
+
+/**
+ * The bucket names from firebase.json's `storage` entries — the single
+ * source of truth, so this script and the CLI can never disagree.
+ * @returns {Promise<string[]>}
+ */
+async function bucketsFromFirebaseJson() {
+  const config = JSON.parse(await readFile(path.join(REPO_ROOT, 'firebase.json'), 'utf8'));
+  const entries = Array.isArray(config.storage) ? config.storage : [config.storage];
+  const buckets = entries.map((e) => e?.bucket).filter((b) => typeof b === 'string' && b);
+  if (buckets.length === 0) {
+    throw new Error(
+      'firebase.json `storage` must be an array of { bucket, rules } entries — ' +
+        'the object form makes the CLI look up a default bucket this project does not have'
+    );
+  }
+  return buckets;
 }
 
 /**
@@ -90,18 +114,18 @@ async function getAccessToken() {
 /**
  * @param {string} token
  * @param {"GET" | "POST"} method
- * @param {object} [json]
+ * @param {string} url
  * @returns {Promise<{ status: number, body: any }>}
  */
-async function api(token, method, json) {
-  const res = await fetch(DEFAULT_BUCKET_URL, {
+async function api(token, method, url) {
+  const res = await fetch(url, {
     method,
     headers: {
       authorization: `Bearer ${token}`,
       'x-goog-user-project': PROJECT,
-      ...(json ? { 'content-type': 'application/json' } : {}),
+      ...(method === 'POST' ? { 'content-type': 'application/json' } : {}),
     },
-    body: json ? JSON.stringify(json) : undefined,
+    body: method === 'POST' ? '{}' : undefined,
   });
   const text = await res.text();
   let body;
@@ -119,71 +143,65 @@ function describe(r) {
   return err ? `${err.status || r.status}: ${err.message}` : `HTTP ${r.status}`;
 }
 
-/** @param {any} defaultBucket */
-function bucketName(defaultBucket) {
-  // DefaultBucket.bucket.name is "projects/_/buckets/<bucket>"; .name is
-  // "projects/<project>/defaultBucket".
-  const full = defaultBucket?.bucket?.name || '';
-  return full.split('/').pop() || `${PROJECT}.firebasestorage.app`;
-}
-
 /**
- * Make sure the project has a default bucket.
- * @returns {Promise<{ ok: true, bucket: string, created: boolean } | { ok: false, reason: string }>}
+ * Link `bucket` to Firebase if it is not already.
+ * @param {string} token
+ * @param {string} bucket
+ * @returns {Promise<{ ok: true, linked: boolean } | { ok: false, reason: string }>}
  */
-async function ensureDefaultBucket() {
-  const token = await getAccessToken();
-
-  const existing = await api(token, 'GET');
-  if (existing.status === 200) {
-    return { ok: true, bucket: bucketName(existing.body), created: false };
-  }
+async function ensureLinked(token, bucket) {
+  const resource = `${API_ROOT}/buckets/${encodeURIComponent(bucket)}`;
+  const existing = await api(token, 'GET', resource);
+  if (existing.status === 200) return { ok: true, linked: false };
   if (existing.status !== 404) {
-    return { ok: false, reason: `could not read default bucket (${describe(existing)})` };
+    return { ok: false, reason: `could not read bucket '${bucket}' (${describe(existing)})` };
   }
 
-  console.log(`No default Storage bucket on '${PROJECT}'; creating one in ${LOCATION}...`);
-  const created = await api(token, 'POST', { location: LOCATION });
-  if (created.status === 200) {
-    return { ok: true, bucket: bucketName(created.body), created: true };
-  }
-  // 409 = raced with someone clicking the console button; re-read.
-  if (created.status === 409) {
-    const again = await api(token, 'GET');
-    if (again.status === 200) return { ok: true, bucket: bucketName(again.body), created: false };
-  }
-  return { ok: false, reason: `could not create default bucket (${describe(created)})` };
+  console.log(`Bucket '${bucket}' is not linked to Firebase yet; linking...`);
+  const linked = await api(token, 'POST', `${resource}:addFirebase`);
+  if (linked.status === 200) return { ok: true, linked: true };
+  // 409 = raced with someone importing it in the console; that's still linked.
+  if (linked.status === 409) return { ok: true, linked: false };
+  return { ok: false, reason: `could not link bucket '${bucket}' (${describe(linked)})` };
 }
 
 async function main() {
-  /** @type {Awaited<ReturnType<typeof ensureDefaultBucket>>} */
-  let ensured;
+  const buckets = await bucketsFromFirebaseJson();
+  /** @type {string[]} */
+  const problems = [];
   try {
-    ensured = await ensureDefaultBucket();
+    const token = await getAccessToken();
+    for (const bucket of buckets) {
+      const result = await ensureLinked(token, bucket);
+      if (!result.ok) {
+        problems.push(result.reason);
+        continue;
+      }
+      console.log(
+        result.linked
+          ? `Linked bucket '${bucket}' to Firebase project '${PROJECT}'.`
+          : `Bucket '${bucket}' is already linked to Firebase.`
+      );
+      if (result.linked && IS_GITHUB) {
+        console.log(
+          `::notice::Storage bucket '${bucket}' is now linked to Firebase. ` +
+            `Make sure the VITE_FIREBASE_STORAGE_BUCKET repository secret is '${bucket}'.`
+        );
+      }
+    }
   } catch (error) {
-    ensured = { ok: false, reason: error instanceof Error ? error.message : String(error) };
+    problems.push(error instanceof Error ? error.message : String(error));
   }
 
-  if (!ensured.ok) {
+  if (problems.length > 0) {
     warn(
-      `storage.rules NOT deployed: ${ensured.reason}. ` +
-        `One-time fix for the project owner: either click "Get Started" at ${CONSOLE_URL}, ` +
-        `or grant the deploy service account the "Firebase Admin" role so CI can create the ` +
-        `bucket itself. Firestore rules and functions are unaffected.`
+      `storage.rules NOT deployed: ${problems.join('; ')}. ` +
+        `One-time fix for the project owner: open ${CONSOLE_URL}, use "Import bucket" to link ` +
+        `'${buckets.join("', '")}' to Firebase (or grant the deploy service account the ` +
+        `"Firebase Admin" role so CI can link it), then re-run this workflow with ` +
+        `deploy_target=rules-only. Firestore rules and functions are unaffected.`
     );
     return 0;
-  }
-
-  console.log(
-    ensured.created
-      ? `Created default Storage bucket '${ensured.bucket}' (${LOCATION}).`
-      : `Default Storage bucket '${ensured.bucket}' already exists.`
-  );
-  if (ensured.created && IS_GITHUB) {
-    console.log(
-      `::notice::Default Storage bucket created: ${ensured.bucket}. ` +
-        `Set the VITE_FIREBASE_STORAGE_BUCKET repository secret to this value if it differs.`
-    );
   }
 
   if (process.env.STORAGE_RULES_SKIP_DEPLOY === '1') return 0;
@@ -191,7 +209,7 @@ async function main() {
   const deploy = spawnSync(
     'firebase',
     ['deploy', '--only', 'storage', '--force', '--project', PROJECT, '--non-interactive'],
-    { stdio: 'inherit' }
+    { stdio: 'inherit', cwd: REPO_ROOT }
   );
   if (deploy.error) throw deploy.error;
   return deploy.status ?? 1;

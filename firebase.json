@@ -28,9 +28,12 @@
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"
   },
-  "storage": {
-    "rules": "storage.rules"
-  },
+  "storage": [
+    {
+      "bucket": "marching.art",
+      "rules": "storage.rules"
+    }
+  ],
   "hosting": {
     "public": "build",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
