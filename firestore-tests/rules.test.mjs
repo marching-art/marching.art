@@ -84,6 +84,7 @@ async function freshSeed() {
 
 const authed = () => testEnv.authenticatedContext(ALICE).firestore();
 const mallory = () => testEnv.authenticatedContext('mallory-uid').firestore();
+const admin = () => testEnv.authenticatedContext('admin-uid', { admin: true }).firestore();
 
 // --- cosmetic writes must still be allowed ---
 await freshSeed();
@@ -1662,6 +1663,328 @@ await check(
 await check(
   'signed-in user cannot list usernames via a filter either',
   assertFails(getDocs(query(collection(mallory(), 'usernames'), where('uid', '==', ALICE))))
+);
+
+// =============================================================================
+// 2026-09-02 audit batch — diff guards and coverage for paths that had none.
+// =============================================================================
+
+// directorInfo.yearsDirecting / specialties — both land on a public doc; a
+// non-numeric or absurd year and an unbounded specialties list are rejected.
+await freshSeed();
+await check(
+  'owner can clear yearsDirecting (null) and save a normal specialties list',
+  assertSucceeds(
+    updateDoc(doc(authed(), profilePath), {
+      directorInfo: { bio: 'ok', yearsDirecting: null, specialties: ['Brass', 'Visual'] },
+    })
+  )
+);
+
+await freshSeed();
+await check(
+  'owner cannot write a string or absurd yearsDirecting',
+  assertFails(
+    updateDoc(doc(authed(), profilePath), {
+      directorInfo: { bio: 'ok', yearsDirecting: 'x'.repeat(50000), specialties: [] },
+    })
+  )
+);
+
+await freshSeed();
+await check(
+  'owner cannot write yearsDirecting above a human lifetime',
+  assertFails(
+    updateDoc(doc(authed(), profilePath), {
+      directorInfo: { bio: 'ok', yearsDirecting: 5000, specialties: [] },
+    })
+  )
+);
+
+await freshSeed();
+await check(
+  'owner cannot write an oversized specialties list',
+  assertFails(
+    updateDoc(doc(authed(), profilePath), {
+      directorInfo: { bio: 'ok', specialties: Array.from({ length: 200 }, (_, i) => `s${i}`) },
+    })
+  )
+);
+
+await freshSeed();
+await check(
+  'owner cannot smuggle a wall of text inside specialties',
+  assertFails(
+    updateDoc(doc(authed(), profilePath), {
+      directorInfo: { bio: 'ok', specialties: ['x'.repeat(20000)] },
+    })
+  )
+);
+
+await freshSeed();
+await check(
+  'owner cannot write non-string specialties',
+  assertFails(
+    updateDoc(doc(authed(), profilePath), {
+      directorInfo: { bio: 'ok', specialties: [{ nested: 'map' }] },
+    })
+  )
+);
+
+// Profile comments — an author may edit the body only: attribution and any
+// other key are frozen, and the body stays bounded (comments are public).
+await freshCommentSeed();
+await check(
+  'comment author cannot rewrite authorUid on their own comment',
+  assertFails(updateDoc(doc(mallory(), commentPath), { authorUid: ALICE }))
+);
+
+await freshCommentSeed();
+await check(
+  'comment author cannot add an unlisted key to their comment',
+  assertFails(updateDoc(doc(mallory(), commentPath), { text: 'ok', pinned: true }))
+);
+
+await freshCommentSeed();
+await check(
+  'comment author cannot grow the body without bound',
+  assertFails(updateDoc(doc(mallory(), commentPath), { text: 'x'.repeat(5000) }))
+);
+
+await freshCommentSeed();
+await check(
+  'comment author cannot blank the body or make it a non-string',
+  assertFails(updateDoc(doc(mallory(), commentPath), { text: 42 }))
+);
+
+// private/data — the owner may touch only the FCM token keys; the email and
+// age-gate attestation are server-written, and the doc is never deletable
+// by its owner.
+await freshPrivateSeed();
+await check(
+  'owner can clear their FCM token (null + stamp)',
+  assertSucceeds(
+    setDoc(
+      doc(authed(), privatePath),
+      { fcmToken: null, fcmTokenUpdatedAt: new Date().toISOString() },
+      { merge: true }
+    )
+  )
+);
+
+await freshPrivateSeed();
+await check(
+  'owner cannot rewrite their email on private/data',
+  assertFails(updateDoc(doc(authed(), privatePath), { email: 'someone-else@example.com' }))
+);
+
+await freshPrivateSeed();
+await check(
+  'owner cannot forge an age-gate attestation on private/data',
+  assertFails(
+    updateDoc(doc(authed(), privatePath), { ageGate: { attestedAt: new Date().toISOString() } })
+  )
+);
+
+await freshPrivateSeed();
+await check(
+  'owner cannot write an oversized FCM token',
+  assertFails(setDoc(doc(authed(), privatePath), { fcmToken: 'x'.repeat(5000) }, { merge: true }))
+);
+
+await freshPrivateSeed();
+await check('owner cannot delete private/data', assertFails(deleteDoc(doc(authed(), privatePath))));
+
+await testEnv.clearFirestore();
+await check(
+  'owner can create private/data with just the FCM token',
+  assertSucceeds(setDoc(doc(authed(), privatePath), { fcmToken: 'token-1' }))
+);
+
+await testEnv.clearFirestore();
+await check(
+  'owner cannot create private/data carrying an email',
+  assertFails(setDoc(doc(authed(), privatePath), { fcmToken: 'token-1', email: 'x@example.com' }))
+);
+
+await freshPrivateSeed();
+await check(
+  'signed-in user cannot list the private collection group',
+  assertFails(getDocs(collectionGroup(mallory(), 'private')))
+);
+
+await freshPrivateSeed();
+await check(
+  'admin can list the private collection group (admin panel email join)',
+  assertSucceeds(getDocs(collectionGroup(admin(), 'private')))
+);
+
+// articles collection group — scoped to the news_hub tree. Any other
+// subcollection that happens to be named `articles` is not world-readable.
+const hubArticlePath = 'news_hub/season-1/days/day_3/articles/daily_recap';
+const strayArticlePath = `artifacts/${APP}/users/${ALICE}/articles/draft-1`;
+await testEnv.clearFirestore();
+await testEnv.withSecurityRulesDisabled(async (ctx) => {
+  await setDoc(doc(ctx.firestore(), hubArticlePath), {
+    isPublished: true,
+    authorUid: ALICE,
+    headline: 'Recap',
+    createdAt: new Date(),
+  });
+  await setDoc(doc(ctx.firestore(), strayArticlePath), {
+    isPublished: true,
+    authorUid: ALICE,
+    headline: 'Not news',
+    createdAt: new Date(),
+  });
+});
+
+await check(
+  'anyone can query the articles group inside news_hub (director articles)',
+  assertSucceeds(
+    getDocs(
+      query(
+        collectionGroup(testEnv.unauthenticatedContext().firestore(), 'articles'),
+        where('authorUid', '==', ALICE),
+        where('isPublished', '==', true)
+      )
+    )
+  )
+);
+
+await check(
+  'a stray articles subcollection outside news_hub is not readable via the group rule',
+  assertFails(getDoc(doc(testEnv.unauthenticatedContext().firestore(), strayArticlePath)))
+);
+
+await check(
+  'the articles group cannot be listed without the isPublished filter (drafts stay hidden)',
+  assertFails(
+    getDocs(
+      query(
+        collectionGroup(testEnv.unauthenticatedContext().firestore(), 'articles'),
+        where('authorUid', '==', ALICE)
+      )
+    )
+  )
+);
+
+await check(
+  'a news_hub article stays directly readable',
+  assertSucceeds(getDoc(doc(testEnv.unauthenticatedContext().firestore(), hubArticlePath)))
+);
+
+// --- Paths that previously had no regression test at all ---
+const anon = () => testEnv.unauthenticatedContext().firestore();
+
+// supporters — PII (payer email + name), fully locked.
+const supporterPath = `artifacts/${APP}/supporters/hash-1`;
+await testEnv.clearFirestore();
+await testEnv.withSecurityRulesDisabled(async (ctx) => {
+  await setDoc(doc(ctx.firestore(), supporterPath), { email: 'fan@example.com', name: 'Fan' });
+});
+await check(
+  'signed-in user cannot read a supporters doc (PII)',
+  assertFails(getDoc(doc(mallory(), supporterPath)))
+);
+await check(
+  'signed-in user cannot write a supporters doc',
+  assertFails(setDoc(doc(mallory(), supporterPath), { email: 'x@example.com' }))
+);
+
+// seasonDetail — public history, server-written.
+const seasonDetailPath = `artifacts/${APP}/users/${ALICE}/seasonDetail/season-1`;
+await testEnv.clearFirestore();
+await testEnv.withSecurityRulesDisabled(async (ctx) => {
+  await setDoc(doc(ctx.firestore(), seasonDetailPath), { lineup: { GE1: 'Blue Devils' } });
+});
+await check(
+  'anyone can read an archived seasonDetail',
+  assertSucceeds(getDoc(doc(anon(), seasonDetailPath)))
+);
+await check(
+  'owner cannot rewrite their own seasonDetail',
+  assertFails(updateDoc(doc(authed(), seasonDetailPath), { lineup: { GE1: 'Forged' } }))
+);
+
+// podium-fan — finalists/winner public; ballots private even to the voter.
+await testEnv.clearFirestore();
+await testEnv.withSecurityRulesDisabled(async (ctx) => {
+  await setDoc(doc(ctx.firestore(), 'podium-fan/season-1'), { finalists: [{ uid: ALICE }] });
+  await setDoc(doc(ctx.firestore(), `podium-fan/season-1/ballots/${ALICE}`), { finals: 'bob-uid' });
+});
+await check(
+  'anyone can read the Fan Favorite finalists',
+  assertSucceeds(getDoc(doc(anon(), 'podium-fan/season-1')))
+);
+await check(
+  'a voter cannot read their own Fan Favorite ballot (votes are private)',
+  assertFails(getDoc(doc(authed(), `podium-fan/season-1/ballots/${ALICE}`)))
+);
+await check(
+  'a voter cannot write a Fan Favorite ballot client-side',
+  assertFails(setDoc(doc(authed(), `podium-fan/season-1/ballots/${ALICE}`), { finals: ALICE }))
+);
+
+// hosted-events — public pages; mutations are callable-only.
+await testEnv.clearFirestore();
+await testEnv.withSecurityRulesDisabled(async (ctx) => {
+  await setDoc(doc(ctx.firestore(), 'hosted-events/season-1/events/evt-1'), { hostUid: ALICE });
+});
+await check(
+  'anyone can read a hosted event',
+  assertSucceeds(getDoc(doc(anon(), 'hosted-events/season-1/events/evt-1')))
+);
+await check(
+  'the host cannot edit their hosted event client-side',
+  assertFails(updateDoc(doc(authed(), 'hosted-events/season-1/events/evt-1'), { purse: 999999 }))
+);
+
+// admin-stats — operational telemetry, admin read only.
+await testEnv.clearFirestore();
+await testEnv.withSecurityRulesDisabled(async (ctx) => {
+  await setDoc(doc(ctx.firestore(), 'admin-stats/economy'), { minted: 1, sunk: 1 });
+});
+await check(
+  'admin can read admin-stats',
+  assertSucceeds(getDoc(doc(admin(), 'admin-stats/economy')))
+);
+await check(
+  'signed-in user cannot read admin-stats',
+  assertFails(getDoc(doc(mallory(), 'admin-stats/economy')))
+);
+
+// game-settings — public read, admin write.
+await testEnv.clearFirestore();
+await testEnv.withSecurityRulesDisabled(async (ctx) => {
+  await setDoc(doc(ctx.firestore(), 'game-settings/season'), { seasonUid: 'season-1' });
+});
+await check(
+  'anyone can read game-settings/season',
+  assertSucceeds(getDoc(doc(anon(), 'game-settings/season')))
+);
+await check(
+  'signed-in user cannot rewrite the season clock',
+  assertFails(updateDoc(doc(mallory(), 'game-settings/season'), { seasonUid: 'forged' }))
+);
+
+// users/{uid}/podium/** — competitive intel, owner read / server write.
+const podiumStatePath = `artifacts/${APP}/users/${ALICE}/podium/state`;
+await testEnv.clearFirestore();
+await testEnv.withSecurityRulesDisabled(async (ctx) => {
+  await setDoc(doc(ctx.firestore(), podiumStatePath), { reputation: 10 });
+});
+await check(
+  'owner can read their own Podium state',
+  assertSucceeds(getDoc(doc(authed(), podiumStatePath)))
+);
+await check(
+  "another director cannot read someone else's Podium state",
+  assertFails(getDoc(doc(mallory(), podiumStatePath)))
+);
+await check(
+  'owner cannot write their own Podium state',
+  assertFails(updateDoc(doc(authed(), podiumStatePath), { reputation: 999 }))
 );
 
 await testEnv.cleanup();

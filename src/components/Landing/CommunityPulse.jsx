@@ -5,55 +5,45 @@
 // fabricate activity for unauthenticated visitors — that would create
 // misleading social proof.
 
-import React, { memo, useState, useEffect } from 'react';
+import React, { memo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Users, TrendingUp, Award, Activity } from 'lucide-react';
 import { getRecentLeagueActivity } from '../../api/community';
 import { auth } from '../../api';
+import { queryKeys } from '../../lib/queryClient';
 
-// Cache to avoid re-fetching on every render
-/** @type {import('../../api/community').CommunityActivityItem[] | null} */
-let activityCache = null;
-let cacheTimestamp = 0;
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const STALE_MS = 5 * 60 * 1000; // 5 minutes
+
+/**
+ * The feed, or an empty list when it can't be read. Cached in React Query
+ * (not module scope) so sign-out's queryClient.clear() drops it with
+ * everything else — the next account never sees the previous one's feed.
+ * @returns {Promise<import('../../api/community').CommunityActivityItem[]>}
+ */
+async function loadActivity() {
+  try {
+    // Fetch recent league creations as a proxy for community activity
+    return await getRecentLeagueActivity();
+  } catch (error) {
+    if (/** @type {{code?: string}} */ (error)?.code !== 'permission-denied') {
+      console.error('CommunityPulse: Failed to fetch activity', error);
+    }
+    return [];
+  }
+}
 
 const CommunityPulse = memo(() => {
   const isAuthenticated = !!auth.currentUser;
-  const [activities, setActivities] = useState(activityCache || []);
-  const [loading, setLoading] = useState(isAuthenticated && !activityCache);
-
-  useEffect(() => {
-    // The leagues collection requires authentication to list (see
-    // firestore.rules). Unauthenticated visitors have no public
-    // activity source to read from, so we render nothing rather than
-    // show a perpetually-loading placeholder or fabricated activity.
-    if (!isAuthenticated) return;
-
-    const fetchActivity = async () => {
-      // Use cache if fresh
-      if (activityCache && Date.now() - cacheTimestamp < CACHE_TTL) {
-        setActivities(activityCache);
-        setLoading(false);
-        return;
-      }
-
-      try {
-        // Fetch recent league creations as a proxy for community activity
-        const sorted = await getRecentLeagueActivity();
-
-        activityCache = sorted;
-        cacheTimestamp = Date.now();
-        setActivities(sorted);
-      } catch (error) {
-        if (/** @type {{code?: string}} */ (error)?.code !== 'permission-denied') {
-          console.error('CommunityPulse: Failed to fetch activity', error);
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchActivity();
-  }, [isAuthenticated]);
+  // The leagues collection requires authentication to list (see
+  // firestore.rules). Unauthenticated visitors have no public activity
+  // source to read from, so the query never runs for them.
+  const { data: activities = [], isLoading } = useQuery({
+    queryKey: queryKeys.communityActivity(),
+    queryFn: loadActivity,
+    enabled: isAuthenticated,
+    staleTime: STALE_MS,
+  });
+  const loading = isAuthenticated && isLoading;
 
   // Do not render for unauthenticated visitors — no public data source
   // exists, and an empty widget would signal a dead platform.
@@ -112,5 +102,7 @@ const CommunityPulse = memo(() => {
     </div>
   );
 });
+
+CommunityPulse.displayName = 'CommunityPulse';
 
 export default CommunityPulse;

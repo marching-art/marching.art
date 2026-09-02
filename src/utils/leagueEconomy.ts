@@ -4,8 +4,8 @@
 // Each value below is a mirror, not a source of truth. The server files these
 // come from all pull in firebase-admin or firebase-functions, so a vitest
 // mirror-equality test cannot import them the way progressionGuide.test.js
-// imports the (dependency-free) XP helpers — the comment on each constant is
-// the link to keep them honest.
+// imports the (dependency-free) XP helpers — utils/economyMirrors.test.ts
+// pins each one by reading the server source text instead.
 //
 // Caption Wars' season cost is the exception and lives in utils/captionWars.ts
 // beside the rest of that format, where it IS pinned by a mirror test.

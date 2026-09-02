@@ -15,7 +15,6 @@
     "functions/src/callable/podiumRoute.js#getPodiumState": "Read-only: fetches podium state; a budget charge would add a billed read per call.",
     "functions/src/callable/podiumStaff.js#getPodiumStaffMarket": "Read-only: fetches the staff market listing.",
     "functions/src/callable/supporters.js#getSupportersWall": "Read-only: public supporters wall fetch.",
-    "functions/src/callable/users.js#checkUsername": "Read-only: username availability check (validated + length-capped input).",
     "functions/src/callable/users.js#getShowRegistrations": "Read endpoint; only write is a best-effort materialization of the show-registration index doc on legacy fallback.",
     "functions/src/callable/users.js#getUserRankings": "Read-only: rankings snapshot read with scan fallback.",
     "functions/src/triggers/newsFeed.js#getDailyNews": "Read-only: single news doc fetch, day/seasonId validated.",

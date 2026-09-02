@@ -8,6 +8,7 @@
 // in the app); this file only contributes the page-level fallback UI, which
 // differs from the inline feature fallback by offering router navigation.
 
+import { useLocation } from 'react-router-dom';
 import React, { startTransition } from 'react';
 import { m } from 'framer-motion';
 import { AlertTriangle, RefreshCw, Home, ArrowLeft } from 'lucide-react';
@@ -50,7 +51,7 @@ const PageErrorFallback: React.FC<PageErrorFallbackProps> = ({ error, pageName, 
         </p>
 
         {/* Error Details (dev only) */}
-        {error && process.env.NODE_ENV === 'development' && (
+        {error && import.meta.env.DEV && (
           <details className="mb-6 text-left">
             <summary className="text-sm text-muted cursor-pointer hover:text-secondary mb-2">
               Technical Details
@@ -112,18 +113,25 @@ interface PageErrorBoundaryProps {
   children: React.ReactNode;
 }
 
-export const PageErrorBoundary: React.FC<PageErrorBoundaryProps> = ({ name, children }) => (
-  <ErrorBoundary
-    onError={(error, errorInfo) => {
-      console.error(`[${name}] Error:`, error);
-      console.error(`[${name}] Component Stack:`, errorInfo.componentStack);
-    }}
-    fallbackRender={(error, reset) => (
-      <PageErrorFallback error={error} pageName={name} onReset={reset} />
-    )}
-  >
-    {children}
-  </ErrorBoundary>
-);
+export const PageErrorBoundary: React.FC<PageErrorBoundaryProps> = ({ name, children }) => {
+  // A crash on one league/profile must not stick to the next: the boundary
+  // resets whenever the path changes (param navigation included), so the
+  // director can move on without a full reload.
+  const { pathname } = useLocation();
+  return (
+    <ErrorBoundary
+      resetKeys={[pathname]}
+      onError={(error, errorInfo) => {
+        console.error(`[${name}] Error:`, error);
+        console.error(`[${name}] Component Stack:`, errorInfo.componentStack);
+      }}
+      fallbackRender={(error, reset) => (
+        <PageErrorFallback error={error} pageName={name} onReset={reset} />
+      )}
+    >
+      {children}
+    </ErrorBoundary>
+  );
+};
 
 export default PageErrorBoundary;

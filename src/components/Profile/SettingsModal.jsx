@@ -27,6 +27,7 @@ import { useTooltipPreference } from '../../hooks/useTooltipPreference';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
 import { usePWAInstall } from '../../hooks/usePWAInstall';
 import PWAInstallInstructions from '../PWAInstallInstructions';
+import { friendlyCallableError } from '../../utils/callableErrors';
 
 // =============================================================================
 // TOGGLE
@@ -348,7 +349,7 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
       onClose();
     } catch (error) {
       console.error('Error deleting account:', error);
-      toast.error(error.message || 'Failed to delete account');
+      toast.error(friendlyCallableError(error, 'Failed to delete account'));
     } finally {
       setIsDeleting(false);
     }

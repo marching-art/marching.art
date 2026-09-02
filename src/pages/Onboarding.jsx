@@ -23,6 +23,7 @@ import toast from 'react-hot-toast';
 import { useSeasonStore } from '../store/seasonStore';
 import { useScheduleStore } from '../store/scheduleStore';
 import { autoFillLineup } from '../utils/lineupAutoFill';
+import { NEW_DIRECTOR_CORPSCOIN } from '../utils/economyMirrors';
 import { getStoredGuestLineup, clearGuestPreviewData } from '../hooks/useGuestPreview';
 import { importGuestLineup } from '../utils/guestLineupImport';
 import {
@@ -545,7 +546,9 @@ const Onboarding = () => {
   };
 
   const handleCelebrationComplete = () => {
-    toast.success("Welcome to marching.art! Here's 100 CorpsCoin to get started!");
+    toast.success(
+      `Welcome to marching.art! Here's ${NEW_DIRECTOR_CORPSCOIN.toLocaleString()} CorpsCoin to get started!`
+    );
     // A director who arrived on a shared deep link (a league invite, a
     // profile) and had to create an account first lands there, not on the
     // dashboard — see lib/pendingRedirect.
@@ -749,8 +752,8 @@ const Onboarding = () => {
                       </div>
                       <p className="text-xs text-muted mt-2 text-center">
                         You can adjust this from your dashboard — changes are unlimited for the
-                        first two weeks, then limited to 3 per week (2 total during Championship
-                        Week)
+                        first two weeks, then limited to 3 per week, and 2 per day during
+                        Championship Week
                       </p>
                     </div>
                   </m.div>

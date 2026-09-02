@@ -8,7 +8,7 @@ burns an hour to conclude "everything's about covered." Don't. If you ship,
 cut, or discover something, edit THIS file in the same PR — that's the whole
 maintenance contract.
 
-_Last updated: 2026-09-02 (projected-score ordering regression fixed)._
+_Last updated: 2026-09-02 (projected-score ordering regression fixed; audit backlog: security-rules + frontend-correctness batches shipped)._
 
 ## In progress
 
@@ -30,40 +30,13 @@ ops step below)_
 - **P2** `firestore.rules:270-276` owner profile update has no
   `affectedKeys().hasOnly([...])` allowlist — arbitrary junk keys up to the
   1 MiB doc cap, served world-readable. (M)
-- **P2** `firestore.rules:299` comment `update` has no diff guard: author can
-  rewrite `authorUid` or add unbounded text; `rules.test.mjs:751` tests only
-  the happy path. (S)
-- **P2** `firestore.rules:328-331` `private/**` owner write is unvalidated
-  (holds `email`, FCM tokens). Restrict to the keys the client writes. (S)
-- **P2** `firestore.rules:856-859` `{path=**}/articles` is an
-  unauthenticated global collection-group read+list. Scope to `news_hub`. (S)
-- **P2** `firestore.rules:212-219` `directorInfo.specialties` /
-  `yearsDirecting` have no size/type check on a public doc. (S)
-- **P2** Rules paths with **zero** regression tests in
-  `firestore-tests/rules.test.mjs`: `supporters` (PII), `seasonDetail`,
-  `podium-fan/ballots`, `hosted-events`, `admin-stats`, `usernames`,
-  `game-settings`, `users/{uid}/podium/**`, all three collection-group
-  rules. One positive + one negative each. (M)
-- **P2** `submitPrediction` (`callable/dailyPredictions.js:46-48`) accepts an
-  unbounded `pick` string and an unchecked `corpsClass` straight into the hot
-  profile doc. Validate against `PREDICTION_QUESTIONS` and the registry. (S)
-- **P2** Client-supplied ids interpolated into paths without `assertDocId`:
-  `callable/leagues.js:231,376,473`, `leaguePools.js:25`,
-  `podiumJoint.js:105,175`. (S)
 - **P2** SSRF: `triggers/avatarGeneration.js:77-100` follows redirects to any
   host (metadata endpoint, RFC1918) with four distinct error strings as an
   oracle. Reject private ranges per hop; collapse errors. (M)
-- **P2** `getRecentNews` (`triggers/newsFeed.js:180-355`) is unauthenticated
-  and any `startAfter` bypasses the cache; `new Date("garbage")` throws
-  `internal`. Validate; budget the paginated branch. (S)
 - **P3** `firestore.rules:475-478,619-622,642-645,807-826` season/config docs
   are client-writable by admin with no field validation — a stolen admin
   session rewrites the season clock from a console. Route through
   callables. (M)
-- **P3** `checkUsername` (`callable/users.js:50-68`) is an unauthenticated,
-  unthrottled existence oracle. (S)
-- **P3** `castFanFavoriteVote` (`callable/podiumFan.js:53-99`) skips
-  `assertNotRestricted` unlike every other ballot surface. (S)
 - **P3** `directorInfo.profileVisibility === 'members'` is honored only by
   the SSR `/d/` page (`helpers/publicProfilePages.js:72`), not by rules —
   don't ship a toggle until it is. (S)
@@ -111,36 +84,10 @@ ops step below)_
 
 ### Frontend correctness & performance
 
-- **P2** `PageErrorBoundary.tsx:115-127` passes no `resetKeys`; a crash on
-  one league/profile sticks across param navigation. `resetKeys={[pathname]}`. (S)
-- **P2** `App.jsx:331-456` — landing, both auth pages, onboarding, `/preview`,
-  `/article/:id`, `/podium/preview`, `/forgot-password` still render bare
-  `<Suspense>` with no `<Page>` boundary; a crash white-screens the app. (S)
-- **P2** `store/profileStore.ts:192-212` sets a new `profile` identity on
-  every metadata-only snapshot, re-rendering 42 consumers and re-firing the
-  daily-login effect. Skip unchanged data. `:301-317` `updateProfile`
-  optimistic set never rolls back on failure (no callers — delete). (M)
 - **P2** `public/service-worker.js:239-257` `staleWhileRevalidate` resolves
   to `null` when offline with a cold cache (offline fallback unreachable);
   `maxAge` config at `:43-56` is never read, and version-keyed image/font
   caches purge on every deploy. (M)
-- **P2** Module-level caches in `Landing/CommunityPulse.jsx:15-17` and
-  `Landing/SocialProofBar.jsx:22-38` survive `queryClient.clear()` on
-  sign-out — next account briefly sees the previous feed. Move to React
-  Query. (S)
-- **P2** Build warning `INEFFECTIVE_DYNAMIC_IMPORT`: `MatchupDetailView.tsx`
-  is lazy-imported by `LeagueDetailView`/`MatchupsTab` but statically
-  re-exported from `components/Leagues/index.js`, so the split never
-  happens. Drop it from the barrel. `vendor-firebase` is the largest eager
-  chunk (671 kB / 198 kB gzip) — audit which `firebase/*` entry points the
-  first paint really needs. (S)
-- **P2** Raw Firebase codes reach toasts (`internal`, `unavailable`) via
-  `api/callable.ts:54` at ~10 player-facing sites incl.
-  `SeasonSetupWizard.jsx:242`, `ShowConceptModal.jsx:76`,
-  `StreakModal.jsx:47`. `friendlyCallableError(error, fallback)`. (S)
-- **P3** `PageErrorBoundary.tsx:53`, `ui/ErrorBoundary.tsx:129` read
-  `process.env.NODE_ENV` inside the fallback — the only `process.env` in the
-  client. `import.meta.env.DEV`. (S)
 - **P3** `api/leagues.ts:551-555` reads all of `matchupHistory` unbounded. (S)
 - **P3** Non-passive scroll listeners with forced layout in
   `ui/DataTable.tsx:213-232`, `scores/PillTabControl.tsx:37-52`;
@@ -149,14 +96,9 @@ ops step below)_
 - **P3** `ui/Modal.tsx:72-81` body scroll lock has no ref count for nested
   modals; `index.jsx:43-53` has no SW update prompt while the SW
   `skipWaiting`s mid-session. (S)
-- **P3** `lib/prefetch.ts` `createPrefetchHandlers` unused and `routeImports`
-  omits `/studio`, `/exchange`, `/guide`, `/updates`; `utils/errorMessages.ts`
-  (239 lines) has zero importers while four auth pages hand-roll the same
-  switch (`Landing.jsx:163` reads `err.code` raw). (S)
-- **P3** `store/seasonStore.ts:101` and `hooks/useFeatures.js:24` hand-write
-  `game-settings/*` paths the path-literal ratchet doesn't scan; add
-  `paths.features()`. `utils/leagueEconomy.ts:19,28,36` mirrors three CC
-  constants with no parity test (currently in sync at 100/25/12). (S)
+- **P2** `vendor-firebase` is the largest eager chunk (671 kB / 198 kB
+  gzip) — audit which `firebase/*` entry points the first paint really
+  needs. (S)
 
 ### SEO, accessibility & UX
 
@@ -194,11 +136,6 @@ ops step below)_
 - **P2** No report control on league chat (`Leagues/tabs/ChatTab.tsx:73-80`
   admits it), profile comments, or instant-publish press releases; only
   article comments have one. Reuse `reportComment`. (M)
-- **P2** Onboarding copy says **100 CorpsCoin** (`Onboarding.jsx:530`,
-  `OnboardingSteps.jsx:140`, `emailService.js:297,333`); the grant is 1,000
-  (`callable/users.js:133,491`). `Onboarding.jsx:710-712` states the wrong
-  show-registration rule. Import the constants; reuse
-  `howToPlayData.js:493`. (S)
 - **P2** Social proof is auth-gated: `SocialProofBar.jsx:104-116` counts hit
   auth-only collections, `CommunityPulse.jsx:60` returns null for guests.
   Nightly public `community_stats` doc. (S)
@@ -359,23 +296,32 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
 - **Unfreeze stale league matchups** (production credentials required):
   `node functions/src/scripts/archiveStaleLeagueMatchups.js --dry-run`, read
   the output, then `--commit`.
-- **Deploy `storage.rules` once** after the "Fix first" storage-rules item wires it into the
-  workflow; confirm in the console that the bucket no longer runs the
-  permissive defaults.
+- **Confirm the default Storage bucket exists.** The 2026-09-02 deploy
+  failed with "Firebase Storage has not been set up" — the project has never
+  had a bucket, so `storage.rules` has never applied to anything. CI now
+  provisions the bucket itself (`scripts/deployStorageRules.mjs`) and only
+  degrades to a workflow **warning** if the deploy service account lacks
+  `firebasestorage.defaultBucket.create`. Check the next Deploy Cloud
+  Functions run: a `::notice::` names the created bucket (set the
+  `VITE_FIREBASE_STORAGE_BUCKET` secret to it); a `::warning::` means click
+  "Get Started" at console.firebase.google.com/project/marching-art/storage
+  or grant the SA the Firebase Admin role, then re-run with
+  `deploy_target=rules-only`.
 - **Prune dead Firestore indexes** in the console after the
   `firestore.indexes.json` cleanup (indexes are deliberately not deployed
   from CI).
 
 ## Evergreen ratchets (any session, any size)
 
-- `@ts-nocheck` paydown — **97 files** at
+- `@ts-nocheck` paydown — **89 files** at
   last update; `npm run ts-nocheck:next` ranks the cheapest (no free wins
-  left; cheapest is 4 errors in `helpers/podium/store.js`). One per
-  substantive task is the CLAUDE.md habit; batches welcome.
+  left; cheapest is 10 errors in `Dashboard/sections/DailyChallenges.jsx`
+  and `modals/ShowConceptModal.jsx`). One per substantive task is the CLAUDE.md
+  habit; batches welcome.
 - Frontend coverage floor upward — actual is ~29% statements against a
   15.9% floor; raise the floor to within a point of actual whenever it's
   touched (functions are held to 70/80/85).
-- ESLint warnings downward — 13 today, no ceiling yet (see DX above).
+- ESLint warnings downward — 14 today, no ceiling yet (see DX above).
 - React Query migration of the remaining manual-fetch components.
 - `ui/Button` / `ui/Modal` adoption; authed-app axe pass (12 untrapped
   dialogs + 32 unlabeled icon buttons is the current tally).
@@ -392,6 +338,29 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
   corpus (`scoringMath.order.test.js`). Root cause of the 2026-09-01 Discord
   "music score 4.5 off my dashboard" report; re-score decision is the ops
   item above.
+- 2026-09-02: audit backlog, frontend-correctness batch: `PageErrorBoundary`
+  resets on path change and every public/auth/onboarding route has a
+  boundary; `import.meta.env.DEV` replaces the client's only `process.env`;
+  `friendlyCallableError` at the 14 player-facing toast sites; landing
+  social-proof caches moved into React Query (cleared on sign-out);
+  `profileStore` skips metadata-only snapshots and lost the caller-less
+  `updateProfile`; `MatchupDetailView` dropped from the barrel so its lazy
+  split lands; `paths.features()`; `authErrorMessage` replaces four
+  hand-rolled auth switches; `utils/economyMirrors.test.ts` pins the four CC
+  mirrors to server source; onboarding quotes the real 1,000 CC grant
+  (`NEW_DIRECTOR_CORPSCOIN`, also the welcome-email default) and the right
+  Championship-week caption rule. Changelog entry added. ts-nocheck → 90.
+- 2026-09-02: audit backlog, security-rules batch (all S items + the rules
+  test-coverage M): comment edits are body-only and bounded; `private/**`
+  owner writes are limited to the FCM token keys (no delete); the `articles`
+  collection group is scoped to `news_hub` (get by path, list by
+  `isPublished`); `directorInfo.yearsDirecting`/`specialties` are typed and
+  capped; `submitPrediction` validates pick + class against the canonical
+  sets; `assertDocId` on every interpolated league/pool/joint id;
+  `getRecentNews` rejects bad cursors as `invalid-argument` and budgets the
+  cursored branch per uid/IP; `checkUsername` needs auth + the profile
+  budget; `castFanFavoriteVote` honors restriction. 42 new rules tests (190
+  total), 13 new functions tests. ts-nocheck → 91.
 - 2026-09-01: audit fix 1 (mirror half) — `profile/public` projection
   (`helpers/publicProfileMirror.js`, allowlist + corps denylist, tests),
   `onProfileDataWritten` trigger, `backfillPublicProfiles.js`, rules + rules
@@ -431,6 +400,11 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
 - 2026-09-01: audit fix 8 — both registration screens derive class budgets
   and unlock levels from the class registry (`CLASS_TABLE`), with a test
   pinning them to the JSON; changelog entry added.
+- 2026-09-02: Deploy Cloud Functions no longer dies when the project has no
+  default Storage bucket: `storage.rules` ships through
+  `scripts/deployStorageRules.mjs`, which creates the bucket via the Storage
+  REST API (the console "Get Started" call) and warns instead of failing
+  if it can't. `ProfileDoc.displayName` is typed; ts-nocheck 90 → 89.
 - 2026-09-01: audit fix 7 — eight caller-less callables deleted
   (`getPublicProfile`, `getLineupAnalytics`, `rescindLeagueInvitation`,
   `migrateUserProfiles`, `updateRivalsNow`, `refreshScheduleWeatherNow`,

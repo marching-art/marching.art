@@ -28,6 +28,7 @@ import {
   PRESS_RELEASE_AUTO_APPROVE_THRESHOLD,
   pressReleaseAutoPublishes,
 } from '../modals/pressReleaseForm';
+import { friendlyCallableError } from '../../utils/callableErrors';
 
 // lazyWithRetry (not raw React.lazy) so a stale hashed chunk after a deploy
 // self-recovers with one reload instead of crashing the page error boundary —
@@ -94,7 +95,7 @@ const NewsroomActions: React.FC<NewsroomActionsProps> = ({ profile }) => {
         queryClient.invalidateQueries({ queryKey: ['directorArticles'] });
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to publish press release');
+      toast.error(friendlyCallableError(error, 'Failed to publish press release'));
     } finally {
       setSubmittingPressRelease(false);
     }
@@ -111,7 +112,7 @@ const NewsroomActions: React.FC<NewsroomActionsProps> = ({ profile }) => {
         queryClient.invalidateQueries({ queryKey: ['myNewsSubmissions'] });
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to submit article');
+      toast.error(friendlyCallableError(error, 'Failed to submit article'));
     } finally {
       setSubmittingNews(false);
     }

@@ -122,6 +122,13 @@ export const queryKeys = {
   leagueMatchups: (leagueId: string) => ['leagueMatchups', leagueId] as const,
   leagueMatchupHistory: (leagueId: string) => ['leagueMatchupHistory', leagueId] as const,
 
+  // Landing social proof (Landing/CommunityPulse, Landing/SocialProofBar).
+  // Cached here rather than in module scope so queryClient.clear() on
+  // sign-out drops them with everything else — the next account never sees
+  // the previous one's feed.
+  communityActivity: () => ['communityActivity'] as const,
+  communityStats: () => ['communityStats'] as const,
+
   // Notification queries
   leagueNotifications: (uid: string) => ['leagueNotifications', uid] as const,
   unreadNotificationCount: (uid: string) => ['unreadNotificationCount', uid] as const,

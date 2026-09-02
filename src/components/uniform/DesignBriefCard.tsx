@@ -19,6 +19,7 @@ import {
 } from '../../api/designBrief';
 import { listWardrobe, type WardrobeDesign } from '../../api/uniformStudio';
 import { ColorwayStrip } from '../scores/SheetPrimitives';
+import { friendlyCallableError } from '../../utils/callableErrors';
 
 export default function DesignBriefCard({ uid }: { uid: string | null }) {
   const [brief, setBrief] = useState<BriefView | null>(null);
@@ -63,7 +64,7 @@ export default function DesignBriefCard({ uid }: { uid: string | null }) {
       }));
       toast.success(res.data.message);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Couldn't score that design.");
+      toast.error(friendlyCallableError(err, "Couldn't score that design."));
     } finally {
       setBusy(false);
     }

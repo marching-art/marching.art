@@ -13,18 +13,7 @@ import toast from 'react-hot-toast';
 import { useBodyScroll } from '../hooks/useBodyScroll';
 import { useSEO } from '../hooks/useSEO';
 import { Heading } from '../components/ui';
-
-/**
- * Firebase auth errors arrive as `unknown` under strict mode but always carry
- * a string `code`. One narrow accessor beats a cast at every use site.
- *
- * @param {unknown} error
- * @returns {string}
- */
-const authErrorCode = (error) =>
-  typeof (/** @type {{code?: unknown}} */ (error)?.code) === 'string'
-    ? /** @type {{code: string}} */ (error).code
-    : '';
+import { authErrorMessage } from '../utils/errorMessages';
 
 const Login = () => {
   useBodyScroll();
@@ -58,21 +47,7 @@ const Login = () => {
     } catch (err) {
       console.error('Login error:', err);
 
-      switch (authErrorCode(err)) {
-        // Email enumeration protection collapses user-not-found and
-        // wrong-password into a single invalid-credential error
-        case 'auth/invalid-credential':
-          setError('Incorrect email or password');
-          break;
-        case 'auth/invalid-email':
-          setError('Invalid email address');
-          break;
-        case 'auth/too-many-requests':
-          setError('Too many failed attempts. Please try again later');
-          break;
-        default:
-          setError('Failed to sign in. Please try again');
-      }
+      setError(authErrorMessage(err, 'Failed to sign in. Please try again'));
     } finally {
       setLoading(false);
     }

@@ -11,6 +11,17 @@
     ]
   },
   {
+    "id": "2026-09-02-clearer-errors-and-recovery",
+    "date": "2026-09-02",
+    "title": "Clearer error messages, and pages that recover on their own",
+    "category": "fix",
+    "summary": "When something goes wrong saving a show concept, buying a Streak Freeze, entering the Showcase, or similar, the message now tells you what happened in plain words instead of a bare code like \"internal\". If a page crashes, moving to another league or profile now shows the new page instead of the stuck error. Sign-in, sign-up, and password-reset errors read the same everywhere.",
+    "highlights": [
+      "Onboarding now quotes your real welcome bonus and the right caption-change rule for Championship Week.",
+      "Signing out fully clears the home page's community feed and stats before the next account signs in."
+    ]
+  },
+  {
     "id": "2026-09-01-age-gate-and-privacy",
     "date": "2026-09-01",
     "title": "Sign-up asks for your date of birth; privacy policy refreshed",

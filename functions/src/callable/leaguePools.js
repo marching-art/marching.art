@@ -14,17 +14,20 @@ const { logger } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
 const { getDb } = require("../config");
 const { paths } = require("../helpers/paths");
-const { assertAuth, assertWriteBudget, assertNotRestricted } = require("../helpers/callableGuards");
+const {
+  assertAuth,
+  assertWriteBudget,
+  assertNotRestricted,
+  assertDocId,
+} = require("../helpers/callableGuards");
 const { addCoinHistoryEntryToTransaction } = require("../helpers/economy");
 const { getGameDay } = require("../helpers/dailyChallenges");
 const { POOL_ANTE } = require("../helpers/leaguePools");
 
 const joinLeaguePool = onCall({ cors: true }, async (request) => {
   const uid = assertAuth(request);
-  const { leagueId } = request.data || {};
-  if (!leagueId || typeof leagueId !== "string") {
-    throw new HttpsError("invalid-argument", "A leagueId is required.");
-  }
+  // Interpolated into a doc path below — must be a doc-id shape.
+  const leagueId = assertDocId(request.data?.leagueId, "leagueId");
 
   const db = getDb();
 

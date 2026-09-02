@@ -1,10 +1,10 @@
-// @ts-nocheck -- grandfathered when functions checkJs landed (functions/tsconfig.json); remove when this file is typed or cleaned up
 /**
  * Email Service for marching.art
  * Handles all outbound email communications via Brevo (formerly Sendinblue)
  */
 
 const admin = require("firebase-admin");
+const { NEW_DIRECTOR_CORPSCOIN } = require("./economy");
 // @getbrevo/brevo is required lazily inside the client/send paths: every
 // function in the deploy unit loads this module at cold start, and only the
 // email senders touch Brevo.
@@ -74,7 +74,7 @@ function getBrevoClient() {
  * @param {string} options.to - Recipient email
  * @param {string} options.subject - Email subject
  * @param {string} options.html - HTML content
- * @param {string} options.text - Plain text content (optional)
+ * @param {string} [options.text] - Plain text content (optional; derived from the HTML when omitted)
  * @param {string} options.emailType - Type of email for tracking
  * @returns {Promise<boolean>} - Success status
  */
@@ -294,7 +294,7 @@ function emailWrapper(content, preheader = "") {
 /**
  * Welcome email template
  */
-function welcomeEmailTemplate({ username, corpsCoinGift = 100 }) {
+function welcomeEmailTemplate({ username, corpsCoinGift = NEW_DIRECTOR_CORPSCOIN }) {
   const content = `
     <div class="content">
       <h2>Welcome to the Field, ${escapeHtml(username)}! 🎺</h2>

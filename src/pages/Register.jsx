@@ -20,18 +20,7 @@ import {
 } from '../utils/ageGate';
 import { useSEO } from '../hooks/useSEO';
 import { Heading } from '../components/ui';
-
-/**
- * Firebase auth errors arrive as `unknown` under strict mode but always carry
- * a string `code`. One narrow accessor beats a cast at every use site.
- *
- * @param {unknown} error
- * @returns {string}
- */
-const authErrorCode = (error) =>
-  typeof (/** @type {{code?: unknown}} */ (error)?.code) === 'string'
-    ? /** @type {{code: string}} */ (error).code
-    : '';
+import { authErrorMessage } from '../utils/errorMessages';
 
 const Register = () => {
   useBodyScroll();
@@ -116,19 +105,7 @@ const Register = () => {
     } catch (err) {
       console.error('Registration error:', err);
 
-      switch (authErrorCode(err)) {
-        case 'auth/email-already-in-use':
-          setError('An account already exists with this email address');
-          break;
-        case 'auth/invalid-email':
-          setError('Invalid email address');
-          break;
-        case 'auth/weak-password':
-          setError('Password is too weak. Please use a stronger password');
-          break;
-        default:
-          setError('Failed to create account. Please try again');
-      }
+      setError(authErrorMessage(err, 'Failed to create account. Please try again'));
     } finally {
       setLoading(false);
     }
