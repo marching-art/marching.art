@@ -60,6 +60,8 @@ export interface ProfileDoc {
    * as `unknown` and could not be passed to anything that wanted a uid.
    */
   uid?: string;
+  /** Same reasoning as `uid`: every reader renders it as text. */
+  displayName?: string;
   corps?: Record<string, unknown> | null;
   /** Corps Identity Shop state (server-written): owned ids + equipped slots. */
   cosmetics?: { owned?: string[]; equipped?: Record<string, string | null> } | null;

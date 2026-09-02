@@ -337,16 +337,20 @@ jobs:
           export GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa-key.json
           trap 'rm -f /tmp/sa-key.json' EXIT
 
-          # 1) Ship Firestore + Storage rules first (one cheap operation). Both
-          #    live in the repo (firestore.rules / storage.rules, wired in
-          #    firebase.json) so security-rule changes actually deploy —
-          #    functions alone would leave them stale. `storage` was missing
-          #    here until 2026-09: storage.rules was a trigger path that never
-          #    shipped, so the bucket ran on whatever the console last had.
-          #    firestore:indexes is intentionally NOT included: `--force` would
-          #    delete any console-managed indexes missing from
-          #    firestore.indexes.json.
-          firebase deploy --only firestore:rules,storage --force --project marching-art
+          # 1) Ship Firestore + Storage rules first (cheap). Both live in the
+          #    repo (firestore.rules / storage.rules, wired in firebase.json)
+          #    so security-rule changes actually deploy — functions alone
+          #    would leave them stale. firestore:indexes is intentionally NOT
+          #    included: `--force` would delete any console-managed indexes
+          #    missing from firestore.indexes.json.
+          firebase deploy --only firestore:rules --force --project marching-art
+          #    storage.rules goes through a wrapper because `firebase deploy
+          #    --only storage` hard-fails on a project with no default bucket
+          #    (2026-09-02: "Firebase Storage has not been set up"). The
+          #    wrapper provisions the bucket via the Storage REST API when it
+          #    is missing, and degrades to a workflow warning (not a failed
+          #    deploy) if the service account is not allowed to.
+          node scripts/deployStorageRules.mjs
 
           # 2) Deploy the functions named by the deploy plan (see the "Compute
           #    deploy targets" step): the changed set on a push, everything on
@@ -630,7 +634,7 @@ jobs:
           node functions/dciArchiveImporter/apply.js --firestore ${{ inputs.archive_name_import_dry_run && '--dry-run' || '' }} ${{ inputs.archive_name_import_args }}
 
   # Fast path for security-rule changes (e.g. flag-day tweaks): ships
-  # firestore.rules alone without redeploying every function. Indexes stay
+  # firestore.rules + storage.rules without redeploying every function. Indexes stay
   # excluded here too — `--force` would delete console-managed indexes
   # missing from firestore.indexes.json.
   deploy-rules-only:
@@ -656,4 +660,7 @@ jobs:
           export GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa-key.json
           trap 'rm -f /tmp/sa-key.json' EXIT
 
-          firebase deploy --only firestore:rules,storage --force --project marching-art
+          firebase deploy --only firestore:rules --force --project marching-art
+          # Provisions the default bucket if missing, then deploys storage.rules
+          # (see the script header for the degrade-to-warning behaviour).
+          node scripts/deployStorageRules.mjs
