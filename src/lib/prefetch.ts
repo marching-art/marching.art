@@ -63,14 +63,3 @@ export function prefetchRoute(path: string): void {
     }
   }
 }
-
-/**
- * Create event handlers for prefetching
- * Use these with onMouseEnter and onFocus
- */
-export function createPrefetchHandlers(path: string) {
-  return {
-    onMouseEnter: () => prefetchRoute(path),
-    onFocus: () => prefetchRoute(path),
-  };
-}

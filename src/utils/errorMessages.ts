@@ -23,6 +23,11 @@ const FIREBASE_ERROR_MESSAGES: Record<string, ErrorInfo> = {
     message: 'Please enter a valid email address.',
     recoverable: true,
   },
+  'auth/weak-password': {
+    title: 'Weak Password',
+    message: 'That password is too weak. Please choose a stronger one.',
+    recoverable: true,
+  },
   // Email enumeration protection collapses user-not-found and wrong-password
   // into a single invalid-credential error
   'auth/invalid-credential': {
@@ -175,6 +180,21 @@ export function getErrorMessage(error: unknown): ErrorInfo {
   }
 
   return DEFAULT_ERROR;
+}
+
+/**
+ * The inline message for a failed Firebase Auth call (sign-in, sign-up,
+ * password reset): the mapped sentence for a known `auth/*` code, otherwise
+ * the caller's fallback. Unknown codes never leak their raw text — the auth
+ * pages used to hand-roll this switch four times over.
+ */
+export function authErrorMessage(error: unknown, fallback: string): string {
+  const code =
+    typeof (error as { code?: unknown } | null)?.code === 'string'
+      ? (error as { code: string }).code
+      : '';
+  const known = code ? FIREBASE_ERROR_MESSAGES[code] : undefined;
+  return known ? known.message : fallback;
 }
 
 /**

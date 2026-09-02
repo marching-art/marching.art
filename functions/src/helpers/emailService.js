@@ -4,6 +4,7 @@
  */
 
 const admin = require("firebase-admin");
+const { NEW_DIRECTOR_CORPSCOIN } = require("./economy");
 // @getbrevo/brevo is required lazily inside the client/send paths: every
 // function in the deploy unit loads this module at cold start, and only the
 // email senders touch Brevo.
@@ -293,7 +294,7 @@ function emailWrapper(content, preheader = "") {
 /**
  * Welcome email template
  */
-function welcomeEmailTemplate({ username, corpsCoinGift = 100 }) {
+function welcomeEmailTemplate({ username, corpsCoinGift = NEW_DIRECTOR_CORPSCOIN }) {
   const content = `
     <div class="content">
       <h2>Welcome to the Field, ${escapeHtml(username)}! 🎺</h2>

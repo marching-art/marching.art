@@ -12,18 +12,7 @@ import { authApi } from '../api/client';
 import { useBodyScroll } from '../hooks/useBodyScroll';
 import { useSEO } from '../hooks/useSEO';
 import { Heading } from '../components/ui';
-
-/**
- * Firebase auth errors arrive as `unknown` under strict mode but always carry
- * a string `code`. One narrow accessor beats a cast at every use site.
- *
- * @param {unknown} error
- * @returns {string}
- */
-const authErrorCode = (error) =>
-  typeof (/** @type {{code?: unknown}} */ (error)?.code) === 'string'
-    ? /** @type {{code: string}} */ (error).code
-    : '';
+import { authErrorMessage } from '../utils/errorMessages';
 
 const ForgotPassword = () => {
   useBodyScroll();
@@ -54,16 +43,7 @@ const ForgotPassword = () => {
 
       // Email enumeration protection is enabled on the Firebase project, so
       // unknown emails resolve successfully (no auth/user-not-found here).
-      switch (authErrorCode(err)) {
-        case 'auth/invalid-email':
-          setError('Invalid email address');
-          break;
-        case 'auth/too-many-requests':
-          setError('Too many requests. Please try again later');
-          break;
-        default:
-          setError('Failed to send reset email. Please try again');
-      }
+      setError(authErrorMessage(err, 'Failed to send reset email. Please try again'));
     } finally {
       setLoading(false);
     }

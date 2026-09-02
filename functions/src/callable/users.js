@@ -5,6 +5,7 @@ const { logger } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
 const { getDb } = require("../config");
 const { calculateLevel, getLevelTitle } = require("../helpers/xpCalculations");
+const { NEW_DIRECTOR_CORPSCOIN } = require("../helpers/economy");
 const { assertAuth, assertAdmin, assertWriteBudget } = require("../helpers/callableGuards");
 const { sumSeasonScore } = require("../helpers/seasonRankings");
 const { processAllInPages } = require("../helpers/firestorePaging");
@@ -158,7 +159,7 @@ exports.createUserProfile = onCall({ cors: true }, async (request) => {
       xpLevel: 1,
       userTitle: 'Rookie',
       // Currency
-      corpsCoin: 1000,
+      corpsCoin: NEW_DIRECTOR_CORPSCOIN,
       // Unlocks
       unlockedClasses: ['soundSport'],
       // Corps data
@@ -443,7 +444,7 @@ exports.fixProfileFields = onCall({ cors: true, timeoutSeconds: 540, memory: "51
     xp: 0,
     xpLevel: 1,
     userTitle: 'Rookie',
-    corpsCoin: 1000,
+    corpsCoin: NEW_DIRECTOR_CORPSCOIN,
     unlockedClasses: ['soundSport'],
     corps: {},
     stats: {

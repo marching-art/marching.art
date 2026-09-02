@@ -87,6 +87,13 @@ function addCoinHistoryEntryToTransaction(transaction, db, uid, entry) {
 /** Weekly league win reward */
 const WEEKLY_LEAGUE_WIN_REWARD = 100;
 
+/**
+ * CorpsCoin a new director starts with (createUserProfile / the legacy
+ * profile fixer). Quoted by onboarding and the welcome email — mirrored in
+ * src/utils/economyMirrors.ts, pinned by its parity test.
+ */
+const NEW_DIRECTOR_CORPSCOIN = 1000;
+
 /** Season finish bonuses based on final rank */
 const SEASON_FINISH_BONUSES = {
   1: 1000, // Champion
@@ -195,6 +202,7 @@ module.exports = {
 
   // Constants
   WEEKLY_LEAGUE_WIN_REWARD,
+  NEW_DIRECTOR_CORPSCOIN,
   SEASON_FINISH_BONUSES,
   TRANSACTION_TYPES,
 

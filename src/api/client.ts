@@ -311,6 +311,8 @@ export const paths = {
 
   // Season paths
   season: () => `game-settings/season`,
+  // Feature flags (hooks/useFeatures) — public read, admin write.
+  features: () => `game-settings/features`,
 
   // Fantasy recaps (parent doc for metadata)
   fantasyRecaps: (seasonUid: string) => `fantasy_recaps/${seasonUid}`,

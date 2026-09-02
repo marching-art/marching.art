@@ -46,6 +46,7 @@ import { useFirstVisit } from '../hooks/useFirstVisit';
 import { useSEO } from '../hooks/useSEO';
 import { resolveAuthRedirect } from '../hooks/useAuthRedirect';
 import { peekPendingRedirect, clearPendingRedirect } from '../lib/pendingRedirect';
+import { authErrorMessage } from '../utils/errorMessages';
 
 // =============================================================================
 // LANDING PAGE COMPONENT
@@ -166,21 +167,7 @@ const Landing = () => {
       }
     } catch (err) {
       console.error('Login error:', err);
-      switch (err.code) {
-        // Email enumeration protection collapses user-not-found and
-        // wrong-password into a single invalid-credential error
-        case 'auth/invalid-credential':
-          setError('Incorrect email or password');
-          break;
-        case 'auth/invalid-email':
-          setError('Invalid email address');
-          break;
-        case 'auth/too-many-requests':
-          setError('Too many attempts. Try again later');
-          break;
-        default:
-          setError('Failed to sign in. Please try again');
-      }
+      setError(authErrorMessage(err, 'Failed to sign in. Please try again'));
     } finally {
       setLoading(false);
     }

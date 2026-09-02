@@ -15,6 +15,7 @@ import toast from 'react-hot-toast';
 import { Link } from 'react-router-dom';
 import { linkBmacSupport, setSupporterVisibility, setSupporterMessage } from '../../api/functions';
 import { BMAC_URL, SUPPORTER_TIERS, getSupporterTier } from '../../utils/supporterTiers';
+import { friendlyCallableError } from '../../utils/callableErrors';
 
 const boxClass = 'bg-surface-sunken border border-line p-3 rounded-none';
 
@@ -57,7 +58,7 @@ function SupporterPanel({ supporter, onRefresh }) {
       setShowLink(false);
       onRefresh?.();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Couldn't link that email.");
+      toast.error(friendlyCallableError(err, "Couldn't link that email."));
     } finally {
       setLinking(false);
     }
@@ -71,7 +72,7 @@ function SupporterPanel({ supporter, onRefresh }) {
       toast.success(next ? 'Hidden from the wall.' : "You're on the wall!");
       onRefresh?.();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Couldn't update visibility.");
+      toast.error(friendlyCallableError(err, "Couldn't update visibility."));
     } finally {
       setAnonSaving(false);
     }
@@ -84,7 +85,7 @@ function SupporterPanel({ supporter, onRefresh }) {
       toast.success('Wall message saved.');
       onRefresh?.();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Couldn't save your message.");
+      toast.error(friendlyCallableError(err, "Couldn't save your message."));
     } finally {
       setMsgSaving(false);
     }

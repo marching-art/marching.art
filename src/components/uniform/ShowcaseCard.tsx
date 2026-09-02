@@ -21,6 +21,7 @@ import {
 } from '../../api/showcase';
 import { listWardrobe, type WardrobeDesign } from '../../api/uniformStudio';
 import UniformFigure from './UniformFigure';
+import { friendlyCallableError } from '../../utils/callableErrors';
 
 function ResultsPodium({ results }: { results: ShowcaseResults }) {
   const medals = ['🥇', '🥈', '🥉'];
@@ -99,7 +100,7 @@ export default function ShowcaseCard({ uid }: { uid: string | null }) {
       setMyEntry({ designName: wardrobe.find((w) => w.id === pick)?.name || 'Your design' });
       if (res.data.paid) setEntryCount((n) => n + 1);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Couldn't enter the Showcase.");
+      toast.error(friendlyCallableError(err, "Couldn't enter the Showcase."));
     } finally {
       setBusy(null);
     }
@@ -111,7 +112,7 @@ export default function ShowcaseCard({ uid }: { uid: string | null }) {
       const res = await getShowcasePair({});
       setPair(res.data.pair);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Couldn't deal a ballot.");
+      toast.error(friendlyCallableError(err, "Couldn't deal a ballot."));
     } finally {
       setBusy(null);
     }
@@ -126,7 +127,7 @@ export default function ShowcaseCard({ uid }: { uid: string | null }) {
       setPair(null);
       void dealPair(); // straight into the next head-to-head
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Couldn't record that vote.");
+      toast.error(friendlyCallableError(err, "Couldn't record that vote."));
       setPair(null);
     } finally {
       setBusy(null);

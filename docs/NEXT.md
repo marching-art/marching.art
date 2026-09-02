@@ -8,7 +8,7 @@ burns an hour to conclude "everything's about covered." Don't. If you ship,
 cut, or discover something, edit THIS file in the same PR — that's the whole
 maintenance contract.
 
-_Last updated: 2026-09-02 (audit backlog: security-rules batch shipped)._
+_Last updated: 2026-09-02 (audit backlog: security-rules + frontend-correctness batches shipped)._
 
 ## In progress
 
@@ -84,36 +84,10 @@ ops step below)_
 
 ### Frontend correctness & performance
 
-- **P2** `PageErrorBoundary.tsx:115-127` passes no `resetKeys`; a crash on
-  one league/profile sticks across param navigation. `resetKeys={[pathname]}`. (S)
-- **P2** `App.jsx:331-456` — landing, both auth pages, onboarding, `/preview`,
-  `/article/:id`, `/podium/preview`, `/forgot-password` still render bare
-  `<Suspense>` with no `<Page>` boundary; a crash white-screens the app. (S)
-- **P2** `store/profileStore.ts:192-212` sets a new `profile` identity on
-  every metadata-only snapshot, re-rendering 42 consumers and re-firing the
-  daily-login effect. Skip unchanged data. `:301-317` `updateProfile`
-  optimistic set never rolls back on failure (no callers — delete). (M)
 - **P2** `public/service-worker.js:239-257` `staleWhileRevalidate` resolves
   to `null` when offline with a cold cache (offline fallback unreachable);
   `maxAge` config at `:43-56` is never read, and version-keyed image/font
   caches purge on every deploy. (M)
-- **P2** Module-level caches in `Landing/CommunityPulse.jsx:15-17` and
-  `Landing/SocialProofBar.jsx:22-38` survive `queryClient.clear()` on
-  sign-out — next account briefly sees the previous feed. Move to React
-  Query. (S)
-- **P2** Build warning `INEFFECTIVE_DYNAMIC_IMPORT`: `MatchupDetailView.tsx`
-  is lazy-imported by `LeagueDetailView`/`MatchupsTab` but statically
-  re-exported from `components/Leagues/index.js`, so the split never
-  happens. Drop it from the barrel. `vendor-firebase` is the largest eager
-  chunk (671 kB / 198 kB gzip) — audit which `firebase/*` entry points the
-  first paint really needs. (S)
-- **P2** Raw Firebase codes reach toasts (`internal`, `unavailable`) via
-  `api/callable.ts:54` at ~10 player-facing sites incl.
-  `SeasonSetupWizard.jsx:242`, `ShowConceptModal.jsx:76`,
-  `StreakModal.jsx:47`. `friendlyCallableError(error, fallback)`. (S)
-- **P3** `PageErrorBoundary.tsx:53`, `ui/ErrorBoundary.tsx:129` read
-  `process.env.NODE_ENV` inside the fallback — the only `process.env` in the
-  client. `import.meta.env.DEV`. (S)
 - **P3** `api/leagues.ts:551-555` reads all of `matchupHistory` unbounded. (S)
 - **P3** Non-passive scroll listeners with forced layout in
   `ui/DataTable.tsx:213-232`, `scores/PillTabControl.tsx:37-52`;
@@ -122,14 +96,9 @@ ops step below)_
 - **P3** `ui/Modal.tsx:72-81` body scroll lock has no ref count for nested
   modals; `index.jsx:43-53` has no SW update prompt while the SW
   `skipWaiting`s mid-session. (S)
-- **P3** `lib/prefetch.ts` `createPrefetchHandlers` unused and `routeImports`
-  omits `/studio`, `/exchange`, `/guide`, `/updates`; `utils/errorMessages.ts`
-  (239 lines) has zero importers while four auth pages hand-roll the same
-  switch (`Landing.jsx:163` reads `err.code` raw). (S)
-- **P3** `store/seasonStore.ts:101` and `hooks/useFeatures.js:24` hand-write
-  `game-settings/*` paths the path-literal ratchet doesn't scan; add
-  `paths.features()`. `utils/leagueEconomy.ts:19,28,36` mirrors three CC
-  constants with no parity test (currently in sync at 100/25/12). (S)
+- **P2** `vendor-firebase` is the largest eager chunk (671 kB / 198 kB
+  gzip) — audit which `firebase/*` entry points the first paint really
+  needs. (S)
 
 ### SEO, accessibility & UX
 
@@ -167,11 +136,6 @@ ops step below)_
 - **P2** No report control on league chat (`Leagues/tabs/ChatTab.tsx:73-80`
   admits it), profile comments, or instant-publish press releases; only
   article comments have one. Reuse `reportComment`. (M)
-- **P2** Onboarding copy says **100 CorpsCoin** (`Onboarding.jsx:530`,
-  `OnboardingSteps.jsx:140`, `emailService.js:297,333`); the grant is 1,000
-  (`callable/users.js:133,491`). `Onboarding.jsx:710-712` states the wrong
-  show-registration rule. Import the constants; reuse
-  `howToPlayData.js:493`. (S)
 - **P2** Social proof is auth-gated: `SocialProofBar.jsx:104-116` counts hit
   auth-only collections, `CommunityPulse.jsx:60` returns null for guests.
   Nightly public `community_stats` doc. (S)
@@ -329,7 +293,7 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
 
 ## Evergreen ratchets (any session, any size)
 
-- `@ts-nocheck` paydown — **91 files** at
+- `@ts-nocheck` paydown — **90 files** at
   last update; `npm run ts-nocheck:next` ranks the cheapest (no free wins
   left; cheapest is 10 errors in `Articles/ArticleSidebarAuth.jsx` and
   `scripts/buildPodiumCurves.js`). One per substantive task is the CLAUDE.md
@@ -337,7 +301,7 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
 - Frontend coverage floor upward — actual is ~29% statements against a
   15.9% floor; raise the floor to within a point of actual whenever it's
   touched (functions are held to 70/80/85).
-- ESLint warnings downward — 13 today, no ceiling yet (see DX above).
+- ESLint warnings downward — 14 today, no ceiling yet (see DX above).
 - React Query migration of the remaining manual-fetch components.
 - `ui/Button` / `ui/Modal` adoption; authed-app axe pass (12 untrapped
   dialogs + 32 unlabeled icon buttons is the current tally).
@@ -347,6 +311,18 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
 
 ## Recently shipped (context, newest first — prune when stale)
 
+- 2026-09-02: audit backlog, frontend-correctness batch: `PageErrorBoundary`
+  resets on path change and every public/auth/onboarding route has a
+  boundary; `import.meta.env.DEV` replaces the client's only `process.env`;
+  `friendlyCallableError` at the 14 player-facing toast sites; landing
+  social-proof caches moved into React Query (cleared on sign-out);
+  `profileStore` skips metadata-only snapshots and lost the caller-less
+  `updateProfile`; `MatchupDetailView` dropped from the barrel so its lazy
+  split lands; `paths.features()`; `authErrorMessage` replaces four
+  hand-rolled auth switches; `utils/economyMirrors.test.ts` pins the four CC
+  mirrors to server source; onboarding quotes the real 1,000 CC grant
+  (`NEW_DIRECTOR_CORPSCOIN`, also the welcome-email default) and the right
+  Championship-week caption rule. Changelog entry added. ts-nocheck → 90.
 - 2026-09-02: audit backlog, security-rules batch (all S items + the rules
   test-coverage M): comment edits are body-only and bounded; `private/**`
   owner writes are limited to the FCM token keys (no delete); the `articles`

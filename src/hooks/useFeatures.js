@@ -9,7 +9,7 @@
 
 import { useSyncExternalStore } from 'react';
 import { doc, onSnapshot } from 'firebase/firestore';
-import { db } from '../api';
+import { db, paths } from '../api';
 
 /** @type {Record<string, unknown>} */
 let features = {};
@@ -21,7 +21,7 @@ const listeners = new Set();
 function ensureListener() {
   if (unsubscribe) return;
   unsubscribe = onSnapshot(
-    doc(db, 'game-settings/features'),
+    doc(db, paths.features()),
     (snapshot) => {
       features = snapshot.exists() ? snapshot.data() : {};
       listeners.forEach((notify) => notify());

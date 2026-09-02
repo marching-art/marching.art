@@ -19,6 +19,7 @@ import { useEscapeKey } from '../../hooks/useEscapeKey';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { saveShowConcept } from '../../api/functions';
 import { SHOW_THEMES, MUSIC_SOURCES, DRILL_STYLES } from '../../utils/showConcept';
+import { friendlyCallableError } from '../../utils/callableErrors';
 
 const PickerGroup = ({ label, icon: Icon, options, value, onChange }) => (
   <div>
@@ -73,7 +74,7 @@ const ShowConceptModal = ({ onClose, corpsClass, corpsName, currentConcept }) =>
       toast.success("Show concept saved — design bonuses pay out after tonight's shows!");
       onClose();
     } catch (error) {
-      toast.error(error.message || 'Could not save show concept');
+      toast.error(friendlyCallableError(error, 'Could not save show concept'));
     } finally {
       setSaving(false);
     }

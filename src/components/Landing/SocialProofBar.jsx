@@ -1,63 +1,28 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 /**
  * SocialProofBar Component
  *
  * Displays community stats (directors, leagues, points) in a subtle data-bar format.
- * Fetches real data from Firestore with caching to minimize reads.
+ * Fetches real data from Firestore, cached in React Query (not module scope) so
+ * sign-out's queryClient.clear() drops it with everything else.
  * Designed to feel like a stats ticker, not marketing fluff.
  */
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { m } from 'framer-motion';
 import { Users, Trophy, Zap } from 'lucide-react';
 import { getCommunityStats } from '../../api/community';
+import { queryKeys } from '../../lib/queryClient';
 
-// =============================================================================
-// STATS CACHE
-// =============================================================================
-// Cache stats for 15 minutes to minimize Firestore reads
-// These numbers don't change rapidly, so stale data is acceptable
-
-const CACHE_TTL = 15 * 60 * 1000; // 15 minutes
-
-const statsCache = {
-  data: null,
-  timestamp: 0,
-
-  isValid() {
-    return this.data && Date.now() - this.timestamp < CACHE_TTL;
-  },
-
-  set(data) {
-    this.data = data;
-    this.timestamp = Date.now();
-  },
-
-  get() {
-    return this.isValid() ? this.data : null;
-  },
-};
-
-// =============================================================================
-// FETCH COMMUNITY STATS
-// =============================================================================
-
-async function fetchCommunityStats() {
-  // Return cached data if valid
-  const cached = statsCache.get();
-  if (cached) return cached;
-
-  const stats = await getCommunityStats();
-  if (stats) {
-    statsCache.set(stats);
-  }
-  return stats;
-}
+// These numbers don't change rapidly, so a 15-minute stale window keeps
+// repeat opens free of Firestore reads.
+const STALE_MS = 15 * 60 * 1000;
 
 // =============================================================================
 // FORMAT HELPERS
 // =============================================================================
 
+/** @param {number} num */
 function formatNumber(num) {
   if (num >= 1000000) {
     return `${(num / 1000000).toFixed(1)}M`;
@@ -72,24 +37,13 @@ function formatNumber(num) {
 // SOCIAL PROOF BAR COMPONENT
 // =============================================================================
 
+/** @param {{ className?: string }} props */
 const SocialProofBar = ({ className = '' }) => {
-  const [stats, setStats] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let mounted = true;
-
-    fetchCommunityStats().then((data) => {
-      if (mounted) {
-        setStats(data);
-        setLoading(false);
-      }
-    });
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
+  const { data: stats = null, isLoading: loading } = useQuery({
+    queryKey: queryKeys.communityStats(),
+    queryFn: getCommunityStats,
+    staleTime: STALE_MS,
+  });
 
   // Don't render if no data and still loading, or if all stats are 0
   if (loading) {
