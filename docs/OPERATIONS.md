@@ -86,9 +86,13 @@ triggers the full deploy path in `.github/workflows/deploy-functions.yml`
 (tests gate the deploy); `workflow_dispatch` remains available for manual,
 single-function, scraper, and rules-only deploys.
 
-Every functions deploy (full or single-function) pushes an annotated
+Every functions deploy (full or single-function) creates a
 `functions-deploy/*` git tag pointing at the exact deployed ref (see
-`.github/workflows/deploy-functions.yml`). To roll back a bad deploy:
+`.github/workflows/deploy-functions.yml`; the tag is created through the
+GitHub REST API because a `git push` of a new ref by the workflow's
+`GITHUB_TOKEN` is refused without the ungrantable `workflows` permission).
+The run's step summary records the deploy plan or function list. To roll
+back a bad deploy:
 
 ```bash
 git tag -l 'functions-deploy/*' | sort | tail   # find the last good tag

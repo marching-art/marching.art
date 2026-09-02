@@ -1,6 +1,6 @@
 name: Deploy Cloud Functions
 
-# ROLLBACK: every successful full/single deploy pushes a `functions-deploy/*`
+# ROLLBACK: every successful full/single deploy creates a `functions-deploy/*`
 # tag pointing at the exact deployed ref. To roll back a bad deploy, run this
 # workflow again with "Use workflow from" set to the previous
 # functions-deploy/* tag (workflow_dispatch accepts tags as the ref) and
@@ -180,7 +180,7 @@ jobs:
     # paths (see the push trigger above).
     if: github.event_name == 'push' || inputs.deploy_target == 'all'
     needs: [test-functions, test-rules]
-    # contents: write is for the functions-deploy/* rollback tag push only.
+    # contents: write is for creating the functions-deploy/* rollback tag only.
     permissions:
       contents: write
     runs-on: ubuntu-latest
@@ -404,19 +404,27 @@ jobs:
       # "Compute deploy targets" step, so it must be pushed on every
       # successful run — including a "none" plan, where deployed state already
       # equals this ref.
+      # The tag is created through the REST API rather than `git push`: a
+      # `git push` of a new ref by the job's GITHUB_TOKEN (a GitHub App token)
+      # is refused with "refusing to allow a GitHub App to create or update
+      # workflow ... without `workflows` permission" whenever the tagged tree
+      # contains workflow files, and `permissions:` cannot grant `workflows`.
+      # Creating the ref via the API only needs `contents: write`.
       - name: Tag deployed ref
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PLAN: ${{ steps.targets.outputs.plan }}
         run: |
           TAG="functions-deploy/$(date -u +%Y%m%d-%H%M%S)-$(git rev-parse --short HEAD)"
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag -a "$TAG" -m "Functions deploy (run ${{ github.run_id }}, plan: ${{ steps.targets.outputs.plan }})"
-          git push origin "$TAG"
-          echo "Tagged this deploy as $TAG. To roll back, re-run the workflow from the previous functions-deploy/* tag."
+          gh api --method POST "/repos/${{ github.repository }}/git/refs" \
+            -f ref="refs/tags/$TAG" -f sha="$(git rev-parse HEAD)" --silent
+          echo "Tagged this deploy as $TAG (run ${{ github.run_id }}, plan: $PLAN). To roll back, re-run the workflow from the previous functions-deploy/* tag."
+          echo "Functions deploy tagged \`$TAG\` (plan: $PLAN)." >> "$GITHUB_STEP_SUMMARY"
 
   deploy-single:
     if: inputs.deploy_target == 'single' && inputs.function_names != ''
     needs: test-functions
-    # contents: write is for the functions-deploy/* rollback tag push only.
+    # contents: write is for creating the functions-deploy/* rollback tag only.
     permissions:
       contents: write
     runs-on: ubuntu-latest
@@ -450,15 +458,18 @@ jobs:
           firebase deploy --only "$FUNCTIONS" --force --project marching-art
 
       # Single deploys get tagged too — a bad hotfix needs the same paper
-      # trail. The tag message records which functions shipped.
+      # trail. Created via the REST API for the same reason as in deploy-all
+      # (a `git push` of the tag is refused without `workflows` permission).
       - name: Tag deployed ref
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FUNCTION_NAMES: ${{ inputs.function_names }}
         run: |
           TAG="functions-deploy/$(date -u +%Y%m%d-%H%M%S)-$(git rev-parse --short HEAD)"
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag -a "$TAG" -m "Single-function deploy: ${{ inputs.function_names }} (run ${{ github.run_id }})"
-          git push origin "$TAG"
-          echo "Tagged this deploy as $TAG."
+          gh api --method POST "/repos/${{ github.repository }}/git/refs" \
+            -f ref="refs/tags/$TAG" -f sha="$(git rev-parse HEAD)" --silent
+          echo "Tagged this deploy as $TAG (single-function deploy: $FUNCTION_NAMES, run ${{ github.run_id }})."
+          echo "Single-function deploy of \`$FUNCTION_NAMES\` tagged \`$TAG\`." >> "$GITHUB_STEP_SUMMARY"
 
           rm -f /tmp/sa-key.json
           echo "Deployment successful!"

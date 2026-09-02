@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Structured panels for the Season Summary article (Article 6): per-class
 // standings compared on combined GE / Visual / Music, the rivalries taking
 // shape in each class, and the SoundSport / Best-in-Show tally to date.
@@ -9,8 +8,56 @@
 
 import { Trophy, Swords, Medal, Award } from 'lucide-react';
 
+/**
+ * @typedef {object} Standing
+ * @property {number} rank
+ * @property {string} corpsName
+ * @property {string} [director]
+ * @property {number} [showsCount]
+ * @property {number} [showWins]
+ * @property {number} [latestTotal]
+ * @property {number} [avgGE]
+ * @property {number} [avgVisual]
+ * @property {number} [avgMusic]
+ *
+ * @typedef {object} Rivalry
+ * @property {string} corpsA
+ * @property {string} corpsB
+ * @property {string} [note]
+ *
+ * @typedef {object} ClassBlock
+ * @property {string} classKey
+ * @property {string} label
+ * @property {Standing[]} standings
+ * @property {Rivalry[]} [rivalries]
+ *
+ * @typedef {object} ShowWinLeader
+ * @property {string} corpsName
+ * @property {string} [classLabel]
+ * @property {number} showWins
+ *
+ * @typedef {object} RatingTally
+ * @property {string} rating
+ * @property {number} count
+ *
+ * @typedef {object} BestInShowLeader
+ * @property {string} corpsName
+ * @property {string} [director]
+ * @property {number} bestInShow
+ *
+ * @typedef {object} SeasonSummary
+ * @property {ClassBlock[]} [classes]
+ * @property {{ ratings?: RatingTally[], bestInShowLeaders?: BestInShowLeader[] } | null} [soundSport]
+ * @property {ShowWinLeader[]} [showWinLeaders]
+ */
+
+/**
+ * @param {number | string | null | undefined} n
+ * @param {number} [d]
+ */
 const fmt = (n, d = 2) => (typeof n === 'number' ? n.toFixed(d) : n);
 
+/** @type {Record<string, string>} */
 const RATING_STYLES = {
   Gold: 'text-brand border-brand/30 bg-brand/10',
   Silver: 'text-secondary border-charcoal-400/30 bg-charcoal-400/10',
@@ -18,6 +65,7 @@ const RATING_STYLES = {
   Participation: 'text-blue-300 border-blue-500/30 bg-blue-500/10',
 };
 
+/** @param {{ block: ClassBlock }} props */
 const ClassStandings = ({ block }) => (
   <div className="mb-8">
     <h3 className="text-sm font-bold text-muted uppercase tracking-wider mb-4 flex items-center gap-2">
@@ -53,7 +101,9 @@ const ClassStandings = ({ block }) => (
               <div className="text-[11px] text-muted truncate">
                 {s.director}
                 {s.showsCount ? ` · ${s.showsCount} show${s.showsCount === 1 ? '' : 's'}` : ''}
-                {s.showWins > 0 ? ` · ${s.showWins} show win${s.showWins === 1 ? '' : 's'}` : ''}
+                {(s.showWins ?? 0) > 0
+                  ? ` · ${s.showWins} show win${s.showWins === 1 ? '' : 's'}`
+                  : ''}
               </div>
             </div>
             <span className="text-sm font-bold font-data text-white tabular-nums text-right">
@@ -77,7 +127,7 @@ const ClassStandings = ({ block }) => (
     </p>
 
     {/* Rivalries within this class. */}
-    {block.rivalries?.length > 0 && (
+    {block.rivalries && block.rivalries.length > 0 && (
       <div className="mt-4 space-y-2">
         {block.rivalries.map((r, idx) => (
           <div
@@ -97,6 +147,7 @@ const ClassStandings = ({ block }) => (
   </div>
 );
 
+/** @param {{ seasonSummary: SeasonSummary | null | undefined }} props */
 const SeasonSummaryCards = ({ seasonSummary }) => {
   if (!seasonSummary) return null;
   const { classes = [], soundSport, showWinLeaders = [] } = seasonSummary;
@@ -130,14 +181,15 @@ const SeasonSummaryCards = ({ seasonSummary }) => {
 
       {/* SoundSport — ratings only, never scores. */}
       {soundSport &&
-        (soundSport.bestInShowLeaders?.length > 0 || soundSport.ratings?.length > 0) && (
+        ((soundSport.bestInShowLeaders?.length ?? 0) > 0 ||
+          (soundSport.ratings?.length ?? 0) > 0) && (
           <div className="mb-8">
             <h3 className="text-sm font-bold text-purple-400 uppercase tracking-wider mb-4 flex items-center gap-2">
               <Medal className="w-4 h-4" />
               SoundSport Spotlight
             </h3>
 
-            {soundSport.ratings?.length > 0 && (
+            {soundSport.ratings && soundSport.ratings.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-3">
                 {soundSport.ratings.map((r) => (
                   <span
@@ -152,7 +204,7 @@ const SeasonSummaryCards = ({ seasonSummary }) => {
               </div>
             )}
 
-            {soundSport.bestInShowLeaders?.length > 0 && (
+            {soundSport.bestInShowLeaders && soundSport.bestInShowLeaders.length > 0 && (
               <div className="space-y-2">
                 <div className="text-[11px] font-bold uppercase tracking-wider text-muted">
                   Best-in-Show Recognition
