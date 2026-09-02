@@ -23,6 +23,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import { GAME_FEATURES, GAME_MODES, GAME_MODE_PODIUM } from './onboardingConstants';
+import { NEW_DIRECTOR_CORPSCOIN } from '../utils/economyMirrors';
 
 // Gold accent for the Podium Class card — the class's signature color, also
 // used on the public Podium guide and the demo.
@@ -137,7 +138,9 @@ export const StepWelcome = ({ formData, setFormData, usernameStatus, onUsernameC
       <div className="flex items-center gap-2">
         <Zap className="w-4 h-4 text-green-400" />
         <p className="text-sm text-green-300">
-          You'll get <span className="font-bold">100 CorpsCoin</span> to start!
+          You'll get{' '}
+          <span className="font-bold">{NEW_DIRECTOR_CORPSCOIN.toLocaleString()} CorpsCoin</span> to
+          start!
         </p>
       </div>
     </div>

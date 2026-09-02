@@ -69,6 +69,11 @@ const PREDICTION_QUESTIONS = [
 
 const PREDICTION_QUESTION_IDS = PREDICTION_QUESTIONS.map((q) => q.id);
 
+// Every value a resolve() above can produce — the only picks a director can
+// submit (submitPrediction rejects anything else before it touches the
+// profile doc).
+const PREDICTION_PICKS = new Set(["Over", "Under", "Yes", "No"]);
+
 /**
  * The recap-day shapes read below. Both pipelines share the per-show layout;
  * fantasy days are keyed by offSeasonDay, podium days by competitionDay.
@@ -374,6 +379,7 @@ module.exports = {
   MAX_PREDICTION_DAYS_KEPT,
   PREDICTION_QUESTIONS,
   PREDICTION_QUESTION_IDS,
+  PREDICTION_PICKS,
   SCORE_FREE_QUESTION_IDS,
   fetchRecentRecaps,
   findRecentResultsForCorps,

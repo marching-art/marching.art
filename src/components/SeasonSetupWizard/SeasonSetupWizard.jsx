@@ -27,6 +27,7 @@ import {
   // local literal again — see constants.js CLASS_TABLE).
   CLASS_TABLE as CLASS_DATA,
 } from './constants';
+import { friendlyCallableError } from '../../utils/callableErrors';
 
 // =============================================================================
 // MAIN CORPS REGISTRATION COMPONENT
@@ -236,7 +237,7 @@ const SeasonSetupWizard = ({
       toast.success('Registration saved');
     } catch (error) {
       console.error('Error:', error);
-      toast.error(error.message || 'Registration failed');
+      toast.error(friendlyCallableError(error, 'Registration failed'));
     } finally {
       setProcessing(false);
     }

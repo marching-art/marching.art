@@ -11,6 +11,7 @@ import Portal from '../Portal';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { getStreakStatus, purchaseStreakFreeze } from '../../api/functions';
+import { friendlyCallableError } from '../../utils/callableErrors';
 
 const StreakModal = ({ onClose, corpsCoin = 0 }) => {
   useEscapeKey(onClose);
@@ -44,7 +45,7 @@ const StreakModal = ({ onClose, corpsCoin = 0 }) => {
       toast.success(result.data.message || 'Streak freeze activated!');
       await loadStatus();
     } catch (error) {
-      toast.error(error.message || 'Failed to purchase streak freeze');
+      toast.error(friendlyCallableError(error, 'Failed to purchase streak freeze'));
     } finally {
       setPurchasing(false);
     }

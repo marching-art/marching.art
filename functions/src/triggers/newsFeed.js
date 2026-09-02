@@ -7,6 +7,45 @@ const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
 const { getCategoryFromType, NEWS_CATEGORIES } = require("../helpers/newsArticleShared");
 const { clampLimit, assertDocId } = require("../helpers/callableGuards");
+const { consumeRateBudget } = require("../helpers/rateLimit");
+
+// Paginated feed reads bypass the shared cache (each cursor is a distinct
+// query), so they are the one billable path an anonymous client can drive.
+// Budget them per caller: by uid when signed in, else by client IP. Far above
+// the article-resolver's worst case (a few pages of 50).
+const PAGED_NEWS_BUDGET = { max: 120, windowMs: 10 * 60 * 1000 };
+
+/**
+ * Stable per-caller key for the anonymous news budget: the uid when signed
+ * in, otherwise the request IP (sanitized to a doc-id-safe shape).
+ * @param {{ auth?: { uid?: string } | null, rawRequest?: { ip?: string } }} request
+ * @returns {string}
+ */
+function newsCallerKey(request) {
+  if (request.auth?.uid) return `uid_${request.auth.uid}`;
+  const ip = String(request.rawRequest?.ip || "unknown").replace(/[^A-Za-z0-9.:_-]/g, "_");
+  return `ip_${ip.slice(0, 64)}`;
+}
+
+/**
+ * Parse the pagination cursor: an ISO-8601 timestamp (what the feed hands
+ * back as `createdAt`). Anything unparseable used to reach
+ * `query.startAfter(new Date("garbage"))`, which throws and surfaced as an
+ * `internal` error.
+ * @param {unknown} startAfter
+ * @returns {Date | null}
+ */
+function parseNewsCursor(startAfter) {
+  if (startAfter === undefined || startAfter === null || startAfter === "") return null;
+  if (typeof startAfter !== "string" || startAfter.length > 40) {
+    throw new HttpsError("invalid-argument", "startAfter must be an ISO timestamp.");
+  }
+  const date = new Date(startAfter);
+  if (Number.isNaN(date.getTime())) {
+    throw new HttpsError("invalid-argument", "startAfter must be an ISO timestamp.");
+  }
+  return date;
+}
 
 // Known article categories ("dci" | "fantasy" | "analysis" | "daily"). Client
 // input outside this set never reaches a Firestore query or cache-key path.
@@ -201,8 +240,22 @@ exports.getRecentNews = onCall(
     }
 
     // For paginated requests (startAfter), skip cache - user is loading more
-    const useCache = !startAfter;
+    const cursor = parseNewsCursor(startAfter);
+    const useCache = !cursor;
     const cacheKey = getNewsCacheKey(category, limit);
+
+    if (cursor) {
+      const allowed = await consumeRateBudget(
+        db,
+        "rate_newsPaged",
+        newsCallerKey(request),
+        PAGED_NEWS_BUDGET.max,
+        PAGED_NEWS_BUDGET.windowMs
+      );
+      if (!allowed) {
+        throw new HttpsError("resource-exhausted", "Too many requests. Please wait a moment.");
+      }
+    }
 
     // Check server-side cache first (non-paginated requests only)
     if (useCache) {
@@ -261,9 +314,8 @@ exports.getRecentNews = onCall(
       query = query.orderBy("createdAt", "desc");
 
       // Handle pagination cursor
-      if (startAfter) {
-        const startDate = new Date(startAfter);
-        query = query.startAfter(startDate);
+      if (cursor) {
+        query = query.startAfter(cursor);
       }
 
       // Fetch exactly what we need - no more 3x over-fetch

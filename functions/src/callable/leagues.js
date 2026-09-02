@@ -13,7 +13,7 @@ const {
 } = require("../helpers/leagueHelpers");
 const { applyStandingsInTransaction } = require("../helpers/leagueStandings");
 const { sendMatchupNotifications } = require("../helpers/matchupNotifications");
-const { assertAuth, hasAdminClaim, assertWriteBudget } = require("../helpers/callableGuards");
+const { assertAuth, hasAdminClaim, assertWriteBudget, assertDocId } = require("../helpers/callableGuards");
 const { chargeEntryFeeInTransaction, MAX_LEAGUE_ENTRY_FEE } = require("../helpers/leagueEconomy");
 const { escrowedTotal, deleteLeagueSubcollections } = require("../helpers/leagueLifecycle");
 const { addCoinHistoryEntryToTransaction, TRANSACTION_TYPES } = require("../helpers/economy");
@@ -228,10 +228,9 @@ exports.createLeague = onCall({ cors: true }, async (request) => {
 
 exports.joinLeague = onCall({ cors: true }, async (request) => {
   assertAuth(request);
-  const { leagueId } = request.data;
   const uid = request.auth.uid;
-
-  if (!leagueId) throw new HttpsError("invalid-argument", "A league ID is required.");
+  // Interpolated into a doc path below — must be a doc-id shape.
+  const leagueId = assertDocId(request.data?.leagueId, "league ID");
 
   // Abuse throttle (shared league bucket) — far above any human rate.
   await assertWriteBudget(getDb(), uid, "leagueSocial", { max: 40 });
@@ -360,12 +359,9 @@ exports.joinLeague = onCall({ cors: true }, async (request) => {
 
 exports.joinLeagueByCode = onCall({ cors: true }, async (request) => {
   assertAuth(request);
-  const { inviteCode } = request.data;
   const uid = request.auth.uid;
-
-  if (!inviteCode) {
-    throw new HttpsError("invalid-argument", "An invite code is required.");
-  }
+  // Interpolated into a doc path below — must be a doc-id shape.
+  const inviteCode = assertDocId(request.data?.inviteCode, "invite code");
 
   const db = getDb();
 
@@ -470,12 +466,9 @@ exports.joinLeagueByCode = onCall({ cors: true }, async (request) => {
 
 exports.leaveLeague = onCall({ cors: true }, async (request) => {
   assertAuth(request);
-  const { leagueId } = request.data;
   const uid = request.auth.uid;
-
-  if (!leagueId) {
-    throw new HttpsError("invalid-argument", "A league ID is required.");
-  }
+  // Interpolated into a doc path below — must be a doc-id shape.
+  const leagueId = assertDocId(request.data?.leagueId, "league ID");
 
   const db = getDb();
 

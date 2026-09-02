@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { adminHelpers, db, functions, paths } from '../api';
 import { normalizeUnlockedClasses } from '../utils/classUnlocks';
@@ -18,6 +18,12 @@ const ALL_CORPS_CLASSES = ['worldClass', 'openClass', 'aClass', 'soundSport'];
 
 // Guard to prevent duplicate time-based unlock writes per session
 let _timeUnlockProcessed = false;
+// The last profile payload handed to the store, serialized. With
+// includeMetadataChanges on, the listener also fires for cache→server
+// transitions whose DATA is identical; publishing a new `profile` object for
+// those re-renders every consumer and re-fires every profile-keyed effect
+// (daily login, recap modals) for nothing.
+let _lastProfileJson: string | null = null;
 
 /** A single daily-challenge completion entry within a day bucket. */
 interface ChallengeCompletion {
@@ -86,7 +92,6 @@ interface ProfileState {
 
   initProfileListener: (uid: string | null | undefined) => () => void;
   cleanup: () => void;
-  updateProfile: (updates: Record<string, unknown>) => Promise<void>;
   completeDailyChallenge: (challengeId: string) => Promise<boolean>;
   submitPrediction: (
     questionId: string,
@@ -181,6 +186,7 @@ export const useProfileStore = create<ProfileState>()((set, get) => ({
 
     // Reset time-unlock guard when initializing a new listener
     _timeUnlockProcessed = false;
+    _lastProfileJson = null;
 
     const unsubscribe = onSnapshot(
       profileRef,
@@ -193,12 +199,16 @@ export const useProfileStore = create<ProfileState>()((set, get) => ({
       (docSnapshot) => {
         if (docSnapshot.exists()) {
           const data = docSnapshot.data() as ProfileDoc;
-          set({
-            profile: data,
-            corps: data.corps || null,
-            loading: false,
-            error: null,
-          });
+          const serialized = JSON.stringify(data);
+          if (serialized !== _lastProfileJson || get().profile === null) {
+            _lastProfileJson = serialized;
+            set({
+              profile: data,
+              corps: data.corps || null,
+              loading: false,
+              error: null,
+            });
+          }
 
           // Sync class unlocks once per session. Security rules make
           // unlockedClasses read-only for clients, so eligibility is computed
@@ -250,6 +260,7 @@ export const useProfileStore = create<ProfileState>()((set, get) => ({
           // Do NOT auto-create a profile here either way — profile creation is
           // owned by onboarding's `createUserProfile` callable, which atomically
           // reserves the username; a minimal doc written here would race it.
+          _lastProfileJson = null;
           if (docSnapshot.metadata.fromCache) {
             set({ loading: true, error: null });
           } else {
@@ -293,28 +304,6 @@ export const useProfileStore = create<ProfileState>()((set, get) => ({
       _currentUid: null,
       _unsubscribe: null,
     });
-  },
-
-  /**
-   * Update profile data (optimistic update + Firestore write)
-   */
-  updateProfile: async (updates) => {
-    const { _currentUid, profile } = get();
-    if (!_currentUid) return;
-
-    // Optimistic update
-    set({
-      profile: { ...profile, ...updates },
-    });
-
-    try {
-      const profileRef = doc(db, paths.userProfile(_currentUid));
-      await updateDoc(profileRef, updates);
-    } catch (err) {
-      console.error('Error updating profile:', err);
-      toast.error('Failed to save changes. Please try again.');
-      // Revert on error (the listener will sync correct data)
-    }
   },
 
   /**

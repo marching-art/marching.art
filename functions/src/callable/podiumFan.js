@@ -8,7 +8,7 @@ const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const store = require("../helpers/podium/store");
 const fanFavorite = require("../helpers/podium/fanFavorite");
 const { podiumContext } = require("./podium");
-const { assertWriteBudget } = require("../helpers/callableGuards");
+const { assertWriteBudget, assertNotRestricted } = require("../helpers/callableGuards");
 
 exports.getFanFavorite = onCall({ cors: true }, async (request) => {
   const { uid, db, seasonData, competitionDay } = await podiumContext(request);
@@ -60,6 +60,9 @@ exports.castFanFavoriteVote = onCall({ cors: true }, async (request) => {
   // Abuse throttle — voting is one-per-day server-side; this just stops
   // unthrottled hammering from a scripted client.
   await assertWriteBudget(db, uid, "fanVotes", { max: 60 });
+  // Same social-action gate as every other ballot surface (showcase,
+  // podium-joint, comments): a restricted account cannot vote.
+  await assertNotRestricted(db, uid);
   const seasonUid = seasonData.seasonUid;
   const cfg = store.balance;
 

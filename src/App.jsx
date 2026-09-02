@@ -352,7 +352,9 @@ function App() {
                       path="/"
                       element={
                         <Suspense fallback={<LoadingScreen fullScreen />}>
-                          <Landing />
+                          <Page name="Home">
+                            <Landing />
+                          </Page>
                         </Suspense>
                       }
                     />
@@ -360,7 +362,9 @@ function App() {
                       path="/article/:id"
                       element={
                         <Suspense fallback={<LoadingScreen fullScreen />}>
-                          <Article />
+                          <Page name="Article">
+                            <Article />
+                          </Page>
                         </Suspense>
                       }
                     />
@@ -369,7 +373,9 @@ function App() {
                       element={
                         <RedirectIfAuthed>
                           <Suspense fallback={<LoadingScreen fullScreen />}>
-                            <Login />
+                            <Page name="Sign In">
+                              <Login />
+                            </Page>
                           </Suspense>
                         </RedirectIfAuthed>
                       }
@@ -379,7 +385,9 @@ function App() {
                       element={
                         <RedirectIfAuthed>
                           <Suspense fallback={<LoadingScreen fullScreen />}>
-                            <Register />
+                            <Page name="Sign Up">
+                              <Register />
+                            </Page>
                           </Suspense>
                         </RedirectIfAuthed>
                       }
@@ -399,7 +407,9 @@ function App() {
                           <Navigate to="/dashboard" />
                         ) : (
                           <Suspense fallback={<LoadingScreen fullScreen />}>
-                            <PodiumPreview />
+                            <Page name="Podium Preview">
+                              <PodiumPreview />
+                            </Page>
                           </Suspense>
                         )
                       }
@@ -411,7 +421,9 @@ function App() {
                           <Navigate to="/dashboard" />
                         ) : (
                           <Suspense fallback={<LoadingScreen fullScreen />}>
-                            <ForgotPassword />
+                            <Page name="Password Reset">
+                              <ForgotPassword />
+                            </Page>
                           </Suspense>
                         )
                       }
@@ -454,7 +466,9 @@ function App() {
                           <Navigate to="/dashboard" />
                         ) : (
                           <Suspense fallback={<DashboardSkeleton />}>
-                            <GuestDashboard />
+                            <Page name="Preview">
+                              <GuestDashboard />
+                            </Page>
                           </Suspense>
                         )
                       }
@@ -469,7 +483,9 @@ function App() {
                       element={
                         <ProtectedRoute requireProfile={false}>
                           <Suspense fallback={<LoadingScreen fullScreen />}>
-                            <Onboarding />
+                            <Page name="Onboarding">
+                              <Onboarding />
+                            </Page>
                           </Suspense>
                         </ProtectedRoute>
                       }

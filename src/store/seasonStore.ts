@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { Timestamp } from 'firebase/firestore';
 import { doc, onSnapshot } from 'firebase/firestore';
-import { db } from '../api';
+import { db, paths } from '../api';
 import { formatSeasonName } from '../utils/season';
 import { getSeasonProgress } from '../utils/seasonProgress';
 
@@ -98,7 +98,7 @@ export const useSeasonStore = create<SeasonState>()((set, get) => ({
       return _unsubscribe;
     }
 
-    const seasonRef = doc(db, 'game-settings/season');
+    const seasonRef = doc(db, paths.season());
 
     const unsubscribe = onSnapshot(
       seasonRef,

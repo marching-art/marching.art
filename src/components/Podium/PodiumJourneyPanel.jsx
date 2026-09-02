@@ -10,6 +10,7 @@ import toast from 'react-hot-toast';
 import { completeJourneyStep } from '../../api/functions';
 import { useProfileStore } from '../../store/profileStore';
 import { PODIUM_JOURNEY } from './podiumConstants';
+import { friendlyCallableError } from '../../utils/callableErrors';
 
 export default function PodiumJourneyPanel() {
   const profile = useProfileStore((state) => state.profile);
@@ -32,7 +33,7 @@ export default function PodiumJourneyPanel() {
         );
       }
     } catch (err) {
-      toast.error((err instanceof Error && err.message) || 'Not there yet.');
+      toast.error(friendlyCallableError(err, 'Not there yet.'));
     } finally {
       setBusy(null);
     }

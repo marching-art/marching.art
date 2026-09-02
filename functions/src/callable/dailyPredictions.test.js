@@ -128,6 +128,24 @@ describe("submitPrediction", () => {
     );
   });
 
+  test("rejects a pick outside the canonical Over/Under/Yes/No set", async () => {
+    await assert.rejects(
+      submitPrediction.run(
+        authedRequest("u1", { questionId: "over-under", pick: "x".repeat(5000), corpsClass: "worldClass" })
+      ),
+      /Unknown prediction pick/i
+    );
+  });
+
+  test("rejects a corpsClass outside the class registry", async () => {
+    await assert.rejects(
+      submitPrediction.run(
+        authedRequest("u1", { questionId: "over-under", pick: "Over", corpsClass: "../../admin" })
+      ),
+      /Unknown corps class/i
+    );
+  });
+
   test("rejects SoundSport predictions", async () => {
     await assert.rejects(
       submitPrediction.run(authedRequest("u1", { questionId: "over-under", pick: "Over", corpsClass: "soundSport" })),

@@ -334,6 +334,21 @@ function leagueDocs({ isPublic, invitationStatus } = {}) {
   return docs;
 }
 
+describe("joinLeague input validation", () => {
+  beforeEach(() => setDbForTesting(null));
+
+  test("rejects a leagueId that is not a doc-id shape (path interpolation)", async () => {
+    const { db, writes } = makeFakeDb(leagueDocs({ isPublic: true }));
+    setDbForTesting(db);
+    await assert.rejects(
+      joinLeague.run(authedRequest("u1", { leagueId: "league-1/members/../x" })),
+      /Invalid league ID/
+    );
+    await assert.rejects(joinLeague.run(authedRequest("u1", {})), /Invalid league ID/);
+    assert.equal(writes.length, 0);
+  });
+});
+
 describe("joinLeague private-league guard", () => {
   beforeEach(() => setDbForTesting(null));
 

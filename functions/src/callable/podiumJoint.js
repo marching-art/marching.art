@@ -11,7 +11,7 @@ const store = require("../helpers/podium/store");
 const joint = require("../helpers/podium/joint");
 const venues = require("../helpers/podium/venues");
 const { podiumContext } = require("./podium");
-const { assertWriteBudget } = require("../helpers/callableGuards");
+const { assertWriteBudget, assertDocId } = require("../helpers/callableGuards");
 
 // ---------------------------------------------------------------------------
 // Joint rehearsals (Phase 7.1, design §5.12) — the human handshake.
@@ -102,7 +102,9 @@ exports.proposeJointRehearsal = onCall({ cors: true }, async (request) => {
   // Podium core loop, so the budget is generous (still far above human rate).
   await assertWriteBudget(db, uid, "podium", { max: 120, windowMs: 10 * 60 * 1000 });
   const { toUid, day } = request.data || {};
-  if (typeof toUid !== "string" || !toUid || toUid === uid) {
+  // toUid is interpolated into the other director's state path.
+  assertDocId(toUid, "toUid");
+  if (toUid === uid) {
     throw new HttpsError("invalid-argument", "Pick another director's corps.");
   }
   validateJointDay(day, competitionDay);
@@ -172,9 +174,8 @@ exports.respondJointRehearsal = onCall({ cors: true }, async (request) => {
   // Podium core loop, so the budget is generous (still far above human rate).
   await assertWriteBudget(db, uid, "podium", { max: 120, windowMs: 10 * 60 * 1000 });
   const { proposalId, accept } = request.data || {};
-  if (typeof proposalId !== "string" || !proposalId) {
-    throw new HttpsError("invalid-argument", "proposalId is required.");
-  }
+  // Interpolated into the proposals collection path.
+  assertDocId(proposalId, "proposalId");
   const proposalRef = joint.proposalsCollection(db, seasonData.seasonUid).doc(proposalId);
   const proposalSnapshot = await proposalRef.get();
   if (!proposalSnapshot.exists) throw new HttpsError("not-found", "Proposal not found.");

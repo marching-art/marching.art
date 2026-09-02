@@ -126,7 +126,7 @@ export const ErrorFallback: React.FC<ErrorFallbackProps> = ({
           : 'An unexpected error occurred. Please try again or contact support if the problem persists.'}
       </p>
 
-      {error && process.env.NODE_ENV === 'development' && (
+      {error && import.meta.env.DEV && (
         <details className="mb-4 w-full max-w-md">
           <summary className="text-sm text-muted cursor-pointer hover:text-secondary">
             Error details (dev only)
