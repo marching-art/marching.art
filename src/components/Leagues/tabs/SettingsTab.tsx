@@ -237,13 +237,19 @@ const SettingsTab = ({
   }, [league?.id]);
 
   const handleCopyInvite = async () => {
+    if (!inviteCode) {
+      toast.error('This league has no invite code yet.');
+      return;
+    }
     try {
-      await navigator.clipboard.writeText(inviteCode || '');
+      await navigator.clipboard.writeText(inviteCode);
       setInviteCopied(true);
       toast.success('Invite code copied!');
       setTimeout(() => setInviteCopied(false), 2000);
     } catch {
-      toast.success(`Code: ${inviteCode}`);
+      // Clipboard access can be denied (insecure context, permissions); show
+      // the code so it can still be copied by hand.
+      toast.success(`Invite code: ${inviteCode}`);
     }
   };
 

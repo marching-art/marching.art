@@ -67,9 +67,13 @@ import Heading from '../components/ui/Heading';
 const ZOOM_STEPS = [1, 1.5, 2];
 
 export default function Studio() {
+  // Auth-walled: without `path` the canonical fell back to the homepage, and
+  // without `noindex` a crawler that reached the login bounce indexed it.
   useSEO({
     title: 'Uniform Studio | marching.art',
     description: 'Design your corps identity: uniforms, colorways, and wardrobe.',
+    path: '/studio',
+    noindex: true,
   });
   const { user } = useAuth() || {};
   const profile = useProfileStore((s) => s.profile);

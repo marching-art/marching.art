@@ -199,7 +199,7 @@ async function assertNotRestricted(db, uid, preloadedProfile) {
     throw new HttpsError(
       "permission-denied",
       "This account is restricted from competitive and social actions. " +
-        "Contact an administrator if you believe this is a mistake."
+        "Email support@marching.art if you believe this is a mistake."
     );
   }
 }

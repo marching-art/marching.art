@@ -300,7 +300,7 @@ exports.weeklyMatchupPushJob = onSchedule(
         const chunk = notificationTasks.slice(i, i + PARALLEL_LIMIT);
         const results = await Promise.allSettled(
           chunk.map((task) =>
-            sendMatchupStartPush(task.userId, task.opponentName, task.leagueName)
+            sendMatchupStartPush(task.userId, task.opponentName, task.leagueName, task.leagueId)
           )
         );
 
@@ -322,7 +322,7 @@ exports.weeklyMatchupPushJob = onSchedule(
             type: "matchup_start",
             title: "Matchup Starting!",
             message: `Your matchup vs ${task.opponentName} in ${task.leagueName} is about to begin!`,
-            link: "/leagues",
+            link: `/leagues/${task.leagueId}/matchups`,
             leagueId: task.leagueId,
             leagueName: task.leagueName,
             metadata: { week: currentWeek, opponentName: task.opponentName },

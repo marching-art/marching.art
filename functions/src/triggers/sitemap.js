@@ -11,6 +11,8 @@ const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
 const { listScoredDays } = require("./resultsPages");
 const { isProfilePrivate } = require("../helpers/publicProfilePages");
+const { SLUG_BY_CLASS } = require("../helpers/shareCards");
+const { paths } = require("../helpers/paths");
 
 // Public, crawlable routes (see robots.txt for the disallow list these must
 // stay out of). lastmod is intentionally omitted for static routes — a fake
@@ -21,7 +23,6 @@ const STATIC_ROUTES = [
   { path: "/podium-guide", changefreq: "monthly", priority: "0.8" },
   { path: "/updates", changefreq: "weekly", priority: "0.7" },
   { path: "/preview", changefreq: "weekly", priority: "0.8" },
-  { path: "/podium", changefreq: "monthly", priority: "0.7" },
   { path: "/podium/preview", changefreq: "monthly", priority: "0.6" },
   { path: "/hall-of-champions", changefreq: "weekly", priority: "0.7" },
   { path: "/register", changefreq: "yearly", priority: "0.5" },
@@ -61,10 +62,13 @@ const escapeXml = (value) =>
  *   Article page entries; lastmod is a YYYY-MM-DD string when known.
  * @param {Array<{seasonUid: string, days: number[]}>} [resultsSeasons]
  *   Public /results pages: one index URL per season plus one per scored day.
- * @param {string[]} [directorUsernames] - Public /d/{username} director pages.
+ * @param {Array<string | {username: string, programSlugs?: string[]}>} [directors]
+ *   Public /d/{username} director pages. An object entry also lists the
+ *   director's corps program pages (/d/{username}/{classSlug}); a bare string
+ *   is the director page alone.
  * @returns {string}
  */
-function buildSitemapXml(staticRoutes, articles, resultsSeasons = [], directorUsernames = []) {
+function buildSitemapXml(staticRoutes, articles, resultsSeasons = [], directors = []) {
   const urls = [];
 
   for (const route of staticRoutes) {
@@ -107,14 +111,26 @@ function buildSitemapXml(staticRoutes, articles, resultsSeasons = [], directorUs
     }
   }
 
-  for (const username of directorUsernames) {
+  for (const director of directors) {
+    const username = typeof director === "string" ? director : director.username;
+    const programSlugs = typeof director === "string" ? [] : director.programSlugs || [];
+    const directorLoc = `${SITE_URL}/d/${escapeXml(encodeURIComponent(username))}`;
     urls.push(
       "  <url>\n" +
-        `    <loc>${SITE_URL}/d/${escapeXml(encodeURIComponent(username))}</loc>\n` +
+        `    <loc>${directorLoc}</loc>\n` +
         "    <changefreq>weekly</changefreq>\n" +
         "    <priority>0.5</priority>\n" +
         "  </url>"
     );
+    for (const slug of programSlugs) {
+      urls.push(
+        "  <url>\n" +
+          `    <loc>${directorLoc}/${escapeXml(slug)}</loc>\n` +
+          "    <changefreq>weekly</changefreq>\n" +
+          "    <priority>0.4</priority>\n" +
+          "  </url>"
+      );
+    }
   }
 
   return (
@@ -160,35 +176,67 @@ const MAX_RESULTS_SEASONS = 40;
 // crawl budget — it becomes crawlable as soon as the director plays.
 const MAX_DIRECTOR_URLS = 2000;
 
+// Program-page classes, in display order. Only the corps name is projected —
+// the rest of the per-corps map (lineups, uniform snapshots, history) never
+// needs to leave Firestore to decide whether a program page exists.
+const PROGRAM_CLASS_KEYS = Object.keys(SLUG_BY_CLASS);
+const PROGRAM_NAME_FIELDS = PROGRAM_CLASS_KEYS.map((key) => `corps.${key}.corpsName`);
+
 /**
- * Usernames with a public /d/{username} page worth crawling: public
- * visibility (same rule the page itself enforces) plus some activity.
- * Failures degrade to an empty list — the sitemap must not 500 because
- * profile enumeration hiccuped.
+ * Reduce one projected profile doc to its sitemap entry, or null when the
+ * director has no crawlable page. Pure — exported for unit tests.
+ *
+ * @param {Record<string, any>} data Projected profile data (username,
+ *   directorInfo, xpLevel, seasonHistory, corps.{class}.corpsName).
+ * @returns {{username: string, programSlugs: string[]} | null}
+ */
+function directorEntryFromProfile(data) {
+  if (!data || typeof data.username !== "string" || !data.username) return null;
+  if (isProfilePrivate(data)) return null;
+  const hasActivity =
+    (typeof data.xpLevel === "number" && data.xpLevel > 1) ||
+    (Array.isArray(data.seasonHistory) && data.seasonHistory.length > 0);
+  if (!hasActivity) return null;
+  const programSlugs = PROGRAM_CLASS_KEYS.filter((key) => {
+    const name = data.corps?.[key]?.corpsName;
+    return typeof name === "string" && name.trim() !== "";
+  }).map((key) => SLUG_BY_CLASS[key]);
+  return { username: data.username, programSlugs };
+}
+
+/**
+ * Directors with a public /d/{username} page worth crawling — public
+ * visibility (same rule the page itself enforces) plus some activity — and,
+ * for each, the corps program pages they field. Failures degrade to an empty
+ * list — the sitemap must not 500 because profile enumeration hiccuped.
+ *
+ * The `profile` collection group also holds the `profile/public` mirror docs
+ * and every other data namespace, so the scan is pinned to this namespace's
+ * `profile/data` documents — anything else would advertise duplicate or
+ * 404ing /d/ URLs.
  *
  * @param {FirebaseFirestore.Firestore} db
- * @returns {Promise<string[]>}
+ * @returns {Promise<Array<{username: string, programSlugs: string[]}>>}
  */
 async function listPublicDirectors(db) {
   try {
     const snapshot = await db
       .collectionGroup("profile")
-      .select("username", "directorInfo", "xpLevel", "seasonHistory")
+      .select("username", "directorInfo", "xpLevel", "seasonHistory", ...PROGRAM_NAME_FIELDS)
       .limit(MAX_DIRECTOR_URLS)
       .get();
 
-    const usernames = [];
+    const usersPrefix = `${paths.users()}/`;
+    const seen = new Set();
+    const directors = [];
     for (const doc of snapshot.docs) {
-      const data = doc.data();
-      if (typeof data.username !== "string" || !data.username) continue;
-      if (isProfilePrivate(data)) continue;
-      const hasActivity =
-        (typeof data.xpLevel === "number" && data.xpLevel > 1) ||
-        (Array.isArray(data.seasonHistory) && data.seasonHistory.length > 0);
-      if (!hasActivity) continue;
-      usernames.push(data.username);
+      if (doc.id !== "data" || !doc.ref.path.startsWith(usersPrefix)) continue;
+      const entry = directorEntryFromProfile(doc.data());
+      if (!entry || seen.has(entry.username)) continue;
+      seen.add(entry.username);
+      directors.push(entry);
     }
-    return usernames;
+    return directors;
   } catch (error) {
     logger.warn("Failed to enumerate public directors for sitemap:", error);
     return [];
@@ -278,11 +326,11 @@ exports.getSitemapHttp = onRequest(
         .get();
 
       const articles = snapshot.docs.map(articleEntryFromDoc);
-      const [resultsSeasons, directorUsernames] = await Promise.all([
+      const [resultsSeasons, directors] = await Promise.all([
         listResultsSeasons(db),
         listPublicDirectors(db),
       ]);
-      const xml = buildSitemapXml(STATIC_ROUTES, articles, resultsSeasons, directorUsernames);
+      const xml = buildSitemapXml(STATIC_ROUTES, articles, resultsSeasons, directors);
 
       // Best-effort cache write; a failed write must not fail the response.
       try {
@@ -307,5 +355,6 @@ module.exports = {
   getSitemapHttp: exports.getSitemapHttp,
   buildSitemapXml,
   articleEntryFromDoc,
+  directorEntryFromProfile,
   STATIC_ROUTES,
 };

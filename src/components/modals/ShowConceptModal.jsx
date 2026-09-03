@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // =============================================================================
 // SHOW CONCEPT MODAL - per-season show design (theme / music / drill)
 // =============================================================================
@@ -21,6 +20,17 @@ import { saveShowConcept } from '../../api/functions';
 import { SHOW_THEMES, MUSIC_SOURCES, DRILL_STYLES } from '../../utils/showConcept';
 import { friendlyCallableError } from '../../utils/callableErrors';
 
+/** @typedef {{ value: string, label: string }} ConceptOption */
+
+/**
+ * @param {{
+ *   label: string,
+ *   icon: React.ComponentType<{ className?: string }>,
+ *   options: ReadonlyArray<ConceptOption>,
+ *   value: string | null,
+ *   onChange: (value: string) => void,
+ * }} props
+ */
 const PickerGroup = ({ label, icon: Icon, options, value, onChange }) => (
   <div>
     <p className="text-[10px] font-bold text-muted uppercase tracking-wider mb-2 flex items-center gap-1.5">
@@ -46,6 +56,19 @@ const PickerGroup = ({ label, icon: Icon, options, value, onChange }) => (
   </div>
 );
 
+/**
+ * @param {{
+ *   onClose: () => void,
+ *   corpsClass: string,
+ *   corpsName: string,
+ *   currentConcept?: {
+ *     showName?: string,
+ *     theme?: string | null,
+ *     musicSource?: string | null,
+ *     drillStyle?: string | null,
+ *   } | string | null,
+ * }} props
+ */
 const ShowConceptModal = ({ onClose, corpsClass, corpsName, currentConcept }) => {
   useEscapeKey(onClose);
   const dialogRef = useRef(null);

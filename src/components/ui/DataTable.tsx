@@ -222,9 +222,11 @@ export const DataTable = <T extends Record<string, unknown>>({
     };
 
     checkScroll();
-    window.addEventListener('resize', checkScroll);
+    // Passive: the handler only reads layout and sets state, never
+    // preventDefault — lets the browser keep scrolling on the compositor.
+    window.addEventListener('resize', checkScroll, { passive: true });
     const el = scrollContainerRef.current;
-    el?.addEventListener('scroll', checkScroll);
+    el?.addEventListener('scroll', checkScroll, { passive: true });
 
     return () => {
       window.removeEventListener('resize', checkScroll);

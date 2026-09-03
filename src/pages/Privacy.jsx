@@ -2,6 +2,7 @@
 import React from 'react';
 import { Heading } from '../components/ui';
 import { useSEO } from '../hooks/useSEO';
+import { APP_CONFIG } from '../config';
 
 // Chrome comes from PublicShell — this page used to offer a lone "Back to Home"
 // link as its entire navigation.
@@ -306,8 +307,8 @@ const Privacy = () => {
             <p className="text-sm">
               Questions about this policy, requests about your data, or a dispute about a fair-play
               restriction:{' '}
-              <a href="mailto:contact@marching.art" className={linkClass}>
-                contact@marching.art
+              <a href={`mailto:${APP_CONFIG.supportEmail}`} className={linkClass}>
+                {APP_CONFIG.supportEmail}
               </a>
               .
             </p>

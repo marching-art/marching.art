@@ -2,6 +2,7 @@
 import React from 'react';
 import { Heading } from '../components/ui';
 import { useSEO } from '../hooks/useSEO';
+import { APP_CONFIG } from '../config';
 
 // Chrome comes from PublicShell — this page used to offer a lone "Back to Home"
 // link as its entire navigation.
@@ -154,10 +155,10 @@ const Terms = () => {
             <p className="text-sm">
               If you have questions about these Terms of Service, please contact us at:{' '}
               <a
-                href="mailto:contact@marching.art"
+                href={`mailto:${APP_CONFIG.supportEmail}`}
                 className="text-interactive hover:text-interactive-hover underline"
               >
-                contact@marching.art
+                {APP_CONFIG.supportEmail}
               </a>
             </p>
           </section>

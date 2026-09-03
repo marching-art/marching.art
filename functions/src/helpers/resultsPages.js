@@ -164,13 +164,15 @@ const FOOTER_LINKS = [
   { href: "/podium-guide", label: "Podium Guide" },
   { href: "/hall-of-champions", label: "Hall of Champions" },
   { href: "/results", label: "Results" },
+  { href: "mailto:support@marching.art", label: "Support" },
   { href: "/privacy", label: "Privacy" },
   { href: "/terms", label: "Terms" },
 ];
 
 const footerHtml = () =>
   `<footer>${FOOTER_LINKS.map(
-    (link) => `<a href="${SITE_URL}${link.href}">${escapeHtml(link.label)}</a>`
+    (link) =>
+      `<a href="${link.href.startsWith("mailto:") ? link.href : `${SITE_URL}${link.href}`}">${escapeHtml(link.label)}</a>`
   ).join("\n")}</footer>`;
 
 /**
