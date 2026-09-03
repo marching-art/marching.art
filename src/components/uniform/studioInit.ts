@@ -21,8 +21,19 @@ export function initialDesignFor(option: CorpsOption | undefined): {
   migrated: boolean;
 } {
   if (option?.corps.uniform) {
-    const { designId: _id, equippedAt: _at, ...rest } = option.corps.uniform;
-    return { design: { ...rest, schema: 2 }, migrated: false };
+    // Strip the snapshot-only fields (ids, timestamps, the re-hosted preview);
+    // a null aiHints on the snapshot means "none" on the design.
+    const {
+      designId: _id,
+      equippedAt: _at,
+      previewUrl: _preview,
+      aiHints,
+      ...rest
+    } = option.corps.uniform;
+    return {
+      design: { ...rest, schema: 2, ...(aiHints ? { aiHints } : {}) },
+      migrated: false,
+    };
   }
   if (option?.corps.uniformDesign?.primaryColor) {
     return {

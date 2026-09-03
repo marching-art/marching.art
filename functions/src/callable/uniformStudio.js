@@ -25,6 +25,10 @@ const {
   sanitizeDesign,
 } = require("../helpers/uniformValidation");
 const { missingPacksFor, missingPacksMessage } = require("../helpers/uniformEntitlements");
+// Called through the module object (not destructured) so tests can stub the
+// upload without a Cloudinary account.
+const uniformPreview = require("../helpers/uniformPreview");
+const { cloudinarySecrets } = require("../helpers/mediaService");
 
 /**
  * Resolve the stored key for a corps class on this profile, tolerating the
@@ -143,12 +147,22 @@ const saveUniformDesign = onCall({ cors: true }, async (request) => {
  * show concept (hornline wears the identity, the guard wears the show,
  * docs/UNIFORM_STUDIO.md §6). Passing designId:null with slot "alternate" or
  * "guard" clears that slot. Does NOT touch avatarUrl or profileAvatarCorps.
+ *
+ * `previewPng` (optional): a PNG data URL of the figure the Studio just
+ * rendered (src/utils/uniformPreview.ts). It is re-hosted and stored on the
+ * snapshot as `previewUrl`, which every AI image call for the corps attaches
+ * as a reference image of the exact design (helpers/uniformReference). An
+ * invalid payload is rejected; a failed upload never fails the equip.
  */
-const equipUniformDesign = onCall({ cors: true }, async (request) => {
+const equipUniformDesign = onCall({ cors: true, secrets: cloudinarySecrets }, async (request) => {
   const uid = assertAuth(request);
-  const { designId, corpsClass, slot } = request.data || {};
+  const { designId, corpsClass, slot, previewPng } = request.data || {};
   if (slot != null && slot !== "primary" && slot !== "alternate" && slot !== "guard") {
     throw new HttpsError("invalid-argument", "Invalid uniform slot.");
+  }
+  if (previewPng != null) {
+    const previewError = uniformPreview.validatePreviewPng(previewPng);
+    if (previewError) throw new HttpsError("invalid-argument", previewError);
   }
   const slotField =
     slot === "alternate" ? "uniformAlt" : slot === "guard" ? "uniformGuard" : null;
@@ -184,6 +198,15 @@ const equipUniformDesign = onCall({ cors: true }, async (request) => {
   }
   const design = designDoc.data();
 
+  const previewUrl = previewPng
+    ? await uniformPreview.storeUniformPreview({
+        uid,
+        classKey: storedKey,
+        slot: slot || "primary",
+        previewPng,
+      })
+    : null;
+
   const snapshot = {
     designId: designDoc.id,
     name: design.name,
@@ -194,6 +217,8 @@ const equipUniformDesign = onCall({ cors: true }, async (request) => {
     // from the single source of truth — the wardrobe doc is not fetched at render
     // time. Null-coalesced so the field is always present.
     aiHints: design.aiHints || null,
+    // The rendered figure the image models get as ground truth (see above).
+    ...(previewUrl ? { previewUrl } : {}),
     equippedAt: new Date().toISOString(),
   };
 

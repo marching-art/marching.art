@@ -9,7 +9,12 @@ const { test, describe, beforeEach, after } = require("node:test");
 const assert = require("node:assert/strict");
 
 const { setDbForTesting } = require("../config");
+const uniformPreview = require("../helpers/uniformPreview");
 const { saveUniformDesign, equipUniformDesign } = require("./uniformStudio");
+
+/** A small but well-formed PNG data URL (1×1 transparent pixel). */
+const TINY_PNG =
+  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
 
 const NS = process.env.DATA_NAMESPACE;
 const profilePath = (uid) => `artifacts/${NS}/users/${uid}/profile/data`;
@@ -284,5 +289,86 @@ describe("equipUniformDesign guard slot", () => {
       "corps.worldClass.uniformDesign",
     ]);
     assert.ok("aiHints" in update.data["corps.worldClass.uniform"]);
+    assert.ok(!("previewUrl" in update.data["corps.worldClass.uniform"]));
+  });
+});
+
+describe("equipUniformDesign preview snapshot", () => {
+  const realStore = uniformPreview.storeUniformPreview;
+  beforeEach(() => setDbForTesting(null));
+  after(() => {
+    uniformPreview.storeUniformPreview = realStore;
+  });
+
+  function seededDocs() {
+    return new Map([
+      [profilePath("director"), { corps: { worldClass: { corpsName: "Preview Corps" } } }],
+      [`${wardrobePrefix("director")}d1`, { ...freeDesign(), createdAt: "2026-08-01" }],
+    ]);
+  }
+
+  test("a valid previewPng is re-hosted and stored as previewUrl on the snapshot", async () => {
+    const { db, writes } = makeFakeDb(seededDocs());
+    setDbForTesting(db);
+    const stored = [];
+    uniformPreview.storeUniformPreview = async (params) => {
+      stored.push(params);
+      return "https://res.cloudinary.com/x/uniform_previews/uniform_director_worldClass_guard.png";
+    };
+
+    await equipUniformDesign.run(
+      authedRequest("director", {
+        designId: "d1",
+        corpsClass: "worldClass",
+        slot: "guard",
+        previewPng: TINY_PNG,
+      })
+    );
+    assert.equal(stored.length, 1);
+    assert.equal(stored[0].uid, "director");
+    assert.equal(stored[0].classKey, "worldClass");
+    assert.equal(stored[0].slot, "guard");
+    assert.equal(stored[0].previewPng, TINY_PNG);
+    const update = writes.find((w) => w.type === "update" && w.path === profilePath("director"));
+    assert.equal(
+      update.data["corps.worldClass.uniformGuard"].previewUrl,
+      "https://res.cloudinary.com/x/uniform_previews/uniform_director_worldClass_guard.png"
+    );
+  });
+
+  test("a failed upload still equips, just without a previewUrl", async () => {
+    const { db, writes } = makeFakeDb(seededDocs());
+    setDbForTesting(db);
+    uniformPreview.storeUniformPreview = async () => null;
+
+    const result = await equipUniformDesign.run(
+      authedRequest("director", { designId: "d1", corpsClass: "worldClass", previewPng: TINY_PNG })
+    );
+    assert.match(result.message, /Design equipped/);
+    const update = writes.find((w) => w.type === "update" && w.path === profilePath("director"));
+    assert.ok(!("previewUrl" in update.data["corps.worldClass.uniform"]));
+  });
+
+  test("a previewPng that is not a PNG data URL is rejected before any write", async () => {
+    const { db, writes } = makeFakeDb(seededDocs());
+    setDbForTesting(db);
+    uniformPreview.storeUniformPreview = async () => {
+      throw new Error("must not be called");
+    };
+    for (const bad of ["https://evil.example/x.png", "data:image/svg+xml;base64,PHN2Zz4=", "data:image/png;base64,not*valid"]) {
+      await assert.rejects(
+        equipUniformDesign.run(
+          authedRequest("director", { designId: "d1", corpsClass: "worldClass", previewPng: bad })
+        ),
+        /previewPng/
+      );
+    }
+    assert.equal(writes.filter((w) => w.type === "update").length, 0);
+  });
+
+  test("an oversized previewPng is rejected", () => {
+    const huge = `data:image/png;base64,${"A".repeat(uniformPreview.MAX_PREVIEW_BYTES * 2)}`;
+    assert.match(uniformPreview.validatePreviewPng(huge), /too large/);
+    assert.equal(uniformPreview.validatePreviewPng(TINY_PNG), null);
   });
 });

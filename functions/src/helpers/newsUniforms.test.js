@@ -84,8 +84,54 @@ test("getUniformDetailsFromDesign handles a bareheaded (no hat) design", () => {
   const snap = greenGoldSnapshot();
   snap.figure = { chest: "swash", sneaker: true };
   const details = getUniformDetailsFromDesign(snap, "Unspecified", null);
-  assert.ok(details.helmet.includes("no traditional headwear"));
+  assert.ok(details.helmet.includes("NO HEADWEAR"));
   assert.equal(details.style, "athletic");
+});
+
+test("getUniformDetailsFromDesign carries the exhaustive figure spec and preview URLs", () => {
+  const snap = {
+    ...greenGoldSnapshot(),
+    previewUrl: "https://res.cloudinary.com/x/uniform_primary.png",
+    guard: { ...guardSnapshot(), previewUrl: "https://res.cloudinary.com/x/uniform_guard.png" },
+  };
+  snap.figure = {
+    ...snap.figure,
+    chest: "baldric",
+    baldric: "#14532d",
+    baldricCenter: "#e0a516",
+    armL: { type: "sleeve", color: "#1f6b3a", glove: "#ffffff" },
+    armR: { type: "bare", glove: null },
+    legL: { color: "#14532d", stripe: "#e0a516" },
+    legR: { color: "#14532d", stripe: "#e0a516" },
+    shoe: "#111111",
+    spats: true,
+  };
+  const details = getUniformDetailsFromDesign(snap, "Unspecified", null);
+  // The full block, one line per part, hex-pinned.
+  assert.ok(details.figureSpec.includes("- CHEST: a classic baldric band in forest green (#14532d)"));
+  assert.ok(details.figureSpec.includes("center stripe"));
+  assert.ok(details.figureSpec.includes("ARMS ARE ASYMMETRIC"));
+  assert.ok(details.figureSpec.includes("gold (#e0a516) side stripe"));
+  assert.ok(details.figureSpec.includes("white spats"));
+  assert.ok(Array.isArray(details.figureSpecLines) && details.figureSpecLines.length >= 13);
+  // The one-line cues older prompt slots read are derived from the same spec.
+  assert.ok(details.uniform.includes("baldric"));
+  assert.ok(details.helmet.includes("shako"));
+  assert.ok(details.helmet.includes("plume"));
+  assert.ok(details.gloves.includes("viewer's left hand"));
+  assert.ok(details.footwear.includes("#111111"));
+  assert.equal(details.symmetric, false);
+  // The guard's own full spec + both rendered previews ride along.
+  assert.ok(details.guardSpec.includes("guard dress"));
+  assert.equal(details.previewUrl, "https://res.cloudinary.com/x/uniform_primary.png");
+  assert.equal(details.guardPreviewUrl, "https://res.cloudinary.com/x/uniform_guard.png");
+});
+
+test("getUniformDetailsFromDesign has no preview URLs when none were stored", () => {
+  const details = getUniformDetailsFromDesign(greenGoldSnapshot(), "Unspecified", null);
+  assert.equal(details.previewUrl, null);
+  assert.equal(details.guardPreviewUrl, null);
+  assert.equal(details.guardSpec, null);
 });
 
 test("getFantasyUniformDetails uses the v2 design when present, else falls back to theme", () => {

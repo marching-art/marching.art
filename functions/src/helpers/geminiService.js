@@ -207,7 +207,9 @@ WHAT MODERN DCI PERFORMERS LOOK LIKE:
   or any sports/protective helmet. If uniform details say "helmet," interpret it as a
   decorative marching-band helmet/shako, not athletic headgear.
   Only include headwear if specifically described in the uniform details.
-- GLOVES: White marching gloves on all performers.
+- GLOVES: White marching gloves by default — BUT when the uniform details specify a glove
+  color, gauntlets, or bare hands, the uniform details win. Same for shoes and every other
+  garment: a stated uniform spec always overrides these defaults.
 - BRASS PLAYERS: Hold brass instruments (mellophones, baritones, contras, trumpets).
   Silver instruments are most common. NO woodwinds, NO electric guitars.
 - PERCUSSIONISTS: Wear drums on body harnesses (snare drums, tenor drums/quads, bass drums).
@@ -272,9 +274,10 @@ MUST AVOID (these will make the image incorrect):
  * @param {Object} [options] - Optional configuration
  * @param {string} [options.model] - Override the default model id
  * @param {string} [options.aspectRatio] - Output aspect ratio (default: '16:9')
- * @param {Array<{data: string, mimeType: string}>} [options.referenceImages] -
+ * @param {Array<{data: string, mimeType: string, caption?: string}>} [options.referenceImages] -
  *   Optional reference images (base64 data without the data: prefix) used to
- *   ground uniform/instrumentation in real photos.
+ *   ground the uniform: real photos, or the director's rendered Studio figure
+ *   (helpers/uniformReference). `caption` tells the model what each one is.
  * @returns {Promise<string>} Base64 data URL of the generated image, or null
  */
 async function generateImageWithImagen(prompt, options = {}) {
@@ -291,6 +294,20 @@ async function generateImageWithImagen(prompt, options = {}) {
     const referenceImages = (options.referenceImages || []).filter(
       (ref) => ref && ref.data && ref.mimeType
     );
+    // Each reference can carry its own caption (what the image is and how to
+    // use it); references without one are treated as photos of the real corps.
+    const referenceRule =
+      referenceImages.length > 0
+        ? `- REFERENCE IMAGES (${referenceImages.length} attached): ${referenceImages
+            .map(
+              (ref, i) =>
+                `Image ${i + 1}: ${
+                  ref.caption ||
+                  "a photo of this corps' actual uniform, colors, and instrumentation — match the uniform design, marching headwear/plume, and instrument types exactly; the reference defines ground truth, not your priors."
+                }`
+            )
+            .join(" ")}`
+        : "";
 
     // Critical per-image constraints, appended after the specific prompt. Retained
     // from the prior Imagen path so the model still gets the hard rules up front.
@@ -305,7 +322,7 @@ CRITICAL RULES FOR THIS IMAGE:
 - CLOSE-UP ONLY: Show 2-6 performers maximum, filling the frame. Do NOT show the full corps or wide formation.
 - FIELD-LEVEL CAMERA: Shoot from eye level on the field, NOT from elevated, aerial, or press box positions.
 - SHALLOW DEPTH OF FIELD: Performers in sharp focus, background (stadium, crowd, field) as soft bokeh.
-${referenceImages.length > 0 ? "- REFERENCE IMAGES: The attached photo(s) show this corps' actual uniform, colors, and instrumentation. Match the uniform design, marching headwear/plume, and instrument types in the reference exactly — the references define ground truth, not your priors." : ""}
+${referenceRule}
 ${IMAGE_NEGATIVE_PROMPT}`;
 
     // Build system instruction with drum corps context

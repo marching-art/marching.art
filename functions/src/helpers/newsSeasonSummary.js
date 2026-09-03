@@ -31,6 +31,7 @@ const {
 } = require("./geminiService");
 const { buildFantasyPerformersImagePrompt } = require("./newsImagePrompts");
 const { resolveCorpsUniform } = require("./newsUniforms");
+const { loadUniformReferenceImages } = require("./uniformReference");
 const { describeShowConcept } = require("./showConceptSynergy");
 const { paths } = require("./paths");
 
@@ -538,7 +539,10 @@ ARTICLE REQUIREMENTS
         reportDay,
         5 // articleIndex 5: Season Summary — distinct scene archetype from the daily five
       );
-      const imageData = await generateImageWithImagen(imagePrompt, { model: PAID_IMAGE_MODEL });
+      const imageData = await generateImageWithImagen(imagePrompt, {
+        model: PAID_IMAGE_MODEL,
+        referenceImages: await loadUniformReferenceImages(imageDesign?.uniform || null),
+      });
       imageResult = await processGeneratedImage(imageData, "season_summary");
       return {
         type: ARTICLE_TYPES.SEASON_SUMMARY,

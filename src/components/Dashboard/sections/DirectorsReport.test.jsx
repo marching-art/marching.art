@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Render tests for the Director's Report — the unified Zone-B daily card.
 // Pins the "Today · X of Y done" count assembly (login + challenges +
 // predictions) and the pending ladder-claim row.
@@ -8,6 +7,7 @@ import { MemoryRouter } from 'react-router-dom';
 
 const claimLadderTier = vi.fn();
 vi.mock('../../../api/functions', () => ({
+  /** @param {...unknown} args */
   claimLadderTier: (...args) => claimLadderTier(...args),
 }));
 vi.mock('react-hot-toast', () => ({
@@ -15,8 +15,10 @@ vi.mock('react-hot-toast', () => ({
 }));
 
 // The store hook powers the report, the embedded challenges, and predictions.
+/** @type {any} */
 let mockProfile = null;
 vi.mock('../../../store/profileStore', () => ({
+  /** @param {(state: any) => unknown} selector */
   useProfileStore: (selector) =>
     selector({
       profile: mockProfile,
@@ -29,6 +31,10 @@ vi.mock('../../../store/profileStore', () => ({
 import DirectorsReport from './DirectorsReport';
 import { getGameDay } from '../../../utils/dailyChallenges';
 
+// The report is a memo()'d, still-untyped JSX component; give the test a
+// prop-accepting view of it until the component itself is typed.
+const Report = /** @type {React.ComponentType<any>} */ (/** @type {unknown} */ (DirectorsReport));
+
 const gameDay = getGameDay();
 
 const twoResults = [
@@ -39,7 +45,7 @@ const twoResults = [
 const renderReport = (props = {}) =>
   render(
     <MemoryRouter>
-      <DirectorsReport
+      <Report
         recentResults={twoResults}
         corpsClass="worldClass"
         seasonUid="s1"

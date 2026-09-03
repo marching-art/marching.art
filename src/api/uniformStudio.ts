@@ -48,6 +48,11 @@ export interface EquipUniformDesignData {
   /** Which slot to fill: the identity uniform (default), the alternate look,
    *  or the color guard's per-season show look. */
   slot?: 'primary' | 'alternate' | 'guard';
+  /** PNG data URL of the rendered figure (utils/uniformPreview). The server
+   *  re-hosts it as the snapshot's `previewUrl`, the reference image every AI
+   *  image of the corps is grounded in. Optional — omitted when the browser
+   *  can't rasterize. */
+  previewPng?: string;
 }
 
 export interface EquipUniformDesignResult {

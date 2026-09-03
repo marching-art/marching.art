@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-09-03-ai-images-match-your-uniform-exactly",
+    "date": "2026-09-03",
+    "title": "AI avatars and news images now reproduce your whole uniform, not just its colors",
+    "category": "improvement",
+    "summary": "Every generated picture of your corps — the avatar you regenerate from your profile, the nightly Fantasy Daily photo, the season summary, and approved article images — is now built from your complete Uniform Studio design: the cut, chest treatment, badge, collar, shoulders, waist, each sleeve and glove, each trouser leg and stripe, shoes, headwear, and plume, in the exact shades you picked. Equipping a design also sends the picture the Studio drew along with it, so the image model works from your actual figure rather than a description of it.",
+    "highlights": [
+      "Asymmetric designs stay asymmetric: a bare left arm and a detached ombré right sleeve are described side by side, not averaged.",
+      "Your glove and shoe colors replace the old always-white gloves and always-black shoes.",
+      "Pieces your design does not have — hats, plumes, epaulets, belts, sashes — are called out as absent so they are not invented.",
+      "The color guard's own show look is described in the same detail, and only guard members wear it.",
+      "Re-equip a design once and every future image of that corps uses the refreshed reference."
+    ]
+  },
+  {
     "id": "2026-09-03-faster-pages-safer-invites-full-deletion",
     "date": "2026-09-03",
     "title": "Faster home and dashboard, sturdier league invites, and account deletion that finishes",

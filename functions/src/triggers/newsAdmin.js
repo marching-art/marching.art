@@ -382,6 +382,9 @@ exports.regenerateArticleImage = onCall(
       // Always build a fresh prompt when regenerating
       // This ensures we use the latest prompt templates and uniform data
       let imagePrompt = null;
+      // The equipped Studio design behind a fantasy image, so its rendered
+      // preview can ride along as a reference image (helpers/uniformReference).
+      let referenceDesign = null;
 
       // Build prompt based on article type
       const articleType = articleData.type;
@@ -446,7 +449,9 @@ exports.regenerateArticleImage = onCall(
             featuredCorps: featuredCorpsName,
             designSource,
             hasDistinctGuardLook: Boolean(fantasyDesign?.guard),
+            hasPreview: Boolean(fantasyDesign?.previewUrl),
           });
+          referenceDesign = fantasyDesign;
           imagePrompt = buildFantasyPerformersImagePrompt(
             featuredCorpsName,
             "Victory celebration",
@@ -519,8 +524,12 @@ exports.regenerateArticleImage = onCall(
         promptLength: imagePrompt?.length
       });
 
-      // Generate the image
-      const imageData = await generateImageWithImagen(imagePrompt);
+      // Generate the image, grounded in the director's rendered figure when
+      // the equipped snapshot carries one.
+      const { loadUniformReferenceImages } = require("../helpers/uniformReference");
+      const imageData = await generateImageWithImagen(imagePrompt, {
+        referenceImages: await loadUniformReferenceImages(referenceDesign),
+      });
 
       if (!imageData) {
         throw new HttpsError("internal", "Failed to generate image. Please try again.");
