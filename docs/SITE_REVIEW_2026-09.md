@@ -1209,4 +1209,186 @@ _(pending)_
 
 ## H. SEO, public surfaces, and communications
 
-_(pending)_
+### Inventory
+
+Public SPA routes (client-rendered): `/`, `/how-to-play`, `/podium-guide`,
+`/updates`, `/preview`, `/podium/preview`, `/hall-of-champions`,
+`/article/:id`, `/login`, `/register`, `/forgot-password`, `/privacy`,
+`/terms`, `*`. Server-rendered via `vercel.json` rewrites: `/sitemap.xml`,
+`/api/news`, `/api/og/*` (PNG cards via sharp), `/share/{article|scores|
+champion|uniform}/*`, `/results[/season[/day]]`, `/d/{username}[/{slug}]`.
+
+Channels: email via Brevo (`helpers/emailService.js`,
+`scheduled/emailNotifications.js`, `triggers/emailTriggers.js`); web push via
+FCM (`helpers/pushService.js`, `scheduled/pushNotifications.js`,
+`triggers/pushTriggers.js`, `src/api/pushNotifications.ts`); in-app inbox
+(`helpers/userNotifications.js`, `src/hooks/useNotificationInbox.ts`); six
+Discord webhooks (`helpers/discord.js:48-53`); Firebase Analytics only.
+Content: Gemini 2.5 Flash articles on recap write
+(`triggers/newsGeneration.js:442`), director submissions/press releases
+(`triggers/newsSubmissions.js`), 2 PM auto-publish, moderated comments.
+
+### Findings
+
+**High**
+
+- **N-H1 · Per-type email opt-outs are silently ignored (key mismatch).**
+  `SettingsModal.jsx:107-113, 270` writes
+  `settings.emailPreferences.{streakBroken, weeklyDigest, winBack, …}`; the
+  backend reads `emailPreferences[emailType]` where `emailType` is
+  `"streak_broken"`, `"weekly_digest"`, `"win_back"`
+  (`emailService.js:32-36`, `emailNotifications.js:29-49`,
+  `emailTriggers.js:107`). Only `allEmails:false` works; a user who unticks
+  "Weekly digest" keeps getting it. Fix: one `EMAIL_TYPES → pref key` map
+  like `PUSH_PREFERENCE_MAP` (`pushService.js:24-33`) plus a test.
+- **N-H2 · No one-click unsubscribe; the preferences link is behind the
+  login wall.** `emailService.js:28` → `/profile?settings=emails`
+  (robots-disallowed, protected); `sendTransacEmail` (`:86-98`) sends no
+  `List-Unsubscribe`/`List-Unsubscribe-Post` headers. Win-back mails target
+  users who haven't logged in for 7–14 days (`emailNotifications.js:432-450`)
+  — the audience least able to log in to opt out. Gmail/Yahoo bulk-sender
+  rules require one-click unsubscribe. Fix: signed-token endpoint that sets
+  `allEmails:false`; pass headers to Brevo.
+- **N-H3 · The sitemap lists `noindex` and redirect URLs.**
+  `sitemap.js:19-31` includes `/podium` (a `<Navigate>` redirect,
+  `App.jsx:400`), `/podium/preview` (sets `noindex`,
+  `PodiumPreview.jsx:158`), and `/login`/`/register`.
+- **N-H4 · Push preferences default to "off" server-side while the client
+  reads them as "on".** `isPushTypeEnabled` returns `false` when
+  `preferences` is null (`pushService.js:81`); `saveFcmToken` writes only the
+  token (`pushNotifications.ts:192-204`); only the Settings toggle writes
+  `allPush:true` (`SettingsModal.jsx:299`). Users who granted browser
+  permission any other way get zero pushes with no feedback.
+- **N-H5 · Article OG tags claim 1200×630 for arbitrary images.**
+  `buildShareHtml` hard-codes `og:image:width/height`
+  (`helpers/shareCards.js:466-468`) but `/share/article` uses
+  `article.imageUrl` (`triggers/shareCards.js:220-226`), including
+  director-submitted URLs (`newsSubmissions.js:113-127`, scheme-checked
+  only). Omit dimensions for non-generated images, as `useSEO.js:62-66`
+  does.
+- **N-H6 · Auth-only SPA routes are not `noindex`ed and several are missing
+  from `robots.txt`.** `ProtectedRoute` (`App.jsx:109-160`) renders a loader
+  then `<Navigate to="/">` with no `useSEO({noindex})`; `robots.txt` misses
+  `/records`, `/shop`, `/exchange`, `/studio`, `/achievements`, `/leagues/*`
+  (partially), `/podium/preview`. Vercel returns 200 for all of them
+  (`vercel.json:32`), so crawlers index a spinner under the homepage title.
+
+**Medium**
+
+- **N-M1 · `page_view` carries `page_name` only** (`analytics.ts:51-53`);
+  GA4 Pages reports key on `page_location`/`page_path`/`page_title`, and SPA
+  navigations never fire the auto `page_view`. Acquisition pages are
+  unmeasurable in default reports.
+- **N-M2 · No first-touch attribution or referral loop.** No `utm_*` reading
+  anywhere in `src`; `Register.jsx` stores no referrer; Discord links use
+  `?src=discord` (`discord.js:58-66`) but nothing persists it at signup.
+  Capture `utm_*`/`src`/`document.referrer` in `sessionStorage` and write
+  `profile.acquisition` at register.
+- **N-M3 · NewsArticle JSON-LD is incomplete.** `Article.jsx:247-265` omits
+  `dateModified`, `publisher.logo`, and `author` for AI articles
+  (`generatedBy: "gemini-2.5-flash"`, `newsGeneration.js:317`).
+- **N-M4 · Day-gated articles reach the sitemap.** `sitemap.js:277-283`
+  filters only `isPublished`; `Article.jsx:238-246` then `noindex`es
+  day-gated ones. Filter `reportDay <= currentDay` (the feed already does,
+  `newsFeed.js:340`).
+- **N-M5 · SSR pages get near-zero internal links.** `/results` is linked
+  only from `SiteFooter.jsx:40` and `SiteLinksMenu.jsx:156`; no SPA link to
+  any `/d/{username}` besides the owner's (`Profile.jsx:306`). Link the day's
+  `/results` from each article and leaderboard, and `/d/` from league
+  member lists.
+- **N-M6 · Landing first paint is gated on localStorage.** `useFirstVisit`
+  starts `isLoading:true` (`useFirstVisit.js:34-48`), so Hero/HowItWorks pop
+  in after effect flush — CLS on the acquisition page and a
+  render-timing-dependent H1 for Googlebot. Read localStorage synchronously
+  in the `useState` initialiser.
+- **N-M7 · No push quiet hours or per-user timezone.** Streak-at-risk at
+  19:00 ET (`pushNotifications.js:742`), lineup lock at 16:00 ET,
+  take-the-field every 15 min 15:00–01:00 ET (`:685`). West-coast users get
+  1 AM pushes.
+- **N-M8 · Settings exposes no toggles for four push types the backend
+  gates on** (`scoreUpdate`, `tradeProposal`, `performance`,
+  `streakReminder` in `pushService.js:24-33` vs `SettingsModal.jsx:118-125,
+665-714`).
+- **N-M9 · Single FCM token per user.** `saveFcmToken` overwrites
+  `fcmToken` (`pushNotifications.ts:195-201`); enabling on phone silently
+  disables desktop; `removeInvalidToken` nukes the only token on the first
+  error. Use a `fcmTokens: {token: updatedAt}` map.
+- **N-M10 · The in-app inbox has no retention, pruning, or pagination.**
+  `useNotificationInbox.ts:43` caps at 30 via live `onSnapshot`;
+  `userNotifications.js` never deletes; no scheduled prune exists. Add a TTL
+  field + Firestore TTL policy and a "load more" cursor.
+- **N-M11 · Discord webhooks have no 429/Retry-After handling.**
+  `postToDiscordWebhook` throws on any non-2xx (`discord.js:134-144`);
+  `announceArticleToDiscord` fires once per article with retries off
+  (`newsDiscord.js:151-158`) — five nightly articles hit the same webhook
+  within seconds.
+- **N-M12 · No global email frequency cap.** Cooldowns are per type
+  (`wasEmailRecentlySent`, `emailNotifications.js:90-100`): streak-broken,
+  digest and win-back can all land within 24 h.
+- **N-M13 · Email opt-in is default-on for all engagement types**
+  (`emailNotifications.js:32-41`) — with N-H2 this is the deliverability
+  profile Brevo will flag.
+- **N-M14 · AI articles publish with no human/safety gate and no spend
+  cap.** `newsGeneration.js:251, 323, 375, 410` set `isPublished:true`
+  directly; `geminiService.js:54-67` configures no `safetySettings`; the
+  fact-check retry ships "regardless" (`:92-101, 152`). Paid image
+  generation (`gemini-3-pro-image`, `newsGeneration.js:320`;
+  `newsSubmissionsShared.js:586`) runs per article and per approved
+  submission with no daily budget counter.
+- **N-M15 · Sitemap director enumeration filters after `limit(2000)`**
+  (`sitemap.js:196-213`) with undefined ordering — active directors past the
+  cutoff are silently omitted.
+
+**Low**
+
+- N-L1 · `og:type` is always `website` (`shareCards.js:462`); articles
+  should emit `article`.
+- N-L2 · `/results` bare path 302s with no `Cache-Control`
+  (`resultsPages.js:105`).
+- N-L3 · Discord `link()` appends `?src=discord` to every URL
+  (`discord.js:64-66`), creating duplicate-URL variants; strip on arrival.
+- N-L4 · `resolveArticleById` tries four storage locations including paging
+  the news API for unknown ids (`articles.ts:1-12`) — bots hitting random
+  slugs incur multiple reads.
+- N-L5 · The Discord news embed links to `/article/...` not
+  `/share/article/...` (`newsDiscord.js:69`), so Discord unfurls the generic
+  site card.
+- N-L6 · `HowToPlayPublic.jsx:78-81` injects FAQ JSON-LD in `<body>` via
+  `dangerouslySetInnerHTML`, inconsistent with `useSEO({jsonLd})`.
+- N-L7 · `weeklyDigestEmailJob` runs one extra Firestore query per recipient
+  (`emailNotifications.js:341`); persist `lastDigestAt` on the profile.
+- N-L8 · `NotFound.jsx` never signals 404 to Vercel; consider a static
+  `404.html` rewrite for known-dead prefixes.
+- N-L9 · `PWAInstallPrompt` shows to logged-out visitors after 8–20 s
+  (`PWAInstallPrompt.jsx:23-42`), competing with the register CTA.
+
+### Growth opportunities grounded in existing code
+
+1. Director share cards exist for `/d/{username}` (`shareCards.js:130-135`)
+   but only the owner sees the link. Surface "Share my corps" in the
+   post-lineup-save toast and league standings.
+2. Uniform share (`/share/uniform/{code}`) is a ready-made viral loop; add a
+   share CTA on Studio save and a "Remixed from @user" back-link on import.
+3. Results pages are the best evergreen SEO asset (ItemList JSON-LD,
+   `helpers/resultsPages.js:421-441`); add per-corps and per-class archive
+   pages plus prev/next-day links.
+4. Press releases (`newsSubmissions.js:226-340`) are a UGC engine; expose
+   `/d/{username}/press`.
+5. Persist `?src=discord` at registration and report Discord→signup
+   conversion.
+6. Take-the-field pushes (`pushService.js:230`) are the highest-intent
+   moment; deep-link to "share your score" instead of `/dashboard`.
+
+### Quick wins
+
+1. Delete `/podium`, `/podium/preview`, `/login` from `STATIC_ROUTES`.
+2. Fix the email-pref key mapping (N-H1).
+3. Add `List-Unsubscribe` headers to `sendTransacEmail` now; build the
+   tokenised endpoint next.
+4. `useSEO({ noindex: true })` in `ProtectedRoute`'s `!user` branch; complete
+   `robots.txt`.
+5. Drop `og:image:width/height` for non-`/api/og` images.
+6. `saveFcmToken` → also set `settings.pushPreferences.allPush: true`.
+7. Add `author` + `dateModified` to the NewsArticle JSON-LD.
+8. Log `page_view` with `page_path`/`page_location`/`page_title`.
+9. Point the Discord news embed at `/share/article/{id}`.
