@@ -255,6 +255,22 @@ function parseOneTimeEvent(body) {
   };
 }
 
+/**
+ * Dashboard "Send test event" deliveries carry `live_mode: false` (real
+ * events are `true`). They are signed like real events, so this is the only
+ * thing separating a sample payload from a paying supporter — acknowledge and
+ * ignore them, never write a supporter doc for a sample email.
+ * @param {unknown} body parsed webhook envelope
+ * @returns {boolean}
+ */
+function isTestEvent(body) {
+  return (
+    !!body &&
+    typeof body === "object" &&
+    /** @type {{ live_mode?: unknown }} */ (body).live_mode === false
+  );
+}
+
 module.exports = {
   SUPPORTER_TIERS,
   TIER_RANK,
@@ -269,4 +285,5 @@ module.exports = {
   extractMonthlyAmount,
   parseSupporterEvent,
   parseOneTimeEvent,
+  isTestEvent,
 };

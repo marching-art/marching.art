@@ -80,7 +80,9 @@ https://us-central1-marching-art.cloudfunctions.net/bmacWebhook
 
 It must be that HTTPS URL — not a service-account email, not the Cloud Run
 `*.run.app` host. Sanity check before saving: a `GET` answers `405`, an
-unsigned `POST` answers `401`. BMAC auto-disables the endpoint after repeated
+unsigned `POST` answers `401`, and a dashboard **Send test event** answers
+`200 Ignored (test event)` — test payloads carry `live_mode: false` and are
+never written as supporters. BMAC auto-disables the endpoint after repeated
 delivery failures and emails "Action Required | Webhook Disabled"; fix the URL,
 then press **Enable** on the endpoint. Subscribe it to:
 `membership.started`, `membership.updated`, `membership.cancelled`,

@@ -269,7 +269,11 @@ ops step below)_
   `https://us-central1-marching-art.cloudfunctions.net/bmacWebhook`
   (`docs/BMAC_SUPPORTERS.md` §2), confirm the signing secret matches
   `BMAC_WEBHOOK_SECRET`, flip the Delivery-status toggle back on, then "Send
-  test event" and check the Event deliveries tab shows 200. If the test still
+  test event" and check the Event deliveries tab shows 200. The first test
+  (before the `live_mode:false` guard shipped) was processed as a real event,
+  so a supporter doc keyed to the sample payload's email may sit in
+  `artifacts/{ns}/supporters/`: a membership one is revoked by the nightly
+  reconcile, a `donation.created` one expires on its own. If the test still
   reports 503 after the merged `cpu: 1` hardening deploys, consider
   `minInstances: 1` on `bmacWebhook` (~$6/mo) — that is a spend call.
 - **Import the `main` ruleset** (Settings → Rules → Rulesets → New ruleset ▾

@@ -21,6 +21,7 @@ const {
   parseSupporterEvent,
   parseOneTimeEvent,
   verifyWebhookSignature,
+  isTestEvent,
   SUPPORTER_TIERS,
   TIER_RANK,
 } = require("../helpers/bmacSupporters");
@@ -83,6 +84,13 @@ exports.bmacWebhook = onRequest(
     } catch (err) {
       logger.warn("BMAC webhook: unparseable body", err.message);
       res.status(400).send("Bad Request");
+      return;
+    }
+
+    if (isTestEvent(body)) {
+      // Dashboard test: verified, but a sample payload — never a supporter.
+      logger.info("BMAC webhook: test event acknowledged", { type: body.type });
+      res.status(200).send("Ignored (test event)");
       return;
     }
 
