@@ -1,5 +1,16 @@
 [
   {
+    "id": "2026-09-03-rewards-paid-per-director-not-per-corps",
+    "date": "2026-09-03",
+    "title": "Weekly XP, league-win bonuses and the season finish bonus are now paid per director",
+    "category": "balance",
+    "summary": "Three rewards used to multiply with how many corps or leagues you had rather than how well you did. They now pay once. Weekly participation XP is one grant per director per week, whatever you fielded. The league-win CorpsCoin and XP bonus is paid once per class each week, however many leagues you win that class in — every win still counts in your record and standings. The season finish bonus and completion XP are paid once, for your best-placed corps; every corps still gets its placement and its line in the season recap.",
+    "highlights": [
+      "Show participation CorpsCoin is unchanged and still pays for every show each corps performs at.",
+      "Your league win count and W-L record keep counting every league you play in."
+    ]
+  },
+  {
     "id": "2026-09-03-league-weeks-are-decided-per-show",
     "date": "2026-09-03",
     "title": "League matchups are now decided on your average per show, not your total",

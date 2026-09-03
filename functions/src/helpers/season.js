@@ -110,6 +110,30 @@ function corpsParticipatedThisSeason(corps, context = {}) {
   return (corps.totalSeasonScore || 0) > 0;
 }
 
+/**
+ * Collapse a director's per-corps season awards to one payout: the row with
+ * the highest coin bonus keeps its coin bonus, the row with the highest
+ * completion XP keeps its XP (usually the same row), every other row is
+ * zeroed. Placements and recap lines are untouched. Mutates in place; pure
+ * otherwise, exported for tests.
+ *
+ * @param {Array<{coinBonus: number, xpBonus: number}>} awards
+ */
+function keepBestSeasonAward(awards) {
+  if (awards.length <= 1) return awards;
+  let bestCoin = 0;
+  let bestXp = 0;
+  awards.forEach((award, i) => {
+    if (award.coinBonus > awards[bestCoin].coinBonus) bestCoin = i;
+    if (award.xpBonus > awards[bestXp].xpBonus) bestXp = i;
+  });
+  awards.forEach((award, i) => {
+    if (i !== bestCoin) award.coinBonus = 0;
+    if (i !== bestXp) award.xpBonus = 0;
+  });
+  return awards;
+}
+
 async function archiveAndResetProfiles(db, oldSeasonUid, newSeasonUid) {
   const profilesQuery = db.collectionGroup("profile").where("activeSeasonId", "==", oldSeasonUid);
   const profilesSnapshot = await profilesQuery.get();
@@ -373,6 +397,12 @@ async function archiveAndResetProfiles(db, oldSeasonUid, newSeasonUid) {
     // Pass the freshly-incremented lifetimeStats explicitly: completing
     // season N must unlock the seasons-gated class in this same write (the
     // "graduation" lands with the recap), not on some later XP event.
+    //
+    // Paid ONCE PER DIRECTOR, for their best finish: every corps still gets
+    // its placement and its recap line, but only the strongest result carries
+    // the coin bonus and the completion XP. A four-corps director used to
+    // collect four finish bonuses for one season (site review G-H1).
+    keepBestSeasonAward(seasonAwards);
     const totalCoin = seasonAwards.reduce((sum, a) => sum + a.coinBonus, 0);
     const totalXP = seasonAwards.reduce((sum, a) => sum + a.xpBonus, 0);
     if (totalXP > 0) {
@@ -806,6 +836,7 @@ async function startNewOffSeason() {
 
 
 module.exports = {
+  keepBestSeasonAward,
   // Core season functions
   shuffleArray,
   startNewLiveSeason,

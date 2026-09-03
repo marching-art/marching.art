@@ -8,7 +8,7 @@ burns an hour to conclude "everything's about covered." Don't. If you ship,
 cut, or discover something, edit THIS file in the same PR — that's the whole
 maintenance contract.
 
-_Last updated: 2026-09-03 (site-review row 13 — league weeks decided per show, percentile edge cases; row 12 — server-enforced age gate + consent-gated analytics; AI imagery now built from the full Uniform Studio design + rendered reference image; main ruleset + gazetteer PR flow; site-review Fix-first 1–11 + quick wins shipped)._
+_Last updated: 2026-09-03 (site-review row 14 — weekly XP / win bonus / finish bonus paid per director; row 13 — league weeks decided per show, percentile edge cases; row 12 — server-enforced age gate + consent-gated analytics; AI imagery now built from the full Uniform Studio design + rendered reference image; main ruleset + gazetteer PR flow; site-review Fix-first 1–11 + quick wins shipped)._
 
 ## In progress
 
@@ -21,10 +21,15 @@ code-first review of the whole product (security, backend, frontend, UX,
 a11y, quality, economy, SEO/comms). Its **Part 1 backlog table** is the
 queue: work it top-down, and tick items off here as they ship.
 
-_(rows 1–13 — S-H1, B-H1, N-H1, F-H3, B-H3, G-H3, Q-H1, F-H2, F-H1, B-H4,
-B-H6/S-M6, S-H2/S-H3, G-H2/G-M10 — and all eight "Cross-area quick wins"
-shipped 2026-09-03; continue from row 14 (G-H1 / G-H7: pay weekly XP, finish
-bonus and league wins per director, once per class) of the Part 1 table. Left open from row 8: the Dashboard
+_(rows 1–14 — S-H1, B-H1, N-H1, F-H3, B-H3, G-H3, Q-H1, F-H2, F-H1, B-H4,
+B-H6/S-M6, S-H2/S-H3, G-H2/G-M10, G-H1/G-H7 — and all eight "Cross-area quick
+wins" shipped 2026-09-03; continue from row 15 (U-H4: one auto-interrupt per
+Dashboard visit; move achievement/unlock to the inbox) of the Part 1 table.
+Left open from G-H1's detail, outside row 14's scope: the league title still
+sums a director's Finals night across every class (`leagueArchival.js`
+`finalsByUid`) — decide it on a flagship class or the mean class percentile;
+and `directorRating.js` placement points are uncapped by field size (a 1st of
+2 pays the same 25 as a 1st of 40). Left open from row 8: the Dashboard
 still reads the full recap archive once an hour for the ranked classes because
 the Season Ledger joins per-show placement from it — store `eventName` on the
 standings history entries and the ledger can read standings instead.)_
@@ -315,7 +320,7 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
 
 ## Evergreen ratchets (any session, any size)
 
-- `@ts-nocheck` paydown — **79 files** at
+- `@ts-nocheck` paydown — **78 files** at
   last update; `npm run ts-nocheck:next` ranks the cheapest (no free wins
   left; `Schedule.jsx` and `Layout/GameShell.jsx` are ~30 errors each). One
   per substantive task is the CLAUDE.md habit; batches welcome.
@@ -332,6 +337,17 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
 
 ## Recently shipped (context, newest first — prune when stale)
 
+- 2026-09-03: site-review row 14 (G-H1 / G-H7). Weekly participation XP is
+  one grant per director (`payWeeklyParticipationXP`, no `× classes.size`).
+  The weekly-win CC + XP bonus is paid once per class per week across every
+  league won: new league-less `weeklyWinBonusToken` guards the money, the
+  per-league `weeklyWinToken` still guards the `stats.leagueWins` record, and
+  a per-run set catches later leagues in the same batch; `awardTokenWrite`
+  is variadic. Season finish bonus + completion XP are paid once per director
+  for the best-placed corps (`keepBestSeasonAward`; other rows keep placement
+  with zero bonus). Earning-opportunities copy, GAMIFICATION tables and the
+  client XP guide say so. `ControlBar.jsx` typed (ts-nocheck 79 → 78).
+  Changelog entry added.
 - 2026-09-03: site-review row 13 (G-H2 / G-M10). A league week is measured
   per show: `buildWeeklyScoreIndex` folds `average` and `perShow` caption
   averages beside the sums, the default format decides on `average` (equal

@@ -27,6 +27,7 @@ const { activeScoringFormat, captionsWonBy } = require("./captionWars");
 const {
   weeklyXpToken,
   weeklyWinToken,
+  weeklyWinBonusToken,
   matchupRecordToken,
   hasAwardToken,
   awardTokenWrite,
@@ -81,6 +82,8 @@ async function processWeeklyMatchups(week, seasonData, db, { force = false } = {
   // ChunkedWriter: two record writes per matchup across up to 500 leagues
   // plus coin awards can exceed a single WriteBatch's per-request cap.
   const winnerBatch = new ChunkedWriter(db);
+  // uid:class pairs whose weekly-win bonus this run has already queued.
+  const bonusPaidThisRun = new Set();
   // Registry-derived (Phase 7.4): every matchup class resolves head-to-head
   // on corps.{class}.totalSeasonScore — Podium's nightly display copy
   // included, once its registry entry enables at launch.
@@ -247,30 +250,51 @@ async function processWeeklyMatchups(week, seasonData, db, { force = false } = {
           // The bonus is a SEPARATE write from the record above, so it carries
           // its own token (win vs rec) — otherwise a retry that landed the
           // record but not the bonus would skip the unpaid bonus.
+          //
+          // The `stats.leagueWins` record counts EVERY winning matchup (per
+          // league); the CC + XP bonus is paid ONCE PER CLASS PER WEEK however
+          // many leagues the director wins in (site review G-H7 — ten private
+          // leagues with the same alts were ten payouts). Two tokens: the
+          // per-league win token guards the record, the league-less bonus
+          // token guards the money; `bonusPaidThisRun` catches the second and
+          // later leagues within this same run, whose pre-read profile
+          // snapshot cannot yet carry the token.
           if (winnerUid) {
             const winner = winnerUid === p1_uid ? p1_profile : p2_profile;
             // The winner's OWN class, so a cross-class win is tokenized and
             // described in the class they actually fielded.
             const winnerClass = winnerUid === p1_uid ? p1Class : p2Class;
             const winToken = weeklyWinToken(seasonData.seasonUid, week, leagueDoc.id, winnerClass);
+            const bonusToken = weeklyWinBonusToken(seasonData.seasonUid, week, winnerClass);
+            const bonusKey = `${winnerUid}:${winnerClass}`;
             if (force || !hasAwardToken(winner.data, winToken)) {
+              const payBonus =
+                !bonusPaidThisRun.has(bonusKey) &&
+                (force || !hasAwardToken(winner.data, bonusToken));
               winnerBatch.set(
                 winner.ref,
                 {
                   stats: { leagueWins: increment },
-                  corpsCoin: admin.firestore.FieldValue.increment(WEEKLY_LEAGUE_WIN_REWARD),
-                  xp: admin.firestore.FieldValue.increment(XP_SOURCES.leagueWin),
-                  ...awardTokenWrite(winToken),
+                  ...(payBonus
+                    ? {
+                        corpsCoin: admin.firestore.FieldValue.increment(WEEKLY_LEAGUE_WIN_REWARD),
+                        xp: admin.firestore.FieldValue.increment(XP_SOURCES.leagueWin),
+                        ...awardTokenWrite(winToken, bonusToken),
+                      }
+                    : awardTokenWrite(winToken)),
                 },
                 { merge: true }
               );
-              addCoinHistoryEntryToBatch(winnerBatch, db, winnerUid, {
-                type: TRANSACTION_TYPES.LEAGUE_WIN,
-                amount: WEEKLY_LEAGUE_WIN_REWARD,
-                description: `Week ${week} ${winnerClass} matchup win in ${leagueDoc.data().name || "your league"}`,
-                corpsClass: winnerClass,
-                timestamp: new Date(),
-              });
+              if (payBonus) {
+                bonusPaidThisRun.add(bonusKey);
+                addCoinHistoryEntryToBatch(winnerBatch, db, winnerUid, {
+                  type: TRANSACTION_TYPES.LEAGUE_WIN,
+                  amount: WEEKLY_LEAGUE_WIN_REWARD,
+                  description: `Week ${week} ${winnerClass} matchup win in ${leagueDoc.data().name || "your league"}`,
+                  corpsClass: winnerClass,
+                  timestamp: new Date(),
+                });
+              }
             }
           }
         }
@@ -412,8 +436,10 @@ async function processWeeklyMatchups(week, seasonData, db, { force = false } = {
 
 /**
  * Pay the advertised weekly-participation XP to every director who competed
- * in at least one show this week — once per participating class, so a
- * director fielding two classes earns two grants.
+ * in at least one show this week — ONCE PER DIRECTOR. It used to be once per
+ * participating class, so a four-corps director earned four times the XP of
+ * a one-corps director for the same act of showing up (site review G-H1);
+ * the per-show participation CC already scales with what was fielded.
  *
  * Participation is derived from the week's committed recap docs
  * (fantasy_recaps/{seasonUid}/days/{day}), which only contain corps that
@@ -461,9 +487,9 @@ async function payWeeklyParticipationXP(week, seasonData, db, { force = false } 
   const xpBatch = new ChunkedWriter(db);
   let totalXP = 0;
   let paid = 0;
-  for (const [uid, classes] of classesByUid.entries()) {
+  for (const uid of classesByUid.keys()) {
     if (skip.has(uid)) continue;
-    const amount = XP_SOURCES.weeklyParticipation * classes.size;
+    const amount = XP_SOURCES.weeklyParticipation;
     totalXP += amount;
     const profileRef = db.doc(
       paths.userProfile(uid)

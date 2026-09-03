@@ -36,8 +36,8 @@ export const CLASS_UNLOCK_COSTS = UNLOCK_COSTS;
 export const XP_SOURCES = {
   dailyLogin: 25, // Automatic daily login claim
   showParticipation: 25, // Per show your corps performs at
-  weeklyParticipation: 150, // Compete in ≥1 show in a week, per participating class
-  leagueWin: 100, // Win a weekly league matchup
+  weeklyParticipation: 150, // Compete in ≥1 show in a week, once per director
+  leagueWin: 100, // Win a weekly league matchup (once per class per week, all leagues)
   seasonCompletion: {
     top10: 500, // Top 10 finish
     top25: 400, // Top 25 finish

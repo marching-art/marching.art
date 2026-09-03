@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // ControlBar - Class tabs and Director HUD for dashboard
 // OPTIMIZATION #4: Extracted from Dashboard.jsx to reduce file size and isolate renders
 
@@ -19,6 +18,12 @@ import NextDeadlineChip from './NextDeadlineChip';
 // Helper to get next class unlock info. Everything speaks canonical class
 // keys (aClass/openClass/worldClass) — the same scheme as unlockedClasses,
 // CORPS_CLASS_ORDER, and the CLASS_UNLOCK_* constants.
+/**
+ * @param {string[] | undefined} unlockedClasses
+ * @param {number} xpLevel
+ * @param {number} corpsCoin
+ * @param {number} totalSeasons
+ */
 const getNextClassUnlock = (unlockedClasses, xpLevel, corpsCoin, totalSeasons) => {
   for (const classKey of ['aClass', 'openClass', 'worldClass']) {
     if (!unlockedClasses?.includes(classKey)) {
@@ -41,7 +46,10 @@ const getNextClassUnlock = (unlockedClasses, xpLevel, corpsCoin, totalSeasons) =
   return null;
 };
 
-// Streak milestone labels
+/**
+ * Streak milestone labels
+ * @param {number} streak
+ */
 const getStreakMilestone = (streak) => {
   if (streak >= 100) return 'Legendary streak!';
   if (streak >= 60) return 'Elite dedication!';
@@ -52,6 +60,20 @@ const getStreakMilestone = (streak) => {
 };
 
 const ControlBar = memo(
+  /**
+   * @param {{
+   *   corps: Record<string, any> | null | undefined,
+   *   activeCorpsClass: string,
+   *   unlockedClasses?: string[],
+   *   profile: any,
+   *   onSwitch: (corpsClass: string) => void,
+   *   onCreateCorps: (corpsClass: string) => void,
+   *   onUnlockClass: (corpsClass: string) => void,
+   *   onStreakClick?: () => void,
+   *   onWalletClick?: () => void,
+   *   onLevelClick?: () => void,
+   * }} props
+   */
   ({
     corps,
     activeCorpsClass,
