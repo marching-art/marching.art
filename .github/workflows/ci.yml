@@ -1,19 +1,25 @@
 name: CI
 
-# Runs on every pull request into main and on pushes to main. This is the
-# merge gate: at minimum the app must still build. `test` and `typecheck`
-# also run here so their status is visible on every PR.
+# Runs twice around every merge, on purpose:
+#   - `pull_request`: tests the PR head merged onto main. The `main` ruleset
+#     (.github/rulesets/main.json, imported once by an owner) requires all
+#     seven jobs below to pass before the PR can merge, so a red PR stays
+#     open instead of landing red on main.
+#   - `push` to main: tests the actual merge commit. Both deploy workflows
+#     wait for this run (.github/actions/wait-for-ci) and abort unless it
+#     succeeded, so a red main never ships.
 #
-# NOTE ON REQUIRED CHECKS: all seven jobs — build, test, typecheck, lint,
-# functions, rules, and e2e — are green, so every one is safe to mark as a
-# required status check in branch protection. (ESLint reports 0 errors;
-# remaining items are non-fatal warnings.)
+# The job `name:` values are the required-check contexts in the ruleset —
+# rename a job here and update the ruleset in the same PR.
 
 on:
   pull_request:
     branches: [main]
   push:
     branches: [main]
+  # Run CI on a branch whose PR was opened by GITHUB_TOKEN (the gazetteer
+  # refresh); such PRs never fire `pull_request` runs on their own.
+  workflow_dispatch:
 
 # Cancel in-progress runs for the same ref when a new commit is pushed.
 concurrency:

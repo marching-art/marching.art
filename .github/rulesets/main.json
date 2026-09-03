@@ -1,0 +1,32 @@
+{
+  "name": "main: CI must pass before merge",
+  "target": "branch",
+  "enforcement": "active",
+  "conditions": {
+    "ref_name": {
+      "include": ["~DEFAULT_BRANCH"],
+      "exclude": []
+    }
+  },
+  "rules": [
+    { "type": "deletion" },
+    { "type": "non_fast_forward" },
+    {
+      "type": "required_status_checks",
+      "parameters": {
+        "strict_required_status_checks_policy": false,
+        "do_not_enforce_on_create": false,
+        "required_status_checks": [
+          { "context": "Build (blocking)", "integration_id": 15368 },
+          { "context": "Unit tests", "integration_id": 15368 },
+          { "context": "Type check", "integration_id": 15368 },
+          { "context": "Lint", "integration_id": 15368 },
+          { "context": "Functions check + tests", "integration_id": 15368 },
+          { "context": "Firestore rules tests", "integration_id": 15368 },
+          { "context": "Playwright e2e", "integration_id": 15368 }
+        ]
+      }
+    }
+  ],
+  "bypass_actors": []
+}

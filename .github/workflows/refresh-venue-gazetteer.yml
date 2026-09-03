@@ -15,11 +15,15 @@ name: Refresh venue gazetteer
 # historical_scores, already fully geocoded); only a completed DCI year adds new
 # cities. Use the manual trigger for an ad-hoc top-up any time.
 #
-# NOTE: this pushes the refreshed files directly (the chosen hands-off mode). The
-# commit lands on the branch it runs on (the default branch for the schedule);
-# production picks it up on the next functions deploy. A brand-new city that
-# appears mid-live-season stays null-safe (no crash, no travel cost on that leg)
-# until the following refresh + deploy.
+# NOTE: the refreshed files land as a pull request, not a direct push — the
+# `main` ruleset (.github/rulesets/main.json) refuses commits that have not
+# passed CI. The job pushes an `automated/venue-gazetteer` branch, opens (or
+# updates) the PR, and dispatches the CI workflow on that branch so the
+# required checks report on it (a PR opened with GITHUB_TOKEN never triggers
+# `pull_request` runs on its own). Merge it like any other PR; production picks
+# it up on the next functions deploy. A brand-new city that appears
+# mid-live-season stays null-safe (no crash, no travel cost on that leg) until
+# the following refresh + deploy.
 
 on:
   workflow_dispatch: {}
@@ -27,7 +31,9 @@ on:
     - cron: '0 8 15 9 *' # 08:00 UTC, September 15, annually
 
 permissions:
-  contents: write
+  contents: write # push the automated/venue-gazetteer branch
+  pull-requests: write # open / refresh the PR
+  actions: write # dispatch CI on that branch
 
 concurrency:
   group: refresh-venue-gazetteer
@@ -77,8 +83,13 @@ jobs:
       - name: Rebuild client hostable venues
         run: cd functions && node src/scripts/buildClientVenues.js
 
-      - name: Commit and push if changed
+      - name: Open a PR if changed
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BASE: ${{ github.ref_name }}
+          BRANCH: automated/venue-gazetteer
         run: |
+          set -euo pipefail
           FILES="functions/src/scripts/dciDotOrgLocations.json functions/src/helpers/podium/venueGazetteer.json src/data/hostableVenues.json"
           if git diff --quiet -- $FILES; then
             echo "No gazetteer changes — nothing to commit."
@@ -86,6 +97,22 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$BRANCH"
           git add $FILES
           git commit -m "chore(podium): refresh venue gazetteer from dci.org archive [automated]"
-          git push origin HEAD:${{ github.ref_name }}
+          # A stale branch from an unmerged earlier run is replaced wholesale:
+          # this run's files are the ones that should ship.
+          git push --force origin "HEAD:refs/heads/$BRANCH"
+
+          existing=$(gh pr list --head "$BRANCH" --base "$BASE" --state open --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            echo "Updated open PR #$existing"
+          else
+            gh pr create --base "$BASE" --head "$BRANCH" \
+              --title "chore(podium): refresh venue gazetteer from dci.org archive" \
+              --body "Automated by the Refresh venue gazetteer workflow (run ${{ github.run_id }}). Review the diff and merge; production picks it up on the next functions deploy."
+          fi
+          # PRs opened with GITHUB_TOKEN do not trigger pull_request runs, so
+          # dispatch CI on the branch explicitly — its check runs attach to
+          # the PR head commit and satisfy the main ruleset's required checks.
+          gh workflow run ci.yml --ref "$BRANCH"

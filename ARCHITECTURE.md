@@ -318,8 +318,12 @@ against the emulator, and **Playwright e2e** — a smoke pass plus an
 emulator-backed core-loop run seeded by `e2e/seedEmulator.mjs`, with an axe
 accessibility gate.
 
+The `main` ruleset (`.github/rulesets/main.json`, imported once by an owner —
+see the README beside it) requires all seven to pass on the PR before it can
+merge, and refuses direct pushes and force-pushes to `main`.
+
 Both deploy workflows (`deploy-hosting.yml`, `deploy-functions.yml`) are
-gated on that run: on a push to `main` they first wait for the CI run on the
+gated on the second CI run, the one the merge commit triggers on `main`: on a push to `main` they first wait for the CI run on the
 same commit (`.github/actions/wait-for-ci`) and abort unless it succeeded, so a
 red `main` never ships. Manual `workflow_dispatch` deploys (rollbacks to a
 `functions-deploy/*` tag) skip the gate deliberately.
