@@ -262,6 +262,16 @@ ops step below)_
 
 ## Operational — owner only, standing until done
 
+- **Re-enable the Buy Me a Coffee webhook.** BMAC auto-disabled it (email
+  "Action Required | Webhook Disabled", 2026-09-03) because the endpoint URL
+  in BMAC → Integrations → Webhooks had been set to the compute
+  service-account email, not the function URL. Set it to
+  `https://us-central1-marching-art.cloudfunctions.net/bmacWebhook`
+  (`docs/BMAC_SUPPORTERS.md` §2), confirm the signing secret matches
+  `BMAC_WEBHOOK_SECRET`, flip the Delivery-status toggle back on, then "Send
+  test event" and check the Event deliveries tab shows 200. If the test still
+  reports 503 after the merged `cpu: 1` hardening deploys, consider
+  `minInstances: 1` on `bmacWebhook` (~$6/mo) — that is a spend call.
 - **Import the `main` ruleset** (Settings → Rules → Rulesets → New ruleset ▾
   → Import a ruleset → `.github/rulesets/main.json`, or the `gh api` line in
   `.github/rulesets/README.md`). Until it is imported, a PR can still be
@@ -335,6 +345,10 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
 
 ## Recently shipped (context, newest first — prune when stale)
 
+- 2026-09-03: BMAC webhook hardening. `bmacWebhook` runs on a full vCPU
+  with an explicit 30s timeout / 3-instance cap so a cold start answers inside
+  BMAC's delivery window (they retry 4× and auto-disable after 10 consecutive
+  failures); the setup doc pins the exact endpoint URL and a 405/401 probe.
 - 2026-09-03: site-review row 18 (N-H2 / N-H6). One-click unsubscribe:
   `helpers/unsubscribeToken.js` signs `uid.hmac` tokens under a key derived
   from `BREVO_API_KEY` (no new secret to provision), `buildSendRequest` adds

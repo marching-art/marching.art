@@ -1,4 +1,3 @@
-// @ts-nocheck -- presentational sheet; the switch list is typed in utils/podiumLineupSwitch
 // =============================================================================
 // PODIUM LINEUP SHEET
 // =============================================================================
@@ -28,6 +27,7 @@ import { triggerHaptic } from '../../hooks/useHaptic';
 
 // The Podium daily-verb CTA. `prominent` renders it as the lead action (brand
 // fill); otherwise it's a quiet secondary row under the fantasy lineups.
+/** @param {{ prominent: boolean, onClick: () => void }} props */
 function RehearseAction({ prominent, onClick }) {
   if (prominent) {
     return (
@@ -64,6 +64,13 @@ function RehearseAction({ prominent, onClick }) {
 
 // One fantasy class the director can jump into. `lead` gives the first row the
 // interactive (azure) fill when the fantasy lineups head the sheet.
+/**
+ * @param {{
+ *   entry: import('../../utils/podiumLineupSwitch').FantasyLineupClass,
+ *   lead: boolean,
+ *   onClick: () => void,
+ * }} props
+ */
 function FantasyClassRow({ entry, lead, onClick }) {
   return (
     <button
@@ -127,6 +134,7 @@ export default function PodiumLineupSheet({
     triggerHaptic('medium');
     onRehearse?.();
   };
+  /** @param {string} classId */
   const handleSwitch = (classId) => {
     triggerHaptic('medium');
     onSwitchToClass?.(classId);

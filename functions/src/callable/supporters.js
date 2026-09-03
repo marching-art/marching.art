@@ -46,7 +46,18 @@ const bmacWebhookSecret = defineSecret("BMAC_WEBHOOK_SECRET");
  * (even ones we ignore) so BMAC doesn't retry indefinitely.
  */
 exports.bmacWebhook = onRequest(
-  { secrets: [bmacWebhookSecret], cors: false },
+  {
+    secrets: [bmacWebhookSecret],
+    cors: false,
+    // Full vCPU (not the fleet-wide gcf_gen1 fraction) so a cold start answers
+    // inside BMAC's delivery window. BMAC retries a failed delivery only 4
+    // times and auto-disables the endpoint after 10 consecutive failures, and
+    // a slow cold start on a rarely-hit endpoint is exactly how that happens.
+    // Billed per request only — no min instances — so the cost is nil.
+    cpu: 1,
+    timeoutSeconds: 30,
+    maxInstances: 3,
+  },
   async (req, res) => {
     if (req.method !== "POST") {
       res.status(405).send("Method Not Allowed");
