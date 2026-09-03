@@ -1,5 +1,13 @@
 [
   {
+    "id": "2026-09-03-lighter-first-load-for-visitors",
+    "date": "2026-09-03",
+    "title": "The site loads lighter, especially for visitors who are not signed in",
+    "category": "improvement",
+    "summary": "The first thing your browser downloads is smaller. The signed-in shell (header, ticker, bottom navigation, notification panel) and the celebration overlays now load only once you are signed in, so the home page, articles, and the guide skip them entirely. Google Analytics code is not downloaded at all until you allow analytics. Returning visitors also re-download less after each update, because the routing library now lives with the rarely-changing React code instead of the app code.",
+    "highlights": []
+  },
+  {
     "id": "2026-09-03-keyboard-and-screen-reader-friendly-dialogs",
     "date": "2026-09-03",
     "title": "Dialogs keep keyboard focus inside them and every icon button has a name",

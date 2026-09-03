@@ -74,7 +74,15 @@ export default defineConfig({
         manualChunks(id) {
           if (!id.includes('node_modules')) return undefined;
           const inPackage = (name) => id.includes(`/node_modules/${name}/`);
-          if (inPackage('react') || inPackage('react-dom') || inPackage('react-router-dom')) {
+          if (
+            inPackage('react') ||
+            inPackage('react-dom') ||
+            inPackage('react-router') ||
+            inPackage('react-router-dom')
+          ) {
+            // react-router (the core react-router-dom re-exports) belongs here
+            // too; matching only react-router-dom left ~39 kB of router in the
+            // app index chunk, so every deploy re-downloaded it.
             return 'vendor-react';
           }
           if (inPackage('firebase') || id.includes('/node_modules/@firebase/')) {
@@ -83,11 +91,19 @@ export default defineConfig({
             // api/client.ts defers storage). Forcing them into the eager
             // vendor-firebase chunk silently undid those deferrals — leave
             // them out so Rolldown gives each its own lazy chunk.
+            // App Check (api/client.ts) and Analytics (api/analytics.ts, on
+            // consent) are dynamic imports as well — grouping them here
+            // undid both deferrals and put ~25 kB the first paint never
+            // needs into the eager chunk.
             if (
               id.includes('/node_modules/@firebase/messaging') ||
               id.includes('/node_modules/firebase/messaging') ||
               id.includes('/node_modules/@firebase/storage') ||
-              id.includes('/node_modules/firebase/storage')
+              id.includes('/node_modules/firebase/storage') ||
+              id.includes('/node_modules/@firebase/app-check') ||
+              id.includes('/node_modules/firebase/app-check') ||
+              id.includes('/node_modules/@firebase/analytics') ||
+              id.includes('/node_modules/firebase/analytics')
             ) {
               return undefined;
             }

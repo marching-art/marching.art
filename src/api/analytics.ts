@@ -10,13 +10,7 @@
 //
 // Usage: import { analytics } from '@/api/analytics';
 
-import {
-  getAnalytics,
-  logEvent,
-  isSupported,
-  setAnalyticsCollectionEnabled,
-  type Analytics,
-} from 'firebase/analytics';
+import type { Analytics } from 'firebase/analytics';
 import { app } from './client';
 import { FEATURE_FLAGS, FIREBASE_CONFIG } from '../config';
 import { isAnalyticsAllowed, subscribeAnalyticsConsent } from '../utils/analyticsConsent';
@@ -24,8 +18,16 @@ import { isAnalyticsAllowed, subscribeAnalyticsConsent } from '../utils/analytic
 // =============================================================================
 // ANALYTICS INITIALIZATION (consent-gated)
 // =============================================================================
+// `firebase/analytics` is imported dynamically, so the SDK (and its slice of
+// @firebase/*) is not part of the first-paint bundle at all — it downloads the
+// first time a visitor consents (or on a later visit when consent is stored).
+// vite.config.js keeps it out of the eager vendor-firebase chunk for the same
+// reason.
+
+type AnalyticsSdk = typeof import('firebase/analytics');
 
 let analyticsInstance: Analytics | null = null;
+let sdk: AnalyticsSdk | null = null;
 let collecting = false;
 let initializing: Promise<void> | null = null;
 /** isSupported() is answered once per page; an unsupported browser stays so. */
@@ -43,10 +45,10 @@ export async function syncAnalyticsWithConsent(): Promise<void> {
   if (!configured) return;
 
   if (!isAnalyticsAllowed()) {
-    if (analyticsInstance && collecting) {
+    if (analyticsInstance && sdk && collecting) {
       collecting = false;
       try {
-        setAnalyticsCollectionEnabled(analyticsInstance, false);
+        sdk.setAnalyticsCollectionEnabled(analyticsInstance, false);
       } catch {
         // Nothing to do — collection was best-effort to begin with.
       }
@@ -57,19 +59,22 @@ export async function syncAnalyticsWithConsent(): Promise<void> {
   if (!analyticsInstance) {
     if (unsupported) return;
     if (!initializing) {
-      initializing = isSupported()
-        .then((supported) => {
+      initializing = import('firebase/analytics')
+        .then(async (loaded) => {
+          sdk = loaded;
+          const supported = await loaded.isSupported();
           if (!supported) {
             unsupported = true;
             return;
           }
           // Re-check: consent may have been withdrawn while we awaited.
           if (isAnalyticsAllowed()) {
-            analyticsInstance = getAnalytics(app);
+            analyticsInstance = loaded.getAnalytics(app);
           }
         })
         .catch(() => {
-          // Analytics not supported or blocked - fail silently
+          // Analytics not supported, blocked, or the chunk failed to load -
+          // fail silently
         })
         .finally(() => {
           initializing = null;
@@ -78,10 +83,10 @@ export async function syncAnalyticsWithConsent(): Promise<void> {
     await initializing;
   }
 
-  if (analyticsInstance && !collecting) {
+  if (analyticsInstance && sdk && !collecting) {
     collecting = true;
     try {
-      setAnalyticsCollectionEnabled(analyticsInstance, true);
+      sdk.setAnalyticsCollectionEnabled(analyticsInstance, true);
     } catch {
       // Best-effort.
     }
@@ -96,6 +101,7 @@ void syncAnalyticsWithConsent();
 /** Test seam. */
 export function _resetAnalyticsForTesting(): void {
   analyticsInstance = null;
+  sdk = null;
   collecting = false;
   initializing = null;
   unsupported = false;
@@ -110,9 +116,9 @@ export function _resetAnalyticsForTesting(): void {
  * Silently fails if analytics is blocked, unavailable, or not consented to
  */
 function safeLogEvent(eventName: string, eventParams?: Record<string, unknown>): void {
-  if (analyticsInstance && collecting) {
+  if (analyticsInstance && sdk && collecting) {
     try {
-      logEvent(analyticsInstance, eventName, eventParams);
+      sdk.logEvent(analyticsInstance, eventName, eventParams);
     } catch {
       // Silently ignore analytics errors (e.g., ad blockers)
     }

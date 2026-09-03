@@ -16,7 +16,6 @@ import {
   ProfilePageSkeleton,
   GalleryPageSkeleton,
 } from './components/Skeleton';
-import GameShell from './components/Layout/GameShell';
 import PublicShell from './components/Layout/PublicShell';
 import RouteAnalytics from './components/RouteAnalytics';
 import { useSEO } from './hooks/useSEO';
@@ -29,10 +28,6 @@ import {
 import { useAppBootstrap } from './hooks/useAppBootstrap';
 import { useProfileStore } from './store/profileStore';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
-import UsernamePromptModal from './components/modals/UsernamePromptModal';
-import { CelebrationContainer } from './components/Celebration';
-import { XPFeedbackContainer } from './components/XPFeedback';
-import { LevelUpCelebrationContainer } from './components/LevelUpCelebration';
 import ErrorBoundary from './components/ErrorBoundary';
 import { PageErrorBoundary } from './components/PageErrorBoundary';
 import { ThemeProvider } from './context/ThemeContext';
@@ -47,6 +42,26 @@ import { lazyWithRetry } from './utils/lazyWithRetry';
 // Lazy load pages for better performance.
 // lazyWithRetry auto-reloads once on stale-chunk errors after a new deploy
 // (old hashed chunks 404 -> "Failed to fetch dynamically imported module").
+// The signed-in shell (header, ticker, bottom nav, notification panel) and the
+// signed-in-only overlays are lazy too: a visitor on `/`, an article or the
+// guide never needs them, and they were ~50 kB min of the eager index chunk.
+const GameShellChunk = lazyWithRetry(() => import('./components/Layout/GameShell'), 'GameShell');
+const AuthedOverlays = lazyWithRetry(
+  () => import('./components/Layout/AuthedOverlays'),
+  'AuthedOverlays'
+);
+
+/**
+ * Drop-in for the shell: every route keeps writing `<GameShell>` while the
+ * chunk loads behind one Suspense boundary here.
+ * @param {{ children: React.ReactNode }} props
+ */
+const GameShell = ({ children }) => (
+  <Suspense fallback={<LoadingScreen fullScreen />}>
+    <GameShellChunk>{children}</GameShellChunk>
+  </Suspense>
+);
+
 const Dashboard = lazyWithRetry(() => import('./pages/Dashboard'), 'Dashboard');
 const Schedule = lazyWithRetry(() => import('./pages/Schedule'), 'Schedule');
 const Scores = lazyWithRetry(() => import('./pages/Scores'), 'Scores');
@@ -338,17 +353,13 @@ function App() {
                     the component handles dismissal memory + installed state */}
                 <PWAInstallPrompt />
 
-                {/* Username Prompt Modal - shows for existing users without username */}
-                {user && <UsernamePromptModal />}
-
-                {/* Celebration System - for achievements and level ups */}
-                <CelebrationContainer />
-
-                {/* XP/CC Floating Feedback - for gains throughout the app */}
-                <XPFeedbackContainer />
-
-                {/* Level Up Celebration - full-screen animation on level up */}
-                <LevelUpCelebrationContainer />
+                {/* Signed-in-only overlays (username prompt, achievement / XP /
+                    level-up celebrations), lazy so guests never download them */}
+                {user && (
+                  <Suspense fallback={null}>
+                    <AuthedOverlays />
+                  </Suspense>
+                )}
 
                 <Suspense fallback={<LoadingScreen fullScreen />}>
                   <Routes>

@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Onboarding step-3 guided caption-selection component. Extracted verbatim
 // from Onboarding.jsx; the caption/color/budget constants it renders live in
 // onboardingConstants.js.
@@ -9,7 +8,21 @@ import { Check, HelpCircle } from 'lucide-react';
 import JargonTooltip from '../components/JargonTooltip';
 import { CAPTIONS, CATEGORY_COLORS, SOUNDSPORT_POINT_LIMIT } from './onboardingConstants';
 
-// Guided Caption Selection Component
+/**
+ * @typedef {{ corpsName: string, sourceYear: string | number, points: number }} PickerCorps
+ * @typedef {Record<string, string>} Lineup - captionId -> "corpsName|year|points"
+ */
+
+/**
+ * Guided Caption Selection Component
+ * @param {{
+ *   availableCorps: PickerCorps[],
+ *   lineup: Lineup,
+ *   setLineup: React.Dispatch<React.SetStateAction<Lineup>>,
+ *   currentCaptionIndex: number,
+ *   setCurrentCaptionIndex: React.Dispatch<React.SetStateAction<number>>,
+ * }} props
+ */
 export const GuidedCaptionSelection = ({
   availableCorps,
   lineup,
@@ -33,10 +46,12 @@ export const GuidedCaptionSelection = ({
   const sortedCorps = [...availableCorps].sort((a, b) => b.points - a.points);
 
   // Check if a corps is already selected in another caption
+  /** @param {string} corpsName */
   const isCorpsUsed = (corpsName) => {
     return Object.values(lineup).some((val) => val && val.startsWith(corpsName + '|'));
   };
 
+  /** @param {PickerCorps} corps */
   const handleSelect = (corps) => {
     const value = `${corps.corpsName}|${corps.sourceYear}|${corps.points}`;
     setLineup((prev) => ({ ...prev, [currentCaption.id]: value }));

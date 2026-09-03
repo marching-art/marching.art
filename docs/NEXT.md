@@ -8,7 +8,7 @@ burns an hour to conclude "everything's about covered." Don't. If you ship,
 cut, or discover something, edit THIS file in the same PR — that's the whole
 maintenance contract.
 
-_Last updated: 2026-09-03 (site-review row 16 — focus traps + Escape in every raw dialog, icon buttons named; row 15 — one dashboard interrupt per visit, celebrations to the inbox; row 14 — weekly XP / win bonus / finish bonus paid per director; row 13 — league weeks decided per show, percentile edge cases; row 12 — server-enforced age gate + consent-gated analytics; AI imagery now built from the full Uniform Studio design + rendered reference image; main ruleset + gazetteer PR flow; site-review Fix-first 1–11 + quick wins shipped)._
+_Last updated: 2026-09-03 (site-review row 17 — vendor-firebase trimmed, GameShell + overlays lazy for guests; row 16 — focus traps + Escape in every raw dialog, icon buttons named; row 15 — one dashboard interrupt per visit, celebrations to the inbox; row 14 — weekly XP / win bonus / finish bonus paid per director; row 13 — league weeks decided per show, percentile edge cases; row 12 — server-enforced age gate + consent-gated analytics; AI imagery now built from the full Uniform Studio design + rendered reference image; main ruleset + gazetteer PR flow; site-review Fix-first 1–11 + quick wins shipped)._
 
 ## In progress
 
@@ -21,11 +21,13 @@ code-first review of the whole product (security, backend, frontend, UX,
 a11y, quality, economy, SEO/comms). Its **Part 1 backlog table** is the
 queue: work it top-down, and tick items off here as they ship.
 
-_(rows 1–16 — S-H1, B-H1, N-H1, F-H3, B-H3, G-H3, Q-H1, F-H2, F-H1, B-H4,
-B-H6/S-M6, S-H2/S-H3, G-H2/G-M10, G-H1/G-H7, U-H4, A-H1/A-H2 — and all eight
-"Cross-area quick wins" shipped 2026-09-03; continue from row 17 (F-H4 / F-M2:
-trim `vendor-firebase` — app-check, analytics out; lazy-load `GameShell` for
-guests) of the Part 1 table.
+_(rows 1–17 — S-H1, B-H1, N-H1, F-H3, B-H3, G-H3, Q-H1, F-H2, F-H1, B-H4,
+B-H6/S-M6, S-H2/S-H3, G-H2/G-M10, G-H1/G-H7, U-H4, A-H1/A-H2, F-H4/F-M2 (+
+F-M1) — and all eight "Cross-area quick wins" shipped 2026-09-03; continue
+from row 18 (N-H2 / N-H6: `List-Unsubscribe` headers + tokenised
+unsubscribe; `noindex` protected routes) of the Part 1 table. Still open from
+F-H4: `re2js` (144 kB) rides in via Firestore's pipelines support — track
+upstream for a pipelines-free entry.
 Left open from G-H1's detail, outside row 14's scope: the league title still
 sums a director's Finals night across every class (`leagueArchival.js`
 `finalsByUid`) — decide it on a flagship class or the mean class percentile;
@@ -115,9 +117,10 @@ ops step below)_
   standings, then pass `skipShows` for the ranked classes. (S)
 - **P3** `index.jsx:43-53` has no SW update prompt while the SW
   `skipWaiting`s mid-session. (S)
-- **P2** `vendor-firebase` is the largest eager chunk (671 kB / 198 kB
-  gzip) — audit which `firebase/*` entry points the first paint really
-  needs. (S)
+- **P3** `vendor-firebase` is still the largest eager chunk (647 kB / 189 kB
+  gzip after app-check + analytics left it, 2026-09-03); the remaining fat
+  is Firestore itself plus `re2js` — nothing to trim until upstream ships a
+  pipelines-free entry. (S)
 
 ### SEO, accessibility & UX
 
@@ -316,7 +319,7 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
 
 ## Evergreen ratchets (any session, any size)
 
-- `@ts-nocheck` paydown — **76 files** at
+- `@ts-nocheck` paydown — **75 files** at
   last update; `npm run ts-nocheck:next` ranks the cheapest (no free wins
   left; `Schedule.jsx` and `Layout/GameShell.jsx` are ~30 errors each). One
   per substantive task is the CLAUDE.md habit; batches welcome.
@@ -334,6 +337,16 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
 
 ## Recently shipped (context, newest first — prune when stale)
 
+- 2026-09-03: site-review row 17 (F-H4 / F-M2, + F-M1). `api/analytics.ts`
+  imports `firebase/analytics` dynamically on consent; `vite.config.js`
+  leaves `@firebase/{app-check,analytics}` out of the eager `vendor-firebase`
+  group (671 → 647 kB raw, 196 → 189 kB gz) and puts `react-router` in
+  `vendor-react` (was in the app index). `GameShell` and the new
+  `Layout/AuthedOverlays` (username prompt + celebrations) are
+  `lazyWithRetry` chunks behind `user &&`; the app index chunk went
+  237 → 142 kB raw (70 → 42 kB gz), so a signed-out visitor no longer
+  downloads the signed-in shell. `OnboardingParts.jsx` typed (ts-nocheck
+  76 → 75). Changelog entry added.
 - 2026-09-03: site-review row 16 (A-H1 / A-H2). `useFocusTrap` (and, where
   missing, `useEscapeKey`) in the 13 hand-rolled dialogs that lacked them;
   `components/a11y/dialogFocusTrap.test.ts` fails on any `role="dialog"`
