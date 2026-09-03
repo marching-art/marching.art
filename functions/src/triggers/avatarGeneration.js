@@ -25,6 +25,7 @@ const {
 } = require("../helpers/newsGeneration");
 const { FREE_IMAGE_MODEL } = require("../helpers/geminiService");
 const { resolveCorpsUniform } = require("../helpers/newsUniforms");
+const { loadUniformReferenceImages } = require("../helpers/uniformReference");
 const { uploadFromUrl, buildOptimizedUrl } = require("../helpers/mediaService");
 const {
   assertAuth,
@@ -224,10 +225,16 @@ async function generateAndSaveAvatar({ userId, corpsClass, corpsName, location, 
   // Build the avatar prompt using the uniform design
   const prompt = buildCorpsAvatarPrompt(corpsName, location, uniformDesign);
 
+  // The director's rendered Studio figure (set at equip time) rides along as
+  // a reference image so the avatar reproduces the exact design, not a prose
+  // approximation of it.
+  const referenceImages = await loadUniformReferenceImages(uniformDesign);
+
   logger.info("Generating avatar with prompt", {
     corpsName,
     location,
     hasUniformDesign: !!uniformDesign?.colorway?.primary,
+    referenceImages: referenceImages.length,
   });
 
   // Uniform/logo avatars always use the FREE-tier image model (Gemini 2.5 Flash
@@ -237,6 +244,7 @@ async function generateAndSaveAvatar({ userId, corpsClass, corpsName, location, 
   const imageData = await generateImageWithImagen(prompt, {
     model: FREE_IMAGE_MODEL,
     aspectRatio: "1:1",
+    referenceImages,
   });
 
   if (!imageData) {

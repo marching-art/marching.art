@@ -85,6 +85,91 @@ test("fantasy performers prompt renders the exact colorway hex and flags a disti
   assert.ok(prompt.includes("SECTION ACCURACY"));
 });
 
+test("fantasy performers prompt embeds the full uniform spec and the design's own gloves/shoes", () => {
+  const design = injectedV2Design({
+    figure: {
+      hatType: "shako",
+      hat: { body: "#17171a", band: "#1f6b3a" },
+      plume: { type: "fountain", color: "#e0a516", accent: "#1f6b3a" },
+      chest: "sash",
+      sash: "#e0a516",
+      chestShape: "tapered",
+      armL: { type: "sleeve", color: "#1f6b3a", glove: "#000000" },
+      armR: { type: "sleeve", color: "#1f6b3a", glove: "#000000" },
+      shoe: "#ffffff",
+    },
+  });
+  const prompt = buildFantasyPerformersImagePrompt("Emerald Guard", "finale", "Denver, CO", design, 1, 4);
+  assert.ok(prompt.includes("UNIFORM SPEC"));
+  assert.ok(prompt.includes("- CHEST: a TAPERED diagonal sash in gold (#e0a516)"));
+  assert.ok(prompt.includes("fountain plume"));
+  assert.ok(prompt.includes("dyed forest green (#1f6b3a)"));
+  assert.ok(prompt.includes("VIEWER's perspective"));
+  // The design's gloves and shoes replace the old hardcoded white/black line.
+  assert.ok(prompt.includes("obsidian black (#000000) gloves"));
+  assert.ok(prompt.includes("arctic white (#ffffff) marching shoes"));
+  assert.ok(!prompt.includes("White marching gloves, black marching shoes"));
+  // Explicit absences guard against invented pieces.
+  assert.ok(prompt.includes("NOT PRESENT"));
+  assert.ok(prompt.includes("epaulets"));
+});
+
+test("fantasy performers prompt keeps the generic defaults when no design is equipped", () => {
+  const prompt = buildFantasyPerformersImagePrompt("Fire Storm", "finale", null, null, 1, 4);
+  assert.ok(!prompt.includes("UNIFORM SPEC"));
+  assert.ok(prompt.includes("white marching gloves"));
+});
+
+test("fantasy performers prompt carries the guard's own full spec", () => {
+  const design = injectedV2Design({
+    guard: {
+      colorway: { primary: "#b3121c", secondary: "#ece2cc", accent: "#141414" },
+      figure: { torsoStyle: "dress", jacket: "#b3121c", satin: true, armL: { type: "bare" }, armR: { type: "bare" } },
+    },
+  });
+  const prompt = buildFantasyPerformersImagePrompt("Emerald Guard", "finale", null, design, 1, 4);
+  assert.ok(prompt.includes("COLOR GUARD COSTUME"));
+  assert.ok(prompt.includes("guard dress"));
+  assert.ok(prompt.includes("satin"));
+});
+
+test("performer avatar prompt embeds the spec and the design's gloves", () => {
+  const design = injectedV2Design({
+    avatarStyle: "performer",
+    figure: { chest: "braid", braid: "#ffffff", armL: { type: "sleeve", glove: "#ff0000" }, armR: { type: "sleeve", glove: "#ff0000" } },
+  });
+  const prompt = buildCorpsAvatarPrompt("Emerald Guard", null, design);
+  assert.ok(prompt.includes("UNIFORM SPEC"));
+  assert.ok(prompt.includes("five horizontal rows"));
+  assert.ok(prompt.includes("Hands: crimson red (#ff0000) gloves"));
+  assert.ok(!prompt.includes("- White marching gloves"));
+});
+
+test("logo avatar prompt echoes the uniform signature", () => {
+  const prompt = buildCorpsAvatarPrompt("Emerald Guard", null, injectedV2Design());
+  assert.ok(prompt.includes("UNIFORM SIGNATURE"));
+  assert.ok(prompt.includes("shako"));
+});
+
+test("article image prompt embeds the spec when corps uniform details are supplied", () => {
+  const { getUniformDetailsFromDesign } = require("./newsUniforms");
+  const details = getUniformDetailsFromDesign(injectedV2Design(), "Emerald Guard", null);
+  const prompt = buildArticleImagePrompt("dci", "Big night", "summary", {
+    corpsName: "Emerald Guard",
+    uniformDetails: details,
+  });
+  assert.ok(prompt.includes("UNIFORM SPEC"));
+  assert.ok(prompt.includes("HANDS: bare hands"));
+  assert.ok(!prompt.includes("White marching gloves on all performers"));
+  // DCI-style details (no spec) keep the classic line.
+  const dci = buildArticleImagePrompt("dci", "Big night", "summary", {
+    corpsName: "Blue Devils",
+    uniformDetails: { uniform: "navy", helmet: "shako", brass: "silver", percussion: "navy", guard: "navy" },
+  });
+  assert.ok(dci.includes("White marching gloves on all performers"));
+  assert.ok(!dci.includes("UNIFORM SPEC"));
+});
+
 test("long user values are truncated instead of flooding the prompt", () => {
   const longName = "A".repeat(1000);
   const prompt = buildFantasyPerformersImagePrompt(longName, null, null, null, 0, 0);

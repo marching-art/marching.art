@@ -7,6 +7,7 @@ const { logger } = require("firebase-functions/v2");
 
 const { DCI_UNIFORMS } = require("./dciUniforms");
 const { proseColorName } = require("./uniformValidation");
+const { describeFigure } = require("./uniformProse");
 
 
 // =============================================================================
@@ -481,13 +482,6 @@ const STYLE_DESCRIPTIONS = {
   "avant-garde": "bold experimental design pushing boundaries",
 };
 
-const HAT_DESCRIPTIONS = {
-  shako: "traditional tall shako",
-  aussie: "aussie-style campaign hat",
-  campaign: "aussie-style campaign hat",
-  pith: "contemporary streamlined helmet",
-  contour: "contemporary streamlined helmet",
-};
 
 /**
  * Classify a v2 figure into one of the five uniform "styles" — the same
@@ -520,7 +514,9 @@ function styleFromFigure(fig) {
  * guard is rendered in the show's colors, not the hornline's. The guard slot
  * (`corps.{class}.uniformGuard`) is a full v2 design in its own right; the
  * director dresses the guard to the season's production, which routinely differs
- * from the corps identity the brass and percussion wear.
+ * from the corps identity the brass and percussion wear. The one-line summary
+ * here is what the legacy `guard` field carries; the exhaustive part-by-part
+ * spec rides along as `guardSpec` on the details object.
  * @param {object} guard - an equipped v2 guard design snapshot.
  * @returns {string}
  */
@@ -530,8 +526,8 @@ function describeGuardCostume(guard) {
   const s = proseColorName(cw.secondary);
   const a = proseColorName(cw.accent);
   const named = (name, hex) => (typeof hex === "string" ? `${name} (${hex})` : name);
-  const isDress = (guard.figure || {}).torsoStyle === "dress";
-  return `color guard in distinct show costumes${isDress ? " (flowing A-line dresses)" : ""} of ${named(p, cw.primary)} and ${named(s, cw.secondary)} with ${named(a, cw.accent)} accents, carrying themed silks`;
+  const spec = describeFigure(guard);
+  return `color guard in distinct show costumes — ${spec.summary} — in ${named(p, cw.primary)} and ${named(s, cw.secondary)} with ${named(a, cw.accent)} accents, carrying themed silks`;
 }
 
 /**
@@ -571,13 +567,12 @@ function getUniformDetailsFromDesign(design, corpsName, location = null) {
   const mascot = hints.mascotOrEmblem || null;
   const themeKeywords = Array.isArray(hints.themeKeywords) ? hints.themeKeywords : [];
 
-  const helmet = fig.hatType
-    ? `${HAT_DESCRIPTIONS[fig.hatType] || "traditional helmet"} in ${primaryName}${
-        fig.plume
-          ? ` with a ${fig.plume.type === "fountain" ? "fountain" : "tall upright"} plume in ${proseColorName(fig.plume.color)}`
-          : ""
-      }`
-    : "no traditional headwear (bareheaded)";
+  // The exhaustive part-by-part spec: every field the Studio renders, named
+  // and hex-pinned (helpers/uniformProse). `uniform`/`helmet` stay as the
+  // one-line cues older prompt slots read; `figureSpec` is the full block.
+  const spec = describeFigure(design);
+
+  const helmet = spec.hasHat ? `${spec.headwear}; plume: ${spec.plume}` : spec.headwear;
 
   // The guard wears its own equipped show look when the director set one;
   // otherwise it coordinates with the corps colors.
@@ -590,7 +585,7 @@ function getUniformDetailsFromDesign(design, corpsName, location = null) {
 
   return {
     colors,
-    uniform: `${STYLE_DESCRIPTIONS[style]} uniform in ${colors}${mascot ? `, featuring ${mascot} emblem` : ""}`,
+    uniform: `${STYLE_DESCRIPTIONS[style]} uniform — ${spec.summary}${mascot ? `, featuring ${mascot} emblem` : ""}`,
     helmet,
     brass: `${secondaryName}-accented brass instruments with ${primaryName} valve caps and ${metal} hardware`,
     percussion: `${primaryName} drums with ${secondaryName} hardware and corps graphics`,
@@ -609,6 +604,19 @@ function getUniformDetailsFromDesign(design, corpsName, location = null) {
     mascotOrEmblem: mascot,
     themeKeywords,
     style,
+    // The full design, part by part — what the image prompts embed verbatim.
+    figureSpec: spec.block,
+    figureSpecLines: spec.lines,
+    gloves: spec.gloves,
+    footwear: spec.footwear,
+    absent: spec.absent,
+    symmetric: spec.symmetric,
+    guardSpec: hasGuardLook ? describeFigure(design.guard).block : null,
+    // Rendered Studio snapshots (set by equipUniformDesign when the client
+    // could rasterize the figure) — attached to image calls as ground truth.
+    previewUrl: typeof design.previewUrl === "string" ? design.previewUrl : null,
+    guardPreviewUrl:
+      hasGuardLook && typeof design.guard.previewUrl === "string" ? design.guard.previewUrl : null,
   };
 }
 

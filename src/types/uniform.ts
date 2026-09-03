@@ -302,5 +302,13 @@ export interface EquippedUniform {
   name: string;
   colorway: UniformColorway;
   figure: FigureConfig;
+  /** The design's prompt-only hints, copied at equip time (null when none). */
+  aiHints?: UniformAiHints | null;
+  /**
+   * Re-hosted PNG of the figure as the Studio rendered it at equip time
+   * (utils/uniformPreview → equipUniformDesign). Attached to every AI image
+   * call for the corps as a reference image of the exact design.
+   */
+  previewUrl?: string;
   equippedAt: string;
 }

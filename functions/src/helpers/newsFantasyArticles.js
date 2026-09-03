@@ -29,6 +29,7 @@ const {
   buildFantasyPerformersImagePrompt,
 } = require("./newsImagePrompts");
 const { resolveCorpsUniform } = require("./newsUniforms");
+const { loadUniformReferenceImages } = require("./uniformReference");
 const {
   getToneGuidance,
   getWritingVariety,
@@ -415,7 +416,11 @@ ${mode.bodyNote ? `${mode.bodyNote}\n` : ''}${captionLeadersBlock && fieldMode !
     // Explicitly pin the quality (paid) image model — this is the one nightly
     // article that ships an AI image, and it should not silently degrade if the
     // service-level default tier ever changes.
-    const imageData = await generateImageWithImagen(imagePrompt, { model: PAID_IMAGE_MODEL });
+    const imageData = await generateImageWithImagen(imagePrompt, {
+      model: PAID_IMAGE_MODEL,
+      // The featured corps' rendered Studio figure, when equipped with one.
+      referenceImages: await loadUniformReferenceImages(uniformDesign),
+    });
     const imageResult = await processGeneratedImage(imageData, "fantasy_daily");
 
     return {

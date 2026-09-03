@@ -266,7 +266,19 @@ export default function Studio() {
         savedJson.current = JSON.stringify(draft);
         void refreshWardrobe();
       }
-      await equipUniformDesign({ designId: id!, corpsClass: activeClass, slot });
+      // Send the server a picture of the exact figure being equipped: it becomes
+      // the reference image every AI avatar/news image of this corps is grounded
+      // in. Rasterizing is best-effort (null when the browser can't) and the
+      // renderer-to-PNG path is loaded on demand so it never weighs the page.
+      const previewPng = await import('../utils/uniformPreview')
+        .then((m) => m.figureToPngDataUrl(draft.figure, `${draft.name} preview`))
+        .catch(() => null);
+      await equipUniformDesign({
+        designId: id!,
+        corpsClass: activeClass,
+        slot,
+        ...(previewPng ? { previewPng } : {}),
+      });
       // the profile store's realtime listener picks up the new snapshot
       const corpsName = activeOption?.corps.corpsName || 'your corps';
       triggerHaptic('success');

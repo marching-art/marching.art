@@ -8,7 +8,7 @@ burns an hour to conclude "everything's about covered." Don't. If you ship,
 cut, or discover something, edit THIS file in the same PR — that's the whole
 maintenance contract.
 
-_Last updated: 2026-09-03 (main ruleset + gazetteer PR flow; site-review Fix-first 1–11 + quick wins shipped)._
+_Last updated: 2026-09-03 (AI imagery now built from the full Uniform Studio design + rendered reference image; main ruleset + gazetteer PR flow; site-review Fix-first 1–11 + quick wins shipped)._
 
 ## In progress
 
@@ -331,6 +331,19 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
 
 ## Recently shipped (context, newest first — prune when stale)
 
+- 2026-09-03: AI imagery reproduces the whole Uniform Studio design. New
+  `helpers/uniformProse.js` walks every FIGURE_FIELDS key (torso/finish,
+  chest + badge, neck, shoulders, waist, per-side arms and legs, feet,
+  headwear, plume, cape) into a hex-pinned part-by-part spec that
+  `getUniformDetailsFromDesign` exposes as `figureSpec`/`gloves`/`footwear`/
+  `absent`/`guardSpec`; every prompt builder embeds it (`uniformSpecSection`)
+  and the hardcoded "white gloves / black shoes" lines now defer to the
+  design. Equipping sends a rasterized PNG of the figure (`utils/
+uniformPreview.ts`) that `equipUniformDesign` re-hosts as `previewUrl`, and
+  `helpers/uniformReference.js` attaches it (plus the guard's) as a captioned
+  reference image on all five Gemini image call sites (avatar, Fantasy Daily,
+  season summary, user-article, admin re-gen). `ArticleManagementParts.jsx`
+  typed (ts-nocheck 83 → 82).
 - 2026-09-03: `main` branch ruleset in the repo (`.github/rulesets/main.json`)
   requiring the seven CI jobs before merge, no deletes/force-pushes, no bypass
   — the `pull_request` CI run now gates the merge and the `push` run on main

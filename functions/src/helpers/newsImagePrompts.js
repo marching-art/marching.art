@@ -15,6 +15,33 @@ const {
 const { promptSafe, UNTRUSTED_FIELD_RULE } = require("./promptSafety");
 
 /**
+ * The exhaustive, part-by-part uniform block for a director-designed corps —
+ * every Studio field, named and hex-pinned (helpers/uniformProse via
+ * getUniformDetailsFromDesign). Server-authored from validated enums and hex,
+ * so it is embedded verbatim rather than «»-delimited/truncated like the
+ * director's free-text hints. Empty for name/theme fallback details.
+ *
+ * @param {object|null|undefined} details - resolved uniform details.
+ * @param {{ heading?: string, wearer?: string }} [options]
+ * @returns {string}
+ */
+function uniformSpecSection(details, options = {}) {
+  if (!details || typeof details.figureSpec !== "string" || !details.figureSpec) return "";
+  const heading = options.heading || "UNIFORM SPEC — DIRECTOR'S EXACT DESIGN (REPRODUCE EVERY LINE)";
+  const wearer = options.wearer || "every brass, percussion, and drum major performer";
+  const absent =
+    Array.isArray(details.absent) && details.absent.length > 0
+      ? `\n- NOT PRESENT — do not add: ${details.absent.join("; ")}`
+      : "";
+  const guard = details.guardSpec
+    ? `\n\nCOLOR GUARD COSTUME — the guard's OWN show look (only guard members wear this; never blend it with the corps uniform above):\n${details.guardSpec}`
+    : "";
+  return `${heading}
+This is the uniform ${wearer} wears. Each line is one part of the design as the director built it in the Uniform Studio. Reproduce every part, in exactly these colors — the hex codes are authoritative and beat the color names — with the stated placement. Sides are given from the VIEWER's perspective, facing the performer. Where the design is asymmetric, keep it asymmetric. Do not add pieces the spec does not list, and do not drop or recolor any it does.
+${details.figureSpec}${absent}${guard}`;
+}
+
+/**
  * Build image prompt for corps avatar/icon generation
  * Creates a distinctive, recognizable avatar for each fantasy corps
  * Supports two styles: 'logo' (team emblem) or 'performer' (section member)
@@ -102,6 +129,11 @@ THEME & MOOD:
 - Keywords: ${themeKeywords.length > 0 ? themeKeywords.map(k => promptSafe(k)).join(", ") : "competitive, elite, championship"}
 - Tone: competitive, elite, championship-ready
 - Dynamic angles, strong silhouettes, and full-frame energy
+${details.figureSpec ? `
+UNIFORM SIGNATURE (this corps' actual uniform — echo its silhouette, headwear, and exact colors in the emblem; a marching figure or headwear motif drawn from it must match it):
+- ${details.uniform}
+- Headwear: ${details.helmet}
+- Hands: ${details.gloves}` : ""}
 
 DO NOT INCLUDE:
 - Circular badge frames or medallion shapes
@@ -134,7 +166,7 @@ function buildPerformerAvatarPrompt(corpsName, locationStr, details, section, co
       instrument: details?.brass
         ? promptSafe(details.brass, { maxLength: 200 })
         : "polished brass horn with bell raised",
-      details: "white gloves, determined expression, athletic posture",
+      details: `${details?.gloves ? details.gloves : "white gloves"}, determined expression, athletic posture`,
     },
     drumline: {
       title: "Percussion Performer",
@@ -149,14 +181,14 @@ function buildPerformerAvatarPrompt(corpsName, locationStr, details, section, co
       pose: "mid-movement with equipment, graceful and dynamic",
       instrument: "silk flag or rifle",
       details: details?.guard
-        ? promptSafe(details.guard, { maxLength: 200 })
+        ? promptSafe(details.guard, { maxLength: 600 })
         : "flowing costume, expressive movement, athletic grace",
     },
   };
 
   const sectionInfo = sectionDescriptions[section] || sectionDescriptions.hornline;
   const helmetDesc = details?.helmet
-    ? promptSafe(details.helmet, { maxLength: 200 })
+    ? promptSafe(details.helmet, { maxLength: 600 })
     : "modern style headwear";
 
   // ==========================================================================
@@ -196,8 +228,9 @@ UNIFORM & COLORS:
 - Secondary: ${promptSafe(secondaryColor)}${accentColor ? `\n- Accent: ${promptSafe(accentColor)}` : ""}
 - Style: ${details?.style ? promptSafe(details.style) : "contemporary"} marching arts uniform
 - Headwear: ${helmetDesc}
-- White marching gloves
+- Hands: ${details?.gloves ? details.gloves : "white marching gloves"}
 - Use team colors in background gradient
+${uniformSpecSection(details, { wearer: `this ${sectionInfo.title}` })}
 
 THEME & MOOD:
 - Keywords: ${themeKeywords.length > 0 ? themeKeywords.map(k => promptSafe(k)).join(", ") : "competitive, elite, championship"}
@@ -240,7 +273,8 @@ function buildArticleImagePrompt(category, headline, summary, options = {}) {
 - BRASS INSTRUMENTS: ${uniformDetails.brass}
 - DRUMS: ${uniformDetails.percussion}
 - COLOR GUARD: ${uniformDetails.guard}
-- White marching gloves on all performers
+- ${uniformDetails.gloves ? `HANDS: ${uniformDetails.gloves}` : "White marching gloves on all performers"}${uniformDetails.footwear ? `\n- FEET: ${uniformDetails.footwear}` : ""}
+${uniformSpecSection(uniformDetails)}
 
 CRITICAL: These uniform details are EXACT. Do not substitute generic uniforms.`;
   }
@@ -576,13 +610,15 @@ ${UNTRUSTED_FIELD_RULE}
 
 UNIFORM DESIGN${details.matchedTheme === "director-custom" ? " (Director-Specified — MATCH EXACTLY)" : ""}:
 - Colors: ${promptSafe(details.colors, { maxLength: 300 })}
-- Uniform: ${promptSafe(details.uniform, { maxLength: 300 })}
-- Headwear: ${promptSafe(details.helmet, { maxLength: 300 })}
+- Uniform: ${promptSafe(details.uniform, { maxLength: 600 })}
+- Headwear: ${promptSafe(details.helmet, { maxLength: 600 })}
 - Brass: ${promptSafe(details.brass, { maxLength: 300 })}
-- Guard elements: ${promptSafe(details.guard, { maxLength: 300 })}
+- Percussion: ${promptSafe(details.percussion || `${details.colors} drums`, { maxLength: 300 })}
+- Guard elements: ${promptSafe(details.guard, { maxLength: 600 })}
 ${details.additionalNotes ? `- Special notes: ${promptSafe(details.additionalNotes, { maxLength: 300 })}` : ""}
 - COLOR FIDELITY IS CRITICAL: render the uniform in the EXACT colors listed above, saturated and true to any hex codes given. Do NOT substitute, mute, or default to grey, charcoal, or black unless those are the stated colors.
 ${details.hasDistinctGuardLook ? "- SECTION ACCURACY: the brass, percussion, and drum major wear the corps uniform above; the color guard wears its OWN distinct show costume as described in \"Guard elements\". If the frame features the color guard, use the guard costume colors; for brass/percussion/drum major, use the corps uniform colors. Never blend the two." : ""}
+${uniformSpecSection(details)}
 
 SCENE CONCEPT: ${scene.scene}
 Mood: ${scene.mood}
@@ -592,7 +628,7 @@ Context: ${theme ? promptSafe(theme, { maxLength: 300 }) : "Championship competi
 
 AUTHENTICITY:
 - Uniform is creative but still clearly a marching arts uniform (not costume)
-- White marching gloves, black marching shoes visible on performers
+- Hands: ${details.gloves ? details.gloves : "white marching gloves"}; feet: ${details.footwear ? details.footwear : "black marching shoes visible on performers"}
 - Realistic instruments with creative themed accents
 - Professional posture and athletic bearing
 
@@ -754,6 +790,7 @@ This intimate portrait captures the essence of ${corps} - their tradition, excel
 }
 
 module.exports = {
+  uniformSpecSection,
   buildCorpsAvatarPrompt,
   buildPerformerAvatarPrompt,
   buildArticleImagePrompt,

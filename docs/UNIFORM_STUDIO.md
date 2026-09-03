@@ -582,6 +582,15 @@ until the guard silhouette (phase 4).
   — spend goes down, not up.
 - News pipeline reads v2-derived prose through the same
   `getFantasyUniformDetails` seam (`functions/src/helpers/newsUniforms.js:452-573`).
+- **Shipped 2026-09:** the prose is now exhaustive. `helpers/uniformProse.js`
+  describes every `FIGURE_FIELDS` key the way the renderer draws it (sides
+  from the viewer's perspective, every color named + hex-pinned, explicit
+  "NOT PRESENT" list), and every prompt builder embeds that block via
+  `uniformSpecSection` in `newsImagePrompts.js`. On equip the client also
+  rasterizes the figure (`src/utils/uniformPreview.ts`) and the callable
+  re-hosts it as `previewUrl` on the snapshot; `helpers/uniformReference.js`
+  attaches it (and the guard look's) to every image call as a captioned
+  reference image, so the model works from the actual drawing.
 
 ### 10.6 Testing & CI obligations
 

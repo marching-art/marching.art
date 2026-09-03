@@ -519,6 +519,7 @@ async function generateFantasyDailyImage(submission, reportDay, authorCorps) {
   const { buildFantasyPerformersImagePrompt } = require("./newsImagePrompts");
   const { generateImageWithImagen, PAID_IMAGE_MODEL } = require("./geminiService");
   const { uploadFromUrl } = require("./mediaService");
+  const { loadUniformReferenceImages } = require("./uniformReference");
 
   // Read the article for concrete visual details before building the prompt.
   const visual = await extractArticleVisualDetails(submission);
@@ -582,8 +583,12 @@ ${lines.join("\n")}`;
   }
 
   try {
-    // Pin the quality (paid) image model, matching the nightly Fantasy Daily article.
-    const imageData = await generateImageWithImagen(imagePrompt, { model: PAID_IMAGE_MODEL });
+    // Pin the quality (paid) image model, matching the nightly Fantasy Daily
+    // article, and ground it in the author's rendered Studio figure when set.
+    const imageData = await generateImageWithImagen(imagePrompt, {
+      model: PAID_IMAGE_MODEL,
+      referenceImages: await loadUniformReferenceImages(uniformDesign),
+    });
     if (!imageData) {
       logger.warn("Image model returned no image for user article:", {
         submissionId: submission._submissionId || null,
