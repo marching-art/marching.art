@@ -143,6 +143,13 @@ function makeFakeDb(docs = new Map()) {
     }),
   };
 
+  db.recursiveDelete = async (ref) => {
+    batchOps.push({ type: "recursiveDelete", path: ref.path });
+    for (const p of [...docs.keys()]) {
+      if (p === ref.path || p.startsWith(`${ref.path}/`)) docs.delete(p);
+    }
+  };
+
   return { db, batchOps, docs };
 }
 
@@ -330,5 +337,38 @@ describe("deleteAccount identity erasure", () => {
     assert.equal(champ.uid, null);
     assert.equal(champ.username, null);
     assert.equal(champ.corpsName, "Blue Notes");
+  });
+});
+
+describe("deleteAccount removes the whole user subtree", () => {
+  test("every subcollection under the user doc is gone, not just corps + notifications", async () => {
+    const userRoot = `artifacts/${NS}/users/u1`;
+    const docs = new Map([
+      [profilePath("u1"), { username: "leaving", corps: {} }],
+      [`${userRoot}/private/data`, { fcmToken: "t" }],
+      [`${userRoot}/profile/public`, { username: "leaving" }],
+      [`${userRoot}/corps/worldClass`, { corpsName: "Old" }],
+      [`${userRoot}/wardrobe/d1`, { name: "Look" }],
+      [`${userRoot}/seasonDetail/s9`, { lineup: {} }],
+      [`${userRoot}/captionLedger/s9/days/3`, { outings: [] }],
+      [`${userRoot}/corpsCoinHistory/e1`, { amount: 5 }],
+      [`${userRoot}/email_log/m1`, { type: "welcome" }],
+      [`${userRoot}/podium/state`, { seasonUid: "s9" }],
+      ...Array.from({ length: 600 }, (_, i) => [`${userRoot}/notifications/n${i}`, { read: false }]),
+      [`artifacts/${NS}/users/u2/profile/data`, { username: "stays" }],
+    ]);
+    const { db, batchOps } = makeFakeDb(docs);
+    setDbForTesting(db);
+
+    await deleteAccount.run(authedRequest("u1"));
+
+    assert.ok(batchOps.some((op) => op.type === "recursiveDelete" && op.path === userRoot));
+    // Nothing of u1 remains, anywhere under the user document.
+    assert.equal([...docs.keys()].filter((p) => p.startsWith(`${userRoot}`)).length, 0);
+    // The neighbour is untouched.
+    assert.ok(docs.has(`artifacts/${NS}/users/u2/profile/data`));
+    // And the old per-doc batch never tried to enumerate 600 notifications
+    // (that is what overflowed the 500-op cap).
+    assert.equal(batchOps.filter((op) => op.type === "delete" && op.path.includes("/notifications/")).length, 0);
   });
 });

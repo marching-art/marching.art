@@ -55,6 +55,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     const generatedId = useId();
     const id = providedId || generatedId;
     const hasError = !!error;
+    // The helper/error line is announced with the field (aria-describedby) and
+    // an error also flips aria-invalid + role="alert" so screen readers hear it
+    // the moment it appears, not only when they land on the input.
+    const descriptionId = helperText || error ? `${id}-description` : undefined;
 
     return (
       <div className="w-full">
@@ -92,6 +96,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
               ${RightIcon || rightElement ? 'pr-8' : ''}
               ${className}
             `}
+            aria-invalid={hasError || undefined}
+            aria-describedby={
+              [props['aria-describedby'], descriptionId].filter(Boolean).join(' ') || undefined
+            }
             {...props}
           />
           {(RightIcon || rightElement) && (
@@ -101,7 +109,11 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           )}
         </div>
         {(helperText || error) && (
-          <p className={`mt-1 text-xs ${hasError ? 'text-red-400' : 'text-muted'}`}>
+          <p
+            id={descriptionId}
+            role={hasError ? 'alert' : undefined}
+            className={`mt-1 text-xs ${hasError ? 'text-red-400' : 'text-muted'}`}
+          >
             {error || helperText}
           </p>
         )}

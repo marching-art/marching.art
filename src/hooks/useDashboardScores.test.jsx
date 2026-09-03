@@ -12,6 +12,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 vi.mock('../api/season', () => ({
   getSeasonRecaps: vi.fn(),
+  getRecentSeasonRecaps: vi.fn(),
   getHistoricalScoresForYear: vi.fn(),
   getRecentPodiumRecaps: vi.fn(),
   // useRevealedDay's drop-plan overlay; null = no plan doc, so the reveal
@@ -46,7 +47,11 @@ vi.mock('./useScoresData', () => ({
   formatRecapDate: vi.fn(() => 'Jan 1'),
 }));
 
-import { getSeasonRecaps, getHistoricalScoresForYear, getRecentPodiumRecaps } from '../api/season';
+import {
+  getRecentSeasonRecaps,
+  getHistoricalScoresForYear,
+  getRecentPodiumRecaps,
+} from '../api/season';
 import { getEffectiveDay, processCaptionScores } from '../utils/dashboardScoring';
 import {
   useLineupScores,
@@ -167,12 +172,12 @@ describe('useRecentResults', () => {
       wrapper: createWrapper(),
     });
     expect(result.current).toEqual([]);
-    expect(getSeasonRecaps).not.toHaveBeenCalled();
+    expect(getRecentSeasonRecaps).not.toHaveBeenCalled();
   });
 
   it('returns the most recent processed results for the active class only', async () => {
     getEffectiveDay.mockReturnValue(5);
-    getSeasonRecaps.mockResolvedValue([
+    getRecentSeasonRecaps.mockResolvedValue([
       recap(4, [aliceResult]),
       // Day 6 is beyond the effective day — must be filtered out
       recap(6, [{ ...aliceResult, totalScore: 99 }]),
@@ -195,7 +200,7 @@ describe('useRecentResults', () => {
 
   it('caps the list at 5 results', async () => {
     getEffectiveDay.mockReturnValue(10);
-    getSeasonRecaps.mockResolvedValue(
+    getRecentSeasonRecaps.mockResolvedValue(
       [10, 9, 8, 7, 6, 5, 4].map((day) => recap(day, [aliceResult]))
     );
 

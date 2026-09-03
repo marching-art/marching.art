@@ -9,6 +9,7 @@ import { Medal } from 'lucide-react';
 import { Heading } from '../components/ui';
 import { useSEO } from '../hooks/useSEO';
 import { useAuth } from '../context/AuthContext';
+import { usePodiumEnabled } from '../hooks/useFeatures';
 
 const SECTIONS = [
   {
@@ -92,6 +93,7 @@ export default function PodiumGuide() {
   // These render on public routes too, where there is no AuthProvider —
   // `useAuth()` is null there and `user` is simply undefined.
   const user = useAuth()?.user;
+  const podiumEnabled = usePodiumEnabled();
 
   // This page is submitted in the sitemap (functions/src/triggers/sitemap.js)
   // but never set its own metadata, so it inherited index.html's canonical —
@@ -115,6 +117,15 @@ export default function PodiumGuide() {
         <p className="text-sm text-muted">
           Run a drum corps. Earn every point. Twelve short sections — everything you need.
         </p>
+        {!podiumEnabled && (
+          <p
+            role="status"
+            className="mt-3 px-3 py-2 text-xs text-warning border border-warning/40 bg-warning/10"
+          >
+            The Podium Division isn&apos;t open right now. The guide stays up so you know what to
+            expect when it returns — the fantasy game is open year-round.
+          </p>
+        )}
       </div>
 
       {/* Sections */}

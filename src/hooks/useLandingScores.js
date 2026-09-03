@@ -11,7 +11,7 @@
 
 import { useMemo } from 'react';
 import { useQuery, useQueries } from '@tanstack/react-query';
-import { getCorpsValues, getHistoricalScoresForYear } from '../api/season';
+import { getCorpsValues, getHistoricalScoresForYear, getLandingScores } from '../api/season';
 import { queryKeys } from '../lib/queryClient';
 import { useSeasonStore } from '../store/seasonStore';
 import { useRevealedDay } from './useRevealedDay';
@@ -63,13 +63,28 @@ export const useLandingScores = ({ enabled = true } = {}) => {
   // night's scores actually drop.
   const maxScoreDay = useRevealedDay(currentDay);
 
-  // Fantasy pool corps (dci-data doc). Needed in both modes: it defines the
-  // off-season ranking list, and in live season it filters the scraped corps
-  // to those selectable as caption options.
+  // Preferred source: the ONE materialized doc the nightly scoring run writes
+  // (landing_scores/{seasonUid}) — each ranked corps' per-day history, a few
+  // KB. `null` means the pipeline has not written it for this season yet, and
+  // only then does the legacy fan-out below (pool doc + every historical year
+  // it references, potentially >1,000 reads) switch on.
+  const seasonUid = seasonData?.seasonUid ?? null;
+  const landingQuery = useQuery({
+    queryKey: queryKeys.landingScores(seasonUid ?? ''),
+    queryFn: () => getLandingScores(seasonUid ?? ''),
+    enabled: !!seasonUid && enabled,
+    staleTime: SCORES_STALE_TIME,
+  });
+  const materialized = landingQuery.data ?? null;
+  const useFallback = enabled && (!seasonUid || landingQuery.data === null);
+
+  // Fantasy pool corps (dci-data doc). Needed in both fallback modes: it
+  // defines the off-season ranking list, and in live season it filters the
+  // scraped corps to those selectable as caption options.
   const corpsValuesQuery = useQuery({
     queryKey: queryKeys.corpsValues(dataDocId ?? ''),
     queryFn: () => getCorpsValues(dataDocId ?? ''),
-    enabled: !!dataDocId && enabled,
+    enabled: !!dataDocId && useFallback,
     staleTime: SCORES_STALE_TIME,
   });
   const poolCorps = corpsValuesQuery.data;
@@ -77,10 +92,11 @@ export const useLandingScores = ({ enabled = true } = {}) => {
   // Which historical_scores years to load: just the live year during a live
   // season, otherwise every source year referenced by the fantasy pool.
   const yearsNeeded = useMemo(() => {
+    if (!useFallback) return [];
     if (isLiveSeason && liveSeasonYear) return [liveSeasonYear];
     if (!poolCorps) return [];
     return [...new Set(poolCorps.map((c) => String(c.sourceYear)))].sort();
-  }, [isLiveSeason, liveSeasonYear, poolCorps]);
+  }, [useFallback, isLiveSeason, liveSeasonYear, poolCorps]);
 
   const {
     historicalData,
@@ -90,7 +106,7 @@ export const useLandingScores = ({ enabled = true } = {}) => {
     queries: yearsNeeded.map((year) => ({
       queryKey: queryKeys.historicalScores(year),
       queryFn: () => getHistoricalScoresForYear(year),
-      enabled,
+      enabled: useFallback,
       staleTime: SCORES_STALE_TIME,
     })),
     combine: (results) => {
@@ -134,13 +150,54 @@ export const useLandingScores = ({ enabled = true } = {}) => {
     return poolCorps || [];
   }, [isLiveSeason, liveSeasonYear, historicalData, poolCorps]);
 
-  const loading = enabled && !!dataDocId && (corpsValuesQuery.isPending || yearsPending);
-  const error = corpsValuesQuery.error?.message || yearsError;
+  const loading =
+    enabled &&
+    ((!!seasonUid && landingQuery.isPending) ||
+      (useFallback && !!dataDocId && (corpsValuesQuery.isPending || yearsPending)));
+  const error = landingQuery.error?.message || corpsValuesQuery.error?.message || yearsError;
 
   // Process scores for landing page display
   const liveScores = useMemo(() => {
-    // Guard: If no data or maxScoreDay is null/0, no scores should be visible
-    // maxScoreDay is null on Day 1 (no processed scores yet)
+    // maxScoreDay is null on Day 1 (no processed scores yet) — nothing is
+    // visible, whichever source is in play.
+    if (!maxScoreDay || maxScoreDay < 1) return [];
+
+    // Materialized path: rank each corps by its latest revealed score; the
+    // change is against the previous DAY it scored (same rule as below).
+    if (materialized) {
+      /** @type {Array<Record<string, any>>} */
+      const ranked = [];
+      for (const corps of materialized.corps || []) {
+        const revealed = (corps.history || []).filter((h) => h.day <= maxScoreDay);
+        if (revealed.length === 0) continue;
+        const latest = revealed[revealed.length - 1];
+        const previous = [...revealed].reverse().find((h) => h.day !== latest.day) || null;
+        let change = null;
+        let direction = 'stable';
+        if (previous) {
+          change = latest.totalScore - previous.totalScore;
+          if (change > 0.001) direction = 'up';
+          else if (change < -0.001) direction = 'down';
+        }
+        ranked.push({
+          corpsName: corps.corpsName,
+          sourceYear: corps.sourceYear,
+          points: corps.points,
+          score: latest.totalScore,
+          change,
+          direction,
+          showCount: revealed.length,
+          latestDay: latest.day,
+        });
+      }
+      ranked.sort((a, b) => b.score - a.score);
+      ranked.forEach((entry, index) => {
+        entry.rank = index + 1;
+      });
+      return ranked;
+    }
+
+    // Fallback path (no materialized doc yet): rank from the raw year data.
     if (
       corpsValues.length === 0 ||
       Object.keys(historicalData).length === 0 ||
@@ -242,7 +299,7 @@ export const useLandingScores = ({ enabled = true } = {}) => {
     });
 
     return rankedScores;
-  }, [corpsValues, historicalData, maxScoreDay]);
+  }, [materialized, corpsValues, historicalData, maxScoreDay]);
 
   // Get the display day (most recent day with scores)
   const displayDay = useMemo(() => {

@@ -67,6 +67,10 @@ describe("buildSitemapXml", () => {
     // crawlers a URL that immediately bounces.
     assert.ok(!STATIC_ROUTES.some((route) => route.path === "/podium"));
     assert.ok(STATIC_ROUTES.some((route) => route.path === "/podium-guide"));
+    // noindex (the Podium demo) and the auth forms are not search results either.
+    for (const path of ["/podium/preview", "/login", "/register"]) {
+      assert.ok(!STATIC_ROUTES.some((route) => route.path === path), `${path} listed`);
+    }
   });
 
   test("emits director pages and their corps program pages", () => {

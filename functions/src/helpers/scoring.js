@@ -41,6 +41,7 @@ const { colorwayStrip } = require("./uniformValidation");
 const { getCompletedCalendarDay } = require("./gameDay");
 const { updateRecordsFromRecap } = require("./gameRecords");
 const { writeSeasonStandings } = require("./standingsMaterializer");
+const { writeLandingScores } = require("./landingScoresMaterializer");
 const {
   claimScoringRun,
   markScoringRunCompleted,
@@ -832,6 +833,15 @@ async function runScoringDay(db, scoredDay, seasonData, strategy, { force = fals
     await writeSeasonStandings(db, seasonData.seasonUid);
   } catch (error) {
     logger.error(`Standings materialization failed (scoring unaffected): ${error.message}`);
+  }
+
+  // Materialize the landing/news "Live Scores" ranking (landing_scores/
+  // {seasonUid}) so anonymous visitors read one doc instead of fanning out to
+  // every historical year the pool references. Isolated like standings.
+  try {
+    await writeLandingScores(db, seasonData);
+  } catch (error) {
+    logger.error(`Landing scores materialization failed (scoring unaffected): ${error.message}`);
   }
 
   // Settle league prediction pools for the game day whose results just

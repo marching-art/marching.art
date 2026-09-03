@@ -181,7 +181,9 @@ exports.joinRookieLeague = onCall({ cors: true }, async (request) => {
       }],
       lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
     });
-    transaction.set(inviteRef, { leagueId: newLeagueRef.id });
+    // `create`: a colliding code fails the transaction instead of hijacking
+    // another league's invite (see helpers/leagueHelpers.js).
+    transaction.create(inviteRef, { leagueId: newLeagueRef.id });
     transaction.set(metaPrivateRef, { inviteCode });
     transaction.update(userProfileRef, {
       leagueIds: admin.firestore.FieldValue.arrayUnion(newLeagueRef.id),

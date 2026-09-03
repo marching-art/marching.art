@@ -577,4 +577,7 @@ module.exports = {
   archiveArticle: exports.archiveArticle,
   deleteArticle: exports.deleteArticle,
   regenerateArticleImage: exports.regenerateArticleImage,
+  // Pure guard, exported for tests only (not a Cloud Function; functions/
+  // index.js lists the callables explicitly).
+  assertArticlePath,
 };

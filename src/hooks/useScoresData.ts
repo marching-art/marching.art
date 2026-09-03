@@ -102,6 +102,8 @@ export interface UseScoresDataOptions {
    * the lazy recap view, which fetches single days via useDayRecapShows).
    */
   skipShows?: boolean;
+  /** False parks every query (zero reads) — e.g. a Dashboard tab whose data lives elsewhere. */
+  enabled?: boolean;
 }
 
 /** Recap-ish input for formatRecapDate (also accepts the Podium day shim). */
@@ -419,6 +421,7 @@ export const useScoresData = (options: UseScoresDataOptions = {}) => {
     classFilter = 'all',
     disableArchiveFallback = false,
     skipShows = false,
+    enabled = true,
   } = options;
 
   const currentSeasonUid = useSeasonStore((state) => state.seasonUid);
@@ -434,10 +437,13 @@ export const useScoresData = (options: UseScoresDataOptions = {}) => {
     (seasonId && seasonId !== currentSeasonUid) ||
     (fallbackSeasonId && fallbackSeasonId !== currentSeasonUid);
 
-  // Fetch available archived seasons (shared cache with Hall of Champions)
+  // Fetch available archived seasons (shared cache with Hall of Champions).
+  // Only the archive fallback needs them — the Dashboard opts out and used to
+  // pay this read on every visit for nothing.
   const { data: archivedSeasons = [] } = useQuery<SeasonChampions[]>({
     queryKey: queryKeys.archivedSeasons(),
     queryFn: getSeasonChampions,
+    enabled: enabled && !disableArchiveFallback,
   });
 
   // Fetch all recap days for the target season; React Query de-duplicates in-session refetches
@@ -463,7 +469,7 @@ export const useScoresData = (options: UseScoresDataOptions = {}) => {
   } = useQuery<SeasonStandings | null>({
     queryKey: queryKeys.seasonStandings(targetSeasonId ?? ''),
     queryFn: () => getSeasonStandings(targetSeasonId ?? ''),
-    enabled: !!targetSeasonId,
+    enabled: enabled && !!targetSeasonId,
     staleTime: isFetchingCurrentSeason ? 60 * 60 * 1000 : Infinity,
     gcTime: 60 * 60 * 1000,
   });
@@ -490,7 +496,8 @@ export const useScoresData = (options: UseScoresDataOptions = {}) => {
   // the standings query is still in flight the download stays parked —
   // firing it eagerly would re-download the whole season in parallel and
   // defeat the point on every cold load.
-  const recapsEnabled = !!targetSeasonId && (!skipShows || (!standingsLoading && !standingsUsable));
+  const recapsEnabled =
+    enabled && !!targetSeasonId && (!skipShows || (!standingsLoading && !standingsUsable));
   const {
     data: rawRecaps,
     isLoading: recapsLoading,

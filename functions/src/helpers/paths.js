@@ -35,6 +35,11 @@ const paths = {
   // Uniform Studio wardrobe: saved v2 designs, owner-read via the rules
   // catch-all, written only by the wardrobe callables.
   userWardrobe: (uid) => `artifacts/${ns()}/users/${uid}/wardrobe`,
+  // Public, world-readable: the pool corps' ranked score history the landing /
+  // news "Live Scores" box reads as ONE doc (helpers/landingScoresMaterializer.js).
+  landingScores: (seasonUid) => `landing_scores/${seasonUid}`,
+  // The season's caption-option pool (corpsValues) — top-level, world-readable.
+  dciData: (dataDocId) => `dci-data/${dataDocId}`,
   userWardrobeDesign: (uid, designId) => `artifacts/${ns()}/users/${uid}/wardrobe/${designId}`,
   // Uniform codes: world-readable design snapshots minted by mintUniformCode
   // (pure structured data — safe to serve to anyone; writes are server-only).

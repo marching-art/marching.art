@@ -404,7 +404,7 @@ function App() {
                       path="/podium/preview"
                       element={
                         user ? (
-                          <Navigate to="/dashboard" />
+                          <Navigate to="/dashboard" replace />
                         ) : (
                           <Suspense fallback={<LoadingScreen fullScreen />}>
                             <Page name="Podium Preview">
@@ -418,7 +418,7 @@ function App() {
                       path="/forgot-password"
                       element={
                         user ? (
-                          <Navigate to="/dashboard" />
+                          <Navigate to="/dashboard" replace />
                         ) : (
                           <Suspense fallback={<LoadingScreen fullScreen />}>
                             <Page name="Password Reset">
@@ -463,7 +463,7 @@ function App() {
                       path="/preview"
                       element={
                         user ? (
-                          <Navigate to="/dashboard" />
+                          <Navigate to="/dashboard" replace />
                         ) : (
                           <Suspense fallback={<DashboardSkeleton />}>
                             <Page name="Preview">

@@ -105,7 +105,8 @@ describe("foldPairsIntoStandings", () => {
 
   test("a bye never outranks a played result", () => {
     // Odd league: alice gets the bye, bob beats carol. Bob (1-0) must lead
-    // alice (0-0, one bye) — the bye rotation cannot decide the table.
+    // alice (0-0, one bye) — the bye rotation cannot decide the table. Carol
+    // (0-1) sits above alice only on the points-for tiebreak: she played.
     const { standings } = foldPairsIntoStandings(
       { alice: {}, bob: {}, carol: {} },
       [
@@ -113,9 +114,10 @@ describe("foldPairsIntoStandings", () => {
         { player1: "bob", player2: "carol", player1Score: 80, player2Score: 70, winner: "bob", completed: true },
       ]
     );
-    assert.deepEqual(standings.map((row) => row.uid), ["bob", "alice", "carol"]);
-    assert.equal(standings[1].byes, 1);
-    assert.equal(standings[1].wins, 0);
+    assert.deepEqual(standings.map((row) => row.uid), ["bob", "carol", "alice"]);
+    const alice = standings.find((row) => row.uid === "alice");
+    assert.equal(alice.byes, 1);
+    assert.equal(alice.wins, 0);
   });
 
   test("incomplete pairs are ignored", () => {

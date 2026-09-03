@@ -562,6 +562,13 @@ match /game-settings/{docId} {
   allow write: if isAdmin();
 }
 
+// Materialized landing/news "Live Scores" ranking — one small doc per season,
+// written by the nightly scoring run (helpers/landingScoresMaterializer.js).
+match /landing_scores/{seasonUid} {
+  allow read: if true;
+  allow write: if false; // Backend only
+}
+
 match /dci-data/{docId} {
   allow read: if true;
   allow write: if isAdmin();

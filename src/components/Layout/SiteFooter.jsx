@@ -16,50 +16,59 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { DISCORD_URL } from '../../utils/siteLinks';
 import { APP_CONFIG } from '../../config';
+import { usePodiumEnabled } from '../../hooks/useFeatures';
 
 // /results is served by a Cloud Function via a hosting rewrite, NOT by the SPA
 // router — a <Link> would be intercepted client-side and fall through to the
 // 404 route. It has to be a real anchor so the browser does a full navigation.
-const SiteFooter = ({ className = '' }) => (
-  <footer className={`border-t border-line mt-8 ${className}`}>
-    <div className="max-w-3xl mx-auto px-4 py-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-muted">
-      <Link to="/" className="hover:text-white transition-colors">
-        Home
-      </Link>
-      <Link to="/how-to-play" className="hover:text-white transition-colors">
-        How to Play
-      </Link>
-      <Link to="/podium-guide" className="hover:text-white transition-colors">
-        Podium Guide
-      </Link>
-      <Link to="/hall-of-champions" className="hover:text-white transition-colors">
-        Hall of Champions
-      </Link>
-      <Link to="/updates" className="hover:text-white transition-colors">
-        What&apos;s New
-      </Link>
-      <a href="/results" className="hover:text-white transition-colors">
-        Results
-      </a>
-      <a
-        href={DISCORD_URL}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="hover:text-white transition-colors"
-      >
-        Discord
-      </a>
-      <a href={`mailto:${APP_CONFIG.supportEmail}`} className="hover:text-white transition-colors">
-        Support
-      </a>
-      <Link to="/privacy" className="hover:text-white transition-colors">
-        Privacy
-      </Link>
-      <Link to="/terms" className="hover:text-white transition-colors">
-        Terms
-      </Link>
-    </div>
-  </footer>
-);
+const SiteFooter = ({ className = '' }) => {
+  const podiumEnabled = usePodiumEnabled();
+  return (
+    <footer className={`border-t border-line mt-8 ${className}`}>
+      <div className="max-w-3xl mx-auto px-4 py-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-muted">
+        <Link to="/" className="hover:text-white transition-colors">
+          Home
+        </Link>
+        <Link to="/how-to-play" className="hover:text-white transition-colors">
+          How to Play
+        </Link>
+        {podiumEnabled && (
+          <Link to="/podium-guide" className="hover:text-white transition-colors">
+            Podium Guide
+          </Link>
+        )}
+        <Link to="/hall-of-champions" className="hover:text-white transition-colors">
+          Hall of Champions
+        </Link>
+        <Link to="/updates" className="hover:text-white transition-colors">
+          What&apos;s New
+        </Link>
+        <a href="/results" className="hover:text-white transition-colors">
+          Results
+        </a>
+        <a
+          href={DISCORD_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:text-white transition-colors"
+        >
+          Discord
+        </a>
+        <a
+          href={`mailto:${APP_CONFIG.supportEmail}`}
+          className="hover:text-white transition-colors"
+        >
+          Support
+        </a>
+        <Link to="/privacy" className="hover:text-white transition-colors">
+          Privacy
+        </Link>
+        <Link to="/terms" className="hover:text-white transition-colors">
+          Terms
+        </Link>
+      </div>
+    </footer>
+  );
+};
 
 export default SiteFooter;

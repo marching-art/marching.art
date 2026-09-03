@@ -75,6 +75,8 @@ export const queryKeys = {
   // Bounded variant: the N most recent recap days (ticker / Dashboard recent
   // results). Nested under the 'fantasyRecaps' prefix so invalidating
   // ['fantasyRecaps', seasonUid] hits both the full archive and this entry.
+  // landing_scores/{seasonUid}: the nightly materialized Live Scores ranking.
+  landingScores: (seasonUid: string) => ['landingScores', seasonUid] as const,
   fantasyRecapsRecent: (seasonUid: string, days: number) =>
     ['fantasyRecaps', seasonUid, 'recent', days] as const,
   // Single-day variant (the Scores page's lazy recap view) — nested under the

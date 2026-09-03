@@ -313,6 +313,8 @@ export const paths = {
   season: () => `game-settings/season`,
   // Feature flags (hooks/useFeatures) — public read, admin write.
   features: () => `game-settings/features`,
+  // Materialized landing/news Live Scores ranking (backend-written, public read).
+  landingScores: (seasonUid: string) => `landing_scores/${seasonUid}`,
 
   // Fantasy recaps (parent doc for metadata)
   fantasyRecaps: (seasonUid: string) => `fantasy_recaps/${seasonUid}`,

@@ -455,13 +455,15 @@ describe("processWeeklyMatchups", () => {
 
     await processWeeklyMatchups(3, seasonData, db);
 
-    // Bye counts as a standings win, but pays no CC/XP and creates no
+    // A bye is folded into standings as a NON-game (recorded as a bye, never a
+    // win — helpers/leagueStandings.js), pays no CC/XP and creates no
     // matchup_result event (nothing was "decided")
     const standingsWrite = writes.find(
       (w) => w.path === standingsPath && w.data?.records
     );
     assert.ok(standingsWrite, "the bye should be folded into standings");
-    assert.equal(standingsWrite.data.records.erin.wins, 1);
+    assert.equal(standingsWrite.data.records.erin.byes, 1);
+    assert.equal(standingsWrite.data.records.erin.wins, 0);
     assert.equal(writes.filter((w) => w.data?.corpsCoin !== undefined).length, 0);
     assert.equal(writes.filter((w) => w.path.includes("/activity/")).length, 0);
   });

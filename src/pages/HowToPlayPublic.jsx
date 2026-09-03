@@ -22,6 +22,7 @@ import {
   Medal,
 } from 'lucide-react';
 import { useSEO } from '../hooks/useSEO';
+import { usePodiumEnabled } from '../hooks/useFeatures';
 import { CAPTIONS, CLASSES, GLOSSARY, FAQ, RATINGS, SCORING_MODEL } from './howToPlayData';
 import { Heading } from '../components/ui';
 
@@ -66,6 +67,8 @@ const SectionHeading = ({ icon: Icon, children }) => (
 // page used to carry its own one-off header and footer, which is exactly the
 // drift PublicShell exists to prevent.
 const HowToPlayPublic = () => {
+  // Podium marketing only while the game is switched on (game-settings/features).
+  const podiumEnabled = usePodiumEnabled();
   useSEO({
     title: 'How to Play Fantasy Drum Corps — Free DCI Fantasy Game | marching.art',
     description:
@@ -268,25 +271,27 @@ const HowToPlayPublic = () => {
           </div>
         </section>
 
-        {/* Podium Class */}
-        <section className="mb-10">
-          <SectionHeading icon={Trophy}>
-            Prefer to Run a Corps? Try the Podium Division
-          </SectionHeading>
-          <p className="text-sm text-secondary mb-4">
-            The Podium Division flips the game. Instead of drafting caption performances, you found
-            your own drum corps and earn every point — running rehearsals day by day, routing a
-            summer tour, managing money and morale, and climbing from Community Corps all the way to
-            Champion Status. It is always open and always free to play.
-          </p>
-          <Link
-            to="/podium-guide"
-            className="inline-flex items-center gap-2 min-h-[44px] px-5 border border-interactive/50 text-interactive font-bold text-sm uppercase tracking-wider rounded-none hover:bg-interactive/10 transition-colors"
-          >
-            Read the Podium Guide
-            <ChevronRight className="w-4 h-4" />
-          </Link>
-        </section>
+        {/* Podium Class — flag-gated, see podiumEnabled above */}
+        {podiumEnabled && (
+          <section className="mb-10">
+            <SectionHeading icon={Trophy}>
+              Prefer to Run a Corps? Try the Podium Division
+            </SectionHeading>
+            <p className="text-sm text-secondary mb-4">
+              The Podium Division flips the game. Instead of drafting caption performances, you
+              found your own drum corps and earn every point — running rehearsals day by day,
+              routing a summer tour, managing money and morale, and climbing from Community Corps
+              all the way to Champion Status. It is always open and always free to play.
+            </p>
+            <Link
+              to="/podium-guide"
+              className="inline-flex items-center gap-2 min-h-[44px] px-5 border border-interactive/50 text-interactive font-bold text-sm uppercase tracking-wider rounded-none hover:bg-interactive/10 transition-colors"
+            >
+              Read the Podium Guide
+              <ChevronRight className="w-4 h-4" />
+            </Link>
+          </section>
+        )}
 
         {/* Leagues */}
         <section className="mb-10">

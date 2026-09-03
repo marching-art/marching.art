@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-09-03-faster-pages-safer-invites-full-deletion",
+    "date": "2026-09-03",
+    "title": "Faster home and dashboard, sturdier league invites, and account deletion that finishes",
+    "category": "improvement",
+    "summary": "The home page's Live Scores box and the dashboard now load from a few small documents instead of re-downloading whole seasons of results, so they appear faster and refresh less often in the background. League invite codes are longer and can never collide with another league's. Deleting your account now removes everything stored under it in one pass, including for very active accounts where it used to fail part-way.",
+    "highlights": [
+      "The league activity feed loads again for everyone — it had been silently empty on some accounts.",
+      "Form errors on sign in, sign up, and password reset are announced to screen readers and tied to the field.",
+      "Back navigation no longer bounces you between the dashboard and a redirect page.",
+      "An invite or share link you were carrying through sign-up survives a page reload.",
+      "The caption picker's footnote now states the real draft-pool cost cap.",
+      "Podium Division links and marketing appear only while the Podium game is open."
+    ]
+  },
+  {
     "id": "2026-09-03-streak-freeze-byes-notifications",
     "date": "2026-09-03",
     "title": "Streak Freeze works as promised, byes stop counting as wins, and notifications say what they mean",

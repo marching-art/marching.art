@@ -111,6 +111,13 @@ const Dashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const dashboardData = useDashboardData();
+  // Rank/score for the active corps and the class recaps the Season Ledger
+  // joins placements from. The ranked classes are served from the materialized
+  // standings docs (which only cover classFilter 'all' — a class-specific
+  // filter used to force the full recap archive on every Dashboard visit and
+  // discard the standings); SoundSport is never in standings, so it keeps the
+  // class filter and the recap read. The Podium tab needs none of this.
+  const dashboardClassKey = dashboardData.activeCorpsClass || 'all';
   const {
     aggregatedScores,
     allShows,
@@ -118,8 +125,8 @@ const Dashboard = () => {
   } = useScoresData({
     // Dashboard should only show current season data, not fall back to archived seasons
     disableArchiveFallback: true,
-    // Filter to active corps class to include SoundSport scores (excluded by default with 'all')
-    classFilter: dashboardData.activeCorpsClass || 'all',
+    classFilter: dashboardClassKey === 'soundSport' ? 'soundSport' : 'all',
+    enabled: dashboardClassKey !== 'podiumClass',
   });
   const { data: myLeagues } = useMyLeagues(user?.uid);
   // Narrow per-field selectors (not a bare useSeasonStore()) so this heavy page

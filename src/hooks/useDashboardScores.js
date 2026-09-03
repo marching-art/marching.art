@@ -10,10 +10,10 @@
 import { useMemo } from 'react';
 import { useQuery, useQueries } from '@tanstack/react-query';
 import {
-  getSeasonRecaps,
   getHistoricalScoresForYear,
   getRecentPodiumRecaps,
   RECENT_RECAP_DAYS,
+  getRecentSeasonRecaps,
 } from '../api/season';
 import { queryKeys } from '../lib/queryClient';
 import { CAPTIONS } from '../components/Dashboard';
@@ -114,6 +114,15 @@ export function useLineupScores(lineup, currentDay, activeCorpsClass) {
 }
 
 /**
+ * The director's last few results (up to 5) for the Recent Results box.
+ *
+ * Reads the BOUNDED most-recent-days recap query — the same cache entry the
+ * always-mounted ticker and useDashboardData observe, at the same staleTime.
+ * It used to observe the full-archive key (every recap day of the season) at
+ * a 5-minute staleTime, which overrode the 60-minute window useScoresData
+ * sets on that key and re-downloaded the whole season twelve times an hour
+ * from the most-visited route (SITE_REVIEW_2026-09 F-H2).
+ *
  * @param {DirectorUser} user
  * @param {SeasonDoc} seasonData
  * @param {string} activeCorpsClass
@@ -124,11 +133,9 @@ export function useRecentResults(user, seasonData, activeCorpsClass, currentDay)
   const enabled = !!user?.uid && !!seasonUid && !!activeCorpsClass && !!currentDay;
   const effectiveDay = useRevealedDay(currentDay);
 
-  // Same cache entry as the Scores page's full-archive fetch (which the
-  // Dashboard already mounts via useScoresData, so this costs no extra reads)
   const { data: recaps } = useQuery({
-    queryKey: queryKeys.fantasyRecaps(seasonUid ?? ''),
-    queryFn: () => getSeasonRecaps(seasonUid ?? ''),
+    queryKey: queryKeys.fantasyRecapsRecent(seasonUid ?? '', RECENT_RECAP_DAYS),
+    queryFn: () => getRecentSeasonRecaps(seasonUid ?? '', RECENT_RECAP_DAYS),
     enabled,
     staleTime: SCORES_STALE_TIME,
   });

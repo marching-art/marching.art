@@ -11,17 +11,22 @@ const {
   buildPairingHistory,
   recordPairingsInHistory,
   invitationId,
+  INVITE_CODE_ALPHABET,
+  INVITE_CODE_LENGTH,
 } = require("./leagueHelpers");
 
 describe("generateUniqueInviteCode", () => {
-  test("produces a 6-char uppercase hex code", () => {
+  test("produces an 8-char code from the look-alike-free alphabet", () => {
     const code = generateUniqueInviteCode("user-123");
-    assert.match(code, /^[0-9A-F]{6}$/);
+    assert.equal(code.length, INVITE_CODE_LENGTH);
+    assert.match(code, new RegExp(`^[${INVITE_CODE_ALPHABET}]{${INVITE_CODE_LENGTH}}$`));
+    // 0/O and 1/I/L are never minted — a code read aloud survives.
+    assert.doesNotMatch(INVITE_CODE_ALPHABET, /[01OIL]/);
   });
 
-  test("codes differ across calls (timestamp/random salted)", () => {
-    const codes = new Set(Array.from({ length: 20 }, () => generateUniqueInviteCode("u")));
-    assert.ok(codes.size > 1);
+  test("codes are random: no repeats across a large sample", () => {
+    const codes = new Set(Array.from({ length: 2000 }, () => generateUniqueInviteCode("u")));
+    assert.equal(codes.size, 2000);
   });
 });
 

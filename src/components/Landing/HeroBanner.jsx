@@ -6,6 +6,7 @@
  * Matches the data-terminal dark theme without marketing fluff.
  */
 
+import { usePodiumEnabled } from '../../hooks/useFeatures';
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { m, AnimatePresence } from 'framer-motion';
@@ -22,6 +23,7 @@ import { useUrgencyTriggers } from '../../hooks/useUrgencyTriggers';
  * @param {{ onDismiss?: () => void }} props
  */
 const HeroBanner = ({ onDismiss }) => {
+  const podiumEnabled = usePodiumEnabled();
   const { primary } = useUrgencyTriggers();
 
   return (
@@ -105,28 +107,33 @@ const HeroBanner = ({ onDismiss }) => {
             </p>
 
             {/* Two ways to play — the site is genuinely two games, so name both
-                up front and let a new visitor start with either. */}
-            <div className="grid sm:grid-cols-2 gap-3 mb-6">
-              <Link
-                to="/podium-guide"
-                className="group flex items-start gap-3 p-3 bg-surface-sunken border border-line rounded-none hover:border-line-strong transition-colors press-feedback"
-              >
-                <div
-                  className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-none"
-                  style={{ backgroundColor: 'rgba(201,162,39,0.13)' }}
+                up front and let a new visitor start with either. The Podium
+                card only appears while the Podium game is switched on
+                (game-settings/features.podiumClass): marketing a game a new
+                director cannot then find is worse than one column. */}
+            <div className={`grid gap-3 mb-6 ${podiumEnabled ? 'sm:grid-cols-2' : ''}`}>
+              {podiumEnabled && (
+                <Link
+                  to="/podium-guide"
+                  className="group flex items-start gap-3 p-3 bg-surface-sunken border border-line rounded-none hover:border-line-strong transition-colors press-feedback"
                 >
-                  <Medal className="w-4 h-4" style={{ color: '#c9a227' }} />
-                </div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-1 text-sm font-bold text-white">
-                    Podium Division
-                    <ChevronRight className="w-3.5 h-3.5 text-muted group-hover:translate-x-0.5 transition-transform" />
+                  <div
+                    className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-none"
+                    style={{ backgroundColor: 'rgba(201,162,39,0.13)' }}
+                  >
+                    <Medal className="w-4 h-4" style={{ color: '#c9a227' }} />
                   </div>
-                  <p className="text-xs text-muted mt-0.5">
-                    Found and run your own corps — a full season simulation.
-                  </p>
-                </div>
-              </Link>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1 text-sm font-bold text-white">
+                      Podium Division
+                      <ChevronRight className="w-3.5 h-3.5 text-muted group-hover:translate-x-0.5 transition-transform" />
+                    </div>
+                    <p className="text-xs text-muted mt-0.5">
+                      Found and run your own corps — a full season simulation.
+                    </p>
+                  </div>
+                </Link>
+              )}
               <Link
                 to="/how-to-play"
                 className="group flex items-start gap-3 p-3 bg-surface-sunken border border-line rounded-none hover:border-line-strong transition-colors press-feedback"

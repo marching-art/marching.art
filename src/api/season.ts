@@ -329,6 +329,44 @@ export async function getDciDataDoc(docId: string): Promise<DocumentData | null>
   return snap.exists() ? snap.data() : null;
 }
 
+// =============================================================================
+// LANDING SCORES — materialized nightly (functions/src/helpers/
+// landingScoresMaterializer.js). One public doc per season with each ranked
+// corps' per-day score history, so the landing/news Live Scores box no longer
+// fans out to every historical year the pool references.
+// =============================================================================
+
+export interface LandingScoresHistoryEntry {
+  day: number;
+  totalScore: number;
+  eventName: string | null;
+}
+
+export interface LandingScoresCorps {
+  corpsName: string;
+  sourceYear: string;
+  points: number | null;
+  /** Chronological (day ascending), non-zero scores only. */
+  history: LandingScoresHistoryEntry[];
+}
+
+export interface LandingScoresDoc {
+  seasonUid: string;
+  status: string | null;
+  generatedAt: string;
+  lastDay: number;
+  corps: LandingScoresCorps[];
+}
+
+/**
+ * The materialized landing ranking for a season, or null when the pipeline
+ * has not written one yet (callers fall back to the per-year fan-out).
+ */
+export async function getLandingScores(seasonUid: string): Promise<LandingScoresDoc | null> {
+  const snap = await getDoc(doc(db, paths.landingScores(seasonUid)));
+  return snap.exists() ? (snap.data() as LandingScoresDoc) : null;
+}
+
 /**
  * Fetch the scraped event array for a single year from historical_scores.
  * Reads the per-event `events` subcollection (the current sharded format) and
