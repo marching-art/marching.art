@@ -8,9 +8,11 @@
  * exceed the remaining budget.
  */
 
-import React from 'react';
+import React, { useRef } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
 import { X, Check, Sparkles } from 'lucide-react';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 const STARTER_BUDGET = 90; // SOUNDSPORT_POINT_LIMIT — the budget onboarding drafts under
 
@@ -39,6 +41,12 @@ const GuestLineupPicker = ({
   onClose,
   onComplete,
 }) => {
+  // Hooks before the early return: a dialog with no Escape and no focus trap
+  // let Tab wander into the obscured page behind it.
+  const dialogRef = useRef(null);
+  useEscapeKey(onClose, isOpen);
+  useFocusTrap(dialogRef, isOpen);
+
   if (!caption) return null;
 
   const usedPoints = Object.values(lineup || {}).reduce((sum, val) => {
@@ -80,6 +88,7 @@ const GuestLineupPicker = ({
             transition={{ duration: 0.2, ease: 'easeOut' }}
             className="bg-surface-card border border-line rounded-none w-full max-w-md max-h-[85dvh] flex flex-col overflow-hidden"
             onClick={(e) => e.stopPropagation()}
+            ref={dialogRef}
             role="dialog"
             aria-modal="true"
             aria-labelledby="guest-picker-title"

@@ -287,7 +287,8 @@ const ShowdayStrip = ({
             {weather?.summary && (
               <span className="flex items-center gap-1">
                 <Thermometer className="w-3 h-3" />
-                {typeof weather.tempF === 'number' ? `${Math.round(weather.tempF)}°F ` : ''}
+                {/* The summary already carries the temperature
+                    ("clear skies, 95°F") — don't prefix it a second time. */}
                 {weather.summary}
               </span>
             )}

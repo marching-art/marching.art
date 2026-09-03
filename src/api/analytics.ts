@@ -1,28 +1,111 @@
 // =============================================================================
 // ANALYTICS UTILITIES
 // =============================================================================
-// Safe analytics logging that gracefully handles ad blockers
+// Safe analytics logging that gracefully handles ad blockers — and, more
+// importantly, consent. Google Analytics is NOT initialised on import: the
+// Privacy policy promises analytics cookies are consent-based, so the SDK is
+// only created once the visitor allows it (utils/analyticsConsent) and
+// collection is switched off again the moment they withdraw. Events logged
+// before consent are dropped, never queued.
+//
 // Usage: import { analytics } from '@/api/analytics';
 
-import { getAnalytics, logEvent, isSupported, Analytics } from 'firebase/analytics';
+import type { Analytics } from 'firebase/analytics';
 import { app } from './client';
+import { FEATURE_FLAGS, FIREBASE_CONFIG } from '../config';
+import { isAnalyticsAllowed, subscribeAnalyticsConsent } from '../utils/analyticsConsent';
 
 // =============================================================================
-// ANALYTICS INITIALIZATION
+// ANALYTICS INITIALIZATION (consent-gated)
 // =============================================================================
+// `firebase/analytics` is imported dynamically, so the SDK (and its slice of
+// @firebase/*) is not part of the first-paint bundle at all — it downloads the
+// first time a visitor consents (or on a later visit when consent is stored).
+// vite.config.js keeps it out of the eager vendor-firebase chunk for the same
+// reason.
+
+type AnalyticsSdk = typeof import('firebase/analytics');
 
 let analyticsInstance: Analytics | null = null;
+let sdk: AnalyticsSdk | null = null;
+let collecting = false;
+let initializing: Promise<void> | null = null;
+/** isSupported() is answered once per page; an unsupported browser stays so. */
+let unsupported = false;
 
-// Initialize analytics only if supported (handles ad blockers gracefully)
-isSupported()
-  .then((supported) => {
-    if (supported) {
-      analyticsInstance = getAnalytics(app);
+/** Builds without a measurement id (local dev, forks) have nothing to report to. */
+const configured = Boolean(FEATURE_FLAGS.analytics && FIREBASE_CONFIG.measurementId);
+
+/**
+ * Bring the SDK in line with the current consent: create it (once) and enable
+ * collection when allowed; disable collection when withdrawn. Idempotent and
+ * safe to call from any consent change.
+ */
+export async function syncAnalyticsWithConsent(): Promise<void> {
+  if (!configured) return;
+
+  if (!isAnalyticsAllowed()) {
+    if (analyticsInstance && sdk && collecting) {
+      collecting = false;
+      try {
+        sdk.setAnalyticsCollectionEnabled(analyticsInstance, false);
+      } catch {
+        // Nothing to do — collection was best-effort to begin with.
+      }
     }
-  })
-  .catch(() => {
-    // Analytics not supported or blocked - fail silently
-  });
+    return;
+  }
+
+  if (!analyticsInstance) {
+    if (unsupported) return;
+    if (!initializing) {
+      initializing = import('firebase/analytics')
+        .then(async (loaded) => {
+          sdk = loaded;
+          const supported = await loaded.isSupported();
+          if (!supported) {
+            unsupported = true;
+            return;
+          }
+          // Re-check: consent may have been withdrawn while we awaited.
+          if (isAnalyticsAllowed()) {
+            analyticsInstance = loaded.getAnalytics(app);
+          }
+        })
+        .catch(() => {
+          // Analytics not supported, blocked, or the chunk failed to load -
+          // fail silently
+        })
+        .finally(() => {
+          initializing = null;
+        });
+    }
+    await initializing;
+  }
+
+  if (analyticsInstance && sdk && !collecting) {
+    collecting = true;
+    try {
+      sdk.setAnalyticsCollectionEnabled(analyticsInstance, true);
+    } catch {
+      // Best-effort.
+    }
+  }
+}
+
+subscribeAnalyticsConsent(() => {
+  void syncAnalyticsWithConsent();
+});
+void syncAnalyticsWithConsent();
+
+/** Test seam. */
+export function _resetAnalyticsForTesting(): void {
+  analyticsInstance = null;
+  sdk = null;
+  collecting = false;
+  initializing = null;
+  unsupported = false;
+}
 
 // =============================================================================
 // SAFE LOGGING
@@ -30,12 +113,12 @@ isSupported()
 
 /**
  * Safely log an analytics event
- * Silently fails if analytics is blocked or unavailable
+ * Silently fails if analytics is blocked, unavailable, or not consented to
  */
 function safeLogEvent(eventName: string, eventParams?: Record<string, unknown>): void {
-  if (analyticsInstance) {
+  if (analyticsInstance && sdk && collecting) {
     try {
-      logEvent(analyticsInstance, eventName, eventParams);
+      sdk.logEvent(analyticsInstance, eventName, eventParams);
     } catch {
       // Silently ignore analytics errors (e.g., ad blockers)
     }

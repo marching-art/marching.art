@@ -20,7 +20,7 @@ import {
   evaluateAchievements,
 } from '../data/achievementsCatalog';
 
-// Rarity styling — matches AchievementModal / AchievementMini so a badge looks
+// Rarity styling — matches AchievementMini so a badge looks
 // the same everywhere it appears.
 /** @type {Record<string, {border: string, bg: string, text: string, badge: string}>} */
 const RARITY_STYLES = {

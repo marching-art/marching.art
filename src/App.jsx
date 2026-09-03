@@ -16,7 +16,6 @@ import {
   ProfilePageSkeleton,
   GalleryPageSkeleton,
 } from './components/Skeleton';
-import GameShell from './components/Layout/GameShell';
 import PublicShell from './components/Layout/PublicShell';
 import RouteAnalytics from './components/RouteAnalytics';
 import { useSEO } from './hooks/useSEO';
@@ -29,10 +28,6 @@ import {
 import { useAppBootstrap } from './hooks/useAppBootstrap';
 import { useProfileStore } from './store/profileStore';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
-import UsernamePromptModal from './components/modals/UsernamePromptModal';
-import { CelebrationContainer } from './components/Celebration';
-import { XPFeedbackContainer } from './components/XPFeedback';
-import { LevelUpCelebrationContainer } from './components/LevelUpCelebration';
 import ErrorBoundary from './components/ErrorBoundary';
 import { PageErrorBoundary } from './components/PageErrorBoundary';
 import { ThemeProvider } from './context/ThemeContext';
@@ -40,12 +35,33 @@ import { AuthContext, useAuth } from './context/AuthContext';
 import { BMAC_URL } from './utils/supporterTiers';
 import { MotionProvider } from './components/MotionProvider';
 import OfflineBanner from './components/OfflineBanner';
+import AnalyticsConsentBanner from './components/AnalyticsConsentBanner';
 import { SkipToContent, RouteChangeFocus } from './components/a11y';
 import { lazyWithRetry } from './utils/lazyWithRetry';
 
 // Lazy load pages for better performance.
 // lazyWithRetry auto-reloads once on stale-chunk errors after a new deploy
 // (old hashed chunks 404 -> "Failed to fetch dynamically imported module").
+// The signed-in shell (header, ticker, bottom nav, notification panel) and the
+// signed-in-only overlays are lazy too: a visitor on `/`, an article or the
+// guide never needs them, and they were ~50 kB min of the eager index chunk.
+const GameShellChunk = lazyWithRetry(() => import('./components/Layout/GameShell'), 'GameShell');
+const AuthedOverlays = lazyWithRetry(
+  () => import('./components/Layout/AuthedOverlays'),
+  'AuthedOverlays'
+);
+
+/**
+ * Drop-in for the shell: every route keeps writing `<GameShell>` while the
+ * chunk loads behind one Suspense boundary here.
+ * @param {{ children: React.ReactNode }} props
+ */
+const GameShell = ({ children }) => (
+  <Suspense fallback={<LoadingScreen fullScreen />}>
+    <GameShellChunk>{children}</GameShellChunk>
+  </Suspense>
+);
+
 const Dashboard = lazyWithRetry(() => import('./pages/Dashboard'), 'Dashboard');
 const Schedule = lazyWithRetry(() => import('./pages/Schedule'), 'Schedule');
 const Scores = lazyWithRetry(() => import('./pages/Scores'), 'Scores');
@@ -101,6 +117,15 @@ const PublicPage = ({ name, children, ...shellProps }) => (
 // Auth context + useAuth hook live in ./context/AuthContext so this file only
 // exports components (keeps Vite fast refresh working).
 
+// A crawler that reaches an auth-walled route sees a loader and then the
+// homepage redirect; without this it indexed that spinner under the homepage
+// title. Rendered only while the wall is up — once the page renders it sets
+// its own metadata, and this unmounts (its cleanup clears the robots tag).
+const AuthWallMeta = () => {
+  useSEO({ noindex: true });
+  return null;
+};
+
 // Protected Route Component
 // requireProfile: when true (default), an authenticated user who has no profile
 // yet is redirected to onboarding. This prevents profile-less users from reaching
@@ -130,11 +155,21 @@ const ProtectedRoute = ({ children, requireProfile = true }) => {
   }, [loading, user, profile, location]);
 
   if (loading) {
-    return <LoadingScreen />;
+    return (
+      <>
+        <AuthWallMeta />
+        <LoadingScreen />
+      </>
+    );
   }
 
   if (!user) {
-    return <Navigate to="/" state={{ from: location }} replace />;
+    return (
+      <>
+        <AuthWallMeta />
+        <Navigate to="/" state={{ from: location }} replace />
+      </>
+    );
   }
 
   if (requireProfile) {
@@ -287,6 +322,10 @@ function App() {
                 {/* Offline Banner - Shows when network is unavailable */}
                 <OfflineBanner />
 
+                {/* Google Analytics is consent-based (Privacy §7): asked once
+                    per browser, off until answered, changeable in Settings */}
+                <AnalyticsConsentBanner />
+
                 {/* Global Toast Notifications - Mobile aware positioning */}
                 {/* ARIA live region for screen reader accessibility (WCAG 4.1.3) */}
                 <div role="region" aria-live="polite" aria-atomic="true" aria-label="Notifications">
@@ -333,17 +372,13 @@ function App() {
                     the component handles dismissal memory + installed state */}
                 <PWAInstallPrompt />
 
-                {/* Username Prompt Modal - shows for existing users without username */}
-                {user && <UsernamePromptModal />}
-
-                {/* Celebration System - for achievements and level ups */}
-                <CelebrationContainer />
-
-                {/* XP/CC Floating Feedback - for gains throughout the app */}
-                <XPFeedbackContainer />
-
-                {/* Level Up Celebration - full-screen animation on level up */}
-                <LevelUpCelebrationContainer />
+                {/* Signed-in-only overlays (username prompt, achievement / XP /
+                    level-up celebrations), lazy so guests never download them */}
+                {user && (
+                  <Suspense fallback={null}>
+                    <AuthedOverlays />
+                  </Suspense>
+                )}
 
                 <Suspense fallback={<LoadingScreen fullScreen />}>
                   <Routes>

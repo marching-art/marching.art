@@ -275,6 +275,41 @@ describe("archiveAndResetProfiles participation gate", () => {
     assert.deepEqual(aDetail.data.lineup, { GE1: "Phantom Regiment|2024" });
   });
 
+  test("a multi-corps director is paid ONE finish bonus, for their best result", async () => {
+    // Two participating corps, each the only entrant in its class (placement 1
+    // in both). Per-corps payment would be two champion bonuses.
+    const { db, writes } = makeFakeDb({
+      profiles: [
+        {
+          uid: "alice",
+          data: {
+            xp: 100,
+            corps: {
+              worldClass: participatingCorps(90),
+              openClass: participatingCorps(80),
+            },
+          },
+        },
+      ],
+    });
+
+    await archiveAndResetProfiles(db, "old-season", "new-season");
+
+    const update = writes.find(
+      (w) => w.type === "update" && w.path === profilePath("alice")
+    ).data;
+    const results = update.pendingSeasonRecap.results;
+    assert.equal(results.length, 2, "both corps keep their recap line");
+    assert.ok(results.every((r) => r.placement === 1));
+    const paidRows = results.filter((r) => r.coinBonus > 0);
+    assert.equal(paidRows.length, 1, "exactly one row carries the coin bonus");
+    assert.equal(results.filter((r) => r.xpBonus > 0).length, 1, "and one the XP");
+    assert.equal(update.pendingSeasonRecap.totalCoin, paidRows[0].coinBonus);
+    assert.equal(update.xp.operand, paidRows[0].xpBonus);
+    // One season completed, not two.
+    assert.equal(update.lifetimeStats.totalSeasons, 1);
+  });
+
   test("equipped uniforms survive rollover and stamp the Uniform History", async () => {
     const equipped = {
       designId: "d1",

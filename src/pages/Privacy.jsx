@@ -11,7 +11,7 @@ import { APP_CONFIG } from '../config';
 // codebase (see ARCHITECTURE.md and docs/INTEGRATIONS.md). When a new one is
 // added — a new vendor, a new signal the integrity job reads, a new place a
 // director's words are republished — add it here in the same change.
-const LAST_UPDATED = 'September 1, 2026';
+const LAST_UPDATED = 'September 3, 2026';
 
 const linkClass = 'text-interactive hover:text-interactive-hover underline';
 
@@ -57,7 +57,10 @@ const Privacy = () => {
             </ul>
             <p className="mt-2 text-sm">Information collected automatically:</p>
             <ul className="list-disc list-inside space-y-1 text-sm ml-2">
-              <li>Usage data (pages visited, features used) through Google Analytics.</li>
+              <li>
+                Usage data (pages visited, features used) through Google Analytics — only if you
+                allow it when asked, or later under Settings → Privacy.
+              </li>
               <li>Device information (browser type, operating system).</li>
               <li>
                 Activity that the game itself records: when you sign in, when you claim daily
@@ -89,6 +92,11 @@ const Privacy = () => {
               <li>
                 To recognize supporters (profile flair and the public Supporters wall, which you can
                 opt out of at any time).
+              </li>
+              <li>
+                To send you optional engagement email (digests, reminders, streak and win-back
+                notes). Every such email carries a one-click unsubscribe link that works without
+                signing in; you can also manage each type under Settings → Email.
               </li>
               <li>
                 To send you the notifications you have enabled: in-app, push, and email (score
@@ -159,7 +167,7 @@ const Privacy = () => {
                 Google Firebase (authentication, database, hosting, push notification delivery) and
                 Google Cloud (servers, logging, error reporting).
               </li>
-              <li>Google Analytics (usage measurement).</li>
+              <li>Google Analytics (usage measurement — only with your consent, section 7).</li>
               <li>Google Gemini / Imagen (generated avatars, images, and articles — section 3).</li>
               <li>Brevo (email delivery — digests and notifications you have enabled).</li>
               <li>Cloudinary (image hosting for avatars and share cards).</li>
@@ -221,9 +229,12 @@ const Privacy = () => {
               <li>Enable YouTube video playback functionality</li>
             </ul>
             <p className="text-sm mt-2">
-              When you watch YouTube videos embedded in our service, YouTube may set cookies on your
-              device. You can manage cookie preferences through your browser settings; the game
-              works without analytics cookies.
+              Analytics cookies are opt-in: Google Analytics does not load until you choose
+              &ldquo;Allow&rdquo; on the prompt shown on your first visit, and you can turn it off
+              at any time under Settings → Privacy (the choice is stored in this browser). When you
+              watch YouTube videos embedded in our service, YouTube may set cookies on your device.
+              You can manage cookie preferences through your browser settings; the game works
+              without analytics cookies.
             </p>
           </section>
 

@@ -106,15 +106,22 @@ function activeScoringFormat(leagueData, seasonUid) {
  * getWeekScore, which returns zeros for a director who did not compete) and
  * returns the stored `captions` block plus the matchup winner.
  *
+ * Each category compares the PER-SHOW AVERAGE of that caption group across the
+ * week (leagueScoring.js `perShow`), not the sum: summing let a director take
+ * every category by attending one more show than their opponent, whatever
+ * either lineup scored. The stored block carries those averages, on the
+ * per-show scale (GE out of 40, Visual and Music out of 30).
+ *
  * A category is never drawn: a tie in a caption resolves to whoever posted the
- * higher weekly TOTAL. Only when the totals are level too — the genuinely
- * dead-even matchup, and the 0-0 week where neither director competed — is a
- * category left undecided, and then the other two still decide the week.
+ * higher weekly AVERAGE, then the higher weekly total (the fuller week). Only
+ * when those are level too — the genuinely dead-even matchup, and the 0-0
+ * week where neither director competed — is a category left undecided, and
+ * then the other two still decide the week.
  *
  * @param {string} p1Uid
  * @param {string} p2Uid
- * @param {{score: number, ge: number, visual: number, music: number}} p1Week
- * @param {{score: number, ge: number, visual: number, music: number}} p2Week
+ * @param {{score: number, shows?: number, average?: number, ge: number, visual: number, music: number, perShow?: {ge: number, visual: number, music: number}}} p1Week
+ * @param {{score: number, shows?: number, average?: number, ge: number, visual: number, music: number, perShow?: {ge: number, visual: number, music: number}}} p2Week
  * @returns {{captions: Object, winner: string}} winner is a uid or "tie"
  */
 function resolveCaptionWars(p1Uid, p2Uid, p1Week, p2Week) {
@@ -124,16 +131,18 @@ function resolveCaptionWars(p1Uid, p2Uid, p1Week, p2Week) {
 
   const p1Total = Number(p1Week?.score) || 0;
   const p2Total = Number(p2Week?.score) || 0;
+  const p1Average = weeklyAverage(p1Week);
+  const p2Average = weeklyAverage(p2Week);
 
   for (const { key, field } of CAPTION_CATEGORIES) {
-    // `field` is one of the entry's own keys by construction; the casts only
-    // tell checkJs that, since it cannot follow the CAPTION_CATEGORIES table.
-    const p1 = Number(/** @type {any} */ (p1Week)?.[field]) || 0;
-    const p2 = Number(/** @type {any} */ (p2Week)?.[field]) || 0;
+    const p1 = categoryPerShow(p1Week, field);
+    const p2 = categoryPerShow(p2Week, field);
 
     let winner;
     if (p1 > p2) winner = p1Uid;
     else if (p2 > p1) winner = p2Uid;
+    else if (p1Average > p2Average) winner = p1Uid;
+    else if (p2Average > p1Average) winner = p2Uid;
     else if (p1Total > p2Total) winner = p1Uid;
     else if (p2Total > p1Total) winner = p2Uid;
     else winner = "tie";
@@ -149,6 +158,35 @@ function resolveCaptionWars(p1Uid, p2Uid, p1Week, p2Week) {
   else if (tally[p2Uid] > tally[p1Uid]) winner = p2Uid;
 
   return { captions, winner };
+}
+
+/**
+ * One caption group's per-show average for a week entry. Reads the folded
+ * `perShow` figure when the entry carries one; otherwise derives it from the
+ * sum and the show count, and treats a bare entry with no show count as
+ * already per-show.
+ *
+ * @param {any} week
+ * @param {string} field
+ */
+function categoryPerShow(week, field) {
+  const folded = Number(week?.perShow?.[field]);
+  if (Number.isFinite(folded)) return folded;
+  const sum = Number(week?.[field]) || 0;
+  const shows = Number(week?.shows) || 0;
+  return shows > 0 ? sum / shows : sum;
+}
+
+/**
+ * The week's per-show average total, derived the same way.
+ * @param {any} week
+ */
+function weeklyAverage(week) {
+  const folded = Number(week?.average);
+  if (Number.isFinite(folded)) return folded;
+  const total = Number(week?.score) || 0;
+  const shows = Number(week?.shows) || 0;
+  return shows > 0 ? total / shows : total;
 }
 
 /**

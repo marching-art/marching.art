@@ -118,10 +118,11 @@ uid is stored alongside the format rather than the format standing alone.
   pair: [uid1, uid2],
   scores:     { [uid1]: 178.2, [uid2]: 176.9 },   // unchanged — weekly totals
   shows:      { [uid1]: 2, [uid2]: 2 },           // unchanged
+  averages:   { [uid1]: 89.1, [uid2]: 88.45 },    // per-show averages (all formats)
   normalized: { [uid1]: 88.0, [uid2]: 74.5 },     // unchanged
   captions: {                                      // NEW, only when the format is on
-    ge:     { scores: { [uid1]: 76.1, [uid2]: 78.4 }, winner: uid2 },
-    visual: { scores: { [uid1]: 51.4, [uid2]: 49.9 }, winner: uid1 },
+    ge:     { scores: { [uid1]: 38.05, [uid2]: 39.2 }, winner: uid2 },  // per-show averages
+    visual: { scores: { [uid1]: 25.7, [uid2]: 24.95 }, winner: uid1 },
     music:  { scores: { [uid1]: 50.7, [uid2]: 48.6 }, winner: uid1 },
     tally:  { [uid1]: 2, [uid2]: 1 },
   },
@@ -191,11 +192,12 @@ In `processWeeklyMatchups`, when the league's format is Caption Wars:
 
 ```
 for each of [ge, visual, music]:
-    a = p1_week[cat], b = p2_week[cat]
+    a = p1_week.perShow[cat], b = p2_week.perShow[cat]   # per-show averages
     if a > b   → category to p1
     if b > a   → category to p2
-    if a === b → category to whoever has the higher WEEKLY TOTAL
-                 if the totals are equal too → category undecided ("tie")
+    if a === b → category to whoever has the higher WEEKLY AVERAGE,
+                 then the higher WEEKLY TOTAL (the fuller week)
+                 if those are equal too → category undecided ("tie")
 
 tally = categories held
 winner = the uid with the higher tally
@@ -357,8 +359,8 @@ draft — has to clear this bar first, and most of them cannot.
 number, each with a check by the winner, and the tally as the headline
 (`2–1`, `3–0`). `BattleBreakdown` already renders GE/Visual/Music, so it becomes
 the primary view rather than a detail expander. The weekly totals stay visible
-underneath — they are still what decides ties and still what feeds standings
-points.
+underneath — they still feed standings points and still break a tie once the
+averages are level.
 
 **StandingsTab.** One extra column, the category record (`14–7`), between the
 W-L-T record and the normalized column, matching the comparator order.
@@ -390,8 +392,11 @@ Backend, pure, no Firestore:
 
 - Weekly caption index sums across multiple shows in a week.
 - Every row of the §4.3 table.
-- Category tie resolving to the higher total; category tie _and_ total tie
-  leaving one undecided while the other two still decide the week.
+- Category tie resolving to the higher weekly average, then the higher total;
+  category tie _and_ level averages _and_ total tie leaving one undecided while
+  the other two still decide the week.
+- Each category compares per-show averages, so a director who attended one
+  more show than their opponent takes nothing on attendance alone.
 - 2-1 where the loser has the higher weekly total — the upset case, which is the
   one that proves the format is doing something.
 - A `"total"` league resolves identically before and after the change (a

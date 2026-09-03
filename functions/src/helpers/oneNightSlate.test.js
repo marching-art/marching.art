@@ -115,23 +115,23 @@ describe("activeScoringFormat", () => {
 });
 
 describe("decideHeadToHead with formats", () => {
-  // grinder plays twice (82 + 80 = 162, peak 82); peak plays once at 85.
+  // grinder plays twice (84 + 88: average 86, peak 88); steady plays once at 87.
   const index = () =>
     buildWeeklyScoreIndex([
       day([
-        { uid: "grinder", corpsClass: "worldClass", totalScore: 82 },
-        { uid: "peak", corpsClass: "worldClass", totalScore: 85 },
+        { uid: "grinder", corpsClass: "worldClass", totalScore: 84 },
+        { uid: "steady", corpsClass: "worldClass", totalScore: 87 },
       ]),
-      day([{ uid: "grinder", corpsClass: "worldClass", totalScore: 80 }]),
+      day([{ uid: "grinder", corpsClass: "worldClass", totalScore: 88 }]),
     ]).index;
 
-  test("oneNight decides on the peak, totals decide by default", () => {
-    const matchup = { pair: ["grinder", "peak"] };
-    const byTotals = decideHeadToHead(matchup, "worldClass", index());
-    assert.equal(byTotals.winner, "grinder"); // 162 > 85
+  test("oneNight decides on the peak, the per-show average decides by default", () => {
+    const matchup = { pair: ["grinder", "steady"] };
+    const byAverage = decideHeadToHead(matchup, "worldClass", index());
+    assert.equal(byAverage.winner, "steady"); // 87 > 86 — not 172 > 87
     const byPeak = decideHeadToHead(matchup, "worldClass", index(), SCORING_FORMATS.ONE_NIGHT);
-    assert.equal(byPeak.winner, "peak"); // 85 > 82
-    assert.deepEqual(byPeak.best.peak, { score: 85, showName: null });
+    assert.equal(byPeak.winner, "grinder"); // 88 > 87
+    assert.deepEqual(byPeak.best.grinder, { score: 88, showName: null });
   });
 
   test("a cross-class matchup resolves on percentile under every format", () => {
@@ -140,6 +140,7 @@ describe("decideHeadToHead with formats", () => {
         { uid: "wc", corpsClass: "worldClass", totalScore: 85 },
         { uid: "wc2", corpsClass: "worldClass", totalScore: 90 },
         { uid: "ss", corpsClass: "soundSport", totalScore: 62 },
+        { uid: "ss2", corpsClass: "soundSport", totalScore: 55 },
       ]),
     ]).index;
     const matchup = { pair: ["wc", "ss"], classes: { wc: "worldClass", ss: "soundSport" } };

@@ -347,11 +347,15 @@ exports.weeklyDigestEmailJob = onSchedule(
           }
 
           const headline = events[0].title;
-          const success = await sendRivalContextEmail(email, {
-            username: profile.username || "Director",
-            headline,
-            events,
-          });
+          const success = await sendRivalContextEmail(
+            email,
+            {
+              username: profile.username || "Director",
+              headline,
+              events,
+            },
+            { uid }
+          );
 
           if (!success) return { status: "failed" };
 
@@ -500,7 +504,8 @@ exports.winBackEmailJob = onSchedule(
             profile.username || "Director",
             daysMissed,
             streakLost,
-            profile.corpsCoin || 0
+            profile.corpsCoin || 0,
+            { uid }
           );
 
           if (success) {
@@ -661,7 +666,8 @@ exports.streakBrokenEmailJob = onSchedule(
           const success = await sendStreakBrokenEmail(
             email,
             profile.username || "Director",
-            profile.engagement.loginStreak
+            profile.engagement.loginStreak,
+            { uid }
           );
 
           if (success) {

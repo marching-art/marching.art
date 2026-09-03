@@ -239,7 +239,7 @@ const getEarningOpportunities = onCall({ cors: true }, async (request) => {
       },
       weeklyLeagueWin: {
         title: "Weekly League Win",
-        description: "Win your weekly matchup to earn bonus CC",
+        description: "Win your weekly matchup to earn bonus CC — once per class each week, however many leagues you play in",
         reward: WEEKLY_LEAGUE_WIN_REWARD,
       },
       dailyPredictions: {

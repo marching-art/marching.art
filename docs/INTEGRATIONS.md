@@ -568,3 +568,21 @@ are invoked in CI via the `run_historical_import` path in
 
 Related operational data (venues for the running-order model) is refreshed by the
 `.github/workflows/refresh-venue-gazetteer.yml` workflow.
+
+## Email (Brevo) — one-click unsubscribe
+
+Every engagement email (welcome, streak broken, weekly digest, win-back,
+milestone) carries `List-Unsubscribe` / `List-Unsubscribe-Post` headers and a
+footer link to `https://marching.art/unsubscribe?t=<token>`. The token is the
+recipient's uid plus an HMAC (`helpers/unsubscribeToken.js`) under a key
+**derived from `BREVO_API_KEY`** — no extra secret to provision, and a
+declared-but-unset secret would have failed the deploy. `getUnsubscribeHttp`
+(`triggers/unsubscribe.js`, both hosts' `/unsubscribe` rewrite) verifies the
+token and merges `settings.emailPreferences.allEmails: false` onto the
+profile, the same switch the Settings modal flips. GET shows a confirmation
+page; POST (RFC 8058 one-click from Gmail/Yahoo) answers 200 with no UI.
+
+- **Rotating `BREVO_API_KEY`** invalidates the links in already-sent mail;
+  they land on the "link didn't work" page, which points at the signed-in
+  Email Preferences.
+- Admin alert emails carry no unsubscribe (they go to admins only).

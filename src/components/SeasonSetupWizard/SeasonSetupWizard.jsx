@@ -254,7 +254,11 @@ const SeasonSetupWizard = ({
             Corps Registration
           </span>
           <span className="ml-2 text-xs text-muted">{formatSeasonName(seasonData?.name)}</span>
-          <button onClick={onComplete} className="ml-auto p-2 text-muted hover:text-white">
+          <button
+            aria-label="Close"
+            onClick={onComplete}
+            className="ml-auto p-2 text-muted hover:text-white min-w-[44px] min-h-[44px] inline-flex items-center justify-center"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>

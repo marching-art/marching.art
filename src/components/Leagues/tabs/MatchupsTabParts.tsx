@@ -50,6 +50,9 @@ export interface TabMatchup {
   best?: Record<string, { score?: number; showName?: string | null } | undefined>;
   /** Each side's weekly finish against its own class, 0–100. */
   normalized?: Record<string, number>;
+  /** Each side's per-show average — what the default format decided on;
+   *  `scores` is the weekly total the record book reads. */
+  averages?: Record<string, number>;
   /** Synthetic React key, attached when a week is flattened for render. */
   id?: string;
 }
@@ -604,6 +607,15 @@ const VersusStrip = memo(
       const cls = uid ? matchup.classes?.[uid] : undefined;
       return cls ? CORPS_CLASS_CONFIG[cls]?.name || cls : undefined;
     };
+    // The default format decides on each side's PER-SHOW AVERAGE across the
+    // week (the weekly total rewarded attendance), so a settled default-format
+    // matchup leads with the average and shows the totals underneath. Weeks
+    // resolved before averages were recorded fall back to the totals.
+    const homeAvg = p1_uid != null ? matchup.averages?.[p1_uid] : undefined;
+    const awayAvg = p2_uid != null ? matchup.averages?.[p2_uid] : undefined;
+    const hasAverages = typeof homeAvg === 'number' && typeof awayAvg === 'number';
+    const sideLabel = (value: number) =>
+      isSoundSport ? (value > 0 ? getSoundSportRating(value) : '—') : value.toFixed(1);
     // One side's best single show (One-Night Slate). SoundSport is ratings-
     // only, so its best night renders as the earned tier, never a number.
     const bestLabel = (uid: string | null) => {
@@ -756,6 +768,38 @@ const VersusStrip = memo(
                     </span>
                   </div>
                   <div className="text-[9px] text-muted uppercase">of own class</div>
+                </div>
+              ) : matchup.completed && hasAverages ? (
+                /* Default format: the per-show average is the result, the
+                   weekly totals are the supporting detail. */
+                <div>
+                  <div
+                    className={`flex items-center justify-center gap-1 font-bold ${
+                      isSoundSport ? 'text-[10px] uppercase' : 'text-sm font-data tabular-nums'
+                    }`}
+                  >
+                    <span
+                      className={
+                        homeWon ? 'text-green-400' : isTie ? 'text-secondary' : 'text-muted'
+                      }
+                    >
+                      {sideLabel(homeAvg as number)}
+                    </span>
+                    <span className="text-muted">-</span>
+                    <span
+                      className={
+                        awayWon ? 'text-green-400' : isTie ? 'text-secondary' : 'text-muted'
+                      }
+                    >
+                      {sideLabel(awayAvg as number)}
+                    </span>
+                  </div>
+                  <div className="text-[9px] text-muted uppercase">avg per show</div>
+                  {!isSoundSport && (
+                    <div className="text-[10px] text-muted font-data tabular-nums">
+                      {home.score.toFixed(0)}-{away.score.toFixed(0)} total
+                    </div>
+                  )}
                 </div>
               ) : matchup.completed || matchup.status === 'live' ? (
                 <div className="flex items-center justify-center gap-1">

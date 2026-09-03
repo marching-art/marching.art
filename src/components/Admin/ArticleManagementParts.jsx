@@ -259,7 +259,11 @@ const ArticleEditorModal = ({ article, onClose, onSave, onRegenerateImage }) => 
             <Edit3 className="w-4 h-4 text-secondary" />
             <h2 className="text-sm font-bold text-white uppercase tracking-wider">Edit Article</h2>
           </div>
-          <button onClick={onClose} className="text-muted hover:text-white transition-colors">
+          <button
+            aria-label="Close"
+            onClick={onClose}
+            className="text-muted hover:text-white transition-colors min-w-[44px] min-h-[44px] inline-flex items-center justify-center"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>

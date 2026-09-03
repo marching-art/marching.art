@@ -1,5 +1,84 @@
 [
   {
+    "id": "2026-09-03-one-click-unsubscribe-from-any-email",
+    "date": "2026-09-03",
+    "title": "Unsubscribe from marching.art email with one click, no sign-in needed",
+    "category": "improvement",
+    "summary": "Every digest, reminder, streak and win-back email now carries a personal unsubscribe link that works without signing in, and mail apps that offer their own Unsubscribe button (Gmail, Yahoo, Apple Mail) can use it directly. One click turns all engagement email off; you can turn individual types back on under Settings → Email whenever you like. Account emails such as password resets are unaffected.",
+    "highlights": []
+  },
+  {
+    "id": "2026-09-03-lighter-first-load-for-visitors",
+    "date": "2026-09-03",
+    "title": "The site loads lighter, especially for visitors who are not signed in",
+    "category": "improvement",
+    "summary": "The first thing your browser downloads is smaller. The signed-in shell (header, ticker, bottom navigation, notification panel) and the celebration overlays now load only once you are signed in, so the home page, articles, and the guide skip them entirely. Google Analytics code is not downloaded at all until you allow analytics. Returning visitors also re-download less after each update, because the routing library now lives with the rarely-changing React code instead of the app code.",
+    "highlights": []
+  },
+  {
+    "id": "2026-09-03-keyboard-and-screen-reader-friendly-dialogs",
+    "date": "2026-09-03",
+    "title": "Dialogs keep keyboard focus inside them and every icon button has a name",
+    "category": "improvement",
+    "summary": "Thirteen dialogs — the lineup editor's template and corps pickers, Settings, standings, video, the guest lineup picker, league creation, league settings, commissioner transfer, the leave-league confirm, the quick-start guide, the onboarding tour, and the mobile season detail on Corps History — now keep Tab inside the dialog, return focus to where you were when they close, and all close on Escape. Forty-odd icon-only buttons (close buttons, week and scroll arrows, league settings, copy invite code, template load and delete) now announce what they do to screen readers and have a full-size touch target.",
+    "highlights": []
+  },
+  {
+    "id": "2026-09-03-one-dashboard-interruption-per-visit",
+    "date": "2026-09-03",
+    "title": "The dashboard now interrupts you at most once per visit",
+    "category": "improvement",
+    "summary": "Opening the dashboard could stack several dialogs in front of the page: the season recap, then the new-season setup, then a class-unlock celebration, then an achievement, then the install nudge. Now only one automatic dialog opens per visit; anything else waits for your next visit. Achievements and class unlocks no longer open a dialog at all — they land in your inbox with a link, and you see a brief toast when they happen.",
+    "highlights": [
+      "Class unlock rows in the inbox deep-link straight to corps registration.",
+      "The install-app nudge stays out of the way on a visit that already showed a dialog."
+    ]
+  },
+  {
+    "id": "2026-09-03-rewards-paid-per-director-not-per-corps",
+    "date": "2026-09-03",
+    "title": "Weekly XP, league-win bonuses and the season finish bonus are now paid per director",
+    "category": "balance",
+    "summary": "Three rewards used to multiply with how many corps or leagues you had rather than how well you did. They now pay once. Weekly participation XP is one grant per director per week, whatever you fielded. The league-win CorpsCoin and XP bonus is paid once per class each week, however many leagues you win that class in — every win still counts in your record and standings. The season finish bonus and completion XP are paid once, for your best-placed corps; every corps still gets its placement and its line in the season recap.",
+    "highlights": [
+      "Show participation CorpsCoin is unchanged and still pays for every show each corps performs at.",
+      "Your league win count and W-L record keep counting every league you play in."
+    ]
+  },
+  {
+    "id": "2026-09-03-league-weeks-are-decided-per-show",
+    "date": "2026-09-03",
+    "title": "League matchups are now decided on your average per show, not your total",
+    "category": "balance",
+    "summary": "A league week used to go to whoever added up the most points across the shows they attended, so four shows beat three whatever the scores said. From this week on, the default format compares each corps' average score per show. Attend one show at 88 and you beat an opponent who attended three at 84. Your weekly total still counts for the standings' points columns and still breaks a tie when two averages are level, so a fuller week is never a disadvantage.",
+    "highlights": [
+      "Matchup cards and the matchup page lead with each side's average per show, with the weekly total shown underneath.",
+      "Caption Wars compares each caption group's per-show average, so a category can no longer be taken on attendance.",
+      "Cross-class matchups and standings tiebreaks rank you against your own class on the same per-show average. Two corps level at the top of a class now share the spot instead of both claiming first, and a class with a single entrant no longer auto-wins every cross-class week.",
+      "One-Night Slate is unchanged: your best single show decides it, and the fuller week still breaks a tie."
+    ]
+  },
+  {
+    "id": "2026-09-03-show-day-card-no-longer-repeats-the-temperature",
+    "date": "2026-09-03",
+    "title": "The show day card no longer repeats the temperature",
+    "category": "fix",
+    "summary": "The weather line on the dashboard's show day card read \"95°F clear skies, 95°F\". It now shows the conditions once: \"clear skies, 95°F\".",
+    "highlights": []
+  },
+  {
+    "id": "2026-09-03-analytics-only-with-your-consent-age-check-enforced",
+    "date": "2026-09-03",
+    "title": "Analytics now runs only if you allow it, and the age check can no longer be skipped",
+    "category": "improvement",
+    "summary": "Google Analytics stays off until you say yes. First-time visitors see a small \"Help improve marching.art?\" bar with Allow and No thanks; either answer is remembered on that browser, and you can change it any time under Settings → Privacy. The privacy policy now describes exactly that. Separately, creating a director profile now always requires your date of birth — if the sign-up hand-off is lost (a reload, a new tab), the onboarding welcome step simply asks for it instead of letting an account through unchecked.",
+    "highlights": [
+      "No analytics cookies are set before you answer; declining is a one-tap, permanent choice for that browser.",
+      "Switching analytics off later stops collection immediately, without a reload.",
+      "Your date of birth is still stored only on your private record and never shown on your profile."
+    ]
+  },
+  {
     "id": "2026-09-03-southwestern-championship-moves-to-san-antonio",
     "date": "2026-09-03",
     "title": "The Southwestern Championship is now held in San Antonio",

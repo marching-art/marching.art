@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // ActiveLineupTable - Main roster table for dashboard
 // OPTIMIZATION #4: Extracted from Dashboard.jsx to reduce file size and isolate renders
 
@@ -19,7 +18,16 @@ const SkeletonRow = memo(() => (
   </div>
 ));
 
-// Trend chip (up/down/flat) shown next to the score.
+/**
+ * @typedef {{ direction: 'up' | 'down' | 'same', delta?: string | number }} CaptionTrend
+ * @typedef {{ score?: number, trend?: CaptionTrend }} CaptionScoreData
+ * @typedef {{ day?: number, eventName?: string, location?: string }} NextShow
+ */
+
+/**
+ * Trend chip (up/down/flat) shown next to the score.
+ * @param {{ trend?: CaptionTrend | null }} props
+ */
 const TrendChip = ({ trend }) => {
   if (!trend) return null;
   const color =
@@ -43,41 +51,51 @@ const TrendChip = ({ trend }) => {
 // Memoized lineup row - compact layout that fits the mobile width. The "next
 // show" is a corps-level fact (every caption competes together at the shows the
 // director registered for), so it lives in the table header, not per row.
-const LineupTableRow = memo(({ caption, value, captionData, onSlotClick, scoresAvailable }) => {
-  const hasValue = !!value;
-  const [corpsName, sourceYear] = hasValue ? value.split('|') : [null, null];
-  const { score, trend } = captionData || {};
+const LineupTableRow = memo(
+  /**
+   * @param {{
+   *   caption: (typeof CAPTIONS)[number],
+   *   value?: string,
+   *   captionData?: CaptionScoreData,
+   *   onSlotClick: (captionId: string) => void,
+   *   scoresAvailable: boolean,
+   * }} props
+   */
+  ({ caption, value, captionData, onSlotClick, scoresAvailable }) => {
+    const hasValue = !!value;
+    const [corpsName, sourceYear] = hasValue ? value.split('|') : [null, null];
+    const { score, trend } = captionData || {};
 
-  return (
-    <button
-      type="button"
-      onClick={() => onSlotClick(caption.id)}
-      className="w-full text-left flex items-center gap-3 px-3 py-2.5 border-b border-line-subtle hover:bg-surface-raised active:bg-surface-raised transition-colors"
-    >
-      {/* Slot Badge */}
-      <span
-        className={`flex-shrink-0 w-11 text-center px-1.5 py-1 text-[10px] font-bold ${
-          hasValue ? 'bg-interactive/20 text-interactive' : 'bg-line text-muted'
-        }`}
+    return (
+      <button
+        type="button"
+        onClick={() => onSlotClick(caption.id)}
+        className="w-full text-left flex items-center gap-3 px-3 py-2.5 border-b border-line-subtle hover:bg-surface-raised active:bg-surface-raised transition-colors"
       >
-        {caption.name}
-      </span>
+        {/* Slot Badge */}
+        <span
+          className={`flex-shrink-0 w-11 text-center px-1.5 py-1 text-[10px] font-bold ${
+            hasValue ? 'bg-interactive/20 text-interactive' : 'bg-line text-muted'
+          }`}
+        >
+          {caption.name}
+        </span>
 
-      {/* Corps + score */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-baseline gap-1.5 min-w-0">
-            {hasValue ? (
-              <>
-                <span className="text-sm text-white truncate">{corpsName}</span>
-                {sourceYear && (
-                  <span className="text-[10px] text-muted flex-shrink-0">
-                    '{String(sourceYear).slice(-2)}
-                  </span>
-                )}
-              </>
-            ) : (
-              /* An unfilled slot is the one moment a director is deciding what
+        {/* Corps + score */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-baseline gap-1.5 min-w-0">
+              {hasValue ? (
+                <>
+                  <span className="text-sm text-white truncate">{corpsName}</span>
+                  {sourceYear && (
+                    <span className="text-[10px] text-muted flex-shrink-0">
+                      '{String(sourceYear).slice(-2)}
+                    </span>
+                  )}
+                </>
+              ) : (
+                /* An unfilled slot is the one moment a director is deciding what
                  this caption is, so spend the space on its name rather than on
                  the word "empty". "VP" means nothing until you have read
                  "Visual Proficiency" once, and a tooltip cannot help here —
@@ -88,37 +106,49 @@ const LineupTableRow = memo(({ caption, value, captionData, onSlotClick, scoresA
                  two. Doing it only on empty slots costs no extra row height on
                  a phone, where a filled row already carries a corps, a year, a
                  score, and a trend. */
-              <span className="text-sm text-muted truncate">{caption.fullName}</span>
+                <span className="text-sm text-muted truncate">{caption.fullName}</span>
+              )}
+            </div>
+
+            {scoresAvailable && hasValue && (
+              <div className="flex items-center gap-2 flex-shrink-0">
+                {score !== null && score !== undefined ? (
+                  <span className="text-sm font-bold text-white font-data tabular-nums">
+                    {score.toFixed(2)}
+                  </span>
+                ) : (
+                  <span className="text-sm text-muted">—</span>
+                )}
+                <TrendChip trend={trend} />
+              </div>
             )}
           </div>
 
-          {scoresAvailable && hasValue && (
-            <div className="flex items-center gap-2 flex-shrink-0">
-              {score !== null && score !== undefined ? (
-                <span className="text-sm font-bold text-white font-data tabular-nums">
-                  {score.toFixed(2)}
-                </span>
-              ) : (
-                <span className="text-sm text-muted">—</span>
-              )}
-              <TrendChip trend={trend} />
+          {/* Draft prompt for empty slots (filled slots need no second line —
+            the corps-level next show is surfaced in the header). */}
+          {!hasValue && (
+            <div className="mt-0.5">
+              <span className="text-[11px] text-interactive font-bold">+ Draft player</span>
             </div>
           )}
         </div>
-
-        {/* Draft prompt for empty slots (filled slots need no second line —
-            the corps-level next show is surfaced in the header). */}
-        {!hasValue && (
-          <div className="mt-0.5">
-            <span className="text-[11px] text-interactive font-bold">+ Draft player</span>
-          </div>
-        )}
-      </div>
-    </button>
-  );
-});
+      </button>
+    );
+  }
+);
 
 const ActiveLineupTable = memo(
+  /**
+   * @param {{
+   *   lineup: Record<string, string>,
+   *   lineupScoreData?: Record<string, CaptionScoreData>,
+   *   loading?: boolean,
+   *   onManageLineup: () => void,
+   *   onSlotClick: (captionId: string) => void,
+   *   scoresAvailable?: boolean,
+   *   nextShow?: NextShow | null,
+   * }} props
+   */
   ({
     lineup,
     lineupScoreData,

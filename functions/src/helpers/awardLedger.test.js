@@ -10,6 +10,7 @@ const {
   showAwardToken,
   weeklyXpToken,
   weeklyWinToken,
+  weeklyWinBonusToken,
   matchupRecordToken,
   hasAwardToken,
   awardTokenWrite,
@@ -20,6 +21,9 @@ describe('awardLedger tokens', () => {
     assert.equal(showAwardToken('s1', 7), 's1:show:d7');
     assert.equal(weeklyXpToken('s1', 2), 's1:weeklyXp:w2');
     assert.equal(weeklyWinToken('s1', 2, 'lgA', 'worldClass'), 's1:win:w2:lgA:worldClass');
+    // The bonus token carries no league id: one payout per class per week.
+    assert.equal(weeklyWinBonusToken('s1', 2, 'worldClass'), 's1:winBonus:w2:worldClass');
+    assert.equal(weeklyWinBonusToken('s1', 2, 'worldClass'), weeklyWinBonusToken('s1', 2, 'worldClass'));
     assert.equal(
       matchupRecordToken('s1', 2, 'lgA', 'worldClass', 'uidX'),
       's1:rec:w2:lgA:worldClass:uidX'

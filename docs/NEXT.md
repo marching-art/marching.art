@@ -8,7 +8,7 @@ burns an hour to conclude "everything's about covered." Don't. If you ship,
 cut, or discover something, edit THIS file in the same PR — that's the whole
 maintenance contract.
 
-_Last updated: 2026-09-03 (AI imagery now built from the full Uniform Studio design + rendered reference image; main ruleset + gazetteer PR flow; site-review Fix-first 1–11 + quick wins shipped)._
+_Last updated: 2026-09-03 (site-review row 18 — one-click unsubscribe + List-Unsubscribe headers, noindex auth wall; row 17 — vendor-firebase trimmed, GameShell + overlays lazy for guests; row 16 — focus traps + Escape in every raw dialog, icon buttons named; row 15 — one dashboard interrupt per visit, celebrations to the inbox; row 14 — weekly XP / win bonus / finish bonus paid per director; row 13 — league weeks decided per show, percentile edge cases; row 12 — server-enforced age gate + consent-gated analytics; AI imagery now built from the full Uniform Studio design + rendered reference image; main ruleset + gazetteer PR flow; site-review Fix-first 1–11 + quick wins shipped)._
 
 ## In progress
 
@@ -21,9 +21,19 @@ code-first review of the whole product (security, backend, frontend, UX,
 a11y, quality, economy, SEO/comms). Its **Part 1 backlog table** is the
 queue: work it top-down, and tick items off here as they ship.
 
-_(rows 1–11 — S-H1, B-H1, N-H1, F-H3, B-H3, G-H3, Q-H1, F-H2, F-H1, B-H4,
-B-H6/S-M6 — and all eight "Cross-area quick wins" shipped 2026-09-03;
-continue from row 12 of the Part 1 table. Left open from row 8: the Dashboard
+_(rows 1–17 — S-H1, B-H1, N-H1, F-H3, B-H3, G-H3, Q-H1, F-H2, F-H1, B-H4,
+B-H6/S-M6, S-H2/S-H3, G-H2/G-M10, G-H1/G-H7, U-H4, A-H1/A-H2, F-H4/F-M2 (+
+F-M1), N-H2/N-H6 — and all eight "Cross-area quick wins" shipped
+2026-09-03; continue from row 19 (Q-H2 / Q-H3: coverage over all functions
+files; first tests for `admin.js` and `leagueAutomation.js`) of the Part 1
+table. Still open from
+F-H4: `re2js` (144 kB) rides in via Firestore's pipelines support — track
+upstream for a pipelines-free entry.
+Left open from G-H1's detail, outside row 14's scope: the league title still
+sums a director's Finals night across every class (`leagueArchival.js`
+`finalsByUid`) — decide it on a flagship class or the mean class percentile;
+and `directorRating.js` placement points are uncapped by field size (a 1st of
+2 pays the same 25 as a 1st of 40). Left open from row 8: the Dashboard
 still reads the full recap archive once an hour for the ranked classes because
 the Season Ledger joins per-show placement from it — store `eventName` on the
 standings history entries and the ledger can read standings instead.)_
@@ -108,21 +118,17 @@ ops step below)_
   standings, then pass `skipShows` for the ranked classes. (S)
 - **P3** `index.jsx:43-53` has no SW update prompt while the SW
   `skipWaiting`s mid-session. (S)
-- **P2** `vendor-firebase` is the largest eager chunk (671 kB / 198 kB
-  gzip) — audit which `firebase/*` entry points the first paint really
-  needs. (S)
+- **P3** `vendor-firebase` is still the largest eager chunk (647 kB / 189 kB
+  gzip after app-check + analytics left it, 2026-09-03); the remaining fat
+  is Firestore itself plus `re2js` — nothing to trim until upstream ships a
+  pipelines-free entry. (S)
 
 ### SEO, accessibility & UX
 
-- **P2** 12 dialogs render `role="dialog" aria-modal` without `useFocusTrap`
-  (`Profile/SettingsModal.jsx:361`, `Sidebar/StandingsModal.jsx:33`,
-  `Sidebar/YouTubeModal.jsx:45`, `Leagues/CreateLeagueModal.tsx:120`,
-  `Leagues/tabs/SettingsTab.tsx:75`, `Dashboard/OnboardingTour.jsx:195`,
-  `pages/LeaguesParts.tsx:32`, `pages/CorpsHistory.jsx:784`, …). 32
-  icon-only buttons have no accessible name (11 hand-rolled modal close
-  buttons under `components/modals/`, `LeagueDetailHeader.tsx:82`, 8 in
-  Admin). Dashboard and NotFound have no `<h1>`. This quantifies the
-  `ui/Modal` adoption ratchet. (M)
+- **P3** Dashboard and NotFound have no `<h1>`. (Focus traps, Escape and
+  icon-button names shipped 2026-09-03 — `dialogFocusTrap.test.ts` now fails
+  on any new `role="dialog"` without `useFocusTrap`; the `ui/Modal` /
+  `IconButton` adoption ratchet remains.) (S)
 - **P3** `a11y/RouteChangeFocus.tsx:24-33` scrolls `window` (a no-op under
   `game-shell-active`) and focuses `#main-content` before the lazy chunk
   resolves. (M)
@@ -163,9 +169,6 @@ ops step below)_
 
 ### Legal & support
 
-- **P2** Engagement emails ship no `List-Unsubscribe` /
-  `List-Unsubscribe-Post` headers (`helpers/emailService.js:81-98`) and the
-  only opt-out is login-walled (`:28`). Signed no-login `/unsubscribe`. (M)
 - **P2** Terms never mention CorpsCoin (no cash value / non-transferable /
   forfeiture), §6 covers only corps names + show concepts, no governing law
   or copyright-notice path (`pages/Terms.jsx`). (M)
@@ -314,7 +317,7 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
 
 ## Evergreen ratchets (any session, any size)
 
-- `@ts-nocheck` paydown — **84 files** at
+- `@ts-nocheck` paydown — **74 files** at
   last update; `npm run ts-nocheck:next` ranks the cheapest (no free wins
   left; `Schedule.jsx` and `Layout/GameShell.jsx` are ~30 errors each). One
   per substantive task is the CLAUDE.md habit; batches welcome.
@@ -323,14 +326,92 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
   touched (functions are held to 70/80/85).
 - ESLint warnings downward — 14 today, no ceiling yet (see DX above).
 - React Query migration of the remaining manual-fetch components.
-- `ui/Button` / `ui/Modal` adoption; authed-app axe pass (12 untrapped
-  dialogs + 32 unlabeled icon buttons is the current tally).
+- `ui/Button` / `ui/Modal` / `IconButton` adoption; authed-app axe pass (the
+  untrapped-dialog and unlabeled-icon-button tallies are at zero as of
+  2026-09-03; `dialogFocusTrap.test.ts` keeps the first one there).
 - The two 700+-line league components (`MatchupsTabParts.tsx`,
   `MatchupDetailView.tsx`) want a split by concern — not by size — when
   next touched; sixteen more files are past the line (list above).
 
 ## Recently shipped (context, newest first — prune when stale)
 
+- 2026-09-03: site-review row 18 (N-H2 / N-H6). One-click unsubscribe:
+  `helpers/unsubscribeToken.js` signs `uid.hmac` tokens under a key derived
+  from `BREVO_API_KEY` (no new secret to provision), `buildSendRequest` adds
+  `List-Unsubscribe` / `List-Unsubscribe-Post` and swaps the footer link for
+  the per-recipient URL, the five engagement senders take `{ uid }`, and
+  `triggers/unsubscribe.js` (`/unsubscribe` rewrite on both hosts) merges
+  `settings.emailPreferences.allEmails: false` on GET (confirmation page) or
+  POST (RFC 8058). `ProtectedRoute` renders `AuthWallMeta` (`noindex`) while
+  loading / bouncing; robots disallows `/unsubscribe` and `/podium/preview`.
+  Privacy §2 and INTEGRATIONS.md updated; 14 new tests.
+  `DashboardModalHost.jsx` typed (ts-nocheck 75 → 74). Changelog entry added.
+- 2026-09-03: site-review row 17 (F-H4 / F-M2, + F-M1). `api/analytics.ts`
+  imports `firebase/analytics` dynamically on consent; `vite.config.js`
+  leaves `@firebase/{app-check,analytics}` out of the eager `vendor-firebase`
+  group (671 → 647 kB raw, 196 → 189 kB gz) and puts `react-router` in
+  `vendor-react` (was in the app index). `GameShell` and the new
+  `Layout/AuthedOverlays` (username prompt + celebrations) are
+  `lazyWithRetry` chunks behind `user &&`; the app index chunk went
+  237 → 142 kB raw (70 → 42 kB gz), so a signed-out visitor no longer
+  downloads the signed-in shell. `OnboardingParts.jsx` typed (ts-nocheck
+  76 → 75). Changelog entry added.
+- 2026-09-03: site-review row 16 (A-H1 / A-H2). `useFocusTrap` (and, where
+  missing, `useEscapeKey`) in the 13 hand-rolled dialogs that lacked them;
+  `components/a11y/dialogFocusTrap.test.ts` fails on any `role="dialog"`
+  file without a trap (allowlist for hook-delegated traps). ~40 icon-only
+  buttons got `aria-label`s and 44px hit areas (modal close buttons, week /
+  scroll arrows, league settings, copy invite code, template load / delete,
+  comment options, send test email). `CorpsCoinModal.jsx` typed (ts-nocheck
+  77 → 76). Changelog entry added.
+- 2026-09-03: site-review row 15 (U-H4). `useModalQueue` shows at most one
+  automated interrupt per dashboard visit (`MAX_INTERRUPTS_PER_VISIT`); the
+  rest stay queued and re-enqueue from their profile flags next mount, and
+  the queue stamps `sessionStorage` (`ma:interruptShown`) so
+  `PWAInstallPrompt` yields for the session. Achievements and class unlocks
+  no longer queue a modal: the claim's reward moments are built by
+  `helpers/rewardMoments.js` (achievement_unlocked, level_up, new
+  `class_unlocked` deep-linking to `/dashboard?panel=register`; backstop
+  unlocks silent; 7 tests) and the dashboard shows a toast.
+  `AchievementModal`, `ClassUnlockModal` and the `DashboardModals` re-export
+  shim are deleted (ts-nocheck 78 → 77). Changelog entry added.
+- 2026-09-03: site-review row 14 (G-H1 / G-H7). Weekly participation XP is
+  one grant per director (`payWeeklyParticipationXP`, no `× classes.size`).
+  The weekly-win CC + XP bonus is paid once per class per week across every
+  league won: new league-less `weeklyWinBonusToken` guards the money, the
+  per-league `weeklyWinToken` still guards the `stats.leagueWins` record, and
+  a per-run set catches later leagues in the same batch; `awardTokenWrite`
+  is variadic. Season finish bonus + completion XP are paid once per director
+  for the best-placed corps (`keepBestSeasonAward`; other rows keep placement
+  with zero bonus). Earning-opportunities copy, GAMIFICATION tables and the
+  client XP guide say so. `ControlBar.jsx` typed (ts-nocheck 79 → 78).
+  Changelog entry added.
+- 2026-09-03: site-review row 13 (G-H2 / G-M10). A league week is measured
+  per show: `buildWeeklyScoreIndex` folds `average` and `perShow` caption
+  averages beside the sums, the default format decides on `average` (equal
+  averages → fuller week → tie), Caption Wars compares `perShow` and stores
+  per-show figures in the `captions` block, and `applyClassPercentiles` ranks
+  on the average with mid-rank ties (two level at the top of ten = 95, not
+  100 each) and a lone entrant at `LONE_ENTRANT_PERCENTILE` (50). Matchups
+  and standings pairs carry `averages` / `player1Average`; notifications quote
+  "averaging X – Y per show"; the card and detail view lead with the average
+  and show the total underneath; the client's provisional table
+  (`buildWeeklyClassAverages`) reads a live week the same way. One-Night
+  Slate unchanged. Spec §4 updated. `ActiveLineupTable.jsx` typed (ts-nocheck 80 →
+  79). Changelog entry added.
+- 2026-09-03: site-review row 12. S-H2: `createUserProfile` refuses a new
+  profile without a valid date of birth (`failed-precondition`,
+  `reason: birth_date_required`; idempotent retries for an existing profile
+  still no-op; 6 tests in `createUserProfile.test.js`), the callable type
+  makes `birthDate` required, and the onboarding welcome step asks for it
+  when the per-tab sign-up stash is gone; server DOB verdicts route back to
+  step 1. S-H3: Google Analytics is consent-gated — `utils/analyticsConsent`
+  (localStorage `ma:analyticsConsent`, cross-tab, `useAnalyticsConsent`),
+  `api/analytics` creates the SDK only on grant and flips
+  `setAnalyticsCollectionEnabled` off on withdrawal, `AnalyticsConsentBanner`
+  asks once per browser, Settings → Privacy toggle, Privacy §2/§5/§7 copy
+  updated; unit tests for all three plus an e2e spec. `OnboardingSteps.jsx`
+  typed (ts-nocheck 81 → 80). Changelog entry added.
 - 2026-09-03: AI imagery reproduces the whole Uniform Studio design. New
   `helpers/uniformProse.js` walks every FIGURE_FIELDS key (torso/finish,
   chest + badge, neck, shoulders, waist, per-side arms and legs, feet,

@@ -1,7 +1,7 @@
 // @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // src/pages/CorpsHistory.jsx
 // Fixed Height Split Layout: Top Stats + Bottom Split (Chart/Timeline)
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
 import {
   Trophy,
@@ -30,6 +30,8 @@ import LoadingScreen from '../components/LoadingScreen';
 import { Line } from '../components/charts';
 import { getSoundSportRating } from '../utils/scoresUtils';
 import { toCanonicalClassKey } from '../utils/classUnlocks';
+import { useEscapeKey } from '../hooks/useEscapeKey';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 import SeasonUniformSection, {
   SeasonLookSwatches,
 } from '../components/uniform/SeasonUniformSection';
@@ -179,6 +181,12 @@ const CorpsHistory = () => {
   const error = useProfileStore((state) => state.error);
   const [selectedCorpsClass, setSelectedCorpsClass] = useState(null);
   const [selectedSeason, setSelectedSeason] = useState(null);
+  // The mobile season-detail sheet is a dialog: Escape closes it and Tab stays
+  // inside it. On desktop the same selection renders an inline side panel and
+  // the sheet is not mounted, so the trap has nothing to hold (its ref is null).
+  const dialogRef = useRef(null);
+  useEscapeKey(() => setSelectedSeason(null), selectedSeason !== null);
+  useFocusTrap(dialogRef, selectedSeason !== null);
   const [activeView, setActiveView] = useState('chart'); // 'chart' or 'timeline'
   // detailId -> heavy per-season detail (lineup + weekly scores), or null once a
   // fetch resolves to "no detail doc". Loaded lazily below.
@@ -781,6 +789,7 @@ const CorpsHistory = () => {
             exit={{ opacity: 0, y: 24 }}
             transition={{ duration: 0.2 }}
             className="lg:hidden fixed inset-0 z-50 flex flex-col bg-surface-sunken"
+            ref={dialogRef}
             role="dialog"
             aria-modal="true"
           >

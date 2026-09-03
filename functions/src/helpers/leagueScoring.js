@@ -23,6 +23,17 @@
  *
  * A week is seven competition days: week N covers days 7N-6 .. 7N, matching
  * the `scoredDay % 7 === 0` boundary in helpers/scoring.js.
+ *
+ * A WEEK IS MEASURED PER SHOW. The weekly TOTAL (`score`) is still folded and
+ * stored — it is what points-for/against, the record book and the recap
+ * margins read — but the default format decides a matchup on the per-show
+ * AVERAGE, and the class percentile ranks on it too. Summing meant four shows
+ * beat three whatever the scores said: a director who registered for every
+ * slot outscored a better lineup that attended one fewer show, and Finals
+ * seeding inherited it. Averaging asks the question a matchup is supposed to
+ * ask — whose corps performed better this week — and leaves attendance to
+ * the tiebreak (equal averages go to the fuller week) and to participation
+ * pay, which already rewards showing up.
  */
 
 const { logger } = require("firebase-functions/v2");
@@ -38,9 +49,13 @@ const { resolveOneNight } = require("./oneNightSlate");
  * @property {string} corpsClass
  * @property {number} score - total across every show attended this week
  * @property {number} shows - shows attended
- * @property {number} ge - General Effect across the week (0–40 per show)
- * @property {number} visual - Visual across the week (0–30 per show)
- * @property {number} music - Music across the week (0–30 per show)
+ * @property {number} average - per-show average total (0 with no shows); what
+ *   the default format decides on and the class percentile ranks on
+ * @property {number} ge - General Effect summed across the week (0–40 per show)
+ * @property {number} visual - Visual summed across the week (0–30 per show)
+ * @property {number} music - Music summed across the week (0–30 per show)
+ * @property {{ge: number, visual: number, music: number}} perShow - the three
+ *   caption groups as per-show averages; what Caption Wars compares
  * @property {number} best - highest single-show total of the week
  * @property {string|null} bestShowName - the show that posted it
  * @property {number} classPercentile - finish against this corps' own class, 0–100
@@ -62,8 +77,10 @@ function scoreKey(uid, corpsClass) {
  * Fold a week's recap day documents into a per-corps weekly index.
  *
  * Pure: takes the snapshots, returns a plain Map. Every show a corps attended
- * during the week is summed, so competing twice counts twice — which is the
- * point, and what the "latest score" comparison threw away.
+ * during the week is folded: the total (`score`) sums them, the per-show
+ * `average` and `perShow` caption averages divide by the shows attended. The
+ * "latest score" comparison threw all but one show away; the sum rewarded
+ * attending more of them; the average is what the week is decided on.
  *
  * @param {Array<{exists: boolean, data: function}>} dayDocs
  * @returns {{index: Map<string, WeekScoreEntry>, daysFound: number}}
@@ -115,8 +132,25 @@ function buildWeeklyScoreIndex(dayDocs) {
     }
   }
 
+  for (const entry of index.values()) applyPerShowAverages(entry);
   applyClassPercentiles(index);
   return { index, daysFound };
+}
+
+/**
+ * Derive the per-show figures from the sums on one entry. Separate from the
+ * fold so a hand-built entry (tests, the forfeit default) gets the same
+ * treatment.
+ *
+ * @param {WeekScoreEntry} entry
+ * @returns {WeekScoreEntry}
+ */
+function applyPerShowAverages(entry) {
+  const shows = Number(entry.shows) || 0;
+  const per = (value) => (shows > 0 ? (Number(value) || 0) / shows : 0);
+  entry.average = per(entry.score);
+  entry.perShow = { ge: per(entry.ge), visual: per(entry.visual), music: per(entry.music) };
+  return entry;
 }
 
 /**
@@ -135,12 +169,23 @@ function buildWeeklyScoreIndex(dayDocs) {
  * for the week, not just the league, because a league of three is far too small
  * a field to rank against.
  *
+ * Ranked on the per-show AVERAGE, not the weekly total, so a director who
+ * attended one more show than the rest of the class does not lead it on
+ * attendance alone.
+ *
  * Percentile is the fraction of its own class this corps finished AT OR AHEAD
- * OF. The best corps in a class is 100 and a lone entrant is 100 — they led
- * their field — while last of four is 25. Tied corps share a value rather than
- * one arbitrarily edging the other. (The textbook mid-rank definition never
- * reaches 100, which reads wrong to a director who just won their class.)
+ * OF, with ties sharing the middle of the run they occupy: the outright class
+ * winner is 100, last of four is 25, and two corps level at the top of ten are
+ * 95 each rather than both claiming the 100 that neither earned outright. (The
+ * textbook mid-rank definition never reaches 100, which reads wrong to a
+ * director who just won their class.)
+ *
+ * A class with a single entrant has no field to finish against, so the lone
+ * corps is placed at 50 — neutral — rather than the 100 that would hand it
+ * every cross-class matchup for merely showing up.
  */
+const LONE_ENTRANT_PERCENTILE = 50;
+
 function applyClassPercentiles(index) {
   const byClass = new Map();
   for (const entry of index.values()) {
@@ -149,19 +194,23 @@ function applyClassPercentiles(index) {
   }
 
   for (const entries of byClass.values()) {
-    const sorted = [...entries].sort((a, b) => a.score - b.score);
-    const total = sorted.length;
+    const total = entries.length;
     for (const entry of entries) {
-      // Everyone this corps finished ahead of, plus everyone level with it
-      // (itself included) — so ties share a value and the class winner is 100.
+      entry.classFieldSize = total;
+      if (total <= 1) {
+        entry.classPercentile = LONE_ENTRANT_PERCENTILE;
+        continue;
+      }
+      // Everyone this corps finished ahead of, plus half of the others level
+      // with it, plus itself — so ties share the middle of their run and an
+      // outright class winner is exactly 100.
       let below = 0;
       let tied = 0;
-      for (const other of sorted) {
-        if (other.score < entry.score) below += 1;
-        else if (other.score === entry.score) tied += 1;
+      for (const other of entries) {
+        if (other.average < entry.average) below += 1;
+        else if (other.average === entry.average) tied += 1;
       }
-      entry.classPercentile = total === 0 ? 0 : ((below + tied) / total) * 100;
-      entry.classFieldSize = total;
+      entry.classPercentile = ((below + (tied + 1) / 2) / total) * 100;
     }
   }
 
@@ -208,6 +257,8 @@ function getWeekScore(index, uid, corpsClass) {
       corpsClass,
       score: 0,
       shows: 0,
+      average: 0,
+      perShow: { ge: 0, visual: 0, music: 0 },
       // Zero in every caption too, so a Caption Wars matchup against a director
       // who sat the week out is a 3-0 sweep rather than a comparison against
       // undefined. Forfeiting a week forfeits every category — and the best
@@ -246,7 +297,9 @@ function getWeekScore(index, uid, corpsClass) {
  *    block alongside the winner.
  * 3. One-Night Slate decides same-class weeks on the best single show
  *    (helpers/oneNightSlate.js), returning the stored `best` block.
- * 4. The default: the weekly point totals, as always.
+ * 4. The default: the per-show average across the week. Equal averages go to
+ *    the higher weekly total (the fuller week), and only equal totals too tie
+ *    — which includes the 0-0 week where neither director competed.
  *
  * @param {Object} matchup - stored matchup entry ({ pair, classes? })
  * @param {string} corpsClass - the class array the matchup is stored under
@@ -280,7 +333,9 @@ function decideHeadToHead(matchup, corpsClass, index, format = SCORING_FORMATS.T
     best = resolved.best;
     winner = resolved.winner;
   } else {
-    if (p1Week.score > p2Week.score) winner = p1;
+    if (p1Week.average > p2Week.average) winner = p1;
+    else if (p2Week.average > p1Week.average) winner = p2;
+    else if (p1Week.score > p2Week.score) winner = p1;
     else if (p2Week.score > p1Week.score) winner = p2;
   }
 
@@ -306,8 +361,10 @@ function participatingClassesByUid(index) {
 }
 
 module.exports = {
+  LONE_ENTRANT_PERCENTILE,
   weekDayRange,
   scoreKey,
+  applyPerShowAverages,
   applyClassPercentiles,
   buildWeeklyScoreIndex,
   fetchWeeklyScoreIndex,

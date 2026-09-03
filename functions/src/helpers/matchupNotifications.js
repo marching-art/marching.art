@@ -37,6 +37,8 @@ function buildResultEntry(params) {
     opponentName,
     userScore,
     opponentScore,
+    userAverage,
+    opponentAverage,
     outcome, // 'win' | 'loss' | 'tie'
     week,
     corpsClass,
@@ -61,11 +63,15 @@ function buildResultEntry(params) {
       : null;
   // On a One-Night Slate week the best single shows decided it, so those are
   // the numbers the copy quotes — the weekly totals could contradict the
-  // verdict they announce.
+  // verdict they announce. Everywhere else the default format decides on the
+  // per-show average (leagueScoring.js), so that is the line; the bare total
+  // survives only for pairs resolved before averages were recorded.
   const scoreLine =
     typeof userBest === "number" && typeof opponentBest === "number"
       ? `best show ${userBest.toFixed(3)} – ${opponentBest.toFixed(3)}`
-      : `${userScore.toFixed(3)} – ${opponentScore.toFixed(3)}`;
+      : typeof userAverage === "number" && typeof opponentAverage === "number"
+        ? `averaging ${userAverage.toFixed(3)} – ${opponentAverage.toFixed(3)} per show`
+        : `${userScore.toFixed(3)} – ${opponentScore.toFixed(3)}`;
   let title;
   let message;
   if (outcome === "win") {
@@ -148,6 +154,8 @@ function buildMatchupEntries(nameByUid, { pairs, previousStandings, newStandings
         opponentName: nameOf(p2),
         userScore: s1,
         opponentScore: s2,
+        userAverage: pair.player1Average,
+        opponentAverage: pair.player2Average,
         userPercentile: pair.player1Normalized,
         opponentPercentile: pair.player2Normalized,
         userBest: pair.player1Best,
@@ -162,6 +170,8 @@ function buildMatchupEntries(nameByUid, { pairs, previousStandings, newStandings
         opponentName: nameOf(p1),
         userScore: s2,
         opponentScore: s1,
+        userAverage: pair.player2Average,
+        opponentAverage: pair.player1Average,
         userPercentile: pair.player2Normalized,
         opponentPercentile: pair.player1Normalized,
         userBest: pair.player2Best,

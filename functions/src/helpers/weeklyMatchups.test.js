@@ -264,6 +264,105 @@ describe("processWeeklyMatchups", () => {
     assert.equal(loserReward, undefined);
   });
 
+  test("the win bonus is paid once per class per week across every league won", async () => {
+    // alice beats bob in two leagues in the same class the same week.
+    const matchupDocs = ["league-1", "league-2"].map((id) => [
+      `${leaguesPath}/${id}/matchups/week-3`,
+      { aClassMatchups: [{ pair: ["alice", "bob"] }] },
+    ]);
+    const docs = new Map([
+      ...matchupDocs,
+      [profilePath("alice"), {}],
+      [profilePath("bob"), {}],
+      ...recapDays(3, [
+        { uid: "alice", corpsClass: "aClass", totalScore: 70 },
+        { uid: "bob", corpsClass: "aClass", totalScore: 60 },
+      ]),
+    ]);
+    const { db, writes } = makeFakeDb({
+      leagues: [
+        { id: "league-1", data: { name: "League One" } },
+        { id: "league-2", data: { name: "League Two" } },
+      ],
+      docs,
+    });
+
+    await processWeeklyMatchups(3, seasonData, db);
+
+    const aliceWrites = writes.filter(
+      (w) => w.path === profilePath("alice") && w.data?.stats?.leagueWins
+    );
+    assert.equal(aliceWrites.length, 2, "both wins count toward stats.leagueWins");
+    const paid = aliceWrites.filter((w) => w.data.corpsCoin !== undefined);
+    assert.equal(paid.length, 1, "the CC + XP bonus is paid for only one of them");
+    const history = writes.filter(
+      (w) => w.path.startsWith(`artifacts/${NS}/users/alice/`) && w.data?.type === "league_win"
+    );
+    assert.equal(history.length, 1, "one league_win history entry");
+    // The bonus token is league-less; the record tokens are per league.
+    const ledger = paid[0].data[LEDGER_FIELD];
+    assert.ok(ledger, "bonus write carries the ledger tokens");
+  });
+
+  test("a second class won the same week is still paid", async () => {
+    const docs = new Map([
+      [
+        `${leaguesPath}/league-1/matchups/week-3`,
+        {
+          aClassMatchups: [{ pair: ["alice", "bob"] }],
+          worldClassMatchups: [{ pair: ["alice", "bob"] }],
+        },
+      ],
+      [profilePath("alice"), {}],
+      [profilePath("bob"), {}],
+      ...recapDays(3, [
+        { uid: "alice", corpsClass: "aClass", totalScore: 70 },
+        { uid: "bob", corpsClass: "aClass", totalScore: 60 },
+        { uid: "alice", corpsClass: "worldClass", totalScore: 90 },
+        { uid: "bob", corpsClass: "worldClass", totalScore: 80 },
+      ]),
+    ]);
+    const { db, writes } = makeFakeDb({
+      leagues: [{ id: "league-1", data: { name: "League One" } }],
+      docs,
+    });
+
+    await processWeeklyMatchups(3, seasonData, db);
+
+    const paid = writes.filter(
+      (w) => w.path === profilePath("alice") && w.data?.corpsCoin !== undefined
+    );
+    assert.equal(paid.length, 2, "one bonus per class");
+  });
+
+  test("a retry after the bonus landed re-counts nothing and re-pays nothing", async () => {
+    const docs = new Map([
+      [
+        `${leaguesPath}/league-2/matchups/week-3`,
+        { aClassMatchups: [{ pair: ["alice", "bob"] }] },
+      ],
+      // League one already paid alice's aClass bonus this week.
+      [profilePath("alice"), { [LEDGER_FIELD]: ["season-1:winBonus:w3:aClass"] }],
+      [profilePath("bob"), {}],
+      ...recapDays(3, [
+        { uid: "alice", corpsClass: "aClass", totalScore: 70 },
+        { uid: "bob", corpsClass: "aClass", totalScore: 60 },
+      ]),
+    ]);
+    const { db, writes } = makeFakeDb({
+      leagues: [{ id: "league-2", data: { name: "League Two" } }],
+      docs,
+    });
+
+    await processWeeklyMatchups(3, seasonData, db);
+
+    const recordWrite = writes.find(
+      (w) => w.path === profilePath("alice") && w.data?.stats?.leagueWins
+    );
+    assert.ok(recordWrite, "the second league's win still counts in the record");
+    assert.equal(recordWrite.data.corpsCoin, undefined, "but the bonus is not paid again");
+  });
+
   test("idempotency: a retry does not re-increment records or re-pay a resolved matchup", async () => {
     // Simulate a torn commit that already applied every award for this matchup:
     // both participants carry their record token and the winner carries the win
@@ -406,6 +505,10 @@ describe("processWeeklyMatchups", () => {
     assert.equal(decided.winner, "alice");
     assert.equal(tied.completed, true);
     assert.equal(tied.winner, "tie");
+    // The per-show average the week was decided on travels with the result,
+    // beside the weekly total the record book reads.
+    assert.deepEqual(decided.averages, { alice: 90, bob: 80 });
+    assert.deepEqual(decided.scores, { alice: 90, bob: 80 });
 
     // Standings/current updated: winner W, loser L, tie for both — this used
     // to happen only via the commissioner callable, never automatically
@@ -685,9 +788,9 @@ describe("payWeeklyParticipationXP", () => {
     shows: [{ eventName: "Test Show", results }],
   });
 
-  test("pays once per participating class across the week's recaps", async () => {
+  test("pays once per director across the week's recaps, however many classes they field", async () => {
     const docs = new Map([
-      // alice competes twice in worldClass (still one grant) and once in aClass
+      // alice competes twice in worldClass and once in aClass — one grant
       [recapDayPath(15), recapWithResults([
         { uid: "alice", corpsClass: "worldClass" },
         { uid: "bob", corpsClass: "soundSport" },
@@ -705,9 +808,9 @@ describe("payWeeklyParticipationXP", () => {
     assert.ok(aliceWrite, "alice should receive an XP write");
     assert.ok(
       aliceWrite.data.xp.isEqual(
-        admin.firestore.FieldValue.increment(XP_SOURCES.weeklyParticipation * 2)
+        admin.firestore.FieldValue.increment(XP_SOURCES.weeklyParticipation)
       ),
-      "alice competed in two classes → two grants in one increment"
+      "alice competed in two classes → still one grant (per director, not per class)"
     );
 
     const bobWrite = writes.find((w) => w.path === profilePath("bob"));

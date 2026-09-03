@@ -570,6 +570,7 @@ const JobsTab = ({ callAdminFunction, seasonData }) => {
               className="flex-1 px-3 py-2 bg-surface-sunken border border-line text-xs text-white focus:outline-none focus:border-interactive"
             />
             <button
+              aria-label="Send test email"
               onClick={handleSendTestEmail}
               disabled={loading === 'testEmail' || !testEmail.trim()}
               className="flex items-center justify-center w-10 h-9 bg-interactive text-white hover:bg-interactive-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"

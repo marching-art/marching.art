@@ -1,4 +1,3 @@
-// @ts-nocheck -- mechanical extraction from Dashboard.jsx; types come with that file
 // =============================================================================
 // DASHBOARD MODAL HOST
 // =============================================================================
@@ -14,12 +13,10 @@
 
 import React, { Suspense } from 'react';
 import {
-  ClassUnlockCongratsModal,
   CorpsRegistrationModal,
   DeleteConfirmModal,
   RetireConfirmModal,
   MoveCorpsModal,
-  AchievementModal,
   OnboardingTour,
   QuickStartGuide,
   CLASS_DISPLAY_NAMES,
@@ -65,6 +62,20 @@ const ShowConceptModal = lazyWithRetry(
   'ShowConceptModal'
 );
 
+/**
+ * `modals` is the whole return of hooks/useDashboardModals and `data` the
+ * aggregated dashboard state (hooks/useDashboardData) — both untyped hook
+ * bags passed straight through, hence `any`.
+ * @param {{
+ *   modals: any,
+ *   data: any,
+ *   quickStartSteps: any[],
+ *   quickStartVariant?: 'fantasy' | 'podium',
+ *   rehearsalIncomplete?: boolean,
+ *   onRequestZone?: (zone: string) => void,
+ *   onRevealPanel?: (panel: string) => void,
+ * }} props
+ */
 const DashboardModalHost = ({
   modals,
   data,
@@ -108,9 +119,6 @@ const DashboardModalHost = ({
     setShowWalletModal,
     handleTourComplete,
     handlePodiumTourComplete,
-    handleSetupNewClass,
-    handleDeclineSetup,
-    handleAchievementClose,
     handleSeasonRecapClose,
     handlePodiumSeasonRecapClose,
     handlePodiumSeasonRecapSetup,
@@ -125,38 +133,19 @@ const DashboardModalHost = ({
     closeCaptionSelection,
   } = modals;
 
-  const {
-    profile,
-    corps,
-    activeCorps,
-    activeCorpsClass,
-    seasonData,
-    unlockedClasses,
-    newlyUnlockedClass,
-    clearNewlyUnlockedClass,
-    newAchievement,
-  } = data;
+  const { profile, corps, activeCorps, activeCorpsClass, seasonData, unlockedClasses } = data;
 
   return (
     <>
-      {modalQueue.isActive('classUnlock') && newlyUnlockedClass && (
-        <ClassUnlockCongratsModal
-          unlockedClass={newlyUnlockedClass}
-          onSetup={handleSetupNewClass}
-          onDecline={handleDeclineSetup}
-        />
-      )}
-
       {showRegistration && (
         <CorpsRegistrationModal
           onClose={() => {
             setShowRegistration(false);
             setRegistrationDefaultClass(null);
-            clearNewlyUnlockedClass();
           }}
           onSubmit={handleCorpsRegistration}
           unlockedClasses={unlockedClasses}
-          defaultClass={registrationDefaultClass || newlyUnlockedClass}
+          defaultClass={registrationDefaultClass}
         />
       )}
 
@@ -170,11 +159,19 @@ const DashboardModalHost = ({
               setRegistrationDefaultClass(targetClass);
               setShowRegistration(true);
             }}
-            onUnretire={(retiredIndex) => handleUnretireCorps(slotPickerClass, retiredIndex)}
+            onUnretire={(/** @type {number} */ retiredIndex) =>
+              handleUnretireCorps(slotPickerClass, retiredIndex)
+            }
             corpsClass={slotPickerClass}
             retiredCorps={(profile?.retiredCorps || [])
-              .map((record, retiredIndex) => ({ record, retiredIndex }))
-              .filter((entry) => entry.record?.corpsClass === slotPickerClass)}
+              .map((/** @type {any} */ record, /** @type {number} */ retiredIndex) => ({
+                record,
+                retiredIndex,
+              }))
+              .filter(
+                (/** @type {{ record: any }} */ entry) =>
+                  entry.record?.corpsClass === slotPickerClass
+              )}
             processing={unretiring}
           />
         </Suspense>
@@ -243,7 +240,6 @@ const DashboardModalHost = ({
           corpsName={activeCorps.corpsName || activeCorps.name}
           corpsClass={activeCorpsClass}
           retiring={retiring}
-          inLeague={false}
           hasPendingWork={corpsHasPendingWork(activeCorps)}
         />
       )}
@@ -258,14 +254,6 @@ const DashboardModalHost = ({
           existingCorps={corps}
           transferring={transferring}
           hasPendingWork={corpsHasPendingWork(activeCorps)}
-        />
-      )}
-
-      {modalQueue.isActive('achievement') && newAchievement && (
-        <AchievementModal
-          onClose={handleAchievementClose}
-          achievements={profile?.achievements || []}
-          newAchievement={newAchievement}
         />
       )}
 

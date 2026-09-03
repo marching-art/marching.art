@@ -34,6 +34,8 @@ export interface LeagueMatchup {
   crossClass?: boolean;
   classes?: Record<string, string>;
   normalized?: Record<string, number>;
+  /** Per-show averages the default format decided on (settled matchups). */
+  averages?: Record<string, number>;
 }
 
 /** A raw `leagues/{id}/matchups/week-N` document as read from Firestore. */
@@ -57,6 +59,17 @@ export type WeeklyClassResults = Record<number, Record<string, Record<string, nu
 
 /** Matchups grouped by week number. */
 export type MatchupsByWeek = Record<number, LeagueMatchup[]>;
+
+/**
+ * Per-class PER-SHOW AVERAGE per member, per week — the same shape as
+ * WeeklyClassResults, holding what a default-format matchup is decided on.
+ *
+ * Summing a week let four shows beat three whatever the scores said; the
+ * server (functions/src/helpers/leagueScoring.js) now decides on the average
+ * and this provisional table must read a live week the same way, or the
+ * mid-week leader would flip at resolution.
+ */
+export type WeeklyClassAverages = WeeklyClassResults;
 
 /** A member's row in the computed league standings. */
 export interface LeagueMemberStanding {
@@ -182,6 +195,52 @@ export function buildWeeklyClassResults(
 }
 
 /**
+ * The per-class fold again, as per-show averages (total ÷ shows attended in
+ * that class that week).
+ */
+export function buildWeeklyClassAverages(
+  recaps: LeagueRecapDay[],
+  memberIds: string[]
+): WeeklyClassAverages {
+  const memberUids = new Set(memberIds);
+  const sums: WeeklyClassResults = {};
+  const counts: WeeklyClassResults = {};
+
+  recaps.forEach((dayRecap) => {
+    const weekNum = Math.ceil(dayRecap.offSeasonDay / 7);
+    if (!sums[weekNum]) sums[weekNum] = {};
+    if (!counts[weekNum]) counts[weekNum] = {};
+
+    dayRecap.shows?.forEach((show) => {
+      show.results?.forEach((result) => {
+        if (!memberUids.has(result.uid)) return;
+        const corpsClass = result.corpsClass || UNKNOWN_CLASS;
+        if (!sums[weekNum][result.uid]) sums[weekNum][result.uid] = {};
+        if (!counts[weekNum][result.uid]) counts[weekNum][result.uid] = {};
+        sums[weekNum][result.uid][corpsClass] =
+          (sums[weekNum][result.uid][corpsClass] || 0) + (result.totalScore || 0);
+        counts[weekNum][result.uid][corpsClass] =
+          (counts[weekNum][result.uid][corpsClass] || 0) + 1;
+      });
+    });
+  });
+
+  const averages: WeeklyClassAverages = {};
+  Object.entries(sums).forEach(([week, byUid]) => {
+    const weekNum = Number(week);
+    averages[weekNum] = {};
+    Object.entries(byUid).forEach(([uid, byClass]) => {
+      averages[weekNum][uid] = {};
+      Object.entries(byClass).forEach(([corpsClass, sum]) => {
+        const n = counts[weekNum]?.[uid]?.[corpsClass] || 0;
+        averages[weekNum][uid][corpsClass] = n > 0 ? sum / n : 0;
+      });
+    });
+  });
+  return averages;
+}
+
+/**
  * A member's score for one matchup: the class it was contested in when that is
  * known on both sides, otherwise their whole week. Falling back to the total
  * keeps legacy recaps (which carry no corpsClass) behaving as they always did.
@@ -208,6 +267,28 @@ function scoreForMatchup(
     if (hasClassifiedResults) return 0;
   }
   return weeklyResults[weekNum]?.[uid] || 0;
+}
+
+/**
+ * A member's per-show average for one matchup, resolved through the same
+ * class logic as scoreForMatchup. Undefined when no averages table was built
+ * (legacy callers), in which case the outcome falls back to totals.
+ */
+function averageForMatchup(
+  matchup: LeagueMatchup,
+  classAverages: WeeklyClassAverages | undefined,
+  weekNum: number,
+  uid: string
+): number | undefined {
+  if (!classAverages) return undefined;
+  const corpsClass = matchup.classes?.[uid] ?? matchup.corpsClass;
+  const perClass = classAverages[weekNum]?.[uid];
+  if (!perClass) return 0;
+  if (corpsClass && perClass[corpsClass] !== undefined) return perClass[corpsClass];
+  if (corpsClass && Object.keys(perClass).some((key) => key !== UNKNOWN_CLASS)) return 0;
+  // Legacy recaps (no class) — the only class present is UNKNOWN_CLASS.
+  const values = Object.values(perClass);
+  return values.length ? values[0] : 0;
 }
 
 /**
@@ -240,6 +321,7 @@ export function buildMatchupsByWeek(
         crossClass?: boolean;
         classes?: Record<string, string>;
         normalized?: Record<string, number>;
+        averages?: Record<string, number>;
       }>;
       classMatchups.forEach((matchup) => {
         if (matchup.pair && matchup.pair[0] && matchup.pair[1]) {
@@ -253,6 +335,7 @@ export function buildMatchupsByWeek(
             crossClass: matchup.crossClass,
             classes: matchup.classes,
             normalized: matchup.normalized,
+            averages: matchup.averages,
           });
         }
       });
@@ -294,13 +377,20 @@ function matchupOutcomeFor(
   matchup: LeagueMatchup,
   uid: string,
   myScore: number,
-  oppScore: number
+  oppScore: number,
+  myAverage?: number,
+  oppAverage?: number
 ): 'W' | 'L' | 'T' {
   if (matchup.completed && matchup.winner) {
     if (matchup.winner === uid) return 'W';
     if (matchup.winner === 'tie') return 'T';
     const oppUid = matchup.user1 === uid ? matchup.user2 : matchup.user1;
     if (matchup.winner === oppUid) return 'L';
+  }
+  // Unresolved: read it the way the server will — per-show average first,
+  // the fuller week (total) on equal averages.
+  if (typeof myAverage === 'number' && typeof oppAverage === 'number' && myAverage !== oppAverage) {
+    return myAverage > oppAverage ? 'W' : 'L';
   }
   return myScore > oppScore ? 'W' : myScore < oppScore ? 'L' : 'T';
 }
@@ -311,12 +401,15 @@ function headToHeadScores(
   weeklyResults: WeeklyResults,
   weekNum: number,
   uid: string,
-  classResults?: WeeklyClassResults
-): { myScore: number; oppScore: number } {
+  classResults?: WeeklyClassResults,
+  classAverages?: WeeklyClassAverages
+): { myScore: number; oppScore: number; myAverage?: number; oppAverage?: number } {
   const oppUid = matchup.user1 === uid ? matchup.user2 : matchup.user1;
   return {
     myScore: scoreForMatchup(matchup, weeklyResults, classResults, weekNum, uid),
     oppScore: scoreForMatchup(matchup, weeklyResults, classResults, weekNum, oppUid),
+    myAverage: averageForMatchup(matchup, classAverages, weekNum, uid),
+    oppAverage: averageForMatchup(matchup, classAverages, weekNum, oppUid),
   };
 }
 
@@ -336,7 +429,8 @@ export function computeMemberStandings(
   members: string[],
   weeklyResults: WeeklyResults,
   matchupsByWeek: MatchupsByWeek,
-  classResults?: WeeklyClassResults
+  classResults?: WeeklyClassResults,
+  classAverages?: WeeklyClassAverages
 ): LeagueMemberStanding[] {
   const memberStats: Record<string, LeagueMemberStanding> = {};
 
@@ -381,7 +475,14 @@ export function computeMemberStandings(
         memberStats[matchup.user2].weeklyScores[weekNum] = scores[matchup.user2] || score2;
       }
 
-      const outcome1 = matchupOutcomeFor(matchup, matchup.user1, score1, score2);
+      const outcome1 = matchupOutcomeFor(
+        matchup,
+        matchup.user1,
+        score1,
+        score2,
+        averageForMatchup(matchup, classAverages, parseInt(weekNum), matchup.user1),
+        averageForMatchup(matchup, classAverages, parseInt(weekNum), matchup.user2)
+      );
       if (outcome1 === 'W') {
         if (memberStats[matchup.user1]) memberStats[matchup.user1].wins++;
         if (memberStats[matchup.user2]) memberStats[matchup.user2].losses++;
@@ -410,17 +511,20 @@ export function computeMemberStandings(
       if (broken) break;
       const weekMatchups = findMatchupsForUser(matchupsByWeek, parseInt(weekNum), stats.uid);
       for (const matchup of weekMatchups) {
-        const { myScore, oppScore } = headToHeadScores(
+        const { myScore, oppScore, myAverage, oppAverage } = headToHeadScores(
           matchup,
           weeklyResults,
           parseInt(weekNum),
           stats.uid,
-          classResults
+          classResults,
+          classAverages
         );
         // Pinned quirk preserved: a drawn week extends an L streak ("did not
         // win"), but the settled winner decides W vs not-W.
         const currentType: 'W' | 'L' =
-          matchupOutcomeFor(matchup, stats.uid, myScore, oppScore) === 'W' ? 'W' : 'L';
+          matchupOutcomeFor(matchup, stats.uid, myScore, oppScore, myAverage, oppAverage) === 'W'
+            ? 'W'
+            : 'L';
 
         if (streakType === null) {
           streakType = currentType;
@@ -456,14 +560,22 @@ export function computeMemberStandings(
 
     for (const weekNum of recentWeeks) {
       for (const matchup of findMatchupsForUser(matchupsByWeek, weekNum, stats.uid)) {
-        const { myScore, oppScore } = headToHeadScores(
+        const { myScore, oppScore, myAverage, oppAverage } = headToHeadScores(
           matchup,
           weeklyResults,
           weekNum,
           stats.uid,
-          classResults
+          classResults,
+          classAverages
         );
-        const outcome = matchupOutcomeFor(matchup, stats.uid, myScore, oppScore);
+        const outcome = matchupOutcomeFor(
+          matchup,
+          stats.uid,
+          myScore,
+          oppScore,
+          myAverage,
+          oppAverage
+        );
         if (outcome === 'W') {
           recentWins++;
         } else if (outcome === 'L') {
@@ -505,12 +617,14 @@ export function computeLeagueTables(input: {
 
   const weeklyResults = buildWeeklyResults(recaps, members);
   const weeklyClassResults = buildWeeklyClassResults(recaps, members);
+  const weeklyClassAverages = buildWeeklyClassAverages(recaps, members);
   const weeklyMatchups = buildMatchupsByWeek(matchupDocs, members, currentWeek);
   const standings = computeMemberStandings(
     members,
     weeklyResults,
     weeklyMatchups,
-    weeklyClassResults
+    weeklyClassResults,
+    weeklyClassAverages
   );
 
   return { weeklyResults, weeklyMatchups, standings };

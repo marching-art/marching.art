@@ -58,7 +58,9 @@ exports.onProfileCreated = onDocumentCreated(
     }
 
     // Send welcome email
-    const success = await sendWelcomeEmail(email, profile.username || "Director");
+    const success = await sendWelcomeEmail(email, profile.username || "Director", {
+      uid: userId,
+    });
 
     if (success) {
       logger.info(`Welcome email sent to ${email} for user ${userId}`);
@@ -117,7 +119,8 @@ exports.onStreakMilestoneReached = onDocumentCreated(
       "streak",
       milestone.days,
       milestone.xpReward || 0,
-      milestone.coinReward || 0
+      milestone.coinReward || 0,
+      { uid: userId }
     );
 
     if (success) {

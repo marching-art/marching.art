@@ -15,6 +15,7 @@ const { logger } = require("firebase-functions/v2");
 // into an email HTML template — otherwise it's stored XSS in the recipient's
 // inbox. Trusted constants (EMAIL_CONFIG URLs, literal copy) stay unescaped.
 const { escapeHtml } = require("./escapeHtml");
+const { deriveUnsubscribeKey, buildUnsubscribeUrl } = require("./unsubscribeToken");
 
 // Define secrets for Brevo (set via `firebase functions:secrets:set`)
 const brevoApiKey = defineSecret("BREVO_API_KEY");
@@ -25,8 +26,66 @@ const EMAIL_CONFIG = {
   fromName: "marching.art",
   replyTo: "support@marching.art",
   appUrl: "https://marching.art",
+  // The signed-in preferences page. Engagement mail swaps this for the
+  // recipient's own one-click link (unsubscribeUrlFor) when it can.
   unsubscribeUrl: "https://marching.art/profile?settings=emails",
 };
+
+/**
+ * The recipient's no-login, one-click unsubscribe link
+ * (helpers/unsubscribeToken.js; served by triggers/unsubscribe.js). Null when
+ * the Brevo key is not configured — in which case no mail goes out anyway.
+ * @param {string | null | undefined} uid
+ * @returns {string | null}
+ */
+function unsubscribeUrlFor(uid) {
+  if (!uid) return null;
+  let apiKey = "";
+  try {
+    apiKey = brevoApiKey.value() || "";
+  } catch {
+    // Secret not bound to this function — no token, keep the signed-in link.
+  }
+  const key = deriveUnsubscribeKey(apiKey);
+  return key ? buildUnsubscribeUrl(uid, key, EMAIL_CONFIG.appUrl) : null;
+}
+
+/**
+ * The Brevo request for one email. Pure and exported so the header contract
+ * can be tested without a client.
+ *
+ * With a per-recipient `unsubscribeUrl` the message carries the
+ * List-Unsubscribe / List-Unsubscribe-Post headers Gmail and Yahoo require of
+ * bulk senders (RFC 8058 one-click), and the footer's "Email Preferences"
+ * link becomes that URL so the visible link works without a login too.
+ *
+ * @param {{to: string, subject: string, html: string, text?: string, emailType: string, unsubscribeUrl?: string | null}} options
+ */
+function buildSendRequest({ to, subject, html, text, emailType, unsubscribeUrl }) {
+  const htmlContent = unsubscribeUrl
+    ? html.split(EMAIL_CONFIG.unsubscribeUrl).join(unsubscribeUrl)
+    : html;
+  return {
+    subject,
+    htmlContent,
+    textContent: text || stripHtml(htmlContent),
+    sender: {
+      email: EMAIL_CONFIG.fromEmail,
+      name: EMAIL_CONFIG.fromName,
+    },
+    to: [{ email: to }],
+    replyTo: { email: EMAIL_CONFIG.replyTo },
+    tags: [emailType],
+    ...(unsubscribeUrl
+      ? {
+          headers: {
+            "List-Unsubscribe": `<${unsubscribeUrl}>`,
+            "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+          },
+        }
+      : {}),
+  };
+}
 
 // Email types for tracking and preferences
 const EMAIL_TYPES = {
@@ -114,26 +173,18 @@ function getBrevoClient() {
  * @param {string} options.html - HTML content
  * @param {string} [options.text] - Plain text content (optional; derived from the HTML when omitted)
  * @param {string} options.emailType - Type of email for tracking
+ * @param {string | null} [options.unsubscribeUrl] - The recipient's one-click unsubscribe link (engagement mail)
  * @returns {Promise<boolean>} - Success status
  */
-async function sendEmail({ to, subject, html, text, emailType }) {
+async function sendEmail({ to, subject, html, text, emailType, unsubscribeUrl = null }) {
   try {
     const client = getBrevoClient();
 
     // v6 SDK: plain request object (no SendSmtpEmail model class) sent via the
     // client's transactionalEmails namespace. Field names are unchanged.
-    await client.transactionalEmails.sendTransacEmail({
-      subject,
-      htmlContent: html,
-      textContent: text || stripHtml(html),
-      sender: {
-        email: EMAIL_CONFIG.fromEmail,
-        name: EMAIL_CONFIG.fromName,
-      },
-      to: [{ email: to }],
-      replyTo: { email: EMAIL_CONFIG.replyTo },
-      tags: [emailType],
-    });
+    await client.transactionalEmails.sendTransacEmail(
+      buildSendRequest({ to, subject, html, text, emailType, unsubscribeUrl })
+    );
     logger.info(`Email sent successfully: ${emailType} to ${to}`);
     return true;
   } catch (error) {
@@ -702,26 +753,28 @@ function milestoneEmailTemplate({ username, milestoneType, milestoneValue, xpRew
 /**
  * Send welcome email to new user
  */
-async function sendWelcomeEmail(email, username) {
+async function sendWelcomeEmail(email, username, { uid = null } = {}) {
   const html = welcomeEmailTemplate({ username });
   return sendEmail({
     to: email,
     subject: "Welcome to marching.art! 🎺",
     html,
     emailType: EMAIL_TYPES.WELCOME,
+    unsubscribeUrl: unsubscribeUrlFor(uid),
   });
 }
 
 /**
  * Send streak broken email
  */
-async function sendStreakBrokenEmail(email, username, previousStreak) {
+async function sendStreakBrokenEmail(email, username, previousStreak, { uid = null } = {}) {
   const html = streakBrokenEmailTemplate({ username, previousStreak });
   return sendEmail({
     to: email,
     subject: "Your streak has reset — start fresh today!",
     html,
     emailType: EMAIL_TYPES.STREAK_BROKEN,
+    unsubscribeUrl: unsubscribeUrlFor(uid),
   });
 }
 
@@ -729,13 +782,14 @@ async function sendStreakBrokenEmail(email, username, previousStreak) {
  * Send the rival-context weekly email. Caller is responsible for ensuring
  * `data.events.length > 0` — this function does not gate on its own.
  */
-async function sendRivalContextEmail(email, data) {
+async function sendRivalContextEmail(email, data, { uid = null } = {}) {
   const html = rivalContextEmailTemplate(data);
   return sendEmail({
     to: email,
     subject: data.headline || "Your class moved this week",
     html,
     emailType: EMAIL_TYPES.WEEKLY_DIGEST,
+    unsubscribeUrl: unsubscribeUrlFor(uid),
   });
 }
 
@@ -800,26 +854,43 @@ async function sendAdminGenericAlertEmail(email, { subject, body }) {
 /**
  * Send win-back campaign email
  */
-async function sendWinBackEmail(email, username, daysMissed, streakLost, corpsCoinBalance) {
+async function sendWinBackEmail(
+  email,
+  username,
+  daysMissed,
+  streakLost,
+  corpsCoinBalance,
+  { uid = null } = {}
+) {
   const html = winBackEmailTemplate({ username, daysMissed, streakLost, corpsCoinBalance });
   return sendEmail({
     to: email,
     subject: `We miss you, ${username}! Come back to marching.art`,
     html,
     emailType: EMAIL_TYPES.WIN_BACK,
+    unsubscribeUrl: unsubscribeUrlFor(uid),
   });
 }
 
 /**
  * Send milestone achieved email
  */
-async function sendMilestoneEmail(email, username, milestoneType, milestoneValue, xpReward, coinReward) {
+async function sendMilestoneEmail(
+  email,
+  username,
+  milestoneType,
+  milestoneValue,
+  xpReward,
+  coinReward,
+  { uid = null } = {}
+) {
   const html = milestoneEmailTemplate({ username, milestoneType, milestoneValue, xpReward, coinReward });
   return sendEmail({
     to: email,
     subject: `🎉 Milestone: ${milestoneValue}-day streak achieved!`,
     html,
     emailType: EMAIL_TYPES.MILESTONE_ACHIEVED,
+    unsubscribeUrl: unsubscribeUrlFor(uid),
   });
 }
 
@@ -885,6 +956,8 @@ async function fanOutToAdmins(senderFn, payload) {
 // =============================================================================
 
 module.exports = {
+  buildSendRequest,
+  unsubscribeUrlFor,
   EMAIL_PREFERENCE_MAP,
   isEmailTypeEnabled,
   // Configuration

@@ -11,6 +11,7 @@ const {
   EMAIL_TYPES,
   EMAIL_PREFERENCE_MAP,
   isEmailTypeEnabled,
+  buildSendRequest,
   welcomeEmailTemplate,
   rivalContextEmailTemplate,
   winBackEmailTemplate,
@@ -159,4 +160,35 @@ test("legacy snake_case keys are still honored; missing prefs default on", () =>
   assert.equal(isEmailTypeEnabled(null, EMAIL_TYPES.MILESTONE_ACHIEVED), true);
   // Non-boolean junk never counts as an opt-out or an opt-in.
   assert.equal(isEmailTypeEnabled({ weeklyDigest: "no" }, EMAIL_TYPES.WEEKLY_DIGEST, false), false);
+});
+
+// One-click unsubscribe (site review N-H2): engagement mail must carry the
+// RFC 8058 headers and a footer link that works without signing in.
+test("buildSendRequest adds List-Unsubscribe headers and swaps the footer link", () => {
+  const url = "https://marching.art/unsubscribe?t=alice.sig";
+  const html = welcomeEmailTemplate({ username: "Alice" });
+  const req = buildSendRequest({
+    to: "a@example.com",
+    subject: "Hi",
+    html,
+    emailType: EMAIL_TYPES.WELCOME,
+    unsubscribeUrl: url,
+  });
+  assert.equal(req.headers["List-Unsubscribe"], `<${url}>`);
+  assert.equal(req.headers["List-Unsubscribe-Post"], "List-Unsubscribe=One-Click");
+  assert.ok(req.htmlContent.includes(url), "footer link is the per-recipient one");
+  assert.ok(!req.htmlContent.includes("/profile?settings=emails"), "login-walled link replaced");
+  assert.ok(!req.textContent.includes("/profile?settings=emails"), "plain text follows the swap");
+  assert.deepEqual(req.tags, [EMAIL_TYPES.WELCOME]);
+});
+
+test("buildSendRequest sends no unsubscribe headers when there is no recipient token", () => {
+  const req = buildSendRequest({
+    to: "a@example.com",
+    subject: "Hi",
+    html: "<p>Admin alert</p>",
+    emailType: EMAIL_TYPES.ADMIN_GENERIC_ALERT,
+  });
+  assert.equal(req.headers, undefined);
+  assert.equal(req.htmlContent, "<p>Admin alert</p>");
 });

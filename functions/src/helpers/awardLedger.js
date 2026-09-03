@@ -35,12 +35,22 @@ const showAwardToken = (seasonUid, scoredDay) => `${seasonUid}:show:d${scoredDay
 const weeklyXpToken = (seasonUid, week) => `${seasonUid}:weeklyXp:w${week}`;
 
 /**
- * Token for a weekly matchup win bonus. Keyed by (week, league, class) so a
- * director in multiple leagues is paid once PER winning matchup, not once per
- * week.
+ * Token for a weekly matchup win's per-league bookkeeping (the
+ * `stats.leagueWins` increment). Keyed by (week, league, class) so every
+ * winning matchup counts once.
  */
 const weeklyWinToken = (seasonUid, week, leagueId, corpsClass) =>
   `${seasonUid}:win:w${week}:${leagueId}:${corpsClass}`;
+
+/**
+ * Token for the weekly-win CorpsCoin + XP BONUS. Keyed by (week, class) with
+ * NO league id: the bonus is paid once per class per week however many
+ * leagues the director wins in. Ten private leagues with the same alts used
+ * to be ten payouts (site review G-H7); the record still counts every win,
+ * only the money is capped.
+ */
+const weeklyWinBonusToken = (seasonUid, week, corpsClass) =>
+  `${seasonUid}:winBonus:w${week}:${corpsClass}`;
 
 /**
  * Token for a director's W-L-T record increment in a weekly matchup. The
@@ -64,8 +74,8 @@ function hasAwardToken(profileData, token) {
  * harmless no-op; the whole point is that it commits atomically WITH the
  * increment beside it.
  */
-function awardTokenWrite(token) {
-  return { [LEDGER_FIELD]: admin.firestore.FieldValue.arrayUnion(token) };
+function awardTokenWrite(...tokens) {
+  return { [LEDGER_FIELD]: admin.firestore.FieldValue.arrayUnion(...tokens) };
 }
 
 module.exports = {
@@ -73,6 +83,7 @@ module.exports = {
   showAwardToken,
   weeklyXpToken,
   weeklyWinToken,
+  weeklyWinBonusToken,
   matchupRecordToken,
   hasAwardToken,
   awardTokenWrite,

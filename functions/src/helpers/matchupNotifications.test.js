@@ -153,6 +153,34 @@ describe("cross-class matchup copy", () => {
   });
 });
 
+describe("default-format matchup copy", () => {
+  test("quotes the per-show averages the week was decided on, not the totals", () => {
+    const entries = buildMatchupEntries(names, {
+      ...baseArgs,
+      pairs: [
+        {
+          player1: "alice",
+          player2: "bob",
+          player1Score: 252, // three shows…
+          player2Score: 88, // …against one
+          player1Average: 84,
+          player2Average: 88,
+          player1Class: "worldClass",
+          player2Class: "worldClass",
+          winner: "bob",
+          corpsClass: "worldClass",
+        },
+      ],
+    });
+    const bob = entries.find((e) => e.uid === "bob");
+    const alice = entries.find((e) => e.uid === "alice");
+    assert.match(bob.message, /averaging 88\.000 – 84\.000 per show/);
+    assert.match(alice.message, /lost to Bob/);
+    // The totals would contradict the verdict — they must not lead the copy.
+    assert.doesNotMatch(bob.message, /252\.000/);
+  });
+});
+
 describe("one-night slate matchup copy", () => {
   test("quotes the best-show line the week was decided on", () => {
     const entries = buildMatchupEntries(names, {

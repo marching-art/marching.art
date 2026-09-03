@@ -65,17 +65,17 @@ your biography passes.
 
 ### XP sources (`XP_SOURCES` in `xpCalculations.js`)
 
-| Source               | XP                                  | Notes                                             |
-| -------------------- | ----------------------------------- | ------------------------------------------------- |
-| Daily login          | 25                                  | ~175/wk if daily (`claimDailyLogin`)              |
-| Compete in a show    | 25 / show (≤4/wk → ≤100)            | The core act, paid in the nightly run             |
-| Weekly participation | 150                                 | Compete in ≥1 show in a week, once per class/week |
-| League matchup win   | 100                                 | Byes and ties award nothing                       |
-| Daily prediction     | 15 / correct                        | + a perfect-day bonus                             |
-| Daily challenges     | 10 core / 20 stretch, 2/day         | + a graduated weekly-arc bonus (3/5/7-day tiers)  |
-| Streak milestones    | 50–1,000                            | At 3/7/14/30/60/100 days                          |
-| Season completion    | 200 / 300 / 400 / 500 by final rank | Guaranteed 200 for finishing                      |
-| First Season Journey | 425 one-time                        | The onboarding questline                          |
+| Source               | XP                                  | Notes                                            |
+| -------------------- | ----------------------------------- | ------------------------------------------------ |
+| Daily login          | 25                                  | ~175/wk if daily (`claimDailyLogin`)             |
+| Compete in a show    | 25 / show (≤4/wk → ≤100)            | The core act, paid in the nightly run            |
+| Weekly participation | 150                                 | Compete in ≥1 show in a week, once per director  |
+| League matchup win   | 100                                 | Once per class/week across all leagues; no byes  |
+| Daily prediction     | 15 / correct                        | + a perfect-day bonus                            |
+| Daily challenges     | 10 core / 20 stretch, 2/day         | + a graduated weekly-arc bonus (3/5/7-day tiers) |
+| Streak milestones    | 50–1,000                            | At 3/7/14/30/60/100 days                         |
+| Season completion    | 200 / 300 / 400 / 500 by final rank | Guaranteed 200 for finishing                     |
+| First Season Journey | 425 one-time                        | The onboarding questline                         |
 
 Design intent: **competing out-earns logging in** — the biggest recurring
 earners are participation and league wins, not passive check-ins.
@@ -130,18 +130,18 @@ instrumented weekly by `scheduled/economyStats.js` (mint vs. sink).
 
 ### Faucets (earning)
 
-| Source                       | Amount                                         |
-| ---------------------------- | ---------------------------------------------- |
-| New-account grant            | 1,000 CC                                       |
-| Show participation (nightly) | 50 / 100 / 150 / 200 CC by class (+175 Podium) |
-| Weekly league win            | 100 CC                                         |
-| Level-up stipend             | 100 CC / level                                 |
-| Streak milestones            | 50–1,000 CC (3→100 days)                       |
-| Prediction accuracy          | 10 CC / correct + 25 CC perfect day            |
-| Daily challenge weekly arc   | up to 150 CC (3/5/7-day milestones; 100 by 5)  |
-| Season finish bonus          | 1,000 / 750 / 500 / 350 / 250 CC by rank       |
-| Season reward ladder         | up to 1,650 CC across 12 tiers                 |
-| League prize pool (champion) | commissioner-funded                            |
+| Source                       | Amount                                                     |
+| ---------------------------- | ---------------------------------------------------------- |
+| New-account grant            | 1,000 CC                                                   |
+| Show participation (nightly) | 50 / 100 / 150 / 200 CC by class (+175 Podium)             |
+| Weekly league win            | 100 CC (once per class/week, all leagues)                  |
+| Level-up stipend             | 100 CC / level                                             |
+| Streak milestones            | 50–1,000 CC (3→100 days)                                   |
+| Prediction accuracy          | 10 CC / correct + 25 CC perfect day                        |
+| Daily challenge weekly arc   | up to 150 CC (3/5/7-day milestones; 100 by 5)              |
+| Season finish bonus          | 1,000 / 750 / 500 / 350 / 250 CC by rank (best corps only) |
+| Season reward ladder         | up to 1,650 CC across 12 tiers                             |
+| League prize pool (champion) | commissioner-funded                                        |
 
 An active World Class director earns roughly **800–1,200 CC/week**; a SoundSport
 rookie roughly 300–500.

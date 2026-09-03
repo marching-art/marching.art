@@ -11,7 +11,7 @@
 //
 // The step lists themselves live in tourSteps.ts, one per device.
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { m } from 'framer-motion';
 import {
   X,
@@ -29,6 +29,8 @@ import {
 } from 'lucide-react';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { getTourSteps } from './tourSteps';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 const ICONS = {
   sparkles: Sparkles,
@@ -67,6 +69,12 @@ const OnboardingTour = ({ isOpen, onClose, onComplete, onRequestZone, variant = 
   const stepIndex = Math.min(currentStep, steps.length - 1);
   const step = steps[stepIndex];
   const Icon = ICONS[step.icon];
+
+  // Escape skips the tour; Tab stays inside the card instead of wandering
+  // into the page it is explaining.
+  const dialogRef = useRef(null);
+  useEscapeKey(onClose, isOpen);
+  useFocusTrap(dialogRef, isOpen);
 
   // A mobile step may live in a zone that is not showing. Ask the dashboard to
   // switch before the positioning effect looks for the target, or the tour
@@ -192,6 +200,7 @@ const OnboardingTour = ({ isOpen, onClose, onComplete, onRequestZone, variant = 
         style={cardStyle}
         onClick={(e) => e.stopPropagation()}
         className={cardClass}
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="tour-step-title"

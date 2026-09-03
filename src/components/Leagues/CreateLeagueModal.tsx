@@ -2,13 +2,14 @@
 // CREATE LEAGUE MODAL - DATA-TERMINAL STYLE
 // =============================================================================
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { X, Users, Lock, Trophy, Copy, Check, Share2, Link2 } from 'lucide-react';
 import Portal from '../Portal';
 import toast from 'react-hot-toast';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
 import type { LeagueCreationData } from '../../types';
 import type { CreateLeagueResult } from '../../api/leagues';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 /** Exactly what createLeague accepts — no prizePool, which is server escrow. */
 type LeagueFormData = LeagueCreationData & {
@@ -33,6 +34,8 @@ interface CreateLeagueModalProps {
 const CreateLeagueModal = ({ onClose, onCreate, onOpenLeague }: CreateLeagueModalProps) => {
   // Close on Escape key
   useEscapeKey(onClose);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(dialogRef);
 
   const [step, setStep] = useState<'create' | 'success'>('create');
   const [formData, setFormData] = useState<LeagueFormData>({
@@ -117,6 +120,7 @@ const CreateLeagueModal = ({ onClose, onCreate, onOpenLeague }: CreateLeagueModa
       <div
         className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4 overflow-y-auto"
         onClick={onClose}
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title-create-league"
@@ -135,7 +139,11 @@ const CreateLeagueModal = ({ onClose, onCreate, onOpenLeague }: CreateLeagueModa
                     Create League
                   </h2>
                 </div>
-                <button onClick={onClose} className="p-1 text-muted hover:text-white">
+                <button
+                  aria-label="Close"
+                  onClick={onClose}
+                  className="p-1 text-muted hover:text-white min-w-[44px] min-h-[44px] inline-flex items-center justify-center"
+                >
                   <X className="w-4 h-4" />
                 </button>
               </div>
@@ -335,6 +343,7 @@ const CreateLeagueModal = ({ onClose, onCreate, onOpenLeague }: CreateLeagueModa
                           </code>
                         </div>
                         <button
+                          aria-label="Copy invite code"
                           onClick={copyInviteCode}
                           className="h-12 w-12 bg-interactive/10 border border-interactive/30 text-interactive hover:bg-interactive/20 flex items-center justify-center"
                         >

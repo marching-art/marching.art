@@ -375,9 +375,10 @@ const CommentRow = ({
 
         {comment.status !== 'rejected' && (
           <button
+            aria-label="Close"
             onClick={onReject}
             disabled={isProcessing}
-            className="p-1.5 text-red-400 hover:bg-red-500/20 rounded-none transition-colors disabled:opacity-50"
+            className="p-1.5 text-red-400 hover:bg-red-500/20 rounded-none transition-colors disabled:opacity-50 min-w-[44px] min-h-[44px] inline-flex items-center justify-center"
             title="Reject"
           >
             <X className="w-4 h-4" />
@@ -430,7 +431,11 @@ const CommentPreviewModal = ({ comment, onClose, onApprove, onReject, onHide, is
                 Review Comment
               </h2>
             </div>
-            <button onClick={onClose} className="p-1 text-muted hover:text-white transition-colors">
+            <button
+              aria-label="Close"
+              onClick={onClose}
+              className="p-1 text-muted hover:text-white transition-colors min-w-[44px] min-h-[44px] inline-flex items-center justify-center"
+            >
               <X className="w-4 h-4" />
             </button>
           </div>

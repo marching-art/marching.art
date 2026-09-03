@@ -76,7 +76,7 @@ export const XP_SOURCE_GUIDE = [
     id: 'weeklyParticipation',
     label: 'Weekly show participation',
     xp: XP_SOURCES.weeklyParticipation,
-    cadence: 'Compete in at least one show that week, per class',
+    cadence: 'Compete in at least one show that week — once per director',
   },
   {
     id: 'leagueWin',

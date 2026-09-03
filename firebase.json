@@ -171,6 +171,13 @@
         }
       },
       {
+        "source": "/unsubscribe",
+        "function": {
+          "functionId": "getUnsubscribeHttp",
+          "region": "us-central1"
+        }
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }

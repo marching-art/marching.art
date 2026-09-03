@@ -5,7 +5,7 @@
 // Account, notification, and privacy settings. Extracted from Profile.jsx to
 // keep that page focused on the profile view.
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Mail,
   AtSign,
@@ -16,6 +16,7 @@ import {
   X,
   Download,
   CheckCircle2,
+  BarChart3,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import SupporterPanel from './SupporterPanel';
@@ -24,10 +25,12 @@ import { useProfileStore } from '../../store/profileStore';
 import { updateUsername, updateEmail, deleteAccount } from '../../api/functions';
 import toast from 'react-hot-toast';
 import { useTooltipPreference } from '../../hooks/useTooltipPreference';
+import { useAnalyticsConsent } from '../../utils/analyticsConsent';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
 import { usePWAInstall } from '../../hooks/usePWAInstall';
 import PWAInstallInstructions from '../PWAInstallInstructions';
 import { friendlyCallableError } from '../../utils/callableErrors';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 // =============================================================================
 // TOGGLE
@@ -59,10 +62,16 @@ const Toggle = ({ checked, onChange, label, description }) => (
 const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
   const { signOut } = useAuth();
   useEscapeKey(onClose, isOpen);
+  const dialogRef = useRef(null);
+  useFocusTrap(dialogRef, isOpen);
   const [activeTab, setActiveTab] = useState(initialTab);
 
   // Tooltip preferences
   const { tooltipsEnabled, setTooltipsEnabled } = useTooltipPreference();
+
+  // Analytics consent (per browser — Privacy §7 promises it is opt-in and
+  // withdrawable; this is the "withdraw" half, the consent bar is the ask).
+  const { enabled: analyticsEnabled, setEnabled: setAnalyticsEnabled } = useAnalyticsConsent();
 
   // PWA install — a persistent, always-reachable way to install the app, so
   // users who dismissed or missed the transient prompt can still find it here.
@@ -361,6 +370,7 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
     <div
       className="fixed inset-0 z-50 bg-black/80 flex items-end sm:items-center justify-center"
       onClick={onClose}
+      ref={dialogRef}
       role="dialog"
       aria-modal="true"
       aria-label="Settings"
@@ -497,6 +507,20 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
                   onChange={(e) => setTooltipsEnabled(e.target.checked)}
                   label="Show jargon tooltips"
                   description="Explain terms like Corps, Caption, DCI on hover"
+                />
+              </div>
+
+              {/* Analytics consent */}
+              <div className="bg-surface-sunken border border-line p-3">
+                <div className="text-[10px] font-bold text-muted uppercase tracking-wider mb-2 flex items-center gap-1">
+                  <BarChart3 className="w-3 h-3" />
+                  Privacy
+                </div>
+                <Toggle
+                  checked={analyticsEnabled}
+                  onChange={(e) => setAnalyticsEnabled(e.target.checked)}
+                  label="Share anonymous usage analytics"
+                  description="Google Analytics stays off unless you allow it. Applies to this browser."
                 />
               </div>
 

@@ -65,6 +65,8 @@ interface SelectedMatchup {
   crossClass?: boolean;
   classes?: Record<string, string>;
   normalized?: Record<string, number>;
+  /** Each side's per-show average, the figure the default format decided on. */
+  averages?: Record<string, number>;
   /** Each side's best single show, on a league running One-Night Slate. */
   best?: Record<string, { score?: number; showName?: string | null } | undefined>;
   winner?: string | null;
@@ -294,6 +296,7 @@ const MatchupsTab = ({
       crossClass: matchup.crossClass,
       classes: matchup.classes,
       normalized: matchup.normalized,
+      averages: matchup.averages,
       best: matchup.best,
       winner: matchup.winner,
       completed: matchup.completed,
@@ -423,9 +426,10 @@ const MatchupsTab = ({
                 </h3>
                 <div className="flex items-center gap-1">
                   <button
+                    aria-label="Previous week"
                     onClick={goToPrevWeek}
                     disabled={(selectedWeek ?? 1) <= 1}
-                    className="p-1 text-muted hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="p-1 text-muted hover:text-white disabled:opacity-30 disabled:cursor-not-allowed min-w-[44px] min-h-[44px] inline-flex items-center justify-center"
                   >
                     <ChevronLeft className="w-4 h-4" />
                   </button>
@@ -437,9 +441,10 @@ const MatchupsTab = ({
                         : 'Upcoming'}
                   </span>
                   <button
+                    aria-label="Next week"
                     onClick={goToNextWeek}
                     disabled={(selectedWeek ?? 1) >= GAME_CONFIG.season.totalWeeks}
-                    className="p-1 text-muted hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="p-1 text-muted hover:text-white disabled:opacity-30 disabled:cursor-not-allowed min-w-[44px] min-h-[44px] inline-flex items-center justify-center"
                   >
                     <ChevronRight className="w-4 h-4" />
                   </button>

@@ -18,8 +18,12 @@ test.describe('Guest preview draft loop', () => {
   test('drafts a full lineup and reaches the save gate', async ({ page }) => {
     await page.goto('/preview');
 
-    // Suppress the PWA install prompt — it overlays the lineup panel.
-    await page.evaluate(() => localStorage.setItem('pwa-install-dismissed', String(Date.now())));
+    // Suppress the PWA install prompt and the analytics consent bar — both
+    // overlay the lineup panel.
+    await page.evaluate(() => {
+      localStorage.setItem('pwa-install-dismissed', String(Date.now()));
+      localStorage.setItem('ma:analyticsConsent', 'denied');
+    });
 
     // Wait for the lineup panel; which button shows tells us the data mode.
     const tryDrafting = page.getByRole('button', { name: /try drafting/i });
@@ -61,7 +65,10 @@ test.describe('Guest preview draft loop', () => {
 
   test('lineup taps are gated to registration without seeded data', async ({ page }) => {
     await page.goto('/preview');
-    await page.evaluate(() => localStorage.setItem('pwa-install-dismissed', String(Date.now())));
+    await page.evaluate(() => {
+      localStorage.setItem('pwa-install-dismissed', String(Date.now()));
+      localStorage.setItem('ma:analyticsConsent', 'denied');
+    });
 
     const tryDrafting = page.getByRole('button', { name: /try drafting/i });
     const gatedEdit = page.getByRole('button', { name: /edit lineup/i });

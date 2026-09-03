@@ -5,7 +5,12 @@ import { DRAFT_POOL_MAX_POINTS } from '../components/CaptionSelection/useCaption
 import React, { useState, useEffect, useMemo, startTransition } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { consumePendingRedirect } from '../lib/pendingRedirect';
-import { takeStashedBirthDate, clearStashedBirthDate } from '../utils/ageGate';
+import {
+  takeStashedBirthDate,
+  clearStashedBirthDate,
+  checkBirthDate,
+  MIN_AGE_YEARS,
+} from '../utils/ageGate';
 import { m, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Check, ArrowLeft, Music, PartyPopper, XCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -65,7 +70,13 @@ const Onboarding = () => {
     displayName: user?.displayName || '',
     username: '',
     corpsName: '',
+    // Date of birth from the sign-up form (utils/ageGate). The server refuses
+    // to create a profile without one, so when the per-tab stash is gone (a
+    // reload, a different tab, storage blocked) the welcome step asks again.
+    birthDate: takeStashedBirthDate() || '',
   }));
+  // True when sign-up didn't hand us a date — the welcome step shows the field.
+  const [askBirthDate] = useState(() => !takeStashedBirthDate());
   const [loading, setLoading] = useState(false);
   // 'loading' | 'ready' | 'error' — season-doc side of the step-3 data load
   const [seasonStatus, setSeasonStatus] = useState('loading');
@@ -263,6 +274,18 @@ const Onboarding = () => {
 
   // Report a step the director could not advance past. Low-cardinality reason
   // codes only — they name the gate, never the value the director typed.
+  /**
+   * The server's own age-gate verdicts (helpers/ageGate): an unparseable date
+   * is `invalid-argument`, a missing or underage one is `failed-precondition`
+   * with a "date of birth" / "years old" message. Sent back to step 1 so the
+   * director can fix the field instead of seeing a generic failure.
+   * @param {any} error
+   */
+  const isBirthDateError = (error) =>
+    (error?.code === 'functions/failed-precondition' ||
+      error?.code === 'functions/invalid-argument') &&
+    /date of birth|years old/i.test(String(error?.message || ''));
+
   const trackBlocked = (reason) => {
     trackFunnelEvent(CLIENT_FUNNEL_EVENTS.ONBOARDING_STEP, {
       step,
@@ -286,6 +309,16 @@ const Onboarding = () => {
       if (usernameStatus.valid !== true) {
         toast.error('Please choose a valid, available username');
         trackBlocked('username_unavailable');
+        return;
+      }
+      const age = checkBirthDate(formData.birthDate);
+      if (!age.ok) {
+        toast.error(
+          age.reason === 'underage'
+            ? `You must be at least ${MIN_AGE_YEARS} years old to create an account.`
+            : 'Please enter your date of birth.'
+        );
+        trackBlocked(age.reason === 'underage' ? 'underage' : 'missing_birth_date');
         return;
       }
     }
@@ -341,9 +374,9 @@ const Onboarding = () => {
       await createUserProfile({
         username: formData.username.trim().toLowerCase(),
         displayName: formData.displayName.trim(),
-        // Date of birth from the sign-up form (utils/ageGate) — recorded on
-        // the owner-only private doc; absent on an older client.
-        birthDate: takeStashedBirthDate(),
+        // Date of birth (sign-up form or the welcome step) — recorded on the
+        // owner-only private doc; the server refuses a profile without it.
+        birthDate: formData.birthDate,
       });
       clearStashedBirthDate();
 
@@ -419,6 +452,9 @@ const Onboarding = () => {
           message: 'This username is already taken',
         });
         setStep(1);
+      } else if (isBirthDateError(error)) {
+        toast.error(error.message || 'Please enter a valid date of birth.');
+        setStep(1);
       } else {
         toast.error('Failed to create profile. Please try again.');
       }
@@ -444,9 +480,9 @@ const Onboarding = () => {
       await createUserProfile({
         username: formData.username.trim().toLowerCase(),
         displayName: formData.displayName.trim(),
-        // Date of birth from the sign-up form (utils/ageGate) — recorded on
-        // the owner-only private doc; absent on an older client.
-        birthDate: takeStashedBirthDate(),
+        // Date of birth (sign-up form or the welcome step) — recorded on the
+        // owner-only private doc; the server refuses a profile without it.
+        birthDate: formData.birthDate,
       });
       clearStashedBirthDate();
 
@@ -498,6 +534,9 @@ const Onboarding = () => {
           valid: false,
           message: 'This username is already taken',
         });
+        setStep(1);
+      } else if (isBirthDateError(error)) {
+        toast.error(error.message || 'Please enter a valid date of birth.');
         setStep(1);
       } else {
         toast.error('Failed to create profile. Please try again.');
@@ -642,6 +681,7 @@ const Onboarding = () => {
                     setFormData={setFormData}
                     usernameStatus={usernameStatus}
                     onUsernameChange={handleUsernameChange}
+                    askBirthDate={askBirthDate}
                   />
                 )}
 
@@ -781,6 +821,7 @@ const Onboarding = () => {
                     (currentStepId === 'welcome' &&
                       (!formData.displayName.trim() ||
                         !formData.username.trim() ||
+                        !formData.birthDate ||
                         usernameStatus.valid !== true)) ||
                     (currentStepId === 'choose' && !gameMode) ||
                     (currentStepId === 'corps' && !formData.corpsName.trim())

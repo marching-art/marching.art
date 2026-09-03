@@ -298,9 +298,10 @@ const SubmissionRow = ({
               <Check className="w-4 h-4" />
             </button>
             <button
+              aria-label="Close"
               onClick={onReject}
               disabled={isProcessing}
-              className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/20 rounded-none transition-colors disabled:opacity-50"
+              className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/20 rounded-none transition-colors disabled:opacity-50 min-w-[44px] min-h-[44px] inline-flex items-center justify-center"
               title="Reject"
             >
               <X className="w-4 h-4" />
@@ -354,7 +355,11 @@ const PreviewModal = ({ submission, onClose, onApprove, onReject, isProcessing, 
                 Review Submission
               </h2>
             </div>
-            <button onClick={onClose} className="p-1 text-muted hover:text-white transition-colors">
+            <button
+              aria-label="Close"
+              onClick={onClose}
+              className="p-1 text-muted hover:text-white transition-colors min-w-[44px] min-h-[44px] inline-flex items-center justify-center"
+            >
               <X className="w-4 h-4" />
             </button>
           </div>

@@ -2,7 +2,7 @@
 // Extracted from CaptionSelectionModal.jsx.
 
 import { DRAFT_POOL_MAX_POINTS } from './useCaptionSelectionModal';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Check,
   Flame,
@@ -23,6 +23,7 @@ import {
 import { formatEtShort, formatEtDayTime } from '../../utils/seasonClock';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
 import { Heading } from '../ui';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 /**
  * One draftable corps from the season pool (dci-data corpsValues), plus
@@ -222,12 +223,15 @@ const CorpsSelectionList = ({
 const TemplateModal = ({ isOpen, onClose, templates, onSave, onLoad, onDelete, currentLineup }) => {
   const [newTemplateName, setNewTemplateName] = useState('');
   useEscapeKey(onClose, isOpen);
+  const dialogRef = useRef(null);
+  useFocusTrap(dialogRef, isOpen);
   if (!isOpen) return null;
 
   return (
     <div
       className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/80"
       onClick={onClose}
+      ref={dialogRef}
       role="dialog"
       aria-modal="true"
       aria-label="Lineup templates"
@@ -240,7 +244,11 @@ const TemplateModal = ({ isOpen, onClose, templates, onSave, onLoad, onDelete, c
           <h3 className="text-xs font-bold uppercase tracking-wider text-secondary">
             Lineup Templates
           </h3>
-          <button onClick={onClose} className="p-1 text-muted hover:text-white">
+          <button
+            aria-label="Close"
+            onClick={onClose}
+            className="p-1 text-muted hover:text-white min-w-[44px] min-h-[44px] inline-flex items-center justify-center"
+          >
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -292,14 +300,16 @@ const TemplateModal = ({ isOpen, onClose, templates, onSave, onLoad, onDelete, c
                   </div>
                   <div className="flex items-center gap-1">
                     <button
+                      aria-label="Load template"
                       onClick={() => onLoad(template)}
-                      className="p-1.5 hover:bg-interactive/20 text-interactive"
+                      className="p-1.5 hover:bg-interactive/20 text-interactive min-w-[44px] min-h-[44px] inline-flex items-center justify-center"
                     >
                       <Download className="w-4 h-4" />
                     </button>
                     <button
+                      aria-label="Delete template"
                       onClick={() => onDelete(idx)}
-                      className="p-1.5 hover:bg-red-500/20 text-red-400"
+                      className="p-1.5 hover:bg-red-500/20 text-red-400 min-w-[44px] min-h-[44px] inline-flex items-center justify-center"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
