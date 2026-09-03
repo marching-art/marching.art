@@ -208,8 +208,10 @@ exports.createLeague = onCall({ cors: true }, async (request) => {
     });
 
     // Create invite code mapping (code -> league) and the member-only copy
-    // of the code for the commissioner/member share UI.
-    transaction.set(inviteRef, { leagueId: leagueRef.id });
+    // of the code for the commissioner/member share UI. `create`, not `set`:
+    // a colliding code must fail this transaction, never re-point another
+    // league's invite at this one.
+    transaction.create(inviteRef, { leagueId: leagueRef.id });
     transaction.set(metaPrivateRef, { inviteCode });
 
     // Add to user profile
@@ -365,8 +367,10 @@ exports.joinLeagueByCode = onCall({ cors: true }, async (request) => {
 
   const db = getDb();
 
-  // Abuse throttle (shared league bucket) — far above any human rate.
-  await assertWriteBudget(db, uid, "leagueSocial", { max: 40 });
+  // Brute-force throttle: its own bucket, tight enough that guessing codes is
+  // hopeless (31^8 space at 10 tries per 10 minutes) yet a director who
+  // mistypes a code a few times is never locked out of a real invite.
+  await assertWriteBudget(db, uid, "leagueJoinByCode", { max: 10 });
 
   // Look up the league by invite code
   const inviteRef = db.doc(`leagueInvites/${inviteCode.toUpperCase()}`);

@@ -1002,6 +1002,21 @@ await testEnv.withSecurityRulesDisabled(async (ctx) => {
   });
 });
 
+// landing_scores/{seasonUid}: the nightly materialized Live Scores ranking the
+// landing page reads signed out. Backend-only writes.
+const landingScoresPath = 'landing_scores/off_2026';
+await testEnv.withSecurityRulesDisabled(async (ctx) => {
+  await setDoc(doc(ctx.firestore(), landingScoresPath), { seasonUid: 'off_2026', corps: [] });
+});
+await check(
+  'anyone (even signed out) can read the materialized landing scores',
+  assertSucceeds(getDoc(doc(testEnv.unauthenticatedContext().firestore(), landingScoresPath)))
+);
+await check(
+  'nobody (not even admin) can write landing scores from a client',
+  assertFails(setDoc(doc(admin(), landingScoresPath), { seasonUid: 'x', corps: [] }))
+);
+
 await check(
   'anyone (even signed out) can read a uniform code',
   assertSucceeds(getDoc(doc(testEnv.unauthenticatedContext().firestore(), uniformCodePath)))

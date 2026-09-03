@@ -8,7 +8,7 @@ burns an hour to conclude "everything's about covered." Don't. If you ship,
 cut, or discover something, edit THIS file in the same PR — that's the whole
 maintenance contract.
 
-_Last updated: 2026-09-03 (site-review Fix-first 1–7 shipped; SEO/UX + frontend-perf S batch shipped)._
+_Last updated: 2026-09-03 (site-review Fix-first 1–11 + the eight cross-area quick wins shipped)._
 
 ## In progress
 
@@ -21,8 +21,12 @@ code-first review of the whole product (security, backend, frontend, UX,
 a11y, quality, economy, SEO/comms). Its **Part 1 backlog table** is the
 queue: work it top-down, and tick items off here as they ship.
 
-_(items 1–7 — S-H1, B-H1, N-H1, F-H3, B-H3, G-H3, Q-H1 — shipped 2026-09-03;
-continue from row 8 of the Part 1 table)_
+_(rows 1–11 — S-H1, B-H1, N-H1, F-H3, B-H3, G-H3, Q-H1, F-H2, F-H1, B-H4,
+B-H6/S-M6 — and all eight "Cross-area quick wins" shipped 2026-09-03;
+continue from row 12 of the Part 1 table. Left open from row 8: the Dashboard
+still reads the full recap archive once an hour for the ranked classes because
+the Season Ledger joins per-show placement from it — store `eventName` on the
+standings history entries and the ledger can read standings instead.)_
 
 ## Fix first — 2026-09-01 audit, P0/P1 (ranked; each is one PR)
 
@@ -98,6 +102,10 @@ ops step below)_
   `maxAge` config at `:43-56` is never read, and version-keyed image/font
   caches purge on every deploy. (M)
 - **P3** `api/leagues.ts:551-555` reads all of `matchupHistory` unbounded. (S)
+- **P3** Dashboard full-recap read for Season Ledger placement (see the
+  Fix-first note above): add `eventName` to `StandingsHistoryEntry` in
+  `helpers/standingsMaterializer.js`, build the ledger's place index from
+  standings, then pass `skipShows` for the ranked classes. (S)
 - **P3** `index.jsx:43-53` has no SW update prompt while the SW
   `skipWaiting`s mid-session. (S)
 - **P2** `vendor-firebase` is the largest eager chunk (671 kB / 198 kB
@@ -302,7 +310,7 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
 
 ## Evergreen ratchets (any session, any size)
 
-- `@ts-nocheck` paydown — **85 files** at
+- `@ts-nocheck` paydown — **84 files** at
   last update; `npm run ts-nocheck:next` ranks the cheapest (no free wins
   left; `Schedule.jsx` and `Layout/GameShell.jsx` are ~30 errors each). One
   per substantive task is the CLAUDE.md habit; batches welcome.
@@ -319,6 +327,29 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
 
 ## Recently shipped (context, newest first — prune when stale)
 
+- 2026-09-03: site-review rows 8–11 + quick wins. F-H2: the Dashboard reads
+  rank/score from the materialized standings (classFilter `all` for ranked
+  classes, SoundSport keeps its own), skips every scores query on the Podium
+  tab, no longer fetches archived seasons, and Recent Results observes the
+  bounded `fantasyRecapsRecent` key (the 5-min override on the full-archive
+  key is gone). F-H1: `landing_scores/{seasonUid}` written after each scoring
+  run (`helpers/landingScoresMaterializer.js`, tests; public-read rule +
+  tests); `useLandingScores` reads it and only falls back to the per-year
+  fan-out when the doc is missing. B-H4: 8-char look-alike-free invite codes,
+  `transaction.create` on `leagueInvites/{code}` in all three writers, and a
+  dedicated 10-per-10-min `leagueJoinByCode` budget. B-H6/S-M6: `deleteAccount`
+  uses `recursiveDelete` on the user subtree (600-notification test), aborts
+  before the Auth delete if that fails, Privacy §8 lists what goes. Quick
+  wins: draft-pool copy derives from `DRAFT_POOL_MAX_POINTS`; Podium marketing
+  (hero card, How-to-Play section, footer + help-menu links) gated on
+  `usePodiumEnabled()`, the guide shows a "not open right now" notice; three
+  `<Navigate replace>`; pending deep link cleared only on `user === null`;
+  league notification listener drops the un-indexed `in` filter; route change
+  scrolls `<main>` too; `Input` wires `aria-describedby`/`aria-invalid`/
+  `role="alert"` and the three auth error blocks are alerts; sitemap drops
+  `/podium/preview`, `/login`, `/register`. Also fixed the five functions
+  tests the previous batch merged red (bye ordering/expectations,
+  `assertArticlePath` export). Changelog entry added.
 - 2026-09-03: site-review Fix-first 1–7. Rules: new `corps.*` keys must be
   registry classes (`corpsKeysOk`, existing keys grandfathered; 3 rules
   tests); scorer + show-registration index skip unknown classes. `newsAdmin`

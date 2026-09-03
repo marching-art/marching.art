@@ -21,9 +21,17 @@ export const RouteChangeFocus = ({ contentId = 'main-content' }: { contentId?: s
       return;
     }
 
+    const main = document.getElementById(contentId) || document.querySelector('main');
+
+    // PublicShell scrolls a fixed <main overflow-y-auto>, GameShell scrolls
+    // its own panes, and only the plain pages scroll the window — so reset
+    // both the content region and the window; each is a no-op where it
+    // doesn't apply.
+    if (main instanceof HTMLElement && typeof main.scrollTo === 'function') {
+      main.scrollTo(0, 0);
+    }
     window.scrollTo(0, 0);
 
-    const main = document.getElementById(contentId) || document.querySelector('main');
     if (main instanceof HTMLElement) {
       // <main> isn't focusable by default — make it a programmatic target
       if (!main.hasAttribute('tabindex')) {

@@ -72,6 +72,16 @@ function makeFakeDb(docs = new Map()) {
         update(ref, data) {
           writes.push({ type: "update", path: ref.path, data });
         },
+        create(ref, data) {
+          if (docs.has(ref.path)) {
+            const err = new Error(`Document already exists: ${ref.path}`);
+            // @ts-ignore -- mirrors the Firestore ALREADY_EXISTS shape
+            err.code = 6;
+            throw err;
+          }
+          docs.set(ref.path, data);
+          writes.push({ type: "set", path: ref.path, data });
+        },
         set(ref, data) {
           // Persist like ref.set() does, so read-back flows work — including
           // the rate-budget doc (helpers/rateLimit runs inside the

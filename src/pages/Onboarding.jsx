@@ -1,6 +1,7 @@
 // @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // src/pages/Onboarding.jsx
 // Streamlined 3-step onboarding: Welcome+Name, Create Corps, Draft Lineup
+import { DRAFT_POOL_MAX_POINTS } from '../components/CaptionSelection/useCaptionSelectionModal';
 import React, { useState, useEffect, useMemo, startTransition } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { consumePendingRedirect } from '../lib/pendingRedirect';
@@ -134,7 +135,7 @@ const Onboarding = () => {
   // from the shared corpsValues cache entry (same key as Landing/Dashboard).
   const corpsQuery = useCorpsValues(seasonData?.seasonUid);
   const availableCorps = useMemo(
-    () => (corpsQuery.data ?? []).filter((c) => (c.points || 0) <= 50),
+    () => (corpsQuery.data ?? []).filter((c) => (c.points || 0) <= DRAFT_POOL_MAX_POINTS),
     [corpsQuery.data]
   );
 

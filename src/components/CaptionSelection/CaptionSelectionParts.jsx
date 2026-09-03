@@ -1,7 +1,7 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Presentational sub-components for the Caption Selection modal.
 // Extracted from CaptionSelectionModal.jsx.
 
+import { DRAFT_POOL_MAX_POINTS } from './useCaptionSelectionModal';
 import { useState, useEffect } from 'react';
 import {
   Check,
@@ -24,9 +24,16 @@ import { formatEtShort, formatEtDayTime } from '../../utils/seasonClock';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
 import { Heading } from '../ui';
 
+/**
+ * One draftable corps from the season pool (dci-data corpsValues), plus
+ * whatever else the pool carries (result days, hot status …).
+ * @typedef {{ corpsName: string, sourceYear: string|number, points: number, [key: string]: any }} PoolCorps
+ */
+
 // -----------------------------------------------------------------------------
 // LINEUP CELEBRATION
 // -----------------------------------------------------------------------------
+/** @param {{ onComplete: () => void }} props */
 const LineupCelebration = ({ onComplete }) => {
   useEffect(() => {
     const timer = setTimeout(onComplete, 2500);
@@ -51,6 +58,15 @@ const LineupCelebration = ({ onComplete }) => {
 // -----------------------------------------------------------------------------
 // CORPS OPTION ROW
 // -----------------------------------------------------------------------------
+/**
+ * @param {{
+ *   corps: PoolCorps,
+ *   isSelected: boolean,
+ *   onSelect: (corps: PoolCorps) => void,
+ *   disabled?: boolean,
+ *   captionHotStatus?: any,
+ * }} props
+ */
 const CorpsOptionRow = ({ corps, isSelected, onSelect, disabled, captionHotStatus }) => {
   return (
     <button
@@ -101,6 +117,20 @@ const CorpsOptionRow = ({ corps, isSelected, onSelect, disabled, captionHotStatu
 // -----------------------------------------------------------------------------
 // CORPS SELECTION LIST (search box + scrollable option rows)
 // -----------------------------------------------------------------------------
+/**
+ * @param {{
+ *   corpsList: PoolCorps[],
+ *   searchValue: string,
+ *   onSearchChange: (value: string) => void,
+ *   selections: Record<string, string>,
+ *   activeCaption: string,
+ *   activeCaptionSelection: { points?: number } | null | undefined,
+ *   totalPoints: number,
+ *   pointLimit: number,
+ *   hotCorpsData: any,
+ *   onSelect: (corps: PoolCorps) => void,
+ * }} props
+ */
 const CorpsSelectionList = ({
   corpsList,
   searchValue,
@@ -168,8 +198,8 @@ const CorpsSelectionList = ({
         })}
       </div>
       <p className="px-4 py-3 text-[10px] text-muted text-center border-t border-line-subtle">
-        Showing this season's draftable corps (cost 25 or less). Cost counts against your budget —
-        scores come from real performances.
+        Showing this season&apos;s draftable corps (cost {DRAFT_POOL_MAX_POINTS} or less). Cost
+        counts against your budget — scores come from real performances.
       </p>
     </div>
   </>
@@ -178,6 +208,17 @@ const CorpsSelectionList = ({
 // -----------------------------------------------------------------------------
 // TEMPLATE MODAL
 // -----------------------------------------------------------------------------
+/**
+ * @param {{
+ *   isOpen: boolean,
+ *   onClose: () => void,
+ *   templates: any[],
+ *   onSave: (name: string) => void,
+ *   onLoad: (template: any) => void,
+ *   onDelete: (template: any) => void,
+ *   currentLineup: Record<string, string>,
+ * }} props
+ */
 const TemplateModal = ({ isOpen, onClose, templates, onSave, onLoad, onDelete, currentLineup }) => {
   const [newTemplateName, setNewTemplateName] = useState('');
   useEscapeKey(onClose, isOpen);
@@ -285,6 +326,14 @@ const TemplateModal = ({ isOpen, onClose, templates, onSave, onLoad, onDelete, c
 // -----------------------------------------------------------------------------
 // DRAFT HELPER
 // -----------------------------------------------------------------------------
+/**
+ * @param {{
+ *   suggestions: Record<string, PoolCorps[]>,
+ *   onSelectSuggestion: (suggestion: PoolCorps, caption: string) => void,
+ *   selections: Record<string, string>,
+ *   activeCaption: string,
+ * }} props
+ */
 const DraftHelper = ({ suggestions, onSelectSuggestion, selections, activeCaption }) => {
   const [activeTab, setActiveTab] = useState('hot');
   const [isExpanded, setIsExpanded] = useState(false);
@@ -338,28 +387,30 @@ const DraftHelper = ({ suggestions, onSelectSuggestion, selections, activeCaptio
             {currentSuggestions.length === 0 ? (
               <p className="text-center text-muted py-2 text-xs">No suggestions</p>
             ) : (
-              currentSuggestions.slice(0, 4).map((corps, idx) => {
-                const isAlreadySelected = Object.values(selections).some(
-                  (s) => s && s.split('|')[0] === corps.corpsName
-                );
-                return (
-                  <button
-                    key={idx}
-                    onClick={() =>
-                      !isAlreadySelected &&
-                      activeCaption &&
-                      onSelectSuggestion(corps, activeCaption)
-                    }
-                    disabled={isAlreadySelected || !activeCaption}
-                    className={`w-full flex items-center justify-between p-2 text-xs ${
-                      isAlreadySelected || !activeCaption ? 'opacity-50' : 'hover:bg-white/5'
-                    }`}
-                  >
-                    <span className="text-secondary">{corps.corpsName}</span>
-                    <span className="text-muted font-data">Cost {corps.points}</span>
-                  </button>
-                );
-              })
+              currentSuggestions
+                .slice(0, 4)
+                .map((/** @type {PoolCorps} */ corps, /** @type {number} */ idx) => {
+                  const isAlreadySelected = Object.values(selections).some(
+                    (s) => s && s.split('|')[0] === corps.corpsName
+                  );
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() =>
+                        !isAlreadySelected &&
+                        activeCaption &&
+                        onSelectSuggestion(corps, activeCaption)
+                      }
+                      disabled={isAlreadySelected || !activeCaption}
+                      className={`w-full flex items-center justify-between p-2 text-xs ${
+                        isAlreadySelected || !activeCaption ? 'opacity-50' : 'hover:bg-white/5'
+                      }`}
+                    >
+                      <span className="text-secondary">{corps.corpsName}</span>
+                      <span className="text-muted font-data">Cost {corps.points}</span>
+                    </button>
+                  );
+                })
             )}
           </div>
         </>
@@ -371,6 +422,9 @@ const DraftHelper = ({ suggestions, onSelectSuggestion, selections, activeCaptio
 // -----------------------------------------------------------------------------
 // TRADES REMAINING INDICATOR
 // -----------------------------------------------------------------------------
+/**
+ * @param {{ tradesRemaining: number | null, isInitialSetup: boolean, changeInfo: any }} props
+ */
 const TradesRemainingIndicator = ({ tradesRemaining, isInitialSetup, changeInfo }) => {
   if (isInitialSetup) {
     return (
@@ -461,7 +515,7 @@ const TradesRemainingIndicator = ({ tradesRemaining, isInitialSetup, changeInfo 
   }
 
   const isChampionship = changeInfo.phase === 'championship';
-  const isLow = tradesRemaining <= 1;
+  const isLow = (tradesRemaining ?? 0) <= 1;
   const colorClass = isLow
     ? 'text-warning border-warning/30 bg-warning/10'
     : 'text-muted border-line bg-surface-raised';
@@ -515,6 +569,16 @@ const TradesRemainingIndicator = ({ tradesRemaining, isInitialSetup, changeInfo 
 // modal; the corps list (opened by tapping a row) is where scrolling happens.
 // `changed` marks a slot edited since the last save so the batch confirm is
 // legible ("here's what I'm about to submit").
+/**
+ * @param {{
+ *   caption: { id: string, name: string },
+ *   selected: { name: string, year?: string|number|null, points: number } | null | undefined,
+ *   isActive: boolean,
+ *   changed: boolean,
+ *   onClick: () => void,
+ *   categoryColor: string,
+ * }} props
+ */
 const CaptionButton = ({ caption, selected, isActive, changed, onClick, categoryColor }) => {
   const hasValue = !!selected;
   const year = selected?.year != null ? String(selected.year).slice(-2) : '';

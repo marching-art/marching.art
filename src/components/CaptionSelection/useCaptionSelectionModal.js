@@ -19,6 +19,14 @@ import { useSeasonStore } from '../../store/seasonStore';
 import { POINT_CAPS } from '../../utils/classRegistry';
 import { generateQuickFillLineup } from './quickFillLineup';
 
+/**
+ * Draftable corps cost cap: the pool shown in the caption picker (and at
+ * onboarding) is every corps costing this many points or fewer. The copy
+ * under the picker derives from this — it used to say "25 or less" while the
+ * filter said 50.
+ */
+export const DRAFT_POOL_MAX_POINTS = 50;
+
 export const CAPTIONS = [
   { id: 'GE1', name: 'General Effect 1', category: 'General Effect' },
   { id: 'GE2', name: 'General Effect 2', category: 'General Effect' },
@@ -154,7 +162,7 @@ export function useCaptionSelectionModal({
   const corpsQuery = useCorpsValues(seasonId);
   const availableCorps = useMemo(() => {
     const corps = (corpsQuery.data ?? [])
-      .filter((c) => (c.points || 0) <= 50)
+      .filter((c) => (c.points || 0) <= DRAFT_POOL_MAX_POINTS)
       .map((c) => ({
         ...c,
         performanceData: {

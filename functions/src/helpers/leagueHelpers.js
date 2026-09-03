@@ -5,17 +5,30 @@ const admin = require("firebase-admin");
 const crypto = require("crypto");
 const { paths } = require("./paths");
 
+// Invite-code alphabet: base32 without the look-alikes (0/O, 1/I/L) so a code
+// read aloud or typed from a screenshot survives. 32^8 ≈ 1.1e12 codes.
+const INVITE_CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+const INVITE_CODE_LENGTH = 8;
+
 /**
- * OPTIMIZATION #2: Generate a deterministic unique invite code based on UID and timestamp.
- * This eliminates the N+1 while loop that previously made unbounded database reads.
- * The code is generated from a hash of the user ID and current timestamp, ensuring uniqueness
- * without requiring any database lookups.
+ * Mint a random league invite code.
+ *
+ * Codes used to be 6 hex chars (16.7M space) written with `transaction.set`,
+ * so a collision silently re-pointed an existing league's code at the new
+ * league (SITE_REVIEW_2026-09 B-H4). Now: 8 chars from a 31-symbol alphabet,
+ * cryptographically random, and every writer uses `transaction.create` on
+ * leagueInvites/{code} so a collision fails the create instead of hijacking.
+ *
+ * @param {string} [_uid] Kept for call-site compatibility; codes are random.
+ * @returns {string}
  */
-function generateUniqueInviteCode(uid) {
-  const uniqueInput = `${uid}_${Date.now()}_${Math.random()}`;
-  const hash = crypto.createHash("sha256").update(uniqueInput).digest("hex");
-  // Take first 6 chars and convert to uppercase for a readable code
-  return hash.substring(0, 6).toUpperCase();
+function generateUniqueInviteCode(_uid) {
+  const bytes = crypto.randomBytes(INVITE_CODE_LENGTH);
+  let code = "";
+  for (let i = 0; i < INVITE_CODE_LENGTH; i++) {
+    code += INVITE_CODE_ALPHABET[bytes[i] % INVITE_CODE_ALPHABET.length];
+  }
+  return code;
 }
 
 /**
@@ -399,6 +412,8 @@ async function createLeagueActivity(db, leagueId, activityData) {
 const invitationId = (leagueId, inviteeUid) => `${leagueId}_${inviteeUid}`;
 
 module.exports = {
+  INVITE_CODE_ALPHABET,
+  INVITE_CODE_LENGTH,
   generateUniqueInviteCode,
   smartPairMembers,
   pairLeagueWeek,

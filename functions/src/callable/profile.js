@@ -358,19 +358,21 @@ exports.deleteAccount = onCall({ cors: true, timeoutSeconds: 300, cpu: 1 }, asyn
 
     const userDocRef = db.doc(paths.user(userId));
 
-    // OPTIMIZATION: Fetch subcollections in parallel instead of sequentially.
     // corpsNamesSnap holds every corps-name reservation this account owns, in
     // any season (corpsnames/{seasonUid}_{name}), so the names can be released
     // back to the open market below.
-    const [corpsSnapshot, notificationsSnapshot, supporterSnap, corpsNamesSnap] = await Promise.all([
-      userDocRef.collection('corps').get(),
-      userDocRef.collection('notifications').get(),
+    const [supporterSnap, corpsNamesSnap] = await Promise.all([
       supporterRef ? supporterRef.get() : Promise.resolve(null),
       db.collection('corpsnames').where('uid', '==', userId).get(),
     ]);
 
-    // OPTIMIZATION: Single batch for all deletions instead of 3 separate commits
-    // Firestore batches support up to 500 operations - we're well under that limit
+    // One small batch for the documents that live OUTSIDE the user's subtree
+    // plus the profile itself (so listeners drop it immediately). Everything
+    // under the user document is removed by the recursive delete below — the
+    // former hand-enumerated batch covered two of the eleven user
+    // subcollections and, with notifications unbounded, overflowed the 500-op
+    // batch cap for any active account, which made deletion impossible for
+    // exactly the directors most likely to want it (SITE_REVIEW B-H6/S-M6).
     const batch = db.batch();
 
     // Delete profile data
@@ -385,16 +387,6 @@ exports.deleteAccount = onCall({ cors: true, timeoutSeconds: 300, cpu: 1 }, asyn
       const usernameRef = db.doc(`usernames/${username.toLowerCase()}`);
       batch.delete(usernameRef);
     }
-
-    // Delete corps subcollection documents
-    corpsSnapshot.docs.forEach(doc => {
-      batch.delete(doc.ref);
-    });
-
-    // Delete notifications subcollection documents
-    notificationsSnapshot.docs.forEach(doc => {
-      batch.delete(doc.ref);
-    });
 
     // Release every corps-name reservation back to the open market. The name is
     // globally unique per season (registerCorps / processCorpsDecisions block a
@@ -431,8 +423,24 @@ exports.deleteAccount = onCall({ cors: true, timeoutSeconds: 300, cpu: 1 }, asyn
       logger.info(`Account deletion ${userId}: league ${leagueId} ${outcome}.`);
     }
 
-    // Single atomic commit for all Firestore deletions
+    // Single atomic commit for the cross-collection deletions
     await batch.commit();
+
+    // The whole user subtree: corps, notifications, the profile/public mirror,
+    // seasonDetail, captionLedger, wardrobe, podium, corpsCoinHistory,
+    // email_log, comments — and the user document itself. Recursive, so a new
+    // subcollection is deleted by default rather than orphaned. A failure here
+    // aborts BEFORE the Auth account goes, so the director can retry: the
+    // profile is already gone and every step above is idempotent.
+    try {
+      await db.recursiveDelete(userDocRef);
+    } catch (recursiveError) {
+      logger.error(`Account deletion ${userId}: recursive delete of the user subtree failed:`, recursiveError);
+      throw new HttpsError(
+        "internal",
+        "Your account data could not be fully removed. Please try again in a moment."
+      );
+    }
 
     // Drop the user out of the materialized "who's attending" show index so the
     // deleted account stops appearing on upcoming show pages (and in the running

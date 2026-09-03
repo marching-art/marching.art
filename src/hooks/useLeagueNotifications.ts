@@ -21,6 +21,18 @@ import { auth, db, paths } from '../api/client';
 import { queryKeys } from '../lib/queryClient';
 import type { LeagueNotification, LeagueActivity, RivalryData } from '../types';
 
+/** The notification kinds that belong to the league activity feed. */
+const LEAGUE_NOTIFICATION_TYPES = new Set([
+  'matchup_result',
+  'standings_change',
+  'new_message',
+  'trade_proposal',
+  'trade_response',
+  'member_joined',
+  'rivalry_matchup',
+  'league_invite',
+]);
+
 // =============================================================================
 // TYPES
 // =============================================================================
@@ -120,29 +132,29 @@ export function useLeagueNotifications(
 
     // Query for league notifications
     const notificationsRef = collection(db, paths.userNotifications(uid));
+    // No `where('type','in', …)`: combined with orderBy(createdAt) it needs a
+    // composite (type, createdAt) index the repo never declared and CI never
+    // deploys, so the listener failed with failed-precondition and the league
+    // activity feed sat empty. Read the newest notifications and keep the
+    // league kinds client-side; the over-fetch is bounded and the docs are
+    // tiny.
     const q = query(
       notificationsRef,
-      where('type', 'in', [
-        'matchup_result',
-        'standings_change',
-        'new_message',
-        'trade_proposal',
-        'trade_response',
-        'member_joined',
-        'rivalry_matchup',
-        'league_invite',
-      ]),
       orderBy('createdAt', 'desc'),
-      limit(notificationLimit)
+      limit(Math.max(notificationLimit * 3, 60))
     );
 
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
-        const notifications = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as LeagueNotification[];
+        const notifications = (
+          snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          })) as LeagueNotification[]
+        )
+          .filter((n) => LEAGUE_NOTIFICATION_TYPES.has(n.type))
+          .slice(0, notificationLimit);
 
         const unreadCount = notifications.filter((n) => !n.read).length;
 

@@ -236,10 +236,13 @@ const Privacy = () => {
                 Your account, profile, and game content are kept for as long as your account exists.
               </li>
               <li>
-                When you delete your account, your profile, private settings, device tokens,
-                supporter link, and date of birth are deleted. Your director name is removed from
-                past results, standings, and champion records — the scores themselves remain, with
-                no name attached, because other players&apos; standings depend on them.
+                When you delete your account, everything stored under it is deleted: your profile
+                and its public copy, private settings, device tokens, date of birth, corps, uniform
+                wardrobe, season and caption history, CorpsCoin ledger, notifications, Podium
+                career, email log, and profile comments. Your supporter link is detached and your
+                corps names are released. Your director name is removed from past results,
+                standings, and champion records — the scores themselves remain, with no name
+                attached, because other players&apos; standings depend on them.
               </li>
               <li>
                 Aggregate statistics (how many directors were active, how much CorpsCoin was earned

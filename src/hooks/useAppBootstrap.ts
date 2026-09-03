@@ -68,7 +68,12 @@ export function useAppBootstrap(user: User | null | undefined): void {
   useEffect(() => {
     if (user) {
       initProfileListener(user.uid);
-    } else {
+    } else if (user === null) {
+      // A SETTLED sign-out only. While Firebase Auth is still resolving the
+      // session (`undefined`) nothing may be cleared: this effect used to run
+      // then too, so every page load — including the forced reload
+      // lazyWithRetry does after a deploy — wiped the pending deep link a
+      // director was carrying through Register → Onboarding.
       cleanupProfileListener();
       // Evict cached per-user react-query data (profiles, leagues, etc.) so a
       // subsequent sign-in with a different account can't briefly see the

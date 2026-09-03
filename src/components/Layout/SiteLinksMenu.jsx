@@ -23,6 +23,7 @@ import { Link } from 'react-router-dom';
 import { HelpCircle, ExternalLink, Sparkles } from 'lucide-react';
 import { DISCORD_URL } from '../../utils/siteLinks';
 import { APP_CONFIG } from '../../config';
+import { usePodiumEnabled } from '../../hooks/useFeatures';
 import { useUnseenUpdates } from '../../hooks/useUnseenUpdates';
 
 // This menu is help: guides, what's-new, the public results surface, and legal.
@@ -36,7 +37,7 @@ const MENU_LINKS = [
   { to: '/dashboard?panel=quickstart', label: 'Quick Start' },
   { to: '/guide', label: 'Game Guide' },
   { to: '/how-to-play', label: 'How to Play' },
-  { to: '/podium-guide', label: 'Podium Guide' },
+  // Podium Guide is appended at render time only while the game is on.
   { to: '/hall-of-champions', label: 'Hall of Champions' },
 ];
 
@@ -49,6 +50,14 @@ const itemClass =
   'block px-3 py-2.5 min-h-touch text-sm text-secondary hover:text-white hover:bg-white/5 transition-colors';
 
 const SiteLinksMenu = () => {
+  const podiumEnabled = usePodiumEnabled();
+  const menuLinks = podiumEnabled
+    ? [
+        ...MENU_LINKS.slice(0, 3),
+        { to: '/podium-guide', label: 'Podium Guide' },
+        ...MENU_LINKS.slice(3),
+      ]
+    : MENU_LINKS;
   const [open, setOpen] = useState(false);
   const { unseenCount, hasUnseen } = useUnseenUpdates();
   /** @type {React.MutableRefObject<HTMLDivElement | null>} */
@@ -136,7 +145,7 @@ const SiteLinksMenu = () => {
 
           <div className="my-1 border-t border-line" />
 
-          {MENU_LINKS.map((link) => (
+          {menuLinks.map((link) => (
             <Link
               key={link.to}
               to={link.to}
