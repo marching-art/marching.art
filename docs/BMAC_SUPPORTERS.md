@@ -43,6 +43,7 @@ BMAC hosts payment
       → supporters/{emailHash} doc (server-only, PII)
   → supporter links the paid email in Settings → linkBmacSupport
       → profile.supporter = { tier } mirrored for flair
+      → #announcements shout-out (helpers/supporterDiscord.js) on a tier gain
   → getSupportersWall (callable) → public /supporters page (emails redacted)
   → reconcileSupporters (nightly) → revokes lapsed memberships
 ```
@@ -72,8 +73,19 @@ firebase functions:secrets:set BMAC_WEBHOOK_SECRET
 firebase deploy --only functions:bmacWebhook,functions:linkBmacSupport,functions:setSupporterVisibility,functions:setSupporterMessage,functions:getSupportersWall,functions:reconcileSupporters
 ```
 
-Copy the deployed `bmacWebhook` URL and add it in **BMAC → Integrations →
-Webhooks**, subscribed to:
+Add the deployed `bmacWebhook` URL in **BMAC → Integrations → Webhooks**:
+
+```
+https://us-central1-marching-art.cloudfunctions.net/bmacWebhook
+```
+
+It must be that HTTPS URL — not a service-account email, not the Cloud Run
+`*.run.app` host. Sanity check before saving: a `GET` answers `405`, an
+unsigned `POST` answers `401`, and a dashboard **Send test event** answers
+`200 Ignored (test event)` — test payloads carry `live_mode: false` and are
+never written as supporters. BMAC auto-disables the endpoint after repeated
+delivery failures and emails "Action Required | Webhook Disabled"; fix the URL,
+then press **Enable** on the endpoint. Subscribe it to:
 `membership.started`, `membership.updated`, `membership.cancelled`,
 `membership.paused`, the `recurring_donation.*` equivalents, and
 `donation.created` + `donation.refunded` (for the one-time `friend`
@@ -84,15 +96,38 @@ recognition).
 In BMAC, create four membership levels priced **$3 / $6 / $12 / $25** to match
 the tier floors above.
 
-### 4. Discord roles (no code)
+### 4. Discord roles (no code) and shout-outs (ours)
 
 BMAC assigns Discord roles natively — we build nothing for this:
 
-1. BMAC → authorize your Discord server.
+1. BMAC → Settings → Integrations → **Connect** Discord and pick the server.
 2. On each membership level, enable **"Give members access to selected Discord
    roles"** and pick the role(s).
-3. Supporters click **Connect to Discord** in their BMAC membership tab; roles
-   are assigned/removed automatically as memberships start/cancel.
+3. In Discord → Server Settings → Roles, drag the **Buy Me a Coffee** bot role
+   **above** every role it hands out. Below them it silently can't assign.
+4. Supporters click **Connect to Discord** in their BMAC membership tab (signed
+   in with the email they paid with); roles are assigned/removed automatically
+   as memberships start/cancel.
+
+What the BMAC bot does **not** do, so nobody waits for it:
+
+- It **never posts a message** — no "X just became a member". Role changes are
+  its only visible effect.
+- It **shows as offline**. It manages roles over Discord's REST API and never
+  connects to the gateway, so its presence dot is grey by design. Offline is
+  not broken; a supporter whose role never appears has skipped step 4 or the
+  bot role sits too low (step 3).
+
+The "someone just supported the game" post is ours: `bmacWebhook` and
+`linkBmacSupport` call `helpers/supporterDiscord.js`, which posts to the
+**#announcements** webhook (`DISCORD_ANNOUNCEMENTS_WEBHOOK_URL`, already
+provisioned for season-clock posts) on a **tier gain only** — a new supporter,
+an upgrade, or a return after a lapse. Monthly renewals, cancellations and the
+nightly reconcile never post. A supporter is **named** only once they have
+linked their support to a marching.art account (username, never the payer
+email) and have not opted out of the wall; an unlinked recurring supporter
+waits for the named post that follows their link, and an unlinked one-time
+coffee is thanked anonymously.
 
 ## How a supporter gets flair
 

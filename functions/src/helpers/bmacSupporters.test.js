@@ -13,7 +13,20 @@ const {
   extractMonthlyAmount,
   parseSupporterEvent,
   parseOneTimeEvent,
+  isTestEvent,
 } = require("./bmacSupporters");
+
+describe("isTestEvent", () => {
+  test("only an explicit live_mode:false is a dashboard test", () => {
+    assert.equal(isTestEvent({ type: "membership.started", live_mode: false }), true);
+    assert.equal(isTestEvent({ type: "membership.started", live_mode: true }), false);
+    // Older/partial payloads without the flag are treated as live.
+    assert.equal(isTestEvent({ type: "membership.started" }), false);
+    assert.equal(isTestEvent({ live_mode: "false" }), false);
+    assert.equal(isTestEvent(null), false);
+    assert.equal(isTestEvent("live_mode"), false);
+  });
+});
 
 describe("tierFromMonthlyAmount", () => {
   test("maps amounts to the highest cleared tier floor", () => {

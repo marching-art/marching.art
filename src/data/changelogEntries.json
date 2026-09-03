@@ -1,5 +1,13 @@
 [
   {
+    "id": "2026-09-03-supporter-shout-outs-in-discord",
+    "date": "2026-09-03",
+    "title": "New supporters get a shout-out in Discord",
+    "category": "feature",
+    "summary": "When a director backs marching.art on Buy Me a Coffee and links it to their account, #announcements now celebrates it — their username and tier, with a link to the Supporters wall. Upgrades get a post too; renewals stay quiet. One-time coffees are thanked without naming anyone. Opting out of the Supporters wall in Settings also keeps you out of the shout-out.",
+    "highlights": []
+  },
+  {
     "id": "2026-09-03-one-click-unsubscribe-from-any-email",
     "date": "2026-09-03",
     "title": "Unsubscribe from marching.art email with one click, no sign-in needed",
