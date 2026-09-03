@@ -14,6 +14,22 @@ _Last updated: 2026-09-03 (audit backlog: SEO/UX + frontend-perf S batch shipped
 
 _(nothing — pick from "Fix first" or the bets below)_
 
+## Fix first — 2026-09 full site review (ranked top 20; each is one PR)
+
+[SITE_REVIEW_2026-09.md](SITE_REVIEW_2026-09.md) is a fresh, independent,
+code-first review of the whole product (security, backend, frontend, UX,
+a11y, quality, economy, SEO/comms). Its **Part 1 backlog table** is the
+queue: work it top-down, and tick items off here as they ship. The first
+seven are ≤1 hour each and all fix something that is silently broken today:
+
+1. S-H1 — rules accept any `corps.<key>`; scorer scores it.
+2. B-H1 — `newsAdmin` callables take an arbitrary Firestore path.
+3. N-H1 — email opt-outs never take effect (camelCase vs snake_case keys).
+4. F-H3 — push notifications render generic text and open `/`.
+5. B-H3 — the 300 CC streak freeze almost never protects a streak.
+6. G-H3 — a league bye counts as a win.
+7. Q-H1 — deploys are not gated on CI.
+
 ## Fix first — 2026-09-01 audit, P0/P1 (ranked; each is one PR)
 
 Every item below was verified in source on `776cb43`. Severity: P0 = live
@@ -324,6 +340,13 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
   scroll/resize listeners, hoisted `TrendIndicator`, feature-flag listener
   released when unused, ref-counted Modal scroll lock (nested test).
   Changelog entry added. ts-nocheck → 87.
+- 2026-09-02: the `functions-deploy/*` rollback tag is now created through
+  the GitHub REST API (`gh api .../git/refs`) instead of `git push`. Every
+  auto-deploy on `main` had been failing at "Tag deployed ref" with
+  "refusing to allow a GitHub App to create or update workflow ... without
+  `workflows` permission" — `GITHUB_TOKEN` can't be granted `workflows`, and
+  the receive hook applies it to any new ref pushed by an App. Deploy plan /
+  function list moved from the tag message to the run's step summary.
 - 2026-09-02: projected caption scores no longer depend on archive order —
   `historicalScores.mergeEventLists` (server) and `utils/historicalEvents`
   (client) return every year chronologically, and `projectCaptionScore` sorts
