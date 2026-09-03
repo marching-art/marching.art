@@ -308,7 +308,7 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
 
 ## Evergreen ratchets (any session, any size)
 
-- `@ts-nocheck` paydown — **87 files** at
+- `@ts-nocheck` paydown — **86 files** at
   last update; `npm run ts-nocheck:next` ranks the cheapest (no free wins
   left; cheapest is 10 errors in `Dashboard/sections/DailyChallenges.jsx`;
   `Schedule.jsx` and `Layout/GameShell.jsx` are ~30 each). One per substantive task is the CLAUDE.md
