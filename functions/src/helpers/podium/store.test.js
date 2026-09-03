@@ -206,6 +206,41 @@ describe("computeTodayBlockBudget", () => {
     );
   });
 
+  test("a played day with no start-of-day snapshot is judged rested, never on drained stamina", () => {
+    // The nightly used to roll tomorrow's `today` without startStamina; after
+    // eleven blocks the live stamina is far below the threshold and the read
+    // path shrank the cap to 8 under the 11 already logged ("11 / 8").
+    const state = {
+      condition: { stamina: 2, morale: 50 },
+      today: { calendarDay: 10, blocksUsed: 11 },
+    };
+    const b = store.computeTodayBlockBudget(state, dayCtx());
+    assert.equal(b.maxBlocksToday, store.balance.rehearsal.blocksPerDay);
+    assert.equal(b.blocksUsedToday, 11);
+    assert.equal(b.blocksRemainingToday, 1);
+  });
+
+  test("an untouched day with no snapshot is judged on live stamina (its start-of-day value)", () => {
+    const state = {
+      condition: { stamina: store.balance.condition.lowStaminaThreshold - 1, morale: 50 },
+      today: { calendarDay: 10, blocksUsed: 0 },
+    };
+    const b = store.computeTodayBlockBudget(state, dayCtx());
+    assert.equal(
+      b.maxBlocksToday,
+      store.balance.rehearsal.blocksPerDay - store.balance.condition.lowStaminaBlockPenalty
+    );
+  });
+
+  test("an explicit isSpringTraining flag overrides the competition-day inference", () => {
+    const state = { ...rested, today: { calendarDay: 3, blocksUsed: 0 } };
+    const b = store.computeTodayBlockBudget(
+      state,
+      dayCtx({ calendarDay: 3, competitionDay: -2, isSpringTraining: false })
+    );
+    assert.equal(b.maxBlocksToday, store.balance.rehearsal.blocksPerDay);
+  });
+
   test("a stale prior-day today reads as a fresh day: 0 used, full cap", () => {
     // getPodiumState never rolls the day, so yesterday's usage must not leak in.
     const state = { ...rested, today: { calendarDay: 9, blocksUsed: 12, restDay: false } };
@@ -220,5 +255,29 @@ describe("computeTodayBlockBudget", () => {
     const b = store.computeTodayBlockBudget(state, dayCtx());
     assert.equal(b.restDayToday, true);
     assert.equal(b.blocksRemainingToday, 0);
+  });
+});
+
+describe("staminaForBlockCap (one rule for logger, reader and nightly)", () => {
+  const threshold = store.balance.condition.lowStaminaThreshold;
+
+  test("the day's snapshot wins when present", () => {
+    const state = { condition: { stamina: 1 } };
+    assert.equal(store.staminaForBlockCap(state, { blocksUsed: 3, startStamina: 77 }), 77);
+  });
+
+  test("a played or rested day without a snapshot reads as rested", () => {
+    const state = { condition: { stamina: 1 } };
+    assert.equal(store.staminaForBlockCap(state, { blocksUsed: 1 }), threshold);
+    assert.equal(store.staminaForBlockCap(state, { blocksUsed: 0, restDay: true }), threshold);
+  });
+
+  test("an untouched day without a snapshot reads its live stamina", () => {
+    assert.equal(store.staminaForBlockCap({ condition: { stamina: 33 } }, { blocksUsed: 0 }), 33);
+    assert.equal(store.staminaForBlockCap({ condition: { stamina: 33 } }, null), 33);
+  });
+
+  test("no condition at all reads as rested", () => {
+    assert.equal(store.staminaForBlockCap({}, { blocksUsed: 0 }), threshold);
   });
 });

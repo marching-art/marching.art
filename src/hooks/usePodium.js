@@ -87,6 +87,10 @@ export function usePodium(enabled) {
               typeof payload.blocksRemaining === 'number'
                 ? payload.blocksRemaining
                 : previous.blocksRemainingToday,
+            maxBlocksToday:
+              typeof payload.maxBlocksToday === 'number'
+                ? payload.maxBlocksToday
+                : previous.maxBlocksToday,
           }
         : previous
     );

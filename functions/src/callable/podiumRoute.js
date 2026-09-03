@@ -408,7 +408,14 @@ exports.getPodiumState = onCall({ cors: true }, async (request) => {
   // all). See store.computeTodayBlockBudget for the freshness handling.
   const { maxBlocksToday, blocksUsedToday, blocksRemainingToday } = store.computeTodayBlockBudget(
     state,
-    { calendarDay, competitionDay, isShowDay }
+    {
+      calendarDay,
+      competitionDay,
+      isShowDay,
+      // Same rule as allocateRehearsalBlock and the nightly processor: the
+      // 20-block camp cap belongs to the live season's preseason only.
+      isSpringTraining: seasonData.status === "live-season" && competitionDay < 1,
+    }
   );
   const blockCaps = store.planBlockCaps();
   const routePreview = await buildRoutePreview(
