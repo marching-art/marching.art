@@ -23,7 +23,7 @@ export const checkUsername = createCallable<{ username: string }, { available: b
   'checkUsername'
 );
 export const createUserProfile = createCallable<
-  { username: string; displayName?: string; birthDate?: string | null },
+  { username: string; displayName?: string; birthDate: string },
   void
 >('createUserProfile');
 export const setUserRole = createCallable<

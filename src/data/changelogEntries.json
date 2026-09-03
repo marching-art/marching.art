@@ -1,5 +1,17 @@
 [
   {
+    "id": "2026-09-03-analytics-only-with-your-consent-age-check-enforced",
+    "date": "2026-09-03",
+    "title": "Analytics now runs only if you allow it, and the age check can no longer be skipped",
+    "category": "improvement",
+    "summary": "Google Analytics stays off until you say yes. First-time visitors see a small \"Help improve marching.art?\" bar with Allow and No thanks; either answer is remembered on that browser, and you can change it any time under Settings → Privacy. The privacy policy now describes exactly that. Separately, creating a director profile now always requires your date of birth — if the sign-up hand-off is lost (a reload, a new tab), the onboarding welcome step simply asks for it instead of letting an account through unchecked.",
+    "highlights": [
+      "No analytics cookies are set before you answer; declining is a one-tap, permanent choice for that browser.",
+      "Switching analytics off later stops collection immediately, without a reload.",
+      "Your date of birth is still stored only on your private record and never shown on your profile."
+    ]
+  },
+  {
     "id": "2026-09-03-southwestern-championship-moves-to-san-antonio",
     "date": "2026-09-03",
     "title": "The Southwestern Championship is now held in San Antonio",

@@ -91,11 +91,14 @@ exports.createUserProfile = onCall({ cors: true }, async (request) => {
   }
   // Age screening (helpers/ageGate): the sign-up form collects a date of
   // birth and validates it client-side; this is the authoritative check and
-  // the record. Optional so older clients / retries without the stash still
-  // create the profile — a missing date is recorded as "not attested", never
-  // as "attested".
+  // the record. The date is REQUIRED for a new profile — the Terms and the
+  // Privacy policy promise no under-13 accounts, and a client that skips the
+  // form (cleared sessionStorage, a direct call) must not get an account with
+  // no attestation. Absent → `ageAttestation` stays null and the transaction
+  // below rejects unless the profile already exists (idempotent retries).
+  const birthDateGiven = birthDate !== undefined && birthDate !== null && birthDate !== "";
   let ageAttestation = null;
-  if (birthDate !== undefined && birthDate !== null && birthDate !== "") {
+  if (birthDateGiven) {
     const check = checkBirthDate(birthDate);
     if (!check.ok) {
       // JSDoc unions don't narrow on the `ok` literal under checkJs; `in` does.
@@ -139,6 +142,17 @@ exports.createUserProfile = onCall({ cors: true }, async (request) => {
       const existingProfile = await t.get(userProfileRef);
       if (existingProfile.exists) {
         return true;
+      }
+
+      // No attestation, no account. Checked after the existence read so a
+      // retry of an already-created profile (whose client has since cleared
+      // the stashed date) still resolves as the no-op above.
+      if (!ageAttestation) {
+        throw new HttpsError(
+          "failed-precondition",
+          "Please enter your date of birth to create your account.",
+          { reason: "birth_date_required" }
+        );
       }
 
       const usernameDoc = await t.get(usernameRef);
@@ -187,7 +201,7 @@ exports.createUserProfile = onCall({ cors: true }, async (request) => {
       t.set(userPrivateRef, {
         email: email,
         // Owner-only: the date of birth never reaches the public profile doc.
-        ...(ageAttestation ? { ageAttestation } : {}),
+        ageAttestation,
       });
 
       t.set(usernameRef, { uid: uid });

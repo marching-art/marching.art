@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Onboarding step-1/step-2 panels and the completion celebration modal.
 // Extracted verbatim from Onboarding.jsx; all state stays in the parent and
 // is passed down as props. The step components are rendered as direct
@@ -11,6 +10,7 @@ import { Heading } from '../components/ui';
 import {
   User,
   Flag,
+  Calendar,
   Star,
   Zap,
   ChevronRight,
@@ -24,13 +24,34 @@ import {
 } from 'lucide-react';
 import { GAME_FEATURES, GAME_MODES, GAME_MODE_PODIUM } from './onboardingConstants';
 import { NEW_DIRECTOR_CORPSCOIN } from '../utils/economyMirrors';
+import { latestEligibleBirthDate, MIN_AGE_YEARS } from '../utils/ageGate';
+
+/**
+ * @typedef {{ displayName: string, username: string, corpsName: string, birthDate: string }} OnboardingFormData
+ * @typedef {{ checking: boolean, valid: boolean | null, message: string }} UsernameStatus
+ */
 
 // Gold accent for the Podium Class card — the class's signature color, also
 // used on the public Podium guide and the demo.
 const PODIUM_GOLD = '#c9a227';
 
 // Step 1: Welcome + Director Name + Username
-export const StepWelcome = ({ formData, setFormData, usernameStatus, onUsernameChange }) => (
+/**
+ * @param {{
+ *   formData: OnboardingFormData,
+ *   setFormData: (next: OnboardingFormData) => void,
+ *   usernameStatus: UsernameStatus,
+ *   onUsernameChange: React.ChangeEventHandler<HTMLInputElement>,
+ *   askBirthDate?: boolean,
+ * }} props
+ */
+export const StepWelcome = ({
+  formData,
+  setFormData,
+  usernameStatus,
+  onUsernameChange,
+  askBirthDate = false,
+}) => (
   <m.div
     initial={{ opacity: 0, x: 20 }}
     animate={{ opacity: 1, x: 0 }}
@@ -132,6 +153,35 @@ export const StepWelcome = ({ formData, setFormData, usernameStatus, onUsernameC
           3-15 characters, letters, numbers, and underscores only
         </p>
       </div>
+
+      {/* Date of birth — normally captured at sign-up (utils/ageGate) and
+          handed over per tab; asked here only when that hand-off is gone,
+          because the server will not create a profile without it. */}
+      {askBirthDate && (
+        <div>
+          <label
+            htmlFor="onboarding-birthdate"
+            className="flex items-center gap-2 text-xs font-bold text-muted uppercase tracking-wider mb-1.5"
+          >
+            <Calendar className="w-4 h-4 text-interactive" />
+            Date of birth
+          </label>
+          <input
+            id="onboarding-birthdate"
+            type="date"
+            className="w-full h-12 px-4 bg-background border border-line rounded-none text-base text-white placeholder-muted focus:outline-none focus:border-interactive [color-scheme:dark]"
+            value={formData.birthDate}
+            onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })}
+            max={latestEligibleBirthDate()}
+            required
+            autoComplete="bday"
+            aria-describedby="onboarding-birthdate-help"
+          />
+          <p id="onboarding-birthdate-help" className="text-xs text-muted mt-1">
+            You must be at least {MIN_AGE_YEARS}. Never shown on your profile.
+          </p>
+        </div>
+      )}
     </div>
 
     <div className="p-3 rounded-none bg-green-500/10 border border-green-500/20">
@@ -150,6 +200,7 @@ export const StepWelcome = ({ formData, setFormData, usernameStatus, onUsernameC
 // Step: Choose Your Game — marching.art is two games in one, so a new director
 // picks which one to set up first. Each card is a full-width, thumb-friendly
 // button; the selected one is outlined in its accent color.
+/** @param {{ gameMode: string | null, setGameMode: (mode: string) => void }} props */
 export const StepChooseGame = ({ gameMode, setGameMode }) => (
   <m.div
     initial={{ opacity: 0, x: 20 }}
@@ -251,6 +302,7 @@ export const StepChooseGame = ({ gameMode, setGameMode }) => (
 // march) lives on the dashboard, so this last onboarding step just sets the
 // expectation and hands off. No form fields; the "start" button in the parent
 // creates the director profile and drops the user into the founding flow.
+/** @param {{ displayName: string }} props */
 export const StepPodiumHandoff = ({ displayName }) => (
   <m.div
     initial={{ opacity: 0, x: 20 }}
@@ -307,6 +359,7 @@ export const StepPodiumHandoff = ({ displayName }) => (
 );
 
 // Step 2: Create Corps
+/** @param {{ formData: OnboardingFormData, setFormData: (next: OnboardingFormData) => void }} props */
 export const StepCorps = ({ formData, setFormData }) => (
   <m.div
     initial={{ opacity: 0, x: 20 }}
@@ -368,6 +421,18 @@ export const StepCorps = ({ formData, setFormData }) => (
 // Celebration modal shown after the profile is created, before navigating away.
 // Copy is parametrized so the Podium branch (which hands off to the founding
 // flow) can differ from the SoundSport branch (whose corps already competes).
+/**
+ * @param {{
+ *   show: boolean,
+ *   displayName: string,
+ *   corpsName: string,
+ *   onComplete: () => void,
+ *   onJoinLeague: () => void,
+ *   headline?: string,
+ *   detail?: React.ReactNode,
+ *   ctaLabel?: string,
+ * }} props
+ */
 export const CelebrationModal = ({
   show,
   displayName,

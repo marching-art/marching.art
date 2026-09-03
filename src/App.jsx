@@ -40,6 +40,7 @@ import { AuthContext, useAuth } from './context/AuthContext';
 import { BMAC_URL } from './utils/supporterTiers';
 import { MotionProvider } from './components/MotionProvider';
 import OfflineBanner from './components/OfflineBanner';
+import AnalyticsConsentBanner from './components/AnalyticsConsentBanner';
 import { SkipToContent, RouteChangeFocus } from './components/a11y';
 import { lazyWithRetry } from './utils/lazyWithRetry';
 
@@ -286,6 +287,10 @@ function App() {
 
                 {/* Offline Banner - Shows when network is unavailable */}
                 <OfflineBanner />
+
+                {/* Google Analytics is consent-based (Privacy §7): asked once
+                    per browser, off until answered, changeable in Settings */}
+                <AnalyticsConsentBanner />
 
                 {/* Global Toast Notifications - Mobile aware positioning */}
                 {/* ARIA live region for screen reader accessibility (WCAG 4.1.3) */}
