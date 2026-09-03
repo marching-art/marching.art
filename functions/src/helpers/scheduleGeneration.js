@@ -265,7 +265,7 @@ async function generateOffSeasonSchedule(seasonLength, startDay) {
     usedLocations.add(location);
   };
 
-  placeMajor([28], "marching.art Southwestern Championship", "Dallas, TX");
+  placeMajor([28], "marching.art Southwestern Championship", "San Antonio, TX");
   placeMajor([35], "marching.art Southeastern Championship", "Atlanta, GA");
   placeMajor([41, 42], "marching.art Eastern Classic", "Allentown, PA");
 

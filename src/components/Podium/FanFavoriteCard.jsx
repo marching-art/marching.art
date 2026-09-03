@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // FanFavoriteCard — the community's ballot (decision 30): prelims at each
 // major, finals in championship week, winner's banner at season end. Purely
 // cosmetic; any signed-in user can vote, corps or not.
@@ -8,40 +7,56 @@ import { Heart, Loader2 } from 'lucide-react';
 import { getFanFavorite, castFanFavoriteVote } from '../../api/podium';
 import { usePodiumEnabled } from '../../hooks/useFeatures';
 
+/**
+ * @typedef {import('../../api/podium').FanFavoriteCandidate} FanFavoriteCandidate
+ * @typedef {import('../../api/podium').FanFavoriteTiebreak} FanFavoriteTiebreak
+ * @typedef {Awaited<ReturnType<typeof getFanFavorite>>['data']} FanFavoriteState
+ */
+
+/** @type {Record<number, string>} */
 const MAJOR_NAMES = { 28: 'Southwestern', 35: 'Southeastern', 41: 'Eastern Classic' };
+/** @type {Record<string, string>} */
 const DIVISION_SHORT = { aClass: 'A', openClass: 'Open', worldClass: 'World' };
 
+/** @param {number | string | undefined} n */
 const votes = (n) => `${n} vote${Number(n) === 1 ? '' : 's'}`;
+
+/** @param {number | null | undefined} major */
+const majorLabel = (major) => (major != null && MAJOR_NAMES[major]) || `Day ${major}`;
 
 // Why a tied crown went where it went, matching the Discord crowning post
 // (helpers/podium/fanFavoriteDiscord.tiebreakNote). A ballot that shows two
 // corps on the same count and hands the trophy to one of them owes the room
 // the reason on the page too, not only in the announcement.
+/** @type {Record<FanFavoriteTiebreak['rule'], (t: FanFavoriteTiebreak) => string>} */
 const TIEBREAK_REASONS = {
   seasonVotes: (t) =>
     `season-long support — ${votes(t.winnerValue)} across the majors to ${votes(t.rivalValue)}`,
   majorsPolled: (t) => `breadth of support — ${t.winnerValue} majors polled to ${t.rivalValue}`,
   majorLead: (t) =>
-    `the ${MAJOR_NAMES[t.major] || `Day ${t.major}`}, the last major to separate them ` +
-    `(${t.winnerValue}–${t.rivalValue})`,
+    `the ${majorLabel(t.major)}, the last major to separate them (${t.winnerValue}–${t.rivalValue})`,
   firstToCount: () => 'reaching the winning total first',
   draw: () => 'a seeded draw — nothing in the ballots separated them',
 };
 
-/** One sentence on a tied crown, or null when the ballot decided outright. */
+/**
+ * One sentence on a tied crown, or null when the ballot decided outright.
+ * @param {FanFavoriteCandidate} winner
+ */
 function tiebreakLine(winner) {
   const tied = (winner.tiedWith || []).filter(Boolean);
   if (tied.length === 0) return null;
-  const reason = winner.tiebreak && TIEBREAK_REASONS[winner.tiebreak.rule];
+  const { tiebreak } = winner;
+  const reason = tiebreak && TIEBREAK_REASONS[tiebreak.rule];
   const level = `Level on the finals count with ${tied.join(', ')}`;
-  return reason ? `${level} — decided on ${reason(winner.tiebreak)}.` : `${level}.`;
+  return reason && tiebreak ? `${level} — decided on ${reason(tiebreak)}.` : `${level}.`;
 }
 
 export default function FanFavoriteCard() {
   const enabled = usePodiumEnabled();
-  const [data, setData] = useState(null);
-  const [busy, setBusy] = useState(null);
-  const [error, setError] = useState(null);
+  const [data, setData] = useState(/** @type {FanFavoriteState | null} */ (null));
+  const [busy, setBusy] = useState(/** @type {string | null} */ (null));
+  const [error, setError] = useState(/** @type {string | null} */ (null));
 
   useEffect(() => {
     if (!enabled) return undefined;
@@ -60,6 +75,7 @@ export default function FanFavoriteCard() {
 
   if (!enabled || !data || !data.stage) return null;
 
+  /** @param {string} corpsUid */
   const vote = async (corpsUid) => {
     setBusy(corpsUid);
     setError(null);
@@ -68,7 +84,7 @@ export default function FanFavoriteCard() {
       const refreshed = await getFanFavorite();
       setData(refreshed.data);
     } catch (err) {
-      setError(err?.message || 'Vote failed.');
+      setError((err instanceof Error && err.message) || 'Vote failed.');
     } finally {
       setBusy(null);
     }
@@ -81,7 +97,7 @@ export default function FanFavoriteCard() {
       ? 'Fan Favorite — decided'
       : data.stage === 'finals'
         ? 'Fan Favorite Finals — vote now'
-        : `Fan Favorite — ${MAJOR_NAMES[data.major] || `Day ${data.major}`} ballot open`;
+        : `Fan Favorite — ${majorLabel(data.major)} ballot open`;
 
   return (
     <div className="bg-surface-card border border-[#5a1a2e] rounded-none p-4 space-y-2">

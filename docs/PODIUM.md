@@ -428,7 +428,7 @@ fresh" panic button, not a routine buy. Design choices that keep it honest:
 - **Stacks with the Tour Manager** (§5.6): the ops-staff reduction still applies on top of the
   halving, so a well-run, well-funded corps arrives freshest. **Available on majors too** — their
   ground travel is subsidized, but paying to fly one is a pure CC-for-stamina trade on the tour's
-  biggest legs (Dallas / Allentown / Indy). Config-driven and tunable without a deploy; grouped under
+  biggest legs (San Antonio / Allentown / Indy). Config-driven and tunable without a deploy; grouped under
   the "travel" line item in the end-of-season financial report.
 
 _How distances are known when schedules are regenerated every season:_ the schedule is random per
@@ -761,7 +761,7 @@ day** (for any class):
 
 | Major                                      | Site                    | Day   | Status                                                                                  |
 | ------------------------------------------ | ----------------------- | ----- | --------------------------------------------------------------------------------------- |
-| **marching.art Southwestern Championship** | Dallas, Texas           | 28    | **Implemented** (`scheduleGeneration.js`, this branch)                                  |
+| **marching.art Southwestern Championship** | San Antonio, Texas      | 28    | **Implemented** (`scheduleGeneration.js`, this branch)                                  |
 | **marching.art Southeastern Championship** | Atlanta, Georgia        | 35    | **Implemented**                                                                         |
 | **marching.art Eastern Classic**           | Allentown, Pennsylvania | 41–42 | **Implemented** — one event placed on both days with `multiNight: { nights: [41, 42] }` |
 | **marching.art World Championships**       | Prelims/Semis/Finals    | 45–49 | Existing exclusive placement + auto-enrollment                                          |
@@ -779,7 +779,7 @@ name-match at ingest instead.
   and 6 a Podium director gets the major plus **3 free selections** (the standard weekly cap is
   4). Week 7 auto-attends Championship Week (days 45–49) and opens its two non-championship days
   (43–44) to **2 free selections**. Majors are **travel-subsidized** (no Corps Budget leg; stamina
-  cost still applies, so routing _around_ an anchor still matters — Dallas in July is a real
+  cost still applies, so routing _around_ an anchor still matters — San Antonio in July is a real
   heat-index day). For the fantasy classes the majors are elective, but since the major is the only
   event on its day, attending week 4/5/6 shows means engaging with them.
 - Full-field head-to-head meets: the guaranteed rivalry collisions, the recap everyone reads, and
@@ -1430,7 +1430,7 @@ proven the machinery. Total: ~16–20 engineering weeks to beta.
 **Resolved in v1.5 (majors hard-coded — implemented on this branch):**
 
 11. **The three majors are hard-coded, branded, exclusive events** in
-    `generateOffSeasonSchedule`: marching.art Southwestern Championship (Dallas, day 28),
+    `generateOffSeasonSchedule`: marching.art Southwestern Championship (San Antonio, day 28),
     marching.art Southeastern Championship (Atlanta, day 35), marching.art Eastern Classic
     (Allentown, days 41–42, `multiNight`). No other events on those days; historical source
     majors excluded from the random pool; `eventTier` threaded through all schedule
@@ -1789,9 +1789,9 @@ additions; conflicts are things that **must** be resolved before Phase 1 code.
    `historical_scores/{year}` as the season progresses. Podium's realism envelope must be built
    from **completed** years only, or mid-season the envelope shifts under players' feet (and
    early-season live data would define absurdly tight day bands).
-8. **Cosmetic inconsistency: Dallas vs. San Antonio.** Off-season hard-codes the Southwestern in
-   Dallas; live seasons keep the real scraped event (San Antonio). Accepted as branding freedom,
-   noted so nobody files it as a bug.
+8. ~~**Cosmetic inconsistency: Dallas vs. San Antonio.**~~ Resolved: the off-season Southwestern
+   Championship is now sited in San Antonio, matching the real DCI Southwestern and the live
+   scraped event.
 9. **Faucet inflation.** Podium participation rewards + hosting payouts add a new CorpsCoin
    faucet on top of a user's existing four classes. If conflict #1 resolves to dual currency,
    most of this pressure disappears (Podium activity pays Budget, not CC); the residual
