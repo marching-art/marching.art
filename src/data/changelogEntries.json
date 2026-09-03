@@ -1,5 +1,13 @@
 [
   {
+    "id": "2026-09-03-show-day-card-no-longer-repeats-the-temperature",
+    "date": "2026-09-03",
+    "title": "The show day card no longer repeats the temperature",
+    "category": "fix",
+    "summary": "The weather line on the dashboard's show day card read \"95°F clear skies, 95°F\". It now shows the conditions once: \"clear skies, 95°F\".",
+    "highlights": []
+  },
+  {
     "id": "2026-09-03-analytics-only-with-your-consent-age-check-enforced",
     "date": "2026-09-03",
     "title": "Analytics now runs only if you allow it, and the age check can no longer be skipped",
