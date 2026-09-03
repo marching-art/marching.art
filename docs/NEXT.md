@@ -14,6 +14,22 @@ _Last updated: 2026-09-02 (projected-score ordering regression fixed; audit back
 
 _(nothing — pick from "Fix first" or the bets below)_
 
+## Fix first — 2026-09 full site review (ranked top 20; each is one PR)
+
+[SITE_REVIEW_2026-09.md](SITE_REVIEW_2026-09.md) is a fresh, independent,
+code-first review of the whole product (security, backend, frontend, UX,
+a11y, quality, economy, SEO/comms). Its **Part 1 backlog table** is the
+queue: work it top-down, and tick items off here as they ship. The first
+seven are ≤1 hour each and all fix something that is silently broken today:
+
+1. S-H1 — rules accept any `corps.<key>`; scorer scores it.
+2. B-H1 — `newsAdmin` callables take an arbitrary Firestore path.
+3. N-H1 — email opt-outs never take effect (camelCase vs snake_case keys).
+4. F-H3 — push notifications render generic text and open `/`.
+5. B-H3 — the 300 CC streak freeze almost never protects a streak.
+6. G-H3 — a league bye counts as a win.
+7. Q-H1 — deploys are not gated on CI.
+
 ## Fix first — 2026-09-01 audit, P0/P1 (ranked; each is one PR)
 
 Every item below was verified in source on `776cb43`. Severity: P0 = live

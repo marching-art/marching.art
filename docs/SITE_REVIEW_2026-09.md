@@ -46,8 +46,106 @@ census and `@ts-nocheck` ratchet that only fall.
 
 # Part 1 — Executive summary and prioritised backlog
 
-_(filled in at the end of the review — see the bottom of Part 2 for the raw
-material)_
+## The picture in five sentences
+
+The platform is technically mature: gates are green, the economy core is
+transactional and lease-guarded, rules are deny-by-default with a real
+regression suite, and the design system is thoughtfully tokenised. The
+biggest risks are not in the core but at its edges — a handful of callables
+and rules that trust caller-supplied paths or keys, reward formulas that
+scale with corps count and attendance rather than skill, and communication
+plumbing (push payload keys, email preference keys) that silently does
+nothing. The user-facing product suffers most from _accumulation_: 21 modals
+on the Dashboard, four overlapping onboarding surfaces, two How-to-Play
+guides, tiny type as a house style, and 14 hand-rolled dialogs that skip the
+focus-trap the codebase already owns. Performance is dominated by two
+avoidable read fan-outs (landing historical scores, dashboard recap archive)
+and a 196 KB-gzip Firebase vendor chunk. Engineering quality is good where
+tests exist and hollow where they don't: deploys aren't gated on CI, the
+functions coverage gate ignores nine untested modules including `admin.js`,
+and e2e never authenticates.
+
+## Themes
+
+1. **Trust the server, verify the client, everywhere.** Five separate
+   findings (S-H1, B-H1, B-H2, B-H7, B-M5) are "the server accepted a
+   caller-supplied path/key/text without checking it against a registry".
+   One `assertKnownClass` / `assertNewsHubPath` / `assertDocId` sweep closes
+   them.
+2. **Reward skill, not volume.** Corps count (G-H1), show count (G-H2),
+   league count (G-H7), byes (G-H3) and tiny fields (G-H4) all pay out
+   linearly. The fix is the same shape each time: pay per director, normalise
+   per show, gate on field size.
+3. **Plumbing that silently fails.** Push text (F-H3), email opt-outs
+   (N-H1), push defaults (N-H4), streak freeze (B-H3), league activity feed
+   index (F-M7), social-proof widgets (U-H3). Each is a few lines and each is
+   invisible until a player complains.
+4. **Consolidate the surfaces.** One onboarding checklist (U-H1), one guide
+   (U-H6), one interrupt per visit (U-H4), one ledger (U-M6), one purchase
+   surface for the streak freeze (U-L15), one date/score formatter
+   (A-M11/A-M12).
+5. **Make the ratchets honest.** Deploy behind CI (Q-H1), coverage over all
+   files (Q-H2), a mirror-constants check (Q-M11), a tiny-text census
+   invariant (A-H6), and auth-enabled e2e (Q-M5, A-L12).
+
+## The backlog: if you only do twenty things
+
+Ordered by (impact × confidence) ÷ effort. Effort: S ≤ 1 h, M ≤ 1 day,
+L ≤ 1 week.
+
+| #   | Ref          | What                                                                                         | Effort |
+| --- | ------------ | -------------------------------------------------------------------------------------------- | ------ |
+| 1   | S-H1         | `corps.keys().hasOnly([...classes])` in rules + registry check in `scoring.js`               | S      |
+| 2   | B-H1         | Path-prefix check in the four `newsAdmin` callables                                          | S      |
+| 3   | N-H1         | Map email preference keys (camelCase ↔ snake_case) so opt-outs work                          | S      |
+| 4   | F-H3         | Read `payload.notification`/`data.url` in the SW push handler; delete dead messaging SW      | S      |
+| 5   | B-H3         | Streak freeze covers the next missed game day; don't clear unused                            | S      |
+| 6   | G-H3         | Byes are non-games in standings                                                              | S      |
+| 7   | Q-H1         | Gate both deploy workflows on CI success                                                     | S      |
+| 8   | F-H2         | Stop calling `useScoresData` on the Dashboard; unify `staleTime`                             | M      |
+| 9   | F-H1         | Materialise `landing_scores/{seasonUid}` nightly; read one doc                               | M      |
+| 10  | B-H4         | `transaction.create` + longer invite codes + tighter join budget                             | S      |
+| 11  | B-H6 / S-M6  | `recursiveDelete` in `deleteAccount`; fix the privacy copy                                   | S      |
+| 12  | S-H2 / S-H3  | Require `birthDate` server-side; gate analytics on consent                                   | M      |
+| 13  | G-H2 / G-M10 | Matchups and tie-breaks on per-show average / class percentile                               | M      |
+| 14  | G-H1 / G-H7  | Pay weekly XP, finish bonus and league wins per director, once per class                     | M      |
+| 15  | U-H4         | One auto-interrupt per Dashboard visit; move achievement/unlock to the inbox                 | M      |
+| 16  | A-H1 / A-H2  | `useFocusTrap` + `useEscapeKey` in the 14 raw dialogs; `IconButton` for 42 unlabeled buttons | M      |
+| 17  | F-H4 / F-M2  | Trim `vendor-firebase` (app-check, analytics out); lazy-load `GameShell` for guests          | M      |
+| 18  | N-H2 / N-H6  | `List-Unsubscribe` headers + tokenised unsubscribe; `noindex` protected routes               | M      |
+| 19  | Q-H2 / Q-H3  | Coverage over all functions files; first tests for `admin.js` and `leagueAutomation.js`      | L      |
+| 20  | U-H1 / U-H6  | One onboarding checklist (JourneyPanel) and one How-to-Play route                            | L      |
+
+## Cross-area quick wins (each ≤ 1 hour)
+
+- Fix "cost 25 or less" → derive from the filter constant (U-H7).
+- Gate Podium marketing on `usePodiumEnabled()` (U-H2).
+- `App.jsx:407,421,466`: add `replace` to the three `<Navigate>`s (F-M11).
+- `useAppBootstrap.ts:68`: only clear the pending redirect on `user === null`
+  (F-M4).
+- Declare the `(type, createdAt)` composite index or drop the `in` filter
+  (F-M7).
+- `RouteChangeFocus.tsx:24`: `(main ?? window).scrollTo(0,0)` (A-H5).
+- `Input.tsx`: `aria-describedby`/`aria-invalid` (A-H3).
+- Delete `/podium`, `/podium/preview`, `/login` from the sitemap (N-H3).
+- `saveFcmToken` also sets `allPush: true` (N-H4).
+- Delete `paydown-cleaned.txt`, `.runtimeconfig.json`,
+  `public/firebase-messaging-sw.js`, `api/leaderboard.ts`, and the unused
+  battle/round-robin client modules (S-L18, F-L5, G-L7).
+- `--max-warnings 14` on lint; `--test-coverage-include` on functions
+  (Q-M13, Q-H2).
+- Refund only unspent Podium commitment (G-M1); require the prior class in
+  `unlockClassWithCorpsCoin` (G-M2).
+- Point the Discord news embed at `/share/article/{id}` (N-L5).
+
+## What this review did not cover
+
+- Live production data, Firestore usage/billing dashboards, or Cloud
+  Logging — every cost finding is inferred from code paths, not measured.
+- The `functions/pressboxImporter`, `dciArchiveImporter` and `rehearsal`
+  tooling beyond noting their committed data size.
+- Visual QA in a real browser beyond the unauthenticated Playwright suite;
+  authenticated screens were reviewed from code only.
 
 ---
 
@@ -1205,7 +1303,225 @@ logButtonClick` have 0 callers; the only 6 calls are login/logout and two
 
 ## G. Game design, economy, and scoring
 
-_(pending)_
+### Economy and scoring as implemented
+
+Nightly `runScoringDay` (`functions/src/helpers/scoring.js:685`) loads all
+active profiles, the day's schedule, and per-caption base scores: the real
+scraped/historical result for that day, else a seeded headroom-regression
+projection (`scoringMath.js:projectCaptionScore`; deterministic FNV jitter,
+`SCORE_STEP` 0.05, hard cap 20). Corps total = GE1+GE2 + (VP+VA+CG)/2 +
+(B+MA+P)/2, capped at 100 (`scoring.js:300-302`). A corps must have a complete
+8-caption lineup and be registered for that show (max 4/week, 7 in week 7;
+`showSelection.js:29-36`). **`totalSeasonScore` is the latest daily total,
+not cumulative** (`scoring.js:563-577`); class rank sorts that number
+(`:477-500`). Days 47–49 use real-or-carried scores only (`:66-82`); cuts
+are top 8 Open / top 4 A (day 46), top 25 (48), top 12 (49) with inclusive
+ties (`scoringAwards.js:92-167`). Weekly league matchups sum every show total
+across the week (`leagueScoring.js:93-94`); cross-class matchups compare
+class percentile. There is no server-side randomness in scoring, matchups or
+Podium (`scoringMath.js:436-441`, `leagueHelpers.js:39-41`,
+`podium/engine.js:4`).
+
+Class registry (client and server JSON byte-identical):
+
+| Class      | Point cap | Unlock                  | CC cost | Reg lock | CC/show |
+| ---------- | --------- | ----------------------- | ------- | -------- | ------- |
+| World      | 150       | L10 / 3 seasons / 60 wk | 5000    | 6 wk     | 200     |
+| Open       | 120       | L5 / 2 / 56             | 2500    | 5        | 150     |
+| A          | 60        | L3 / 1 / 52             | 1000    | 4        | 100     |
+| SoundSport | 90        | —                       | 0       | 0        | 50      |
+| Podium     | —         | —                       | 0       | 0        | 175     |
+
+CC faucets: start 1000; show participation (above) + design bonus ≤15/show
+(`scoring.js:322`); league win 100 per class per league per week; season
+finish 1000/750/500/350/250 per competitive corps; streak milestones
+50–1000; level stipend 100/level; predictions 10/correct + 25 perfect
+(≤65/day); weekly loop 40/60/50; season ladder 1650/season; achievements
+25–250; journey 25–100; Podium activity 200/500 + hosted-event payouts +
+refund of earned budget. CC sinks: class unlocks; streak freeze 300;
+cosmetics 750–10k; plaques 2.5k–15k; banner 10k; legacy 5k–100k (titles to
+1M); league formats 2000/1500; pool ante 25 and entry fees (zero-sum
+escrow); Podium commits (refundable). XP: login 25, show 25, weekly
+participation 150/class, league win 100, prediction 15/correct, challenges
+10/10/20, weekly loop 150, streaks 50–1000, season completion 200–500/corps,
+Podium 120/300. Level = ⌊xp/1000⌋+1 everywhere.
+
+Parity: registry JSON, caption mastery tiers, ladder tiers, shop prices,
+prestige/legacy prices, prediction XP, challenge pool, pool ante, caption
+window trade limits and the level formula all match between client mirrors
+and server. The divergences are behavioural (G-H5) and the unused client
+re-implementations (G-L6).
+
+### Findings
+
+**High**
+
+- **G-H1 · Every reward is multiplied by corps count.** Participation CC
+  (`scoring.js:305-309`), weekly XP `150 * classes.size`
+  (`weeklyMatchups.js` `payWeeklyParticipationXP`), league wins per class,
+  season finish per corps (`season.js:218-240`), director rating per corps
+  row (`directorRating.js:4-12`), and the league title (week-7 totals summed
+  across all classes, `leagueArchival.js:105-112`). A 4-corps director earns
+  ~4× a 1-corps director and effectively always wins the league
+  championship. Fix: pay weekly XP/finish bonus per director (best corps),
+  decide league titles on a flagship class or percentile, cap rating by field
+  size.
+- **G-H2 · Matchups reward attendance count, not lineup quality.**
+  `entry.score += showTotal` (`leagueScoring.js:93-94`): 4 shows beat 3
+  regardless of scores; finals seeding inherits it. Fix: average per show or
+  best-N-of-week, normalised to field.
+- **G-H3 · A bye is a free win.** `generateMatchups` marks the bye
+  `winner: byeMember` (`leagueHelpers.js:84-92`), `processWeeklyMatchups`
+  pushes it as a win, `leagueStandings.js:95-101` increments `wins`. In
+  odd-sized leagues standings are decided by bye rotation. Fix: record byes
+  as neither win nor loss; sort on win% with games played.
+- **G-H4 · Small-field payouts.** `getSeasonBonusAmount(placement)`
+  (`season.js:224-226`) pays 1000 CC to the champion of a 1-corps class;
+  `getSeasonCompletionXP` grants top-10 XP via `rank <= 10` regardless of
+  field; `top_10_*` achievements read live `seasonRank`
+  (`achievements.js:78-80`); rating grants 25 points for 1-of-1. Off-season
+  A/Open classes are exactly this. Fix: require a minimum field (e.g. 8) and
+  scale by percentile.
+- **G-H5 · Client "battle points" contradict server results.**
+  `matchupScoring.ts:69-81` scores 8 caption battles + total + high-single +
+  momentum; `MatchupDetailView.tsx:310-333` and `useLeagueStats.ts:188`
+  display it. The server decides by week total / Caption Wars / One Night
+  only, so the card can show the loser "winning 7–4". Fix: delete the battle
+  system or render the server's `captions`/`best` block.
+- **G-H6 · XP lost to write races.** `calculateXPUpdates` emits
+  `xp: newXP` as a plain total (`xpCalculations.js`); `claimDailyLogin`,
+  predictions (`dailyPredictions.js:270-280`) and journey
+  (`journey.js:64-67`) write it inside transactions, but nightly jobs use
+  `FieldValue.increment` (`weeklyMatchups.js`, `season.js`). A callable that
+  read stale XP overwrites a concurrent increment. Fix: always
+  `increment(xpToAdd)` and lazily recompute level.
+- **G-H7 · Unlimited league membership multiplies win payouts.** No
+  per-director league cap exists; each league pays 100 CC + 100 XP per class
+  per week (`weeklyMatchups.js` win branch). Ten private leagues with the
+  same alts = 10× income. Fix: pay win CC/XP once per class per week, or cap
+  leagues.
+
+**Medium**
+
+- **G-M1 · Podium is the richest faucet with no gate.** 175 CC/show
+  (`processor.js:412-420`) plus `showPayout` 30/show and fundraiser 3/block
+  credit the budget, and the season sweep refunds the entire balance
+  ("committed + earned − spent === refunded", `store.js:640-649`,
+  `career.js:356-367`) plus 200/500 CC activity recognition and hosted-event
+  profit (`hostedEvents.js:308-320`). Unlock level 0. Fix: refund only unspent
+  commitment; keep earned budget in-sim.
+- **G-M2 · CC unlock skips the ladder; A Class is free on day one.**
+  `unlockClassWithCorpsCoin` checks only balance (`economy.js:31-33,64`);
+  starting 1000 CC = A Class cost. Require the prior class or raise A above 1000.
+- **G-M3 · Point-cap inversion:** SoundSport 90 > A Class 60. The first
+  ranked class fields worse lineups than the tutorial class; graduating feels
+  like a downgrade.
+- **G-M4 · Missing history scores 0.** `getRealisticCaptionScore` returns 0
+  when a corps/year/caption has no data (`scoringMath.js`), collapsing a whole
+  corps total with only a log warning. Fall back to the year's caption median
+  or exclude the corps that night.
+- **G-M5 · XP outruns seasons.** `xpCalculations.js:11` says "4–5 months to
+  World Class", but ~1,500–2,500 XP/week is routine, so L10 lands in ~5 weeks
+  — before one season completes; the seasons path (1/2/3) is decorative.
+- **G-M6 · Predictions are a stakeless daily farm.** Four questions, 65 CC +
+  60 XP/day, no entry cost; `podium` resolves "top 3" (`dailyPredictions.js`)
+  — trivially true in small classes. Pool "perfect day" needs only
+  `POOL_MIN_ANSWERED = 2` (`leaguePools.js:19`) and only answered questions
+  count, so answering the two safest questions is optimal.
+- **G-M7 · Daily challenge variety is nil.** Pool of 3, 2 per day
+  (`dailyChallenges.js:6-34`); "join-league-pool" pays 20 XP but costs a
+  25 CC ante.
+- **G-M8 · Streak rewards end at day 100** (`engagementRewards.js`); the
+  daily login is 25 XP forever after.
+- **G-M9 · Caption Wars is a reskinned total.** Categories are week sums and
+  every tie falls to total (`captionWars.js` `resolveCaptionWars`), so it
+  inherits G-H2 and rarely diverges from Total for 2000 CC.
+- **G-M10 · Cross-class percentile edge cases.** `(below + tied)/total`
+  (`leagueScoring.js:158-162`): a 1-corps class is always 100th percentile;
+  two tied members both get 100.
+- **G-M11 · Mid-season joiners are locked out.** World/Open/A registration
+  closes at 6/5/4 weeks remaining — World closes after week 1 of 7 — with no
+  prorated catch-up. Add a late-join bundle.
+- **G-M12 · Standings reward recency, not consistency.** Latest-score
+  ranking (`scoring.js:563-577`) plus projections that rise with day means
+  whoever attends the latest show ranks highest; skipping mid-season shows
+  costs only CC.
+- **G-M13 · Single-entrant pools are a no-op.** Pot = own ante; a perfect
+  day returns it (`leaguePools.js` `settleLeaguePoolsForDay`). Require ≥2
+  entrants or refund.
+- **G-M14 · Podium staff: five apprentices dominate.** `maxTotalBoost` 0.15
+  = 5 × apprentice (200 CC) vs one legend (320) (`balanceConfig.json`
+  `staff`); tenure raises salary 6%/season so loyalty is penalised.
+- **G-M15 · The Legacy top tier is unreachable.** Founding Legacy needs
+  1,000,000 CC (`legacyCatalog.js`); a maximally stacked director nets
+  ~15–25k/season → 40+ seasons.
+
+**Low**
+
+- G-L1 · `getSeasonCompletionXP` percentile branch divides by
+  `totalParticipants` = 0 → Infinity for lineup-only corps (masked by the
+  `rank <= 10` short-circuit).
+- G-L2 · Level stipend only settles on `claimDailyLogin`
+  (`dailyOps.js:180-187`); a non-claimer never gets it.
+- G-L3 · The free day-30 streak freeze lasts 24 h from claim
+  (`dailyOps.js:171-174`), so it usually expires before the next miss (see
+  B-H3).
+- G-L4 · `chargeEntryFeeInTransaction` writes history with the post-debit
+  balance but the debit is performed by callers (`leagueEconomy.js`,
+  `leagues.js:292`) — fragile coupling.
+- G-L5 · The show-design bonus (≤15 CC) is the only place show concepts
+  matter.
+- G-L6 · `captionPricing.js` re-implements `canRegisterForClass`,
+  `getCaptionChangesAllowed`, `calculateLevel`, `CLASS_UNLOCK_REQUIREMENTS`,
+  `getNextClassProgress` with no runtime consumer — drift risk.
+- G-L7 · Dead exports to delete or wire: `matchupScoring.ts`
+  (`BATTLE_POINTS`, `calculateCaptionBattles`, `countCaptionWins`,
+  `calculateTotalScoreBattle`, `calculateHighSingleBattle`,
+  `calculateMomentumBattle`, `formatBattleScore`, `getMatchupDescription`,
+  `calculateWinProbability`, `aggregateCaptionScores`); `leagueStats.ts`
+  (`generateRoundRobinMatchups`, `buildWeeklyResults`,
+  `buildWeeklyClassResults`, `buildMatchupsByWeek`,
+  `computeMemberStandings`); `seasonClock.js` (`SCORES_PROCESS_HOUR_ET`,
+  `OFF_SEASON_DROP_HOUR_ET`, `LIVE_EARLIEST_DROP_HOUR_ET`,
+  `UNLIMITED_THROUGH_DAY`, `BLACKOUT_DAYS`, `CHANMPIONSHIP_CLASS_DAYS`,
+  `getNextScoresProcessingTime`); `captionUtils.js` (`CAPTION_OPTIONS*`,
+  `getCaptionColor`, `getCaptionDescription`, `getTextColorFromBg`);
+  `journeyProgress.ts` (`deriveJourneyState`); `dashboardScoring.ts`
+  (`processCategoryTotals`); `competitionCalendar.js`
+  (`getSpringTrainingDays`); `historicalEvents.ts`
+  (`compareEventsChronologically`); `classRegistry.js` (`getClass`,
+  `isClassEnabled`).
+
+### Design opportunities the code is nearly ready for
+
+- The per-show private caption ledger (`captionLedger.js`) already stores
+  8-caption breakdowns — a real per-caption, per-show Caption Wars needs no
+  new data.
+- `classPercentile` is computed for every corps every week — switching
+  standings tie-breaks and matchup wins to it fixes G-H2/G-M10 with one
+  line.
+- `awardLedger` tokens exist for every payout — a per-director weekly cap
+  (G-H7) is a token-key change.
+- The Podium `activity` accumulator and assessment tiers could feed a
+  fantasy-side consistency reward (fixes G-M12).
+- `poolCarry` + finals scores support a season-long league jackpot with no
+  schema change.
+
+### Quick wins
+
+1. Treat byes as non-games in `leagueStandings.js:95-101`.
+2. Gate `getSeasonBonusAmount`, top-10 XP and achievements on
+   `classRanking.length >= 8`.
+3. Refund only `budget.committed - spent` in `store.js:649`.
+4. Require the prior class in `unlockClassWithCorpsCoin` (`economy.js:31`).
+5. Switch `updates.xp` to `FieldValue.increment` in `calculateXPUpdates`
+   callers.
+6. Raise `POOL_MIN_ANSWERED` to the number of available questions.
+7. Delete the unused battle/round-robin client modules and stale
+   `captionPricing.js` rule copies.
+8. Fix the "4–5 month" comment in `xpCalculations.js:11` or retune
+   `classUnlocks` to 5/10/20.
+9. Set SoundSport cap ≤ A Class cap, or raise A to 90.
 
 ## H. SEO, public surfaces, and communications
 
