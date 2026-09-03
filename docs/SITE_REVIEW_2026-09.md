@@ -1039,7 +1039,169 @@ bypass the primitives, and a few primitives that violate their own laws.
 
 ## F. Engineering quality, tests, and developer experience
 
-_(pending)_
+### Metrics
+
+| Metric                                                    | Value                                                                                                                                                                          |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Source vs sibling-test files, `src/`                      | pages 45/6 · components 273/39 · hooks 55/15 · utils 64/51 · api 24/2 · lib 6/3 · store 3/1                                                                                    |
+| Source vs sibling-test files, `functions/src/`            | callable 43/32 · helpers 149/128 · scheduled 20/8 · triggers 16/4                                                                                                              |
+| functions modules >250 lines with no sibling test         | 31 (newsGeneration 983, newsSubmissions 950, admin 893, season 842, pushNotifications 823, dailyOps 784, emailNotifications 703, leagueAutomation 596 …)                       |
+| `src` non-component modules >300 lines, no test           | 37 (Onboarding 888, useScoresData 797, App.jsx 785, api/functions.ts 756, Leagues.tsx 747, api/podium.ts 687, api/leagues.ts 620 …)                                            |
+| functions modules required by zero test files             | admin.js, podiumJoint.js, leagueAutomation.js, lifetimeLeaderboard.js, leagueArchival.js, newsGeneration.js, pushNotifications.js, emailNotifications.js, engagementRewards.js |
+| Vitest coverage thresholds (`vite.config.js:157`)         | statements 15.9 / branches 12.5 / functions 13.3 / lines 15.8                                                                                                                  |
+| functions coverage thresholds                             | lines 70 / branches 80 / functions 85 — loaded-files-only (no `--test-coverage-include`)                                                                                       |
+| Hand-rolled fake Firestore definitions in functions tests | 58 files; 0 shared test util                                                                                                                                                   |
+| src tests using `vi.mock`                                 | 30/121; 0 snapshots; 39 weak (`toBeTruthy`/`toBeDefined`) asserts                                                                                                              |
+| e2e                                                       | 39 tests across 7 specs, chromium + Pixel 5; 0 authenticated flows                                                                                                             |
+| `: any` / `as any` / `as unknown as` in src TS            | 3 / 1 / 5; JSDoc `{any}` in functions: 48                                                                                                                                      |
+| `@ts-nocheck` headers                                     | 88 real (components 60, pages 19, utils 5; functions 2)                                                                                                                        |
+| functions `tsconfig.json`                                 | `strict: false`                                                                                                                                                                |
+| Duplicated function names src/utils ↔ functions/helpers   | 42 (sampled bodies identical); `classRegistry.json` mirrors byte-identical                                                                                                     |
+| `console.*` in functions non-script code                  | 0 (logger: 883); `console.log` in src: 8 (4 unguarded)                                                                                                                         |
+| Callables with `enforceAppCheck`                          | 0 of 157; `onCall` handlers also live in 10 non-`callable/` files                                                                                                              |
+| Analytics                                                 | 10 named events defined; 6 call sites app-wide                                                                                                                                 |
+
+### Findings
+
+**High**
+
+- **Q-H1 · Deploys are not gated on CI.** `deploy-hosting.yml:18-31` deploys
+  on any push to `main` touching `src/**` after only `npm run build`;
+  `deploy-functions.yml:135-176` runs `node --check`, functions tests and
+  rules tests but no typecheck, lint, or ratchets. A red CI on `main` still
+  ships. Fix: `workflow_run: {workflows: [CI], types: [completed]}` +
+  `if: conclusion == 'success'`, or move deploy into `ci.yml` behind all
+  jobs.
+- **Q-H2 · The functions coverage gate is hollow.** `functions/package.json`
+  `test:coverage` uses Node's loaded-files coverage, so the nine modules
+  never required by any test don't count against 70/80/85. Fix:
+  `--test-coverage-include='src/**/*.js'` and re-baseline honestly.
+- **Q-H3 · `callable/admin.js` (893 lines) has zero tests and zero test
+  imports.** Role grants and corrections are the highest-blast-radius writes.
+  Reuse the `.run()` + fake-db pattern from `callable/leagues.test.js:1-45`.
+- **Q-H4 · `scheduled/leagueAutomation.js` (596) and
+  `helpers/leagueArchival.js` (375) are untested** — season-end settlement
+  and archival run once a season, where bugs are unrecoverable.
+- **Q-H5 · Season-day literals duplicated across 12 functions modules.**
+  `captionWindows.js:56-79` defines `BLACKOUT_DAYS`,
+  `CHAMPIONSHIP_START_DAY=45`, `SEASON_FINAL_DAY=49`, but
+  `helpers/scoring.js:376,631,635,741,762` hard-codes `[41,42]`, `46`, `49`,
+  `>= 45`; 45 literal comparisons exist across dropPlanner, weather,
+  scheduleGeneration, scoringAwards, shareCards, resultsPages, podium/*,
+  gameDay. Fix: named constants from one module plus a grep ratchet.
+- **Q-H6 · The frontend coverage floor is 15.8% lines.** Pages (6/45), api
+  (2/24) and components (39/273) are effectively unguarded. Target `src/api/**`
+  and `src/hooks/**` with their own thresholds.
+
+**Medium**
+
+- **Q-M1 · `src/api/functions.ts` (756) + `podium.ts` (687) + `leagues.ts`
+  (620) have no tests** and are the only place callable request/response
+  shapes are declared (`createCallable<Req,Res>` ×79); nothing checks them
+  against the handlers. Add a contract test or generate client types from the
+  functions side.
+- **Q-M2 · `src/types/user.ts` lags server writes.** `engagement.weeklyLoop`,
+  `streakMilestones`, `lastLoginDate`, `seasonXP`, `podiumCorps` are written
+  by functions but absent from `UserProfile`; this is what blocks
+  de-nochecking `DailyChallenges.jsx:75`.
+- **Q-M3 · Functions `tsconfig.json` is `strict:false`** with 48 JSDoc
+  `{any}`; with 2 `@ts-nocheck` files left there, enabling `noImplicitAny`
+  is now cheap.
+- **Q-M4 · 58 copies of a hand-rolled fake Firestore** in functions tests
+  (`makeFakeDb` in `callable/leagues.test.js:36` etc.); semantics drift
+  between copies. One `functions/src/testing/fakeFirestore.js`.
+- **Q-M5 · e2e never authenticates.** `auth.spec.ts` only checks form
+  rendering; `studio.spec.ts:5` notes the suite runs unauthenticated;
+  `guest-draft.spec.ts:30` skips without the emulator. Lineup save, league
+  join, shop purchase have zero browser coverage. Use the Auth emulator
+  (`src/api/client.ts:81` already wires it) with a seeded user and a
+  `storageState` fixture.
+- **Q-M6 · No client-side error dedupe/throttle** in
+  `src/lib/errorReporter.ts:41-64` and no per-IP throttle in
+  `functions/src/triggers/clientErrors.js:79-108`. A render loop fans out
+  unbounded `logger.error` writes.
+- **Q-M7 · The analytics taxonomy is defined but unused.**
+  `logCorpsCreated/logLeagueJoined/logCaptionSelected/logPageView/
+logButtonClick` have 0 callers; the only 6 calls are login/logout and two
+  free-form events in `funnel.ts:213,237`. Wire them at the `api/functions.ts`
+  wrappers or delete.
+- **Q-M8 · `functions/` has no formatter and no style rule.**
+  `.prettierignore:15-17` excludes `functions` citing a
+  `functions/eslint.config.js` that does not exist; 26,451 double-quoted vs
+  2,124 single-quoted strings. Add a Prettier override instead of ignoring.
+- **Q-M9 · `helpers/economy.js` (212) has no sibling test**; it holds
+  `WEEKLY_LEAGUE_WIN_REWARD`, `SEASON_FINISH_BONUSES`, `TRANSACTION_TYPES` and
+  the ledger writer.
+- **Q-M10 · `helpers/season.js` (842), `callable/dailyOps.js` (784),
+  `helpers/xpCalculations.js` (321)** reach tests only via one to three
+  importers; rollover is once-per-season logic.
+- **Q-M11 · Mirror constants are scattered, not paired.** `seasonClock.js` ↔
+  `captionWindows.js`, `captionPricing.js` ↔ `xpCalculations.js` +
+  `showSelection.js`, `leagueEconomy.ts` ↔ `leaguePools.js` +
+  `leagueChampion.js`. Values match today (verified: XP_SOURCES, milestones,
+  CHALLENGE_POOL, trade limits, class days, ante 25, finals 12, CC 1000/100)
+  but only `classRegistry.json` has a CI sync check. Add
+  `checkMirrorConstants.mjs`.
+- **Q-M12 · Callable handlers spread across triggers/scheduled/helpers** (10
+  files outside `callable/`).
+- **Q-M13 · `react-hooks/exhaustive-deps` is warn-only** and `lint` has no
+  `--max-warnings`; the 14 warnings can grow silently.
+- **Q-M14 · `src/App.jsx` (785 lines) is `@ts-nocheck` and untested**, and
+  contains auth bootstrapping + analytics + routing. Extract the auth-state
+  effect into a tested hook.
+
+**Low**
+
+- Q-L1 · `max-lines` (700) is warn; 9 files exceed it.
+- Q-L2 · 4 unguarded `console.log` in src (`api/pushNotifications.ts:129,245`,
+  `index.jsx:48,51`, `Onboarding.jsx:520`, `useScoresData.ts:533`).
+- Q-L3 · `src/api/index.ts` `export *` chains through `functions.ts` and 3
+  more modules — cycle risk and poor tree-shaking.
+- Q-L4 · 39 weak assertions in src tests that only prove "didn't throw".
+- Q-L5 · `firebase.json` has no `emulators` block; ports live in
+  `src/config/index.ts:207-212`, `e2e/firebase.json`,
+  `functions/rehearsal/firebase.json`.
+- Q-L6 · No general dev seed; `e2e/seedEmulator.mjs` is the only playable
+  world. Promote to `npm run seed:local`.
+- Q-L7 · `.env.local.example` exists but no `.env.example`;
+  `VITE_USE_EMULATORS` documented only in `vite-env.d.ts`.
+- Q-L8 · The deploy secrets loop (`deploy-functions.yml:265-300`) creates a
+  new Secret Manager version on every run.
+- Q-L9 · `firestore-tests` run twice on push (`ci.yml` and
+  `deploy-functions.yml`).
+
+### Top 10 modules to test first
+
+1. `functions/src/callable/admin.js` — privileged writes, 0 tests.
+2. `functions/src/scheduled/leagueAutomation.js` — season-end payouts.
+3. `functions/src/helpers/leagueArchival.js` — destructive, same path.
+4. `functions/src/helpers/economy.js` — every CC ledger write.
+5. `functions/src/helpers/season.js` — rollover.
+6. `functions/src/callable/podiumJoint.js` — money + podium settlement.
+7. `functions/src/scheduled/lifetimeLeaderboard.js` — public ranking rewrite.
+8. `src/api/functions.ts` + `podium.ts` + `leagues.ts` — the client/server
+   contract.
+9. `functions/src/helpers/xpCalculations.js` — level/unlock gates.
+10. `src/hooks/useScoresData.ts` (797) — feeds every score view.
+
+### Quick wins
+
+1. Gate deploy workflows on CI success (`workflow_run`).
+2. `--test-coverage-include='src/**/*.js'` in functions `test:coverage`;
+   re-baseline.
+3. `--max-warnings 14` on `npm run lint`.
+4. Add `EngagementData.weeklyLoop/streakMilestones` to `src/types/user.ts`,
+   then drop `@ts-nocheck` from `DailyChallenges.jsx`.
+5. Delete the dead `analytics.log*` helpers or wire three of them.
+6. Prettier override for `functions/`; fix the dangling
+   `functions/eslint.config.js` reference.
+7. Extract `EASTERN_CLASSIC_DAYS = [41, 42]` and `CLASS_FINALS_DAY = 46`
+   into `captionWindows.js`; replace the five literals in `scoring.js`.
+8. A 30-line `checkMirrorConstants.mjs` CI step deep-equalling the six
+   mirror pairs.
+9. Gate the four stray `console.log`s on `import.meta.env.DEV`.
+10. Seed an Auth-emulator user in `e2e/seedEmulator.mjs` and add one
+    signed-in "save lineup" spec.
 
 ## G. Game design, economy, and scoring
 
