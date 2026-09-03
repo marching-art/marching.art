@@ -583,8 +583,8 @@ const PodiumSection = () => (
         access — a broke corps can always play.
       </PodiumCard>
       <PodiumCard icon={MapPin} title="The tour & majors">
-        Route up to 4 shows a week and hit the three majors — Dallas (Day 28), Atlanta (Day 35), and
-        Allentown (Days 41–42) — before Championship Week in Indianapolis.
+        Route up to 4 shows a week and hit the three majors — San Antonio (Day 28), Atlanta (Day
+        35), and Allentown (Days 41–42) — before Championship Week in Indianapolis.
       </PodiumCard>
       <PodiumCard icon={Trophy} title="Scoring">
         Your 8 captions score against the real historical DCI envelope. The Podium Division is the

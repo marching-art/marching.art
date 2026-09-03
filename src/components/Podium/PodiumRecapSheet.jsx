@@ -28,7 +28,7 @@ import { useHorizontalTabSlide } from '../scores/useHorizontalTabSlide';
 import { PODIUM_CAPTIONS } from './podiumConstants';
 
 const MAJOR_MASTHEADS = {
-  28: { name: 'marching.art Southwestern Championship', site: 'Dallas, TX' },
+  28: { name: 'marching.art Southwestern Championship', site: 'San Antonio, TX' },
   35: { name: 'marching.art Southeastern Championship', site: 'Atlanta, GA' },
   41: { name: 'marching.art Eastern Classic — Night 1', site: 'Allentown, PA' },
   42: { name: 'marching.art Eastern Classic — Night 2', site: 'Allentown, PA' },

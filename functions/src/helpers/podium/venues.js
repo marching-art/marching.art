@@ -213,7 +213,7 @@ function heatStamina(venue, cfg) {
 // plus Championship Week in Indianapolis — subsidized travel like every
 // major (isMajor derives from membership here).
 const MAJOR_VENUES = {
-  28: venueFor("Dallas, Texas"),
+  28: venueFor("San Antonio, Texas"),
   35: venueFor("Atlanta, Georgia"),
   41: venueFor("Allentown, Pennsylvania"),
   42: venueFor("Allentown, Pennsylvania"),

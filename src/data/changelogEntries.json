@@ -1,5 +1,16 @@
 [
   {
+    "id": "2026-09-03-southwestern-championship-moves-to-san-antonio",
+    "date": "2026-09-03",
+    "title": "The Southwestern Championship is now held in San Antonio",
+    "category": "fix",
+    "summary": "The Day 28 marching.art Southwestern Championship on the off-season schedule now takes place in San Antonio, Texas, where the real DCI Southwestern is held, instead of Dallas. Every place that names the site — the schedule, the Podium Division recap masthead, the tour guide, and travel costs for Podium corps routing to the major — agrees.",
+    "highlights": [
+      "Podium travel legs to and from the Southwestern are priced from San Antonio, so mileage, stamina, and airfare reflect the real trip.",
+      "Seasons whose schedule was already generated keep their existing site until the next schedule is built."
+    ]
+  },
+  {
     "id": "2026-09-03-ai-images-match-your-uniform-exactly",
     "date": "2026-09-03",
     "title": "AI avatars and news images now reproduce your whole uniform, not just its colors",
