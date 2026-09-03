@@ -8,7 +8,7 @@ burns an hour to conclude "everything's about covered." Don't. If you ship,
 cut, or discover something, edit THIS file in the same PR — that's the whole
 maintenance contract.
 
-_Last updated: 2026-09-03 (site-review row 12 — server-enforced age gate + consent-gated analytics; AI imagery now built from the full Uniform Studio design + rendered reference image; main ruleset + gazetteer PR flow; site-review Fix-first 1–11 + quick wins shipped)._
+_Last updated: 2026-09-03 (site-review row 13 — league weeks decided per show, percentile edge cases; row 12 — server-enforced age gate + consent-gated analytics; AI imagery now built from the full Uniform Studio design + rendered reference image; main ruleset + gazetteer PR flow; site-review Fix-first 1–11 + quick wins shipped)._
 
 ## In progress
 
@@ -21,10 +21,10 @@ code-first review of the whole product (security, backend, frontend, UX,
 a11y, quality, economy, SEO/comms). Its **Part 1 backlog table** is the
 queue: work it top-down, and tick items off here as they ship.
 
-_(rows 1–12 — S-H1, B-H1, N-H1, F-H3, B-H3, G-H3, Q-H1, F-H2, F-H1, B-H4,
-B-H6/S-M6, S-H2/S-H3 — and all eight "Cross-area quick wins" shipped
-2026-09-03; continue from row 13 (G-H2 / G-M10: matchups and tie-breaks on
-per-show average / class percentile) of the Part 1 table. Left open from row 8: the Dashboard
+_(rows 1–13 — S-H1, B-H1, N-H1, F-H3, B-H3, G-H3, Q-H1, F-H2, F-H1, B-H4,
+B-H6/S-M6, S-H2/S-H3, G-H2/G-M10 — and all eight "Cross-area quick wins"
+shipped 2026-09-03; continue from row 14 (G-H1 / G-H7: pay weekly XP, finish
+bonus and league wins per director, once per class) of the Part 1 table. Left open from row 8: the Dashboard
 still reads the full recap archive once an hour for the ranked classes because
 the Season Ledger joins per-show placement from it — store `eventName` on the
 standings history entries and the ledger can read standings instead.)_
@@ -315,7 +315,7 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
 
 ## Evergreen ratchets (any session, any size)
 
-- `@ts-nocheck` paydown — **80 files** at
+- `@ts-nocheck` paydown — **79 files** at
   last update; `npm run ts-nocheck:next` ranks the cheapest (no free wins
   left; `Schedule.jsx` and `Layout/GameShell.jsx` are ~30 errors each). One
   per substantive task is the CLAUDE.md habit; batches welcome.
@@ -332,6 +332,19 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
 
 ## Recently shipped (context, newest first — prune when stale)
 
+- 2026-09-03: site-review row 13 (G-H2 / G-M10). A league week is measured
+  per show: `buildWeeklyScoreIndex` folds `average` and `perShow` caption
+  averages beside the sums, the default format decides on `average` (equal
+  averages → fuller week → tie), Caption Wars compares `perShow` and stores
+  per-show figures in the `captions` block, and `applyClassPercentiles` ranks
+  on the average with mid-rank ties (two level at the top of ten = 95, not
+  100 each) and a lone entrant at `LONE_ENTRANT_PERCENTILE` (50). Matchups
+  and standings pairs carry `averages` / `player1Average`; notifications quote
+  "averaging X – Y per show"; the card and detail view lead with the average
+  and show the total underneath; the client's provisional table
+  (`buildWeeklyClassAverages`) reads a live week the same way. One-Night
+  Slate unchanged. Spec §4 updated. `ActiveLineupTable.jsx` typed (ts-nocheck 80 →
+  79). Changelog entry added.
 - 2026-09-03: site-review row 12. S-H2: `createUserProfile` refuses a new
   profile without a valid date of birth (`failed-precondition`,
   `reason: birth_date_required`; idempotent retries for an existing profile

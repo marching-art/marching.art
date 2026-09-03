@@ -893,6 +893,7 @@ exports.updateMatchupResults = onCall({ cors: true }, async (request) => {
           ...matchup,
           scores: { [p1_uid]: p1_score, [p2_uid]: p2_score },
           shows: { [p1_uid]: decided.p1Week.shows, [p2_uid]: decided.p2Week.shows },
+          averages: { [p1_uid]: decided.p1Week.average, [p2_uid]: decided.p2Week.average },
           normalized: {
             [p1_uid]: decided.p1Week.classPercentile,
             [p2_uid]: decided.p2Week.classPercentile,
@@ -911,6 +912,8 @@ exports.updateMatchupResults = onCall({ cors: true }, async (request) => {
           player2: p2_uid,
           player1Score: p1_score,
           player2Score: p2_score,
+          player1Average: decided.p1Week.average,
+          player2Average: decided.p2Week.average,
           player1Normalized: decided.p1Week.classPercentile,
           player2Normalized: decided.p2Week.classPercentile,
           player1Class: p1Class,

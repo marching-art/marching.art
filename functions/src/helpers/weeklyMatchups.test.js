@@ -406,6 +406,10 @@ describe("processWeeklyMatchups", () => {
     assert.equal(decided.winner, "alice");
     assert.equal(tied.completed, true);
     assert.equal(tied.winner, "tie");
+    // The per-show average the week was decided on travels with the result,
+    // beside the weekly total the record book reads.
+    assert.deepEqual(decided.averages, { alice: 90, bob: 80 });
+    assert.deepEqual(decided.scores, { alice: 90, bob: 80 });
 
     // Standings/current updated: winner W, loser L, tie for both — this used
     // to happen only via the commissioner callable, never automatically

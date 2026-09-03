@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-09-03-league-weeks-are-decided-per-show",
+    "date": "2026-09-03",
+    "title": "League matchups are now decided on your average per show, not your total",
+    "category": "balance",
+    "summary": "A league week used to go to whoever added up the most points across the shows they attended, so four shows beat three whatever the scores said. From this week on, the default format compares each corps' average score per show. Attend one show at 88 and you beat an opponent who attended three at 84. Your weekly total still counts for the standings' points columns and still breaks a tie when two averages are level, so a fuller week is never a disadvantage.",
+    "highlights": [
+      "Matchup cards and the matchup page lead with each side's average per show, with the weekly total shown underneath.",
+      "Caption Wars compares each caption group's per-show average, so a category can no longer be taken on attendance.",
+      "Cross-class matchups and standings tiebreaks rank you against your own class on the same per-show average. Two corps level at the top of a class now share the spot instead of both claiming first, and a class with a single entrant no longer auto-wins every cross-class week.",
+      "One-Night Slate is unchanged: your best single show decides it, and the fuller week still breaks a tie."
+    ]
+  },
+  {
     "id": "2026-09-03-show-day-card-no-longer-repeats-the-temperature",
     "date": "2026-09-03",
     "title": "The show day card no longer repeats the temperature",

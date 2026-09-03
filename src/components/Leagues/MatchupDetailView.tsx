@@ -77,6 +77,9 @@ interface DetailMatchup {
   crossClass?: boolean;
   classes?: Record<string, string>;
   normalized?: Record<string, number>;
+  /** Each side's per-show average across the week — the number the default
+   *  format decided on (functions/src/helpers/leagueScoring.js). */
+  averages?: Record<string, number>;
   /** Each side's best single show, on a league running One-Night Slate. */
   best?: Record<string, { score?: number; showName?: string | null } | undefined>;
   winner?: string | null;
@@ -144,6 +147,9 @@ const MatchupDetailView = ({
   recaps: recapsProp = null, // OPTIMIZATION: Accept pre-fetched recaps to avoid duplicate query
 }: MatchupDetailViewProps) => {
   const [weeklyScores, setWeeklyScores] = useState({ user1: 0, user2: 0 });
+  // Shows attended this week per side; the week is decided on the per-show
+  // average (leagueScoring.js), so the header leads with it.
+  const [weeklyShows, setWeeklyShows] = useState({ user1: 0, user2: 0 });
   const [loading, setLoading] = useState(true);
   const [scoreBreakdown, setScoreBreakdown] = useState<{
     user1: SideBreakdown | null;
@@ -301,6 +307,7 @@ const MatchupDetailView = ({
           });
 
           setWeeklyScores({ user1: score1, user2: score2 });
+          setWeeklyShows({ user1: user1Shows.length, user2: user2Shows.length });
           setScoreBreakdown({ user1: breakdown1, user2: breakdown2 });
 
           // Calculate battle breakdown if we have data
@@ -419,28 +426,55 @@ const MatchupDetailView = ({
     processRecaps();
   }, [matchup, league?.id, recapsProp]);
 
-  // A settled matchup's stored winner outranks anything recomputed from raw
-  // totals here: cross-class weeks are decided on class percentiles, Caption
-  // Wars on the category tally, One-Night Slate on the best single show.
+  // The per-show average each side is judged on. A settled matchup carries
+  // the server's figures; a live one derives them from the recaps folded
+  // above, the same way the server will.
+  const weeklyAverages = useMemo(() => {
+    const stored1 = matchup.completed ? matchup.averages?.[matchup.user1] : undefined;
+    const stored2 = matchup.completed ? matchup.averages?.[matchup.user2] : undefined;
+    return {
+      user1:
+        typeof stored1 === 'number'
+          ? stored1
+          : weeklyShows.user1 > 0
+            ? weeklyScores.user1 / weeklyShows.user1
+            : 0,
+      user2:
+        typeof stored2 === 'number'
+          ? stored2
+          : weeklyShows.user2 > 0
+            ? weeklyScores.user2 / weeklyShows.user2
+            : 0,
+    };
+  }, [matchup, weeklyScores, weeklyShows]);
+
+  // A settled matchup's stored winner outranks anything recomputed here:
+  // cross-class weeks are decided on class percentiles, Caption Wars on the
+  // category tally, One-Night Slate on the best single show. A live one is
+  // read the way the server will decide it: per-show average, then the
+  // fuller week on equal averages.
   const isCrossClass = Boolean(matchup.crossClass);
   const settledWinner = matchup.completed ? matchup.winner : undefined;
-  const user1Leading = settledWinner
-    ? settledWinner === matchup.user1
-    : weeklyScores.user1 > weeklyScores.user2;
-  const user2Leading = settledWinner
-    ? settledWinner === matchup.user2
-    : weeklyScores.user2 > weeklyScores.user1;
-  const tied = settledWinner
-    ? settledWinner === 'tie'
-    : weeklyScores.user1 === weeklyScores.user2 && weeklyScores.user1 > 0;
-  const scoreDiff = Math.abs(weeklyScores.user1 - weeklyScores.user2);
+  const liveLead = (() => {
+    if (weeklyAverages.user1 !== weeklyAverages.user2) {
+      return weeklyAverages.user1 > weeklyAverages.user2 ? matchup.user1 : matchup.user2;
+    }
+    if (weeklyScores.user1 !== weeklyScores.user2) {
+      return weeklyScores.user1 > weeklyScores.user2 ? matchup.user1 : matchup.user2;
+    }
+    return weeklyScores.user1 > 0 ? 'tie' : null;
+  })();
+  const user1Leading = settledWinner ? settledWinner === matchup.user1 : liveLead === matchup.user1;
+  const user2Leading = settledWinner ? settledWinner === matchup.user2 : liveLead === matchup.user2;
+  const tied = settledWinner ? settledWinner === 'tie' : liveLead === 'tie';
+  const scoreDiff = Math.abs(weeklyAverages.user1 - weeklyAverages.user2);
 
   // Calculate win probability
   const winProbability = useMemo(() => {
-    const total = weeklyScores.user1 + weeklyScores.user2;
+    const total = weeklyAverages.user1 + weeklyAverages.user2;
     if (total === 0) return 50;
-    return (weeklyScores.user1 / total) * 100;
-  }, [weeklyScores]);
+    return (weeklyAverages.user1 / total) * 100;
+  }, [weeklyAverages]);
 
   const tabs: Array<{
     id: 'battles' | 'rivalry' | 'overview' | 'captions';
@@ -589,9 +623,11 @@ const MatchupDetailView = ({
                       : 'text-white'
               }`}
             >
-              {loading ? '—' : weeklyScores.user1.toFixed(1)}
+              {loading ? '—' : weeklyAverages.user1.toFixed(1)}
             </div>
-            <p className="text-[10px] text-muted/40 mt-1">Total Score</p>
+            <p className="text-[10px] text-muted/40 mt-1">
+              Avg per Show · {weeklyScores.user1.toFixed(1)} total
+            </p>
 
             {user1Stats && (
               <p className="text-sm text-muted/60 mt-2">
@@ -663,9 +699,11 @@ const MatchupDetailView = ({
                       : 'text-white'
               }`}
             >
-              {loading ? '—' : weeklyScores.user2.toFixed(1)}
+              {loading ? '—' : weeklyAverages.user2.toFixed(1)}
             </div>
-            <p className="text-[10px] text-muted/40 mt-1">Total Score</p>
+            <p className="text-[10px] text-muted/40 mt-1">
+              Avg per Show · {weeklyScores.user2.toFixed(1)} total
+            </p>
 
             {user2Stats && (
               <p className="text-sm text-muted/60 mt-2">

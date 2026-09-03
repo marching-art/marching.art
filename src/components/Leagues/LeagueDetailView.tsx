@@ -56,6 +56,7 @@ interface SelectedMatchup {
   crossClass?: boolean;
   classes?: Record<string, string>;
   normalized?: Record<string, number>;
+  averages?: Record<string, number>;
   winner?: string | null;
   completed?: boolean;
   isUserMatchup?: boolean;

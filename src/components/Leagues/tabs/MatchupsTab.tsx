@@ -65,6 +65,8 @@ interface SelectedMatchup {
   crossClass?: boolean;
   classes?: Record<string, string>;
   normalized?: Record<string, number>;
+  /** Each side's per-show average, the figure the default format decided on. */
+  averages?: Record<string, number>;
   /** Each side's best single show, on a league running One-Night Slate. */
   best?: Record<string, { score?: number; showName?: string | null } | undefined>;
   winner?: string | null;
@@ -294,6 +296,7 @@ const MatchupsTab = ({
       crossClass: matchup.crossClass,
       classes: matchup.classes,
       normalized: matchup.normalized,
+      averages: matchup.averages,
       best: matchup.best,
       winner: matchup.winner,
       completed: matchup.completed,

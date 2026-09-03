@@ -282,6 +282,70 @@ describe('computeLeagueTables', () => {
   });
 });
 
+// A live (unsettled) week is read the way the server will decide it: on the
+// per-show AVERAGE, with the weekly total only breaking level averages. The
+// old sum let four shows beat three whatever the scores said, and this table
+// would have shown a mid-week leader who lost at resolution.
+describe('per-show averages on unsettled weeks', () => {
+  it('leads with the better average, not the fuller week', () => {
+    const tables = computeLeagueTables({
+      recaps: [
+        day(1, [
+          ['busy', 84],
+          ['sharp', 88],
+        ]),
+        day(2, [['busy', 84]]),
+        day(3, [['busy', 84]]),
+      ],
+      matchupDocs: [weekDoc(1, [['busy', 'sharp']])],
+      members: ['busy', 'sharp'],
+      currentWeek: 1,
+    })!;
+
+    // Totals still say busy (252 vs 88); the standings say sharp.
+    expect(tables.weeklyResults[1]).toEqual({ busy: 252, sharp: 88 });
+    expect(tables.standings.map((s) => s.uid)).toEqual(['sharp', 'busy']);
+    expect(tables.standings[0]).toMatchObject({ wins: 1, losses: 0 });
+  });
+
+  it('breaks level averages on the fuller week', () => {
+    const tables = computeLeagueTables({
+      recaps: [
+        day(1, [
+          ['two', 85],
+          ['one', 85],
+        ]),
+        day(2, [['two', 85]]),
+      ],
+      matchupDocs: [weekDoc(1, [['one', 'two']])],
+      members: ['one', 'two'],
+      currentWeek: 1,
+    })!;
+    expect(tables.standings[0]).toMatchObject({ uid: 'two', wins: 1 });
+  });
+
+  it('still trusts a settled winner over both figures', () => {
+    const tables = computeLeagueTables({
+      recaps: [
+        day(1, [
+          ['busy', 84],
+          ['sharp', 88],
+        ]),
+        day(2, [['busy', 84]]),
+      ],
+      matchupDocs: [
+        {
+          id: 'week-1',
+          worldClassMatchups: [{ pair: ['busy', 'sharp'], completed: true, winner: 'busy' }],
+        },
+      ],
+      members: ['busy', 'sharp'],
+      currentWeek: 1,
+    })!;
+    expect(tables.standings[0]).toMatchObject({ uid: 'busy', wins: 1 });
+  });
+});
+
 // A director can field more than one corps class, which means more than one
 // matchup per week. Both of these used to be wrong: weekly scores were summed
 // across every class and compared in a class-scoped matchup, and only the

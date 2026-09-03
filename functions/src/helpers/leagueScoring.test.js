@@ -7,6 +7,7 @@ const { test, describe } = require("node:test");
 const assert = require("node:assert/strict");
 
 const {
+  LONE_ENTRANT_PERCENTILE,
   weekDayRange,
   buildWeeklyScoreIndex,
   getWeekScore,
@@ -39,6 +40,18 @@ describe("buildWeeklyScoreIndex", () => {
     const alice = getWeekScore(index, "alice", "worldClass");
     assert.equal(alice.score, 162.5);
     assert.equal(alice.shows, 2);
+    // ...and the week is measured per show: the average is what decides it.
+    assert.equal(alice.average, 81.25);
+  });
+
+  test("folds the caption groups per show alongside the sums", () => {
+    const { index } = buildWeeklyScoreIndex([
+      day([{ uid: "a", corpsClass: "worldClass", totalScore: 90, geScore: 36, visualScore: 27, musicScore: 27 }]),
+      day([{ uid: "a", corpsClass: "worldClass", totalScore: 94, geScore: 38, visualScore: 28, musicScore: 28 }]),
+    ]);
+    const a = getWeekScore(index, "a", "worldClass");
+    assert.deepEqual({ ge: a.ge, visual: a.visual, music: a.music }, { ge: 74, visual: 55, music: 55 });
+    assert.deepEqual(a.perShow, { ge: 37, visual: 27.5, music: 27.5 });
   });
 
   test("keeps a director's classes separate", () => {
@@ -180,12 +193,39 @@ describe("class percentiles", () => {
     );
   });
 
-  test("a lone entrant leads their field", () => {
+  test("a lone entrant has no field to lead and sits at the neutral mark", () => {
     const { index } = buildWeeklyScoreIndex([
       day([{ uid: "solo", corpsClass: "aClass", totalScore: 70 }]),
     ]);
-    assert.equal(getWeekScore(index, "solo", "aClass").classPercentile, 100);
+    assert.equal(getWeekScore(index, "solo", "aClass").classPercentile, LONE_ENTRANT_PERCENTILE);
     assert.equal(getWeekScore(index, "solo", "aClass").classFieldSize, 1);
+  });
+
+  test("corps level at the top share the middle of their run, not 100 each", () => {
+    const results = [
+      { uid: "t1", corpsClass: "worldClass", totalScore: 95 },
+      { uid: "t2", corpsClass: "worldClass", totalScore: 95 },
+    ];
+    for (let i = 0; i < 8; i++) results.push({ uid: `r${i}`, corpsClass: "worldClass", totalScore: 80 + i });
+    const { index } = buildWeeklyScoreIndex([day(results)]);
+    assert.equal(getWeekScore(index, "t1", "worldClass").classPercentile, 95);
+    assert.equal(getWeekScore(index, "t2", "worldClass").classPercentile, 95);
+    // An outright leader is still exactly 100, last of the field 10.
+    assert.equal(getWeekScore(index, "r7", "worldClass").classPercentile, 80);
+    assert.equal(getWeekScore(index, "r0", "worldClass").classPercentile, 10);
+  });
+
+  test("ranks on the per-show average, so an extra show does not lead the class", () => {
+    const { index } = buildWeeklyScoreIndex([
+      day([
+        { uid: "busy", corpsClass: "worldClass", totalScore: 84 },
+        { uid: "sharp", corpsClass: "worldClass", totalScore: 88 },
+      ]),
+      day([{ uid: "busy", corpsClass: "worldClass", totalScore: 84 }]),
+    ]);
+    // busy: 168 total, 84 average. sharp: 88 total, 88 average.
+    assert.equal(getWeekScore(index, "sharp", "worldClass").classPercentile, 100);
+    assert.equal(getWeekScore(index, "busy", "worldClass").classPercentile, 50);
   });
 });
 
@@ -220,7 +260,7 @@ describe("decideHeadToHead", () => {
       ]),
     ]).index;
 
-  test("same-class matchups are still decided on points", () => {
+  test("same-class matchups are decided on the per-show average", () => {
     const { winner, crossClass } = decideHeadToHead(
       { pair: ["alice", "wc2"] },
       "worldClass",
@@ -228,6 +268,35 @@ describe("decideHeadToHead", () => {
     );
     assert.equal(crossClass, false);
     assert.equal(winner, "wc2");
+  });
+
+  test("attending more shows does not win a week a better lineup lost on the field", () => {
+    const { index } = buildWeeklyScoreIndex([
+      day([
+        { uid: "busy", corpsClass: "worldClass", totalScore: 84 },
+        { uid: "sharp", corpsClass: "worldClass", totalScore: 88 },
+      ]),
+      day([{ uid: "busy", corpsClass: "worldClass", totalScore: 84 }]),
+      day([{ uid: "busy", corpsClass: "worldClass", totalScore: 84 }]),
+    ]);
+    // busy: 252 across three shows (84.0 average); sharp: one show at 88.
+    const decided = decideHeadToHead({ pair: ["busy", "sharp"] }, "worldClass", index);
+    assert.equal(decided.winner, "sharp");
+    assert.equal(decided.p1Week.score, 252);
+    assert.equal(decided.p1Week.average, 84);
+  });
+
+  test("equal averages go to the fuller week, equal totals too tie", () => {
+    const { index } = buildWeeklyScoreIndex([
+      day([
+        { uid: "two", corpsClass: "worldClass", totalScore: 85 },
+        { uid: "one", corpsClass: "worldClass", totalScore: 85 },
+      ]),
+      day([{ uid: "two", corpsClass: "worldClass", totalScore: 85 }]),
+    ]);
+    assert.equal(decideHeadToHead({ pair: ["one", "two"] }, "worldClass", index).winner, "two");
+    // Neither competed: 0-0 in every figure is a tie, not a coin flip.
+    assert.equal(decideHeadToHead({ pair: ["x", "y"] }, "worldClass", index).winner, "tie");
   });
 
   test("cross-class matchups are decided on each side's class percentile", () => {

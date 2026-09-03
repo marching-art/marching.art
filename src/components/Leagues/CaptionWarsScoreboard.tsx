@@ -82,7 +82,7 @@ const CaptionWarsScoreboard = ({
 
       <div className="px-4 py-2 border-t border-line bg-surface-sunken flex items-center justify-between text-[10px] text-muted">
         <span className="truncate max-w-[40%]">{homeDisplayName}</span>
-        <span>Take two captions, take the week</span>
+        <span>Per-show averages · take two captions, take the week</span>
         <span className="truncate max-w-[40%] text-right">{awayDisplayName}</span>
       </div>
     </div>

@@ -80,7 +80,7 @@ describe("resolveCaptionWars", () => {
     assert.equal(resolveCaptionWars("alice", "bob", alice, bob).winner, "alice");
   });
 
-  test("summed weeks compare, not single shows", () => {
+  test("whole weeks compare, not single shows", () => {
     // Two shows apiece, already folded by buildWeeklyScoreIndex.
     const alice = { score: 172, shows: 2, ge: 76, visual: 48, music: 48 };
     const bob = { score: 170, shows: 2, ge: 74, visual: 49, music: 47 };
@@ -88,14 +88,38 @@ describe("resolveCaptionWars", () => {
     const { captions, winner } = resolveCaptionWars("alice", "bob", alice, bob);
     assert.equal(winner, "alice");
     assert.deepEqual(captions.tally, { alice: 2, bob: 1 });
+    // The stored block carries the per-show figures, on the per-show scale.
+    assert.deepEqual(captions.ge.scores, { alice: 38, bob: 37 });
+  });
+
+  test("each category compares per-show averages, so attendance takes nothing", () => {
+    // busy attends three shows at 30/27/27 = 84; sharp attends one at 33/28/28 = 89.
+    const busy = { score: 252, shows: 3, ge: 90, visual: 81, music: 81 };
+    const sharp = { score: 89, shows: 1, ge: 33, visual: 28, music: 28 };
+
+    const { captions, winner } = resolveCaptionWars("busy", "sharp", busy, sharp);
+    // Summed, busy would sweep 90-33 / 81-28 / 81-28.
+    assert.equal(winner, "sharp");
+    assert.deepEqual(captions.tally, { busy: 0, sharp: 3 });
+    assert.deepEqual(captions.visual.scores, { busy: 27, sharp: 28 });
+  });
+
+  test("reads the folded perShow figures when the entry carries them", () => {
+    const a = { score: 180, shows: 2, ge: 70, visual: 55, music: 55, perShow: { ge: 35, visual: 27.5, music: 27.5 } };
+    const b = { score: 89, shows: 1, ge: 34, visual: 28, music: 27, perShow: { ge: 34, visual: 28, music: 27 } };
+    const { captions } = resolveCaptionWars("a", "b", a, b);
+    assert.equal(captions.ge.winner, "a");
+    assert.equal(captions.visual.winner, "b");
+    assert.equal(captions.music.winner, "a");
   });
 });
 
 // "A caption is never drawn" — a tied category goes to whoever had the better
-// week overall. It is the one rule that keeps a best-of-three from producing
-// 1-1-1 every time two evenly matched directors meet.
+// week overall (the higher per-show average, then the fuller week). It is the
+// one rule that keeps a best-of-three from producing 1-1-1 every time two
+// evenly matched directors meet.
 describe("tied categories", () => {
-  test("a tied caption goes to the higher weekly total", () => {
+  test("a tied caption goes to the higher weekly average", () => {
     const alice = week(30, 28, 28, 90); // same GE, better week
     const bob = week(30, 29, 27, 88);
 
@@ -117,6 +141,14 @@ describe("tied categories", () => {
     assert.equal(captions.ge.winner, "tie");
     assert.deepEqual(captions.tally, { alice: 1, bob: 1 });
     assert.equal(winner, "tie");
+  });
+
+  test("a tied caption with equal averages goes to the fuller week", () => {
+    const two = { score: 180, shows: 2, ge: 60, visual: 60, music: 60 };
+    const one = { score: 90, shows: 1, ge: 30, visual: 30, music: 30 };
+    const { captions, winner } = resolveCaptionWars("two", "one", two, one);
+    assert.equal(captions.ge.winner, "two");
+    assert.equal(winner, "two");
   });
 
   test("an undecided caption does not rescue a director already beaten 2-0", () => {

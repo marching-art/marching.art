@@ -186,7 +186,7 @@ async function processWeeklyMatchups(week, seasonData, db, { force = false } = {
         const p2_score = p2_week.score;
 
         // Caption best-of-three, best single show, class percentile
-        // (cross-class), or the plain comparison of weekly totals — the
+        // (cross-class), or the per-show average across the week — the
         // format-aware rule lives in ONE place (leagueScoring.js
         // decideHeadToHead). Whatever decided it, everything below this point
         // — the record increment, the award tokens, the weekly-win bonus, the
@@ -285,6 +285,11 @@ async function processWeeklyMatchups(week, seasonData, db, { force = false } = {
           // Shows attended, so the matchup card can say "did not compete"
           // rather than implying a 0.0 performance.
           shows: { [p1_uid]: p1_week.shows, [p2_uid]: p2_week.shows },
+          // Per-show average — what the default format actually decided on
+          // (leagueScoring.js decideHeadToHead), so the card can lead with
+          // the number that agrees with the verdict. `scores` above stays the
+          // weekly total for points-for/against and the record book.
+          averages: { [p1_uid]: p1_week.average, [p2_uid]: p2_week.average },
           // How each corps did against its OWN class this week, so a
           // mixed-class league can rank its members on a comparable number
           // (helpers/leagueScoring.js applyClassPercentiles).
@@ -309,6 +314,8 @@ async function processWeeklyMatchups(week, seasonData, db, { force = false } = {
           player2: p2_uid,
           player1Score: p1_score,
           player2Score: p2_score,
+          player1Average: p1_week.average,
+          player2Average: p2_week.average,
           player1Normalized: p1_week.classPercentile,
           player2Normalized: p2_week.classPercentile,
           // Per-side classes so the notification copy can tell a cross-class
