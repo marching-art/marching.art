@@ -329,6 +329,13 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
 
 ## Recently shipped (context, newest first — prune when stale)
 
+- 2026-09-02: the `functions-deploy/*` rollback tag is now created through
+  the GitHub REST API (`gh api .../git/refs`) instead of `git push`. Every
+  auto-deploy on `main` had been failing at "Tag deployed ref" with
+  "refusing to allow a GitHub App to create or update workflow ... without
+  `workflows` permission" — `GITHUB_TOKEN` can't be granted `workflows`, and
+  the receive hook applies it to any new ref pushed by an App. Deploy plan /
+  function list moved from the tag message to the run's step summary.
 - 2026-09-02: projected caption scores no longer depend on archive order —
   `historicalScores.mergeEventLists` (server) and `utils/historicalEvents`
   (client) return every year chronologically, and `projectCaptionScore` sorts
