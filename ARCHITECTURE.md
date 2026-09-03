@@ -318,6 +318,12 @@ against the emulator, and **Playwright e2e** — a smoke pass plus an
 emulator-backed core-loop run seeded by `e2e/seedEmulator.mjs`, with an axe
 accessibility gate.
 
+Both deploy workflows (`deploy-hosting.yml`, `deploy-functions.yml`) are
+gated on that run: on a push to `main` they first wait for the CI run on the
+same commit (`.github/actions/wait-for-ci`) and abort unless it succeeded, so a
+red `main` never ships. Manual `workflow_dispatch` deploys (rollbacks to a
+`functions-deploy/*` tag) skip the gate deliberately.
+
 The lint job carries the ratchets. Each freezes a count as a CI ceiling so a
 migration can only converge; when a counter hits zero its rule becomes a hard
 error:

@@ -33,6 +33,8 @@ import type { LeagueSeasonActivity, SeasonMatchupStats } from '../../../types';
 /** A standings row as this table renders it. */
 type StandingsRow = StandingRow & {
   totalPoints?: number;
+  /** Weeks sat out in an odd-sized league — a non-game, not a win. */
+  byes?: number;
   normalizedScore?: number | null;
   captionsWon?: number;
   captionsLost?: number;
@@ -117,7 +119,11 @@ const StandingsTab = ({
     const activity = getSeasonActivity(league);
     const isActive = activity
       ? (stats: StandingsRow) => activity.activeMembers?.includes(stats.uid)
-      : (stats: StandingsRow) => stats.wins > 0 || stats.losses > 0 || (stats.totalPoints ?? 0) > 0;
+      : (stats: StandingsRow) =>
+          stats.wins > 0 ||
+          stats.losses > 0 ||
+          (stats.byes ?? 0) > 0 ||
+          (stats.totalPoints ?? 0) > 0;
 
     const active: StandingsRow[] = [];
     const inactive: StandingsRow[] = [];

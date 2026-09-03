@@ -46,6 +46,8 @@ export interface Engagement {
   totalLogins: number;
   recentActivity: unknown[];
   weeklyProgress: unknown[];
+  /** Server-owned weekly challenge arc (functions/src/helpers/dailyChallenges.js). */
+  weeklyLoop?: { weekKey?: string; countedDays?: string[]; rewardedDays?: number[] };
 }
 
 /**

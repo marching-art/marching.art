@@ -45,6 +45,44 @@ const EMAIL_TYPES = {
   ADMIN_GENERIC_ALERT: "admin_generic_alert",
 };
 
+// settings.emailPreferences key per email type. The Settings modal writes
+// camelCase keys (streakBroken, weeklyDigest, …) while EMAIL_TYPES values are
+// snake_case; the senders used to index preferences by the snake_case type,
+// so every per-type opt-out except `allEmails` was silently ignored. Mirrors
+// PUSH_PREFERENCE_MAP in pushService.js.
+const EMAIL_PREFERENCE_MAP = {
+  [EMAIL_TYPES.WELCOME]: "welcome",
+  [EMAIL_TYPES.STREAK_BROKEN]: "streakBroken",
+  [EMAIL_TYPES.WEEKLY_DIGEST]: "weeklyDigest",
+  [EMAIL_TYPES.WIN_BACK]: "winBack",
+  [EMAIL_TYPES.LINEUP_REMINDER]: "lineupReminder",
+  [EMAIL_TYPES.SHOW_REMINDER]: "showReminder",
+  [EMAIL_TYPES.LEAGUE_ACTIVITY]: "leagueActivity",
+  [EMAIL_TYPES.MATCHUP_RESULT]: "matchupResult",
+  [EMAIL_TYPES.MILESTONE_ACHIEVED]: "milestoneAchieved",
+};
+
+/**
+ * Whether a director's email preferences allow one email type.
+ *
+ * `allEmails: false` wins over everything. Otherwise the camelCase key the
+ * Settings modal writes decides; a legacy snake_case key is honored too;
+ * absent → `defaultValue` (engagement emails are opt-out, so true).
+ *
+ * @param {Record<string, unknown> | null | undefined} emailPreferences
+ * @param {string} emailType One of EMAIL_TYPES.
+ * @param {boolean} [defaultValue]
+ * @returns {boolean}
+ */
+function isEmailTypeEnabled(emailPreferences, emailType, defaultValue = true) {
+  const prefs = emailPreferences && typeof emailPreferences === "object" ? emailPreferences : {};
+  if (prefs.allEmails === false) return false;
+  const key = EMAIL_PREFERENCE_MAP[emailType];
+  if (key && typeof prefs[key] === "boolean") return prefs[key];
+  if (typeof prefs[emailType] === "boolean") return prefs[emailType];
+  return defaultValue;
+}
+
 // Cached Brevo client instance - reused across requests in same instance
 let cachedBrevoClient = null;
 
@@ -847,6 +885,8 @@ async function fanOutToAdmins(senderFn, payload) {
 // =============================================================================
 
 module.exports = {
+  EMAIL_PREFERENCE_MAP,
+  isEmailTypeEnabled,
   // Configuration
   EMAIL_TYPES,
   EMAIL_CONFIG,

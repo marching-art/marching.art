@@ -8,6 +8,9 @@ const { test } = require("node:test");
 const assert = require("node:assert/strict");
 
 const {
+  EMAIL_TYPES,
+  EMAIL_PREFERENCE_MAP,
+  isEmailTypeEnabled,
   welcomeEmailTemplate,
   rivalContextEmailTemplate,
   winBackEmailTemplate,
@@ -123,4 +126,37 @@ test("trusted URLs and layout are not escaped", () => {
   const html = welcomeEmailTemplate({ username: "Sarah" });
   assert.ok(html.includes('<a href="https://marching.art/dashboard"'));
   assert.ok(html.includes("Welcome to the Field, Sarah!"));
+});
+
+// --- per-type opt-outs (N-H1) -------------------------------------------------
+// The Settings modal writes camelCase keys; the senders used to look up the
+// snake_case EMAIL_TYPES value and so ignored every per-type opt-out.
+
+test("every engagement email type maps to a Settings-modal preference key", () => {
+  for (const type of Object.values(EMAIL_TYPES)) {
+    if (type.startsWith("admin_")) continue;
+    assert.equal(typeof EMAIL_PREFERENCE_MAP[type], "string", `no preference key for ${type}`);
+    assert.doesNotMatch(EMAIL_PREFERENCE_MAP[type], /_/, `${type} key must be camelCase`);
+  }
+});
+
+test("a camelCase opt-out disables that email type", () => {
+  const prefs = { allEmails: true, weeklyDigest: false, streakBroken: true };
+  assert.equal(isEmailTypeEnabled(prefs, EMAIL_TYPES.WEEKLY_DIGEST), false);
+  assert.equal(isEmailTypeEnabled(prefs, EMAIL_TYPES.STREAK_BROKEN), true);
+  // Untouched types fall back to the caller's default.
+  assert.equal(isEmailTypeEnabled(prefs, EMAIL_TYPES.WIN_BACK), true);
+  assert.equal(isEmailTypeEnabled(prefs, EMAIL_TYPES.WIN_BACK, false), false);
+});
+
+test("allEmails:false wins over every per-type setting", () => {
+  assert.equal(isEmailTypeEnabled({ allEmails: false, weeklyDigest: true }, EMAIL_TYPES.WEEKLY_DIGEST), false);
+});
+
+test("legacy snake_case keys are still honored; missing prefs default on", () => {
+  assert.equal(isEmailTypeEnabled({ weekly_digest: false }, EMAIL_TYPES.WEEKLY_DIGEST), false);
+  assert.equal(isEmailTypeEnabled(undefined, EMAIL_TYPES.WEEKLY_DIGEST), true);
+  assert.equal(isEmailTypeEnabled(null, EMAIL_TYPES.MILESTONE_ACHIEVED), true);
+  // Non-boolean junk never counts as an opt-out or an opt-in.
+  assert.equal(isEmailTypeEnabled({ weeklyDigest: "no" }, EMAIL_TYPES.WEEKLY_DIGEST, false), false);
 });

@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // DailyChallenges — the day's rotating objectives (2 of a 3-challenge pool).
 // Every challenge is a DECISION with a server-verified, GENUINELY SAME-DAY
 // outcome: make today's prediction, enter today's league pool, or review your
@@ -33,219 +32,233 @@ import {
 // brand-new director (fewer than two scored results) has NO prediction
 // questions, so the row would point at a panel that doesn't exist and the
 // day's set could never complete (the server excuses it the same way).
-const DailyChallenges = memo(
-  ({
-    onLineupClick,
-    onConceptClick,
-    embedded = false,
-    predictionAvailable = true,
-    podium = null,
-    leaguePool = null,
-    // The parent (Director's Report) passes a clock-driven game day so the
-    // rotation rolls over at 2 AM ET even in a tab left open across the
-    // boundary. Falls back to a fresh compute when rendered standalone.
-    gameDay: gameDayProp = null,
-  }) => {
-    const { trigger: haptic } = useHaptic();
-    const profile = useProfileStore((state) => state.profile);
-    const completeDailyChallenge = useProfileStore((state) => state.completeDailyChallenge);
+/** @typedef {import('../../../utils/dailyChallenges').Challenge} Challenge */
 
-    const gameDay = gameDayProp ?? getGameDay();
-    // The context the challenge predicates need beyond the profile: prediction
-    // availability, the Podium show/concept facts, and today's league-pool
-    // entry fact — none of which the profile document alone can answer.
-    const context = useMemo(
-      () => ({ predictionAvailable, podium, leaguePool }),
-      [predictionAvailable, podium, leaguePool]
-    );
-    const challenges = useMemo(
-      () => getAvailableChallengesForGameDay(gameDay, profile, context),
-      [gameDay, profile, context]
-    );
+/**
+ * @param {{
+ *   onLineupClick?: () => void,
+ *   onConceptClick?: () => void,
+ *   embedded?: boolean,
+ *   predictionAvailable?: boolean,
+ *   podium?: unknown,
+ *   leaguePool?: unknown,
+ *   gameDay?: string | null,
+ * }} props
+ */
+const DailyChallengesInner = ({
+  onLineupClick,
+  onConceptClick,
+  embedded = false,
+  predictionAvailable = true,
+  podium = null,
+  leaguePool = null,
+  // The parent (Director's Report) passes a clock-driven game day so the
+  // rotation rolls over at 2 AM ET even in a tab left open across the
+  // boundary. Falls back to a fresh compute when rendered standalone.
+  gameDay: gameDayProp = null,
+}) => {
+  const { trigger: haptic } = useHaptic();
+  const profile = useProfileStore((state) => state.profile);
+  const completeDailyChallenge = useProfileStore((state) => state.completeDailyChallenge);
 
-    const completedIds = useMemo(() => {
-      const bucket = profile?.challenges?.[gameDay] || [];
-      return new Set(bucket.filter((c) => c.completed).map((c) => c.id));
-    }, [profile?.challenges, gameDay]);
+  const gameDay = gameDayProp ?? getGameDay();
+  // The context the challenge predicates need beyond the profile: prediction
+  // availability, the Podium show/concept facts, and today's league-pool
+  // entry fact — none of which the profile document alone can answer.
+  const context = useMemo(
+    () => ({ predictionAvailable, podium, leaguePool }),
+    [predictionAvailable, podium, leaguePool]
+  );
+  const challenges = useMemo(
+    () => getAvailableChallengesForGameDay(gameDay, profile, context),
+    [gameDay, profile, context]
+  );
 
-    const completedCount = challenges.filter((c) => completedIds.has(c.id)).length;
-    const totalCount = challenges.length;
+  const completedIds = useMemo(() => {
+    const bucket = profile?.challenges?.[gameDay] || [];
+    return new Set(bucket.filter((c) => c.completed).map((c) => c.id));
+  }, [profile?.challenges, gameDay]);
 
-    // Weekly arc progress (server-owned; countedDays are full-set days).
-    const weeklyLoop = profile?.engagement?.weeklyLoop;
-    const arcDays =
-      weeklyLoop?.weekKey === getWeekKey(gameDay) ? weeklyLoop.countedDays?.length || 0 : 0;
-    // The next milestone still ahead on the ladder — drives the progress copy
-    // and the reward shown. Null once a perfect week is reached.
-    const nextMilestone = WEEKLY_LOOP_MILESTONES.find((m) => arcDays < m.days) || null;
+  const completedCount = challenges.filter((c) => completedIds.has(c.id)).length;
+  const totalCount = challenges.length;
 
-    // Auto-claim: when the verifying state for a challenge is already
-    // satisfied, claim it — the server re-verifies before paying, and no-ops
-    // for anything not actually done. One attempt per challenge per day.
-    //
-    // Only challenges with a `check` predicate participate. `check` reads
-    // per-day state (a prediction saved today), so auto-claiming it reflects a
-    // genuine same-day action. Challenges without a `check` — check-lineup — are
-    // deliberately action-gated: they claim on the row click (handleAction), not
-    // on load, so they never phantom-complete off persistent state.
-    const attemptedRef = useRef(new Set());
-    useEffect(() => {
-      if (!profile) return;
-      for (const challenge of challenges) {
-        const key = `${gameDay}:${challenge.id}`;
-        if (completedIds.has(challenge.id) || attemptedRef.current.has(key)) continue;
-        if (challenge.check && challenge.check(profile, gameDay, context)) {
-          attemptedRef.current.add(key);
-          completeDailyChallenge(challenge.id);
-        }
+  // Weekly arc progress (server-owned; countedDays are full-set days).
+  const weeklyLoop = profile?.engagement?.weeklyLoop;
+  const arcDays =
+    weeklyLoop?.weekKey === getWeekKey(gameDay) ? weeklyLoop.countedDays?.length || 0 : 0;
+  // The next milestone still ahead on the ladder — drives the progress copy
+  // and the reward shown. Null once a perfect week is reached.
+  const nextMilestone = WEEKLY_LOOP_MILESTONES.find((m) => arcDays < m.days) || null;
+
+  // Auto-claim: when the verifying state for a challenge is already
+  // satisfied, claim it — the server re-verifies before paying, and no-ops
+  // for anything not actually done. One attempt per challenge per day.
+  //
+  // Only challenges with a `check` predicate participate. `check` reads
+  // per-day state (a prediction saved today), so auto-claiming it reflects a
+  // genuine same-day action. Challenges without a `check` — check-lineup — are
+  // deliberately action-gated: they claim on the row click (handleAction), not
+  // on load, so they never phantom-complete off persistent state.
+  const attemptedRef = useRef(new Set());
+  useEffect(() => {
+    if (!profile) return;
+    for (const challenge of challenges) {
+      const key = `${gameDay}:${challenge.id}`;
+      if (completedIds.has(challenge.id) || attemptedRef.current.has(key)) continue;
+      if (challenge.check && challenge.check(profile, gameDay, context)) {
+        attemptedRef.current.add(key);
+        completeDailyChallenge(challenge.id);
       }
-    }, [profile, challenges, completedIds, gameDay, completeDailyChallenge, context]);
+    }
+  }, [profile, challenges, completedIds, gameDay, completeDailyChallenge, context]);
 
-    const handleAction = (challenge) => {
-      haptic?.();
-      if (challenge.action === 'lineup') onLineupClick?.();
-      if (challenge.action === 'concept') onConceptClick?.();
-      // Reviewing the lineup is satisfied by opening it — claim on the spot
-      // (the server still verifies a lineup exists).
-      if (challenge.action === 'lineup') completeDailyChallenge(challenge.id);
-    };
+  /** @param {Challenge} challenge */
+  const handleAction = (challenge) => {
+    haptic?.();
+    if (challenge.action === 'lineup') onLineupClick?.();
+    if (challenge.action === 'concept') onConceptClick?.();
+    // Reviewing the lineup is satisfied by opening it — claim on the spot
+    // (the server still verifies a lineup exists).
+    if (challenge.action === 'lineup') completeDailyChallenge(challenge.id);
+  };
 
-    // With the pool trimmed to genuinely-daily challenges, a director can now
-    // have none available today (a Podium-only director has no lineup, and a
-    // brand-new director has no prediction question yet). Render nothing rather
-    // than an empty "0/0 — all complete" shell.
-    if (totalCount === 0) return null;
+  // With the pool trimmed to genuinely-daily challenges, a director can now
+  // have none available today (a Podium-only director has no lineup, and a
+  // brand-new director has no prediction question yet). Render nothing rather
+  // than an empty "0/0 — all complete" shell.
+  if (totalCount === 0) return null;
 
-    return (
-      <div
-        className={
-          embedded ? 'overflow-hidden' : 'bg-surface-card border border-line overflow-hidden'
-        }
-      >
-        <div className="bg-surface-raised px-4 py-3 border-b border-line flex items-center justify-between">
-          <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted flex items-center gap-2">
-            <Target className="w-3.5 h-3.5 text-orange-500" />
-            Daily Challenges
-          </h3>
-          <span className="text-[10px] font-bold text-muted font-data tabular-nums">
-            {completedCount}/{totalCount}
-          </span>
-        </div>
+  return (
+    <div
+      className={
+        embedded ? 'overflow-hidden' : 'bg-surface-card border border-line overflow-hidden'
+      }
+    >
+      <div className="bg-surface-raised px-4 py-3 border-b border-line flex items-center justify-between">
+        <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted flex items-center gap-2">
+          <Target className="w-3.5 h-3.5 text-orange-500" />
+          Daily Challenges
+        </h3>
+        <span className="text-[10px] font-bold text-muted font-data tabular-nums">
+          {completedCount}/{totalCount}
+        </span>
+      </div>
 
-        {/* Progress bar */}
-        <div className="h-1 bg-surface-raised">
-          <div
-            className="h-full bg-orange-500 transition-all duration-500"
-            style={{ width: `${(completedCount / totalCount) * 100}%` }}
-          />
-        </div>
+      {/* Progress bar */}
+      <div className="h-1 bg-surface-raised">
+        <div
+          className="h-full bg-orange-500 transition-all duration-500"
+          style={{ width: `${(completedCount / totalCount) * 100}%` }}
+        />
+      </div>
 
-        <div className="divide-y divide-line-subtle">
-          {challenges.map((challenge) => {
-            const isDone = completedIds.has(challenge.id);
-            const inner = (
-              <div className="flex items-center gap-3">
-                <div
-                  className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${
-                    isDone ? 'bg-green-500' : 'border border-line-strong'
-                  }`}
-                >
-                  {isDone && <Check className="w-3 h-3 text-white" />}
-                </div>
-                <span
-                  className={`text-sm flex-1 text-left ${isDone ? 'text-muted line-through' : 'text-white'}`}
-                >
-                  {challenge.label}
+      <div className="divide-y divide-line-subtle">
+        {challenges.map((challenge) => {
+          const isDone = completedIds.has(challenge.id);
+          const inner = (
+            <div className="flex items-center gap-3">
+              <div
+                className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${
+                  isDone ? 'bg-green-500' : 'border border-line-strong'
+                }`}
+              >
+                {isDone && <Check className="w-3 h-3 text-white" />}
+              </div>
+              <span
+                className={`text-sm flex-1 text-left ${isDone ? 'text-muted line-through' : 'text-white'}`}
+              >
+                {challenge.label}
+              </span>
+              <div className="flex items-center gap-1">
+                <span className="text-[10px] font-bold text-purple-400 font-data">
+                  +{challenge.xp} XP
                 </span>
-                <div className="flex items-center gap-1">
-                  <span className="text-[10px] font-bold text-purple-400 font-data">
-                    +{challenge.xp} XP
-                  </span>
-                  {!isDone && <ChevronRight className="w-3.5 h-3.5 text-muted" />}
-                </div>
+                {!isDone && <ChevronRight className="w-3.5 h-3.5 text-muted" />}
+              </div>
+            </div>
+          );
+
+          // Done rows are inert; open rows route the player to the decision.
+          if (isDone) {
+            return (
+              <div key={challenge.id} className="px-4 py-3">
+                {inner}
               </div>
             );
+          }
 
-            // Done rows are inert; open rows route the player to the decision.
-            if (isDone) {
-              return (
-                <div key={challenge.id} className="px-4 py-3">
-                  {inner}
-                </div>
-              );
-            }
-
-            if (challenge.action === 'predictions') {
-              // The predictions live directly below in the Director's Report —
-              // completing a pick auto-claims this row.
-              return (
-                <div key={challenge.id} className="px-4 py-3">
-                  {inner}
-                  <p className="text-[10px] text-muted mt-1 ml-8">
-                    Answer in Daily Predictions below
-                  </p>
-                </div>
-              );
-            }
-
-            if (challenge.action) {
-              return (
-                <button
-                  key={challenge.id}
-                  onClick={() => handleAction(challenge)}
-                  className="w-full px-4 py-3 hover:bg-surface-raised transition-colors text-left press-feedback"
-                >
-                  {inner}
-                </button>
-              );
-            }
-
+          if (challenge.action === 'predictions') {
+            // The predictions live directly below in the Director's Report —
+            // completing a pick auto-claims this row.
             return (
-              <Link
+              <div key={challenge.id} className="px-4 py-3">
+                {inner}
+                <p className="text-[10px] text-muted mt-1 ml-8">
+                  Answer in Daily Predictions below
+                </p>
+              </div>
+            );
+          }
+
+          if (challenge.action) {
+            return (
+              <button
                 key={challenge.id}
-                to={challenge.link}
-                onClick={() => haptic?.()}
-                className="block px-4 py-3 hover:bg-surface-raised transition-colors press-feedback"
+                onClick={() => handleAction(challenge)}
+                className="w-full px-4 py-3 hover:bg-surface-raised transition-colors text-left press-feedback"
               >
                 {inner}
-              </Link>
+              </button>
             );
-          })}
-        </div>
+          }
 
-        {/* All complete state */}
-        {completedCount === totalCount && (
-          <div className="px-4 py-3 border-t border-line-subtle bg-orange-500/5">
-            <div className="flex items-center gap-2 justify-center">
-              <Flame className="w-4 h-4 text-orange-500" />
-              <span className="text-xs font-bold text-orange-400">All challenges complete!</span>
-            </div>
+          return (
+            <Link
+              key={challenge.id}
+              to={challenge.link || '/dashboard'}
+              onClick={() => haptic?.()}
+              className="block px-4 py-3 hover:bg-surface-raised transition-colors press-feedback"
+            >
+              {inner}
+            </Link>
+          );
+        })}
+      </div>
+
+      {/* All complete state */}
+      {completedCount === totalCount && (
+        <div className="px-4 py-3 border-t border-line-subtle bg-orange-500/5">
+          <div className="flex items-center gap-2 justify-center">
+            <Flame className="w-4 h-4 text-orange-500" />
+            <span className="text-xs font-bold text-orange-400">All challenges complete!</span>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Weekly arc — a graduated, week-long pursuit on top of the daily set.
+      {/* Weekly arc — a graduated, week-long pursuit on top of the daily set.
             Shows the next milestone's target and reward, or a perfect-week
             marker once every tier is earned. */}
-        <div className="px-4 py-2 border-t border-line-subtle flex items-center gap-2">
-          <CalendarCheck className="w-3 h-3 text-emerald-500 flex-shrink-0" />
-          {nextMilestone ? (
-            <>
-              <span className="text-[10px] text-muted flex-1">
-                Weekly arc: full set on {arcDays}/{nextMilestone.days} days
-              </span>
-              <span className="text-[10px] font-bold text-emerald-400 font-data">
-                +{nextMilestone.coin} CC
-              </span>
-            </>
-          ) : (
-            <span className="text-[10px] font-bold text-emerald-400 flex-1">
-              Perfect week — every weekly-arc milestone earned!
+      <div className="px-4 py-2 border-t border-line-subtle flex items-center gap-2">
+        <CalendarCheck className="w-3 h-3 text-emerald-500 flex-shrink-0" />
+        {nextMilestone ? (
+          <>
+            <span className="text-[10px] text-muted flex-1">
+              Weekly arc: full set on {arcDays}/{nextMilestone.days} days
             </span>
-          )}
-        </div>
+            <span className="text-[10px] font-bold text-emerald-400 font-data">
+              +{nextMilestone.coin} CC
+            </span>
+          </>
+        ) : (
+          <span className="text-[10px] font-bold text-emerald-400 flex-1">
+            Perfect week — every weekly-arc milestone earned!
+          </span>
+        )}
       </div>
-    );
-  }
-);
+    </div>
+  );
+};
+
+const DailyChallenges = memo(DailyChallengesInner);
 
 export default DailyChallenges;

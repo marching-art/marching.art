@@ -21,6 +21,7 @@
  */
 
 const { homeGeoFor } = require("./corpsGeo");
+const { getClass } = require("./classRegistry");
 
 /**
  * Deterministic document key for an event. base64url keeps arbitrary event
@@ -47,6 +48,9 @@ function collectRegistrationsFromProfile(uid, profile) {
   const out = [];
   const corps = profile?.corps || {};
   for (const corpsClass of Object.keys(corps)) {
+    // Unknown class keys never reach the public "who's attending" index
+    // (same registry check as the scorer).
+    if (!getClass(corpsClass)) continue;
     const corpsData = corps[corpsClass] || {};
     const selectedShows = corpsData.selectedShows || {};
     for (const weekKey of Object.keys(selectedShows)) {

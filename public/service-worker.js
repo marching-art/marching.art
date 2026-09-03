@@ -308,19 +308,39 @@ self.addEventListener('message', (event) => {
   }
 });
 
-// Push notification handling
+// Push notification handling.
+//
+// FCM tokens are bound to THIS worker (src/api/pushNotifications.ts passes
+// navigator.serviceWorker.ready as the registration), so this handler receives
+// the raw FCM web-push payload:
+//   { notification: { title, body, icon?, badge? },
+//     data: { url, pushType, ... },
+//     fcmOptions?: { link } }
+// (functions/src/helpers/pushService.js). It used to read title/body/url off
+// the top level, where they never are, so every push rendered "marching.art /
+// New update from marching.art" and opened "/".
 self.addEventListener('push', (event) => {
   if (!event.data) return;
 
-  const data = event.data.json();
+  let payload = {};
+  try {
+    payload = event.data.json() || {};
+  } catch {
+    payload = { notification: { body: event.data.text() } };
+  }
+  const notification = payload.notification || {};
+  const data = payload.data || {};
+  const url = data.url || payload.fcmOptions?.link || payload.url || '/';
+
   const options = {
-    body: data.body || 'New update from marching.art',
-    icon: '/logo192.png',
-    badge: '/logo192.png',
+    body: notification.body || data.body || payload.body || 'New update from marching.art',
+    icon: notification.icon || '/logo192.png',
+    badge: notification.badge || '/logo192.png',
     vibrate: [100, 50, 100],
-    data: {
-      url: data.url || '/'
-    },
+    // One notification per pushType replaces the previous one of that kind
+    // instead of stacking (three "scores are in" cards after a weekend away).
+    tag: data.pushType ? `marching-art-${data.pushType}` : undefined,
+    data: { url, pushType: data.pushType || null },
     actions: [
       { action: 'open', title: 'Open' },
       { action: 'dismiss', title: 'Dismiss' }
@@ -328,7 +348,10 @@ self.addEventListener('push', (event) => {
   };
 
   event.waitUntil(
-    self.registration.showNotification(data.title || 'marching.art', options)
+    self.registration.showNotification(
+      notification.title || data.title || payload.title || 'marching.art',
+      options
+    )
   );
 });
 
@@ -338,7 +361,10 @@ self.addEventListener('notificationclick', (event) => {
 
   if (event.action === 'dismiss') return;
 
-  const urlToOpen = event.notification.data?.url || '/';
+  // data.url is a site path ("/leagues/abc/matchups"); fcmOptions.link is
+  // absolute. Resolve either against this origin so navigate()/openWindow get
+  // one canonical same-origin URL.
+  const urlToOpen = new URL(event.notification.data?.url || '/', self.location.origin).href;
 
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true })

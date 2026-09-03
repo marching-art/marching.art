@@ -8,6 +8,28 @@ const { getDb } = require("../config");
 const { invalidateNewsCache } = require("./newsFeed");
 const { assertAdmin } = require("../helpers/callableGuards");
 
+// The only documents the article-admin callables may touch. They used to
+// pass the client's `path` straight to db.doc(): an admin token (or a leaked
+// one) could read, edit or delete ANY document — game-settings/season, a
+// profile's corpsCoin, users/*/private/data. Article ids are the composite
+// the news feed builds: news_hub/{seasonId}/days/{dayId}/articles/{type}.
+const ARTICLE_PATH_PATTERN =
+  /^news_hub\/[A-Za-z0-9_-]{1,80}\/days\/[A-Za-z0-9_-]{1,40}\/articles\/[A-Za-z0-9_-]{1,60}$/;
+
+/**
+ * Validate a client-supplied article document path.
+ * @param {unknown} path
+ * @returns {string} the path, when it names an article document
+ * @throws {HttpsError} invalid-argument otherwise
+ */
+function assertArticlePath(path) {
+  if (typeof path !== "string" || !ARTICLE_PATH_PATTERN.test(path)) {
+    throw new HttpsError("invalid-argument", "Article path is required");
+  }
+  return path;
+}
+exports.assertArticlePath = assertArticlePath;
+
 const geminiApiKey = defineSecret("GOOGLE_GENERATIVE_AI_API_KEY");
 const cloudinaryCloudName = defineSecret("CLOUDINARY_CLOUD_NAME");
 const cloudinaryApiKey = defineSecret("CLOUDINARY_API_KEY");
@@ -125,9 +147,7 @@ exports.getArticleForEdit = onCall(
 
     const { path } = request.data || {};
 
-    if (!path) {
-      throw new HttpsError("invalid-argument", "Article path is required");
-    }
+    assertArticlePath(path);
 
     try {
       const doc = await db.doc(path).get();
@@ -171,9 +191,7 @@ exports.updateArticle = onCall(
 
     const { path, updates } = request.data || {};
 
-    if (!path) {
-      throw new HttpsError("invalid-argument", "Article path is required");
-    }
+    assertArticlePath(path);
 
     if (!updates || typeof updates !== "object") {
       throw new HttpsError("invalid-argument", "Updates object is required");
@@ -249,9 +267,7 @@ exports.archiveArticle = onCall(
 
     const { path, archive = true } = request.data || {};
 
-    if (!path) {
-      throw new HttpsError("invalid-argument", "Article path is required");
-    }
+    assertArticlePath(path);
 
     try {
       await db.doc(path).update({
@@ -289,9 +305,7 @@ exports.deleteArticle = onCall(
 
     const { path, confirmDelete } = request.data || {};
 
-    if (!path) {
-      throw new HttpsError("invalid-argument", "Article path is required");
-    }
+    assertArticlePath(path);
 
     if (confirmDelete !== true) {
       throw new HttpsError("invalid-argument", "Must confirm deletion");
@@ -327,9 +341,7 @@ exports.regenerateArticleImage = onCall(
 
     const { path, headline, category } = request.data || {};
 
-    if (!path) {
-      throw new HttpsError("invalid-argument", "Article path is required");
-    }
+    assertArticlePath(path);
 
     if (!headline) {
       throw new HttpsError("invalid-argument", "Headline is required for image generation");

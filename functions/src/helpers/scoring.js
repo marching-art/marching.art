@@ -1,5 +1,6 @@
 const { getDb } = require("../config");
 const { paths } = require("./paths");
+const { getClass } = require("./classRegistry");
 const { logger } = require("firebase-functions/v2");
 // A ProfilesSnapshot is the query-snapshot-shaped object the scoring flow
 // passes around: the real QuerySnapshot in production, or the lite
@@ -232,6 +233,11 @@ function scoreShowsForDay({
     const uid = userDoc.ref.parent.parent.id;
     const userCorps = userProfile.corps || {};
     for (const corpsClass of Object.keys(userCorps)) {
+      // Registry classes only. Rules allowlist new corps keys too
+      // (corpsKeysOk), but a profile that predates that rule or was written
+      // by another path must never get a made-up class scored into the
+      // public recaps.
+      if (!getClass(corpsClass)) continue;
       const corps = userCorps[corpsClass];
       if (!corps || !corps.corpsName || !corps.lineup) continue;
 

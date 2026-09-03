@@ -33,6 +33,11 @@ const EMPTY_RECORD = {
   wins: 0,
   losses: 0,
   ties: 0,
+  // Weeks sat out in an odd-sized league. A bye is a non-game: it counts
+  // toward nothing in the record and leaves the streak alone. It used to be
+  // scored as a win, which in a 5-member league decided the table by bye
+  // rotation rather than by results.
+  byes: 0,
   pointsFor: 0,
   pointsAgainst: 0,
   // Sum of this director's weekly class percentiles — "how did you do against
@@ -92,13 +97,10 @@ function foldPairsIntoStandings(baseRecords, pairs) {
     if (!pair.completed || pair.winner === null) return;
 
     if (pair.player2 === null) {
-      // Bye week - count as a win
+      // Bye week — a non-game. Recorded so the table can show it, but no
+      // win, no points, and the streak carries over untouched.
       if (records[pair.player1]) {
-        records[pair.player1].wins += 1;
-        records[pair.player1].currentStreak = records[pair.player1].streakType === 'W'
-          ? records[pair.player1].currentStreak + 1
-          : 1;
-        records[pair.player1].streakType = 'W';
+        records[pair.player1].byes += 1;
       }
     } else if (pair.winner === 'tie') {
       // Tie
@@ -169,6 +171,7 @@ function foldPairsIntoStandings(baseRecords, pairs) {
       wins: data.wins || 0,
       losses: data.losses || 0,
       ties: data.ties || 0,
+      byes: data.byes || 0,
       totalPoints: data.pointsFor || 0,
       pointsAgainst: data.pointsAgainst || 0,
       // Mean class percentile — the cross-class comparable figure the table

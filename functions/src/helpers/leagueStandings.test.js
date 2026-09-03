@@ -88,13 +88,34 @@ describe("foldPairsIntoStandings", () => {
     assert.equal(records.bob.pointsFor, 158);
   });
 
-  test("byes count as a win with no points", () => {
-    const { records } = foldPairsIntoStandings(freshRecords(), [
+  test("byes are non-games: no win, no points, streak untouched", () => {
+    const base = freshRecords();
+    const before = { ...base.bob };
+    const { records, standings } = foldPairsIntoStandings(base, [
       { player1: "bob", player2: null, winner: "bob", completed: true },
     ]);
-    assert.equal(records.bob.wins, 1);
-    assert.equal(records.bob.streakType, "W");
+    assert.equal(records.bob.byes, 1);
+    assert.equal(records.bob.wins, before.wins);
+    assert.equal(records.bob.losses, before.losses);
+    assert.equal(records.bob.streakType, before.streakType);
+    assert.equal(records.bob.currentStreak, before.currentStreak);
     assert.equal(records.bob.pointsFor, 70); // unchanged
+    assert.equal(standings.find((row) => row.uid === "bob").byes, 1);
+  });
+
+  test("a bye never outranks a played result", () => {
+    // Odd league: alice gets the bye, bob beats carol. Bob (1-0) must lead
+    // alice (0-0, one bye) — the bye rotation cannot decide the table.
+    const { standings } = foldPairsIntoStandings(
+      { alice: {}, bob: {}, carol: {} },
+      [
+        { player1: "alice", player2: null, winner: "alice", completed: true },
+        { player1: "bob", player2: "carol", player1Score: 80, player2Score: 70, winner: "bob", completed: true },
+      ]
+    );
+    assert.deepEqual(standings.map((row) => row.uid), ["bob", "alice", "carol"]);
+    assert.equal(standings[1].byes, 1);
+    assert.equal(standings[1].wins, 0);
   });
 
   test("incomplete pairs are ignored", () => {
@@ -345,7 +366,8 @@ describe("rebuildStandingsFromMatchups", () => {
       classes
     );
 
-    assert.equal(records.alice.wins, 1);
+    assert.equal(records.alice.wins, 0);
+    assert.equal(records.alice.byes, 1);
     assert.equal(records.bob, undefined);
   });
 

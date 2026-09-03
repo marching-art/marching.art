@@ -8,7 +8,7 @@ burns an hour to conclude "everything's about covered." Don't. If you ship,
 cut, or discover something, edit THIS file in the same PR — that's the whole
 maintenance contract.
 
-_Last updated: 2026-09-03 (audit backlog: SEO/UX + frontend-perf S batch shipped)._
+_Last updated: 2026-09-03 (site-review Fix-first 1–7 shipped; SEO/UX + frontend-perf S batch shipped)._
 
 ## In progress
 
@@ -19,16 +19,10 @@ _(nothing — pick from "Fix first" or the bets below)_
 [SITE_REVIEW_2026-09.md](SITE_REVIEW_2026-09.md) is a fresh, independent,
 code-first review of the whole product (security, backend, frontend, UX,
 a11y, quality, economy, SEO/comms). Its **Part 1 backlog table** is the
-queue: work it top-down, and tick items off here as they ship. The first
-seven are ≤1 hour each and all fix something that is silently broken today:
+queue: work it top-down, and tick items off here as they ship.
 
-1. S-H1 — rules accept any `corps.<key>`; scorer scores it.
-2. B-H1 — `newsAdmin` callables take an arbitrary Firestore path.
-3. N-H1 — email opt-outs never take effect (camelCase vs snake_case keys).
-4. F-H3 — push notifications render generic text and open `/`.
-5. B-H3 — the 300 CC streak freeze almost never protects a streak.
-6. G-H3 — a league bye counts as a win.
-7. Q-H1 — deploys are not gated on CI.
+_(items 1–7 — S-H1, B-H1, N-H1, F-H3, B-H3, G-H3, Q-H1 — shipped 2026-09-03;
+continue from row 8 of the Part 1 table)_
 
 ## Fix first — 2026-09-01 audit, P0/P1 (ranked; each is one PR)
 
@@ -308,11 +302,10 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
 
 ## Evergreen ratchets (any session, any size)
 
-- `@ts-nocheck` paydown — **86 files** at
+- `@ts-nocheck` paydown — **85 files** at
   last update; `npm run ts-nocheck:next` ranks the cheapest (no free wins
-  left; cheapest is 10 errors in `Dashboard/sections/DailyChallenges.jsx`;
-  `Schedule.jsx` and `Layout/GameShell.jsx` are ~30 each). One per substantive task is the CLAUDE.md
-  habit; batches welcome.
+  left; `Schedule.jsx` and `Layout/GameShell.jsx` are ~30 errors each). One
+  per substantive task is the CLAUDE.md habit; batches welcome.
 - Frontend coverage floor upward — actual is ~29% statements against a
   15.9% floor; raise the floor to within a point of actual whenever it's
   touched (functions are held to 70/80/85).
@@ -326,6 +319,20 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
 
 ## Recently shipped (context, newest first — prune when stale)
 
+- 2026-09-03: site-review Fix-first 1–7. Rules: new `corps.*` keys must be
+  registry classes (`corpsKeysOk`, existing keys grandfathered; 3 rules
+  tests); scorer + show-registration index skip unknown classes. `newsAdmin`
+  callables accept only `news_hub/{s}/days/{d}/articles/{t}` paths
+  (`assertArticlePath`, tests). Email opt-outs honor the Settings modal's
+  camelCase keys (`EMAIL_PREFERENCE_MAP` / `isEmailTypeEnabled`, tests). The
+  service worker reads FCM's `notification`/`data.url` payload (real
+  title/body, deep link, one card per push type); dead
+  `firebase-messaging-sw.js` deleted. Streak Freeze covers the next missed
+  game day and is held up to 30 days (`helpers/loginStreak.js`, 9 tests;
+  panel copy updated). Byes are non-games in standings (`byes` on the record
+  and row; `leagueCareer` matches). Both deploy workflows wait for the CI run
+  on the commit (`.github/actions/wait-for-ci`) on push events. Changelog
+  entry added.
 - 2026-09-03: audit backlog, SEO/UX + frontend-perf S batch: `/studio` and
   `/exchange` are `noindex` with their own canonical, and robots disallows
   them plus `/shop`, `/records`, `/achievements`; the sitemap lists corps
