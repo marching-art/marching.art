@@ -72,8 +72,17 @@ firebase functions:secrets:set BMAC_WEBHOOK_SECRET
 firebase deploy --only functions:bmacWebhook,functions:linkBmacSupport,functions:setSupporterVisibility,functions:setSupporterMessage,functions:getSupportersWall,functions:reconcileSupporters
 ```
 
-Copy the deployed `bmacWebhook` URL and add it in **BMAC → Integrations →
-Webhooks**, subscribed to:
+Add the deployed `bmacWebhook` URL in **BMAC → Integrations → Webhooks**:
+
+```
+https://us-central1-marching-art.cloudfunctions.net/bmacWebhook
+```
+
+It must be that HTTPS URL — not a service-account email, not the Cloud Run
+`*.run.app` host. Sanity check before saving: a `GET` answers `405`, an
+unsigned `POST` answers `401`. BMAC auto-disables the endpoint after repeated
+delivery failures and emails "Action Required | Webhook Disabled"; fix the URL,
+then press **Enable** on the endpoint. Subscribe it to:
 `membership.started`, `membership.updated`, `membership.cancelled`,
 `membership.paused`, the `recurring_donation.*` equivalents, and
 `donation.created` + `donation.refunded` (for the one-time `friend`
