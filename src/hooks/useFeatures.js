@@ -38,7 +38,16 @@ function ensureListener() {
 function subscribe(notify) {
   ensureListener();
   listeners.add(notify);
-  return () => listeners.delete(notify);
+  return () => {
+    listeners.delete(notify);
+    // Last consumer gone (e.g. sign-out unmounts the game shell): drop the
+    // Firestore listener instead of holding it open for the page's lifetime.
+    // The next subscriber re-attaches and receives a fresh snapshot.
+    if (listeners.size === 0 && unsubscribe) {
+      unsubscribe();
+      unsubscribe = null;
+    }
+  };
 }
 
 /** All feature flags ({} until the doc loads or when it doesn't exist). */

@@ -15,6 +15,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { DISCORD_URL } from '../../utils/siteLinks';
+import { APP_CONFIG } from '../../config';
 
 // /results is served by a Cloud Function via a hosting rewrite, NOT by the SPA
 // router — a <Link> would be intercepted client-side and fall through to the
@@ -47,6 +48,9 @@ const SiteFooter = ({ className = '' }) => (
         className="hover:text-white transition-colors"
       >
         Discord
+      </a>
+      <a href={`mailto:${APP_CONFIG.supportEmail}`} className="hover:text-white transition-colors">
+        Support
       </a>
       <Link to="/privacy" className="hover:text-white transition-colors">
         Privacy

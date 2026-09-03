@@ -310,6 +310,7 @@ exports.transferCommissioner = onCall({ cors: true }, async (request) => {
     type: "commissioner_changed",
     title: "You're the Commissioner",
     message: `${previousName} made you commissioner of ${leagueName}.`,
+    link: `/leagues/${leagueId}/settings`,
   });
 
   logger.info(`League ${leagueId} commissioner transferred from ${uid} to ${newCommissionerUid}.`);
@@ -416,6 +417,7 @@ exports.setCoCommissioner = onCall({ cors: true }, async (request) => {
       type: "commissioner_changed",
       title: "You're a Co-Commissioner",
       message: `You can now help run ${outcome.leagueName}.`,
+      link: `/leagues/${leagueId}/settings`,
     });
   }
 

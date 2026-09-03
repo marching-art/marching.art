@@ -43,8 +43,8 @@ export const PillTabControl = ({
       setCanScrollRight(hasMore && notAtEnd);
     };
     checkScroll();
-    window.addEventListener('resize', checkScroll);
-    el.addEventListener('scroll', checkScroll);
+    window.addEventListener('resize', checkScroll, { passive: true });
+    el.addEventListener('scroll', checkScroll, { passive: true });
     return () => {
       window.removeEventListener('resize', checkScroll);
       el.removeEventListener('scroll', checkScroll);

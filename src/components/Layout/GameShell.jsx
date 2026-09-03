@@ -239,6 +239,14 @@ const MEDAL_COLORS = {
   Bronze: 'text-amber-600',
 };
 
+// Hoisted out of TickerBar: defined inside render it was a new component type
+// every tick, so React unmounted and remounted every icon on each update.
+const TrendIndicator = ({ trend }) => {
+  if (trend === 'up') return <TrendingUp className="w-3 h-3 text-green-500" />;
+  if (trend === 'down') return <TrendingDown className="w-3 h-3 text-red-500" />;
+  return <Minus className="w-3 h-3 text-muted" />;
+};
+
 const TickerBar = () => {
   const { tickerData, podiumData, loading, hasData } = useTickerData();
   const { prefersReducedMotion } = useReducedMotion();
@@ -336,13 +344,6 @@ const TickerBar = () => {
     window.addEventListener('resize', measure);
     return () => window.removeEventListener('resize', measure);
   }, [tickerSections, prefersReducedMotion]);
-
-  // Trend indicator component
-  const TrendIndicator = ({ trend }) => {
-    if (trend === 'up') return <TrendingUp className="w-3 h-3 text-green-500" />;
-    if (trend === 'down') return <TrendingDown className="w-3 h-3 text-red-500" />;
-    return <Minus className="w-3 h-3 text-muted" />;
-  };
 
   // Loading state
   if (loading) {

@@ -311,7 +311,7 @@ const claimDailyLogin = onCall({ cors: true }, async (request) => {
           type: "achievement_unlocked",
           title: "Achievements Unlocked",
           message: `You've unlocked ${earned.length} achievements! Check your profile to see them.`,
-          link: "/profile?tab=achievements",
+          link: "/achievements",
           metadata: { count: earned.length },
           dedupeKey: `achievements_backfill_${uid}`,
         });
@@ -321,7 +321,7 @@ const claimDailyLogin = onCall({ cors: true }, async (request) => {
             type: "achievement_unlocked",
             title: "Achievement Unlocked",
             message: `${achievement.title} — ${achievement.description}`,
-            link: "/profile?tab=achievements",
+            link: "/achievements",
             metadata: {
               achievementId: achievement.id,
               rarity: achievement.rarity,

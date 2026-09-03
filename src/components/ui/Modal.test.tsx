@@ -198,6 +198,26 @@ describe('Modal', () => {
       );
       expect(document.body.style.overflow).toBe('');
     });
+
+    it('keeps the lock while an outer modal is still open (nested modals)', () => {
+      const Nested = ({ inner }: { inner: boolean }) => (
+        <Modal isOpen={true} onClose={() => {}}>
+          <p>Outer</p>
+          <Modal isOpen={inner} onClose={() => {}}>
+            <p>Inner</p>
+          </Modal>
+        </Modal>
+      );
+      const { rerender, unmount } = render(<Nested inner={true} />);
+      expect(document.body.style.overflow).toBe('hidden');
+
+      // Inner closes — the outer modal is still on screen.
+      rerender(<Nested inner={false} />);
+      expect(document.body.style.overflow).toBe('hidden');
+
+      unmount();
+      expect(document.body.style.overflow).toBe('');
+    });
   });
 
   describe('accessibility', () => {

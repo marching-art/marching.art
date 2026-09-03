@@ -22,6 +22,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { HelpCircle, ExternalLink, Sparkles } from 'lucide-react';
 import { DISCORD_URL } from '../../utils/siteLinks';
+import { APP_CONFIG } from '../../config';
 import { useUnseenUpdates } from '../../hooks/useUnseenUpdates';
 
 // This menu is help: guides, what's-new, the public results surface, and legal.
@@ -171,6 +172,19 @@ const SiteLinksMenu = () => {
             className={`${itemClass} flex items-center justify-between gap-2`}
           >
             Discord
+            <ExternalLink className="w-3.5 h-3.5 text-muted" aria-hidden="true" />
+          </a>
+
+          {/* The one support address. Restricted-account errors, the legal
+              pages, and outgoing mail all point here — a director who is
+              told to "email support" has to be able to find it. */}
+          <a
+            href={`mailto:${APP_CONFIG.supportEmail}`}
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className={`${itemClass} flex items-center justify-between gap-2`}
+          >
+            Support
             <ExternalLink className="w-3.5 h-3.5 text-muted" aria-hidden="true" />
           </a>
 

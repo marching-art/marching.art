@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-09-03-deep-links-support-and-schedule",
+    "date": "2026-09-03",
+    "title": "Notifications land where they point, and support is one click away",
+    "category": "improvement",
+    "summary": "Inbox and push notifications now open the exact page they're about: an achievement unlock opens your Achievements page, a matchup alert opens that league's Matchups tab, and being made commissioner opens the league's Settings. A Support link now sits in every footer and the help menu, and every place the game asks you to get in touch names the same address.",
+    "highlights": [
+      "The Schedule page between seasons explains what's playable in the meantime instead of a bare \"No Active Season\".",
+      "Copying a league invite before one exists no longer shows a broken code.",
+      "Each corps' public program page (marching.art/d/you/world-class) is now listed for search engines alongside your director page.",
+      "Opening a confirmation on top of another dialog no longer lets the page behind scroll when it closes."
+    ]
+  },
+  {
     "id": "2026-09-02-projected-caption-scores-order",
     "date": "2026-09-02",
     "title": "Projected caption scores are back in line with your dashboard",

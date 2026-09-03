@@ -5,7 +5,12 @@
 const { test, describe } = require("node:test");
 const assert = require("node:assert/strict");
 
-const { buildSitemapXml, articleEntryFromDoc, STATIC_ROUTES } = require("./sitemap");
+const {
+  buildSitemapXml,
+  articleEntryFromDoc,
+  directorEntryFromProfile,
+  STATIC_ROUTES,
+} = require("./sitemap");
 
 describe("buildSitemapXml", () => {
   test("emits every static route with its changefreq and priority", () => {
@@ -57,11 +62,69 @@ describe("buildSitemapXml", () => {
     assert.ok(!xml.includes("bad&<id>"));
   });
 
+  test("bare redirects are not listed", () => {
+    // /podium is a client-side redirect to /podium-guide; listing it teaches
+    // crawlers a URL that immediately bounces.
+    assert.ok(!STATIC_ROUTES.some((route) => route.path === "/podium"));
+    assert.ok(STATIC_ROUTES.some((route) => route.path === "/podium-guide"));
+  });
+
+  test("emits director pages and their corps program pages", () => {
+    const xml = buildSitemapXml([], [], [], [
+      { username: "drum_major", programSlugs: ["world-class", "soundsport"] },
+      "legacy_string",
+    ]);
+    assert.ok(xml.includes("<loc>https://marching.art/d/drum_major</loc>"));
+    assert.ok(xml.includes("<loc>https://marching.art/d/drum_major/world-class</loc>"));
+    assert.ok(xml.includes("<loc>https://marching.art/d/drum_major/soundsport</loc>"));
+    assert.ok(xml.includes("<loc>https://marching.art/d/legacy_string</loc>"));
+    assert.equal(xml.match(/<url>/g)?.length, 4);
+  });
+
   test("emits /results index and day URLs per season", () => {
     const xml = buildSitemapXml([], [], [{ seasonUid: "overture_2026", days: [1, 12] }]);
     assert.ok(xml.includes("<loc>https://marching.art/results/overture_2026</loc>"));
     assert.ok(xml.includes("<loc>https://marching.art/results/overture_2026/1</loc>"));
     assert.ok(xml.includes("<loc>https://marching.art/results/overture_2026/12</loc>"));
+  });
+});
+
+describe("directorEntryFromProfile", () => {
+  const active = { username: "vanguard_fan", xpLevel: 4 };
+
+  test("lists every class the director fields a named corps in", () => {
+    const entry = directorEntryFromProfile({
+      ...active,
+      corps: {
+        worldClass: { corpsName: "Blue Stars 2.0" },
+        openClass: { corpsName: "   " },
+        soundSport: { corpsName: "Garage Brass" },
+      },
+    });
+    assert.deepEqual(entry, {
+      username: "vanguard_fan",
+      programSlugs: ["world-class", "soundsport"],
+    });
+  });
+
+  test("a director with no corps still gets the director page", () => {
+    assert.deepEqual(directorEntryFromProfile(active), {
+      username: "vanguard_fan",
+      programSlugs: [],
+    });
+  });
+
+  test("skips private, inactive, and username-less profiles", () => {
+    assert.equal(
+      directorEntryFromProfile({ ...active, directorInfo: { profileVisibility: "members" } }),
+      null
+    );
+    assert.equal(directorEntryFromProfile({ username: "brand_new", xpLevel: 1 }), null);
+    assert.equal(directorEntryFromProfile({ xpLevel: 9 }), null);
+    // A completed season counts as activity even at level 1.
+    assert.ok(
+      directorEntryFromProfile({ username: "one_season", xpLevel: 1, seasonHistory: [{}] })
+    );
   });
 });
 

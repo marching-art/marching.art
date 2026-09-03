@@ -8,7 +8,7 @@ burns an hour to conclude "everything's about covered." Don't. If you ship,
 cut, or discover something, edit THIS file in the same PR — that's the whole
 maintenance contract.
 
-_Last updated: 2026-09-02 (projected-score ordering regression fixed; audit backlog: security-rules + frontend-correctness batches shipped)._
+_Last updated: 2026-09-03 (audit backlog: SEO/UX + frontend-perf S batch shipped)._
 
 ## In progress
 
@@ -89,8 +89,7 @@ ops step below)_
 - **P3** `helpers/weather.js:26` reads `OPEN_METEO_API_KEY` from
   `process.env` outside the `defineSecret` convention. (S)
 - **P3** `callable/articleComments.js:236-243` hand-builds a namespaced path;
-  use `paths.userProfile`. `triggers/sitemap.js:172-177` director scan has
-  no namespace filter (advertises `/d/` URLs that 404). (S)
+  use `paths.userProfile`. (S)
 - **P3** Ledger entries without `balance`: `callable/seasonLadder.js:386-392`,
   `leaguePools.js:97`. (S)
 - **P3** No uptime checks on the five public rewrite targets and no Cloud
@@ -105,12 +104,7 @@ ops step below)_
   `maxAge` config at `:43-56` is never read, and version-keyed image/font
   caches purge on every deploy. (M)
 - **P3** `api/leagues.ts:551-555` reads all of `matchupHistory` unbounded. (S)
-- **P3** Non-passive scroll listeners with forced layout in
-  `ui/DataTable.tsx:213-232`, `scores/PillTabControl.tsx:37-52`;
-  `TrendIndicator` defined inside render at `Layout/GameShell.jsx:341`;
-  `hooks/useFeatures.js:21-42` listener never unsubscribes. (S)
-- **P3** `ui/Modal.tsx:72-81` body scroll lock has no ref count for nested
-  modals; `index.jsx:43-53` has no SW update prompt while the SW
+- **P3** `index.jsx:43-53` has no SW update prompt while the SW
   `skipWaiting`s mid-session. (S)
 - **P2** `vendor-firebase` is the largest eager chunk (671 kB / 198 kB
   gzip) — audit which `firebase/*` entry points the first paint really
@@ -118,12 +112,6 @@ ops step below)_
 
 ### SEO, accessibility & UX
 
-- **P2** `pages/Studio.tsx:70-73`, `pages/Exchange.tsx:127-130` call `useSEO`
-  without `path` → canonical is the homepage; neither is in `robots.txt`
-  Disallow (nor `/shop`, `/records`, `/achievements`). `noindex` + robots. (S)
-- **P2** Program pages `/d/{username}/{class-slug}` are not in the sitemap
-  (`triggers/sitemap.js:111-116`); `/podium` is listed but is a bare
-  redirect (`App.jsx:372`). (S)
 - **P2** 12 dialogs render `role="dialog" aria-modal` without `useFocusTrap`
   (`Profile/SettingsModal.jsx:361`, `Sidebar/StandingsModal.jsx:33`,
   `Sidebar/YouTubeModal.jsx:45`, `Leagues/CreateLeagueModal.tsx:120`,
@@ -144,11 +132,6 @@ ops step below)_
   conditionally unavailable (`helpers/dailyChallenges.js:87-133`) — a new
   leagueless director sees one repeating task. Grow to 6-8 verifiable
   verbs. (M)
-- **P2** Dead/weak deep links: achievements notifications go to
-  `/profile?tab=achievements` (`callable/dailyOps.js:314,324`; Profile has
-  no `tab` handler); commissioner-promotion notifications have no `link`
-  (`callable/leagueAdmin.js:310,416`); weekly matchup push links `/leagues`
-  not the league. (S)
 - **P2** No report control on league chat (`Leagues/tabs/ChatTab.tsx:73-80`
   admits it), profile comments, or instant-publish press releases; only
   article comments have one. Reuse `reportComment`. (M)
@@ -162,9 +145,11 @@ ops step below)_
 - **P2** Showcase vote and Weekly Design Brief deadlines are visible only on
   `/exchange`; add a Director's Report row when a deadline is within ~48h
   (needs the showcase/brief state hooks the Exchange cards already use). (M)
-- **P3** `Schedule.jsx:247-270` off-season empty state has no date/CTA and a
-  hard-coded `'2025'`; Podium has no nav entry (`ControlBar.jsx:147`); invite
-  copy toasts can print `Code: undefined` (`Leagues/tabs/SettingsTab.tsx:241`). (S)
+- **P3** Between seasons the Schedule empty state has a CTA but still no
+  date: the season doc is deleted at rollover, so nothing client-readable
+  says when the next one opens. Publish a `nextSeasonStartsAt` on
+  `game-settings/season` (or a sibling public doc) and render it there and
+  on the dashboard. (S)
 - **P3** No referral mechanic exists (zero hits for `referral`) despite share
   cards, program pages, and a Discord bridge — per-director code, CC to both
   sides on completed onboarding. (M)
@@ -182,10 +167,6 @@ ops step below)_
 - **P2** Terms never mention CorpsCoin (no cash value / non-transferable /
   forfeiture), §6 covers only corps names + show concepts, no governing law
   or copyright-notice path (`pages/Terms.jsx`). (M)
-- **P2** Restricted accounts are told to "contact an administrator"
-  (`helpers/callableGuards.js:189-192`) but no `/support` route or footer
-  contact exists; Privacy/Terms say `contact@`, outgoing mail replies to
-  `support@` (`emailService.js:26`). Pick one; put it in the footer. (S)
 
 ### CI/CD, hosting & dependencies
 
@@ -327,10 +308,10 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
 
 ## Evergreen ratchets (any session, any size)
 
-- `@ts-nocheck` paydown — **89 files** at
+- `@ts-nocheck` paydown — **86 files** at
   last update; `npm run ts-nocheck:next` ranks the cheapest (no free wins
-  left; cheapest is 10 errors in `Dashboard/sections/DailyChallenges.jsx`
-  and `modals/ShowConceptModal.jsx`). One per substantive task is the CLAUDE.md
+  left; cheapest is 10 errors in `Dashboard/sections/DailyChallenges.jsx`;
+  `Schedule.jsx` and `Layout/GameShell.jsx` are ~30 each). One per substantive task is the CLAUDE.md
   habit; batches welcome.
 - Frontend coverage floor upward — actual is ~29% statements against a
   15.9% floor; raise the floor to within a point of actual whenever it's
@@ -345,6 +326,20 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
 
 ## Recently shipped (context, newest first — prune when stale)
 
+- 2026-09-03: audit backlog, SEO/UX + frontend-perf S batch: `/studio` and
+  `/exchange` are `noindex` with their own canonical, and robots disallows
+  them plus `/shop`, `/records`, `/achievements`; the sitemap lists corps
+  program pages (`directorEntryFromProfile`, projected `corps.*.corpsName`
+  only), is pinned to this namespace's `profile/data` docs (no mirror
+  duplicates), and drops the bare `/podium` redirect; achievement, matchup
+  and commissioner notifications deep-link to `/achievements`,
+  `/leagues/{id}/matchups`, `/leagues/{id}/settings`; one support address
+  (`support@`) in SiteFooter, SiteLinksMenu, the SSR results footer,
+  Terms/Privacy and the restricted-account error; Schedule between-seasons
+  CTA + no hard-coded year; invite copy never prints `undefined`; passive
+  scroll/resize listeners, hoisted `TrendIndicator`, feature-flag listener
+  released when unused, ref-counted Modal scroll lock (nested test).
+  Changelog entry added. ts-nocheck → 87.
 - 2026-09-02: the `functions-deploy/*` rollback tag is now created through
   the GitHub REST API (`gh api .../git/refs`) instead of `git push`. Every
   auto-deploy on `main` had been failing at "Tag deployed ref" with

@@ -11,6 +11,24 @@ import { X } from 'lucide-react';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 // =============================================================================
+// BODY SCROLL LOCK
+// =============================================================================
+// Ref-counted so nested modals (a confirm on top of a form) don't unlock the
+// page when the inner one closes while the outer is still open.
+
+let scrollLockCount = 0;
+
+const lockBodyScroll = () => {
+  scrollLockCount += 1;
+  if (scrollLockCount === 1) document.body.style.overflow = 'hidden';
+};
+
+const unlockBodyScroll = () => {
+  scrollLockCount = Math.max(0, scrollLockCount - 1);
+  if (scrollLockCount === 0) document.body.style.overflow = '';
+};
+
+// =============================================================================
 // TYPES
 // =============================================================================
 
@@ -70,13 +88,12 @@ export const Modal: React.FC<ModalProps> = ({
 
   // Lock body scroll and listen for Escape while open
   useEffect(() => {
-    if (isOpen) {
-      document.addEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = 'hidden';
-    }
+    if (!isOpen) return undefined;
+    document.addEventListener('keydown', handleKeyDown);
+    lockBodyScroll();
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = '';
+      unlockBodyScroll();
     };
   }, [isOpen, handleKeyDown]);
 

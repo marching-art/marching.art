@@ -146,9 +146,13 @@ function EntryCard({
 }
 
 export default function Exchange() {
+  // Auth-walled: without `path` the canonical fell back to the homepage, and
+  // without `noindex` a crawler that reached the login bounce indexed it.
   useSEO({
     title: 'Design Exchange | marching.art',
     description: 'Browse, like, and save uniform designs shared by other directors.',
+    path: '/exchange',
+    noindex: true,
   });
   const { user } = useAuth() || {};
   const uid = user?.uid || null;

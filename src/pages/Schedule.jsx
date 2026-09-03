@@ -6,7 +6,7 @@
 // Laws: Dense data, data-terminal aesthetic, mobile-optimized touch targets
 
 import React, { useState, useEffect, useMemo, useCallback, useRef, Suspense } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import { Calendar, Clock, Map as MapIcon } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSeasonStore } from '../store/seasonStore';
@@ -244,14 +244,33 @@ const Schedule = () => {
     );
   }
 
-  // No season
+  // Between seasons: the season doc is absent while rollover runs (or before
+  // the first season is configured), so there is no next-season date to
+  // promise — point the director at what is playable meanwhile.
   if (!seasonData) {
     return (
       <div className="w-full py-20 flex items-center justify-center p-4">
         <div className="text-center max-w-sm">
-          <Calendar className="w-12 h-12 text-muted mx-auto mb-3" />
-          <h2 className="text-sm font-bold text-white mb-1">No Active Season</h2>
-          <p className="text-xs text-muted">The schedule will appear once a season is active.</p>
+          <Calendar className="w-12 h-12 text-muted mx-auto mb-3" aria-hidden="true" />
+          <h1 className="text-sm font-bold text-white mb-1">Between Seasons</h1>
+          <p className="text-xs text-muted mb-4">
+            The next season&apos;s show schedule is published the day it opens. Until then, your
+            corps, lineup, and Podium rehearsals are all still yours to work on.
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <Link
+              to="/dashboard"
+              className="px-3 py-2 min-h-touch inline-flex items-center text-[10px] font-bold uppercase tracking-wider bg-interactive text-white rounded-none hover:bg-interactive-hover transition-colors"
+            >
+              Back to Dashboard
+            </Link>
+            <Link
+              to="/hall-of-champions"
+              className="px-3 py-2 min-h-touch inline-flex items-center text-[10px] font-bold uppercase tracking-wider border border-line text-secondary rounded-none hover:text-white hover:border-interactive transition-colors"
+            >
+              Past Champions
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -266,7 +285,8 @@ const Schedule = () => {
             <Calendar className="w-5 h-5 text-interactive" />
             <div>
               <h1 className="text-sm font-bold text-white uppercase tracking-wider">
-                {formatSeasonName?.() || '2025'} Schedule
+                {formatSeasonName?.() || `${seasonData.seasonYear || new Date().getFullYear()}`}{' '}
+                Schedule
               </h1>
               <p className="text-[10px] text-muted">
                 Week {currentWeek} of 7 • {getWeekDateRange(currentWeek)}

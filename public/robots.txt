@@ -26,6 +26,11 @@ Disallow: /onboarding
 Disallow: /retired-corps
 Disallow: /corps-history
 Disallow: /soundsport
+Disallow: /studio
+Disallow: /exchange
+Disallow: /shop
+Disallow: /records
+Disallow: /achievements
 
 # Internal design-system reference, not a product page. The page also sets its
 # own noindex; this saves the crawl.

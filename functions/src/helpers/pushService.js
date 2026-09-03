@@ -188,15 +188,20 @@ async function removeInvalidToken(userId) {
 // =============================================================================
 
 /**
- * Send matchup starting notification
+ * Send matchup starting notification — deep-linked to the league's matchups
+ * tab when the league is known, else the leagues index.
+ * @param {string} userId
+ * @param {string} opponentName
+ * @param {string} leagueName
+ * @param {string} [leagueId]
  */
-async function sendMatchupStartPush(userId, opponentName, leagueName) {
+async function sendMatchupStartPush(userId, opponentName, leagueName, leagueId) {
   return sendPushNotification(
     userId,
     {
       title: "Matchup Starting!",
       body: `Your matchup vs ${opponentName} in ${leagueName} is about to begin!`,
-      url: "/leagues",
+      url: leagueId ? `/leagues/${leagueId}/matchups` : "/leagues",
     },
     PUSH_TYPES.MATCHUP_START,
     { opponentName, leagueName }
