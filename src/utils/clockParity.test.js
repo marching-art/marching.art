@@ -43,6 +43,12 @@ import { getSeasonProgress } from './seasonProgress';
 import { CLASS_UNLOCK_SEASONS } from './classUnlocks';
 import clientRegistry from '../config/classRegistry.json';
 
+// The two matrix tests walk every instant × class × field of several seasons
+// (~7 s of CPU for the file). Under a full-suite run they share cores with the
+// rest of the workers and have tripped vitest's default 5 s per-test timeout;
+// the work is deterministic, only the wall clock is not.
+const MATRIX_TIMEOUT_MS = 60_000;
+
 const require = createRequire(import.meta.url);
 const backendCaption = require('../../functions/src/helpers/captionWindows.js');
 const backendGameDay = require('../../functions/src/helpers/gameDay.js');
@@ -123,25 +129,29 @@ describe('caption-change window parity (functions captionWindows <-> client seas
   const SHARED_SCALARS = ['day', 'week', 'phase', 'status', 'tradeLimit', 'periodKey'];
   const SHARED_INSTANTS = ['unlimitedEndsAt', 'locksAt', 'reopensAt'];
 
-  it.each(SEASONS)('agrees across the full matrix (start %s, spring %i)', (startIso, spring) => {
-    const season = seasonDoc(startIso, spring);
-    let compared = 0;
-    for (const now of instants(startIso, spring)) {
-      for (const corpsClass of CORPS_CLASSES) {
-        const backend = backendCaption.getCaptionChangeWindow(season, now, corpsClass);
-        const client = getCaptionChangeInfo(season, now, corpsClass);
-        const context = `${startIso} spring=${spring} now=${now.toISOString()} class=${corpsClass}`;
-        for (const key of SHARED_SCALARS) {
-          expect(client[key], `${key} @ ${context}`).toBe(backend[key]);
+  it.each(SEASONS)(
+    'agrees across the full matrix (start %s, spring %i)',
+    (startIso, spring) => {
+      const season = seasonDoc(startIso, spring);
+      let compared = 0;
+      for (const now of instants(startIso, spring)) {
+        for (const corpsClass of CORPS_CLASSES) {
+          const backend = backendCaption.getCaptionChangeWindow(season, now, corpsClass);
+          const client = getCaptionChangeInfo(season, now, corpsClass);
+          const context = `${startIso} spring=${spring} now=${now.toISOString()} class=${corpsClass}`;
+          for (const key of SHARED_SCALARS) {
+            expect(client[key], `${key} @ ${context}`).toBe(backend[key]);
+          }
+          for (const key of SHARED_INSTANTS) {
+            expect(ms(client[key]), `${key} @ ${context}`).toBe(ms(backend[key]));
+          }
+          compared++;
         }
-        for (const key of SHARED_INSTANTS) {
-          expect(ms(client[key]), `${key} @ ${context}`).toBe(ms(backend[key]));
-        }
-        compared++;
       }
-    }
-    expect(compared).toBeGreaterThan(1000);
-  });
+      expect(compared).toBeGreaterThan(1000);
+    },
+    MATRIX_TIMEOUT_MS
+  );
 
   it('both sides return null without a start date', () => {
     expect(backendCaption.getCaptionChangeWindow({}, new Date())).toBeNull();
@@ -150,32 +160,36 @@ describe('caption-change window parity (functions captionWindows <-> client seas
 });
 
 describe('game-day parity (functions gameDay <-> client seasonProgress)', () => {
-  it.each(SEASONS)('agrees across the full matrix (start %s, spring %i)', (startIso, spring) => {
-    const season = seasonDoc(startIso, spring);
-    const start = new Date(startIso);
-    let compared = 0;
-    for (const now of instants(startIso, spring)) {
-      // Backend truth: active calendar day from the 2 AM ET game-day clock,
-      // minus spring training, clamped exactly the way the client displays it.
-      const activeCalendarDay = backendGameDay.getActiveCalendarDay(start, now);
-      const expectedDay = Math.max(1, Math.min(activeCalendarDay - spring, 49));
-      const expectedWeek = Math.max(1, Math.min(Math.ceil(expectedDay / 7), 7));
+  it.each(SEASONS)(
+    'agrees across the full matrix (start %s, spring %i)',
+    (startIso, spring) => {
+      const season = seasonDoc(startIso, spring);
+      const start = new Date(startIso);
+      let compared = 0;
+      for (const now of instants(startIso, spring)) {
+        // Backend truth: active calendar day from the 2 AM ET game-day clock,
+        // minus spring training, clamped exactly the way the client displays it.
+        const activeCalendarDay = backendGameDay.getActiveCalendarDay(start, now);
+        const expectedDay = Math.max(1, Math.min(activeCalendarDay - spring, 49));
+        const expectedWeek = Math.max(1, Math.min(Math.ceil(expectedDay / 7), 7));
 
-      const progress = getSeasonProgress(season, now);
-      const context = `${startIso} spring=${spring} now=${now.toISOString()}`;
-      expect(progress.currentDay, `currentDay @ ${context}`).toBe(expectedDay);
-      expect(progress.currentWeek, `currentWeek @ ${context}`).toBe(expectedWeek);
+        const progress = getSeasonProgress(season, now);
+        const context = `${startIso} spring=${spring} now=${now.toISOString()}`;
+        expect(progress.currentDay, `currentDay @ ${context}`).toBe(expectedDay);
+        expect(progress.currentWeek, `currentWeek @ ${context}`).toBe(expectedWeek);
 
-      // The league jobs' week (getCurrentSeasonWeek) rides the same 2 AM ET
-      // clock; it is unclamped above week 7, so compare the clamped value.
-      const backendWeek = backendGameDay.getCurrentSeasonWeek(season, now);
-      expect(Math.min(backendWeek, 7), `getCurrentSeasonWeek @ ${context}`).toBe(
-        progress.currentWeek
-      );
-      compared++;
-    }
-    expect(compared).toBeGreaterThan(300);
-  });
+        // The league jobs' week (getCurrentSeasonWeek) rides the same 2 AM ET
+        // clock; it is unclamped above week 7, so compare the clamped value.
+        const backendWeek = backendGameDay.getCurrentSeasonWeek(season, now);
+        expect(Math.min(backendWeek, 7), `getCurrentSeasonWeek @ ${context}`).toBe(
+          progress.currentWeek
+        );
+        compared++;
+      }
+      expect(compared).toBeGreaterThan(300);
+    },
+    MATRIX_TIMEOUT_MS
+  );
 
   it('active day is completed day + 1 on the backend (shared 2 AM ET boundary)', () => {
     const now = new Date('2026-06-25T12:00:00Z');
