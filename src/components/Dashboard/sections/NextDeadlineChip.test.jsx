@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Render tests for the deadline countdown chip. Firebase modules are mocked;
 // the season store is seeded directly. Time-dependent output is asserted
 // loosely (a countdown exists) since the chip reads the real clock.
@@ -25,6 +24,7 @@ import NextDeadlineChip from './NextDeadlineChip';
 
 // The chip's deadline hook uses react-query (drop-plan cache), so renders
 // need a provider. Fresh client per render keeps tests isolated.
+/** @param {React.ReactElement} ui */
 const render = (ui) => {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -32,12 +32,20 @@ const render = (ui) => {
   return rtlRender(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
 };
 
+/**
+ * @param {string} status
+ * @param {Date} startDate
+ */
 const seedSeason = (status, startDate) => {
+  // The chip only calls `toDate()` on the Timestamp; a stub is enough.
+  const startTs = /** @type {import('firebase/firestore').Timestamp} */ (
+    /** @type {unknown} */ ({ toDate: () => startDate })
+  );
   useSeasonStore.setState({
     seasonData: {
       status,
       seasonUid: 'test-season',
-      schedule: { startDate: { toDate: () => startDate } },
+      schedule: { startDate: startTs },
     },
     loading: false,
   });
@@ -96,6 +104,10 @@ describe('NextDeadlineChip', () => {
   // time passed and roll the countdown forward to the 2 AM ET estimate — so it
   // promised 11 PM and then jumped to "3 hours" at 11 PM sharp.
   describe('while the drop is pending', () => {
+    const mockGetDropPlan = vi.mocked(getDropPlan);
+    /**
+     * @param {{ dropOffsetMs: number, windowOffsetMs: number, scoredAt?: string | null }} plan
+     */
     const planFor = ({ dropOffsetMs, windowOffsetMs, scoredAt = null }) => ({
       dropInstant: new Date(Date.now() + dropOffsetMs).toISOString(),
       scrapeRetryUntil: new Date(Date.now() + windowOffsetMs).toISOString(),
@@ -104,7 +116,7 @@ describe('NextDeadlineChip', () => {
     });
 
     it('says scores are processing instead of counting down to a later time', async () => {
-      getDropPlan.mockResolvedValueOnce(
+      mockGetDropPlan.mockResolvedValueOnce(
         // Drop was 10 minutes ago; the night's retry window runs 2 more hours.
         planFor({ dropOffsetMs: -10 * 60e3, windowOffsetMs: 2 * 3600e3 })
       );
@@ -116,7 +128,7 @@ describe('NextDeadlineChip', () => {
     });
 
     it('counts down normally while the planned drop is still ahead', async () => {
-      getDropPlan.mockResolvedValueOnce(
+      mockGetDropPlan.mockResolvedValueOnce(
         planFor({ dropOffsetMs: 45 * 60e3, windowOffsetMs: 3 * 3600e3 })
       );
       seedSeason('live-season', new Date(Date.now() - 30 * 24 * 3600e3));
@@ -127,7 +139,7 @@ describe('NextDeadlineChip', () => {
     });
 
     it('goes back to a countdown once the night has scored', async () => {
-      getDropPlan.mockResolvedValueOnce(
+      mockGetDropPlan.mockResolvedValueOnce(
         planFor({
           dropOffsetMs: -10 * 60e3,
           windowOffsetMs: 2 * 3600e3,

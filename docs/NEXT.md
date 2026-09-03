@@ -8,7 +8,7 @@ burns an hour to conclude "everything's about covered." Don't. If you ship,
 cut, or discover something, edit THIS file in the same PR — that's the whole
 maintenance contract.
 
-_Last updated: 2026-09-03 (site-review Fix-first 1–11 + the eight cross-area quick wins shipped)._
+_Last updated: 2026-09-03 (main ruleset + gazetteer PR flow; site-review Fix-first 1–11 + quick wins shipped)._
 
 ## In progress
 
@@ -179,8 +179,6 @@ ops step below)_
   pin to the `firestore-tests` version. (S)
 - **P2** `security.yml` is weekly `npm audit` only — no CodeQL, no
   `dependency-review-action` on PRs. (M)
-- **P2** `refresh-venue-gazetteer.yml:91` pushes generated files straight to
-  `main`, bypassing PR CI and triggering both deploys. Open a PR instead. (S)
 - **P2** No www↔apex or trailing-slash redirects in either host config, and
   `checkHostingParity.mjs` doesn't compare redirects. (M)
 - **P2** `firestore.indexes.json` is never deployed yet is a deploy-trigger
@@ -261,6 +259,12 @@ ops step below)_
 
 ## Operational — owner only, standing until done
 
+- **Import the `main` ruleset** (Settings → Rules → Rulesets → New ruleset ▾
+  → Import a ruleset → `.github/rulesets/main.json`, or the `gh api` line in
+  `.github/rulesets/README.md`). Until it is imported, a PR can still be
+  merged before its CI finishes (#1490 landed red on main that way) and the
+  gazetteer refresh's PR could be merged without checks. Then confirm the
+  next PR shows the seven jobs as required.
 - **Re-score the Overture nights scored on hash-ordered history (days 19–23,
   2026-08-27 → 08-31).** The `historical_scores` sharding (a103c8f) returned a
   year's events in document-id order; the projection model read its season
@@ -327,6 +331,13 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
 
 ## Recently shipped (context, newest first — prune when stale)
 
+- 2026-09-03: `main` branch ruleset in the repo (`.github/rulesets/main.json`)
+  requiring the seven CI jobs before merge, no deletes/force-pushes, no bypass
+  — the `pull_request` CI run now gates the merge and the `push` run on main
+  gates deploys (`ci.yml` header documents the two roles). The annual
+  gazetteer refresh opens an `automated/venue-gazetteer` PR and dispatches CI
+  on it (`ci.yml` gained `workflow_dispatch`) instead of pushing to `main`.
+  `NextDeadlineChip.test.jsx` typed (ts-nocheck 84 → 83).
 - 2026-09-03: site-review rows 8–11 + quick wins. F-H2: the Dashboard reads
   rank/score from the materialized standings (classFilter `all` for ranked
   classes, SoundSport keeps its own), skips every scores query on the Podium
