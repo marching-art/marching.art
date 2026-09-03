@@ -13,14 +13,12 @@
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import UniformFigure, { FIGURE_VIEWBOX } from '../components/uniform/UniformFigure';
+import { PREVIEW_BACKGROUND } from '../data/uniformRenderTheme';
 import type { FigureConfig } from '../types/uniform';
 
 /** Rendered at 2x the 240×560 viewBox: crisp for the model, still tens of KB. */
 export const PREVIEW_WIDTH = 480;
 export const PREVIEW_HEIGHT = 1120;
-
-/** Neutral mid-gray so both white and black garments read against it. */
-const PREVIEW_BACKGROUND = '#d9d9d9';
 
 /** Mirrors MAX_PREVIEW_BYTES in functions/src/helpers/uniformPreview.js. */
 const MAX_PREVIEW_BYTES = 400 * 1024;

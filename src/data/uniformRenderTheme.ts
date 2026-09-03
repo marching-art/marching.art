@@ -109,6 +109,13 @@ export const FIGURE_HAIR_COLORS: string[] = [
   '#b7b4ad',
 ];
 
+/**
+ * Backdrop behind the rasterized equip preview (utils/uniformPreview): a
+ * neutral mid-gray so both white and black garments read against it in the
+ * reference image the AI image models receive.
+ */
+export const PREVIEW_BACKGROUND = '#d9d9d9';
+
 /** Share-card ("field entrance") scene palette — see UniformShareCard.tsx. */
 export const SHARE_CARD_THEME = {
   bg: '#0a0c12',
