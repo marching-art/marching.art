@@ -349,6 +349,13 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
 
 ## Recently shipped (context, newest first — prune when stale)
 
+- 2026-09-03: supporter shout-outs. `helpers/supporterDiscord.js` posts a
+  new/upgraded supporter to #announcements (existing webhook secret, no new
+  ops) on a tier gain only; `writeSupporterState` now returns the transition
+  so callers can tell a gain from a renewal. Named only after the supporter
+  links and unless they opted out; unlinked one-time coffees are anonymous.
+  `docs/BMAC_SUPPORTERS.md` §4 documents that BMAC's bot never posts and shows
+  offline by design.
 - 2026-09-03: BMAC webhook hardening. `bmacWebhook` runs on a full vCPU
   with an explicit 30s timeout / 3-instance cap so a cold start answers inside
   BMAC's delivery window (they retry 4× and auto-disable after 10 consecutive

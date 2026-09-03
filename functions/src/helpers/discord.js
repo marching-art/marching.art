@@ -16,7 +16,8 @@
  *                                                    caption windows,
  *                                                    registration deadlines,
  *                                                    Eastern Classic night
- *                                                    lineups
+ *                                                    lineups,
+ *                                                    new supporters
  *   news          DISCORD_NEWS_WEBHOOK_URL           published articles,
  *                                                    the Podium Report
  *   pressReleases DISCORD_PRESS_RELEASES_WEBHOOK_URL director-authored
@@ -77,6 +78,7 @@ const COLORS = {
   event: 0x1c7ed6, // blue — a director-hosted show
   news: 0x868e96, // grey — editorial
   ops: 0xe8590c, // orange — something needs a human
+  supporter: 0xffdd00, // Buy Me a Coffee yellow — someone backed the game
 };
 
 const MEDALS = ["🥇", "🥈", "🥉"];

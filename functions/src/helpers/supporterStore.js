@@ -57,6 +57,20 @@ function buildProfileSupporter({
 }
 
 /**
+ * What a supporter write changed — enough for the caller to decide whether the
+ * moment deserves a Discord shout-out (tier gain) and whom to credit.
+ * @typedef {Object} SupporterWriteResult
+ * @property {boolean} written false when the doc was absent and createIfAbsent was off
+ * @property {string|null} prevTier effective tier before the write
+ * @property {string|null} tier effective tier after the write
+ * @property {boolean} active
+ * @property {string|null} uid linked account, if any
+ * @property {string|null} username
+ * @property {string|null} displayName
+ * @property {boolean} anonymous opted out of being named publicly
+ */
+
+/**
  * Core upsert: merge a patch into the supporter doc, recompute the effective
  * tier/active state (honoring one-time expiry), and mirror flair onto the
  * linked profile.
@@ -70,6 +84,7 @@ function buildProfileSupporter({
  *   oneTimeExpiresMs? (null to revoke).
  * @param {boolean} [opts.createIfAbsent=true] skip when the doc is absent
  *   (revoke/refresh paths pass false so they don't create empty docs).
+ * @returns {Promise<SupporterWriteResult>}
  */
 async function writeSupporterState(db, emailHash, { meta, patch = {}, createIfAbsent = true }) {
   const ref = db.doc(paths.supporter(emailHash));
@@ -80,6 +95,17 @@ async function writeSupporterState(db, emailHash, { meta, patch = {}, createIfAb
   // every night.
   /** @type {{uid: string, isActive: boolean, tier: (string|null)}|null} */
   let transition = null;
+  /** @type {SupporterWriteResult} */
+  let result = {
+    written: false,
+    prevTier: null,
+    tier: null,
+    active: false,
+    uid: null,
+    username: null,
+    displayName: null,
+    anonymous: false,
+  };
   await db.runTransaction(async (tx) => {
     const snap = await tx.get(ref);
     if (!snap.exists && !createIfAbsent) return;
@@ -115,6 +141,16 @@ async function writeSupporterState(db, emailHash, { meta, patch = {}, createIfAb
     const message = ex.message ?? null;
     const oneTimeExpiresAt =
       oneTimeExpiresMs != null ? admin.firestore.Timestamp.fromMillis(oneTimeExpiresMs) : null;
+    result = {
+      written: true,
+      prevTier: ex.tier ?? null,
+      tier,
+      active,
+      uid: ex.uid ?? null,
+      username: ex.username ?? null,
+      displayName: ex.displayName ?? null,
+      anonymous,
+    };
 
     tx.set(
       ref,
@@ -189,11 +225,12 @@ async function writeSupporterState(db, emailHash, { meta, patch = {}, createIfAb
       logger.error("supporter_update notification failed", { err: err.message });
     }
   }
+  return result;
 }
 
 /** Upsert an active recurring supporter (membership / monthly support). */
 async function applyActiveSupport(db, parsed) {
-  await writeSupporterState(db, parsed.emailHash, {
+  return writeSupporterState(db, parsed.emailHash, {
     meta: parsed,
     patch: { recurringActive: true, recurringTier: parsed.tier },
   });
@@ -206,7 +243,7 @@ async function applyActiveSupport(db, parsed) {
  * Won't create a doc that doesn't exist.
  */
 async function applyInactiveSupport(db, emailHash) {
-  await writeSupporterState(db, emailHash, {
+  return writeSupporterState(db, emailHash, {
     patch: { recurringActive: false },
     createIfAbsent: false,
   });
@@ -214,7 +251,7 @@ async function applyInactiveSupport(db, emailHash) {
 
 /** Grant/extend the temporary one-time 'friend' recognition by the donation amount. */
 async function applyOneTimeSupport(db, parsed) {
-  await writeSupporterState(db, parsed.emailHash, {
+  return writeSupporterState(db, parsed.emailHash, {
     meta: parsed,
     patch: { extendOneTimeDays: oneTimeDaysForAmount(parsed.amount) },
   });
@@ -222,7 +259,7 @@ async function applyOneTimeSupport(db, parsed) {
 
 /** Remove the one-time recognition (donation refunded). */
 async function revokeOneTimeSupport(db, emailHash) {
-  await writeSupporterState(db, emailHash, {
+  return writeSupporterState(db, emailHash, {
     patch: { oneTimeExpiresMs: null },
     createIfAbsent: false,
   });

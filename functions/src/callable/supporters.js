@@ -5,7 +5,8 @@
 // the supporter links that email to their marching.art account → we mirror a
 // server-only `supporter` tier onto their profile (flair) and list them on the
 // public Supporters wall. Discord roles are handled natively by BMAC and never
-// touch this code.
+// touch this code; the "new supporter" shout-out in #announcements is ours
+// (helpers/supporterDiscord.js) because BMAC's bot never posts anything.
 //
 // Nothing here grants CorpsCoin, XP, unlocks, or any competitive edge — the
 // perks are cosmetic recognition only (donation-only, no pay-to-win).
@@ -33,6 +34,8 @@ const {
   buildProfileSupporter,
 } = require("../helpers/supporterStore");
 const { sanitizeBannerMessage } = require("../helpers/prestigeCatalog");
+const { discordAnnouncementsWebhookUrl } = require("../helpers/discord");
+const { announceSupporter, shouldAnnounceTierChange } = require("../helpers/supporterDiscord");
 
 const bmacWebhookSecret = defineSecret("BMAC_WEBHOOK_SECRET");
 
@@ -48,7 +51,7 @@ const bmacWebhookSecret = defineSecret("BMAC_WEBHOOK_SECRET");
  */
 exports.bmacWebhook = onRequest(
   {
-    secrets: [bmacWebhookSecret],
+    secrets: [bmacWebhookSecret, discordAnnouncementsWebhookUrl],
     cors: false,
     // Full vCPU (not the fleet-wide gcf_gen1 fraction) so a cold start answers
     // inside BMAC's delivery window. BMAC retries a failed delivery only 4
@@ -104,10 +107,11 @@ exports.bmacWebhook = onRequest(
 
     try {
       const db = getDb();
+      let state = null;
       if (parsed) {
         // Recurring membership / monthly support.
         if (parsed.active && parsed.tier) {
-          await applyActiveSupport(db, parsed);
+          state = await applyActiveSupport(db, parsed);
         } else {
           // Cancelled/paused, or an active plan below the lowest tier floor.
           await applyInactiveSupport(db, parsed.emailHash);
@@ -120,7 +124,7 @@ exports.bmacWebhook = onRequest(
       } else {
         // One-time donation → permanent 'friend' recognition.
         if (oneTime.active) {
-          await applyOneTimeSupport(db, oneTime);
+          state = await applyOneTimeSupport(db, oneTime);
         } else {
           await revokeOneTimeSupport(db, oneTime.emailHash);
         }
@@ -129,6 +133,7 @@ exports.bmacWebhook = onRequest(
           oneTime: oneTime.active,
         });
       }
+      await announceFromWebhook(state);
       res.status(200).send("OK");
     } catch (err) {
       logger.error("BMAC webhook: processing error", err);
@@ -137,6 +142,27 @@ exports.bmacWebhook = onRequest(
     }
   }
 );
+
+/**
+ * Discord shout-out for a webhook-driven tier gain. A linked supporter who
+ * hasn't opted out is named; an unlinked recurring supporter waits for the
+ * named post that follows their link (see helpers/supporterDiscord.js), and an
+ * unlinked one-time coffee is thanked anonymously. Never throws.
+ * @param {import("../helpers/supporterStore").SupporterWriteResult|null} state
+ */
+async function announceFromWebhook(state) {
+  if (!state?.written || !state.tier) return;
+  if (!shouldAnnounceTierChange(state.prevTier, state.tier)) return;
+  const linked = !!state.uid;
+  if (!linked && state.tier !== "friend") return;
+  const name = linked && !state.anonymous ? state.username || state.displayName : null;
+  if (linked && !name) return;
+  await announceSupporter(discordAnnouncementsWebhookUrl.value(), {
+    tier: state.tier,
+    prevTier: state.prevTier,
+    name,
+  });
+}
 
 // ---------------------------------------------------------------------------
 // Link an account to a BMAC support (manual claim)
@@ -183,7 +209,9 @@ async function consumeLinkAttempt(db, uid) {
  * mismatch flow is legitimate (PayPal emails differ) but is the only path an
  * email-guessing attacker can use, so it stays auditable and throttled.
  */
-exports.linkBmacSupport = onCall({ cors: true }, async (request) => {
+exports.linkBmacSupport = onCall(
+  { cors: true, secrets: [discordAnnouncementsWebhookUrl] },
+  async (request) => {
   const uid = assertAuth(request);
   const email = (request.data?.email || "").trim();
   const emailHash = hashEmail(email);
@@ -234,6 +262,10 @@ exports.linkBmacSupport = onCall({ cors: true }, async (request) => {
       const profile = profileSnap.exists ? profileSnap.data() : {};
       const displayName = profile.displayName || profile.username || "Director";
       const username = profile.username || null;
+      // First link of this support (and not opted out of the wall) earns the
+      // one named Discord shout-out; re-links and relinks stay silent.
+      const announce =
+        !supporter.linkAnnouncedAt && supporter.anonymous !== true && !!username;
 
       tx.set(
         supporterRef,
@@ -241,6 +273,7 @@ exports.linkBmacSupport = onCall({ cors: true }, async (request) => {
           uid,
           displayName,
           username,
+          ...(announce ? { linkAnnouncedAt: new Date().toISOString() } : {}),
           // Audit trail: false marks a link claimed with an email that is
           // not the caller's verified login email (the guessable path).
           claimEmailMatched: emailMatchesCaller,
@@ -263,8 +296,16 @@ exports.linkBmacSupport = onCall({ cors: true }, async (request) => {
       );
 
       logger.info("BMAC support linked", { uid, tier: supporter.tier, emailMatchesCaller });
-      return { success: true, tier: supporter.tier };
+      return { success: true, tier: supporter.tier, announce: announce ? username : null };
     });
+
+    // Named shout-out in #announcements, after the commit. Best-effort.
+    if (result.announce) {
+      await announceSupporter(discordAnnouncementsWebhookUrl.value(), {
+        tier: result.tier,
+        name: result.announce,
+      });
+    }
 
     // Mismatched-email links are legitimate but auditable: tell the admins
     // so a stolen-flair claim can be spotted and reversed. Never let the
@@ -285,13 +326,14 @@ exports.linkBmacSupport = onCall({ cors: true }, async (request) => {
       }
     }
 
-    return result;
+    return { success: result.success, tier: result.tier };
   } catch (err) {
     if (err instanceof HttpsError) throw err;
     logger.error("linkBmacSupport error", err);
     throw new HttpsError("internal", "Couldn't link your support. Try again.");
   }
-});
+  }
+);
 
 // ---------------------------------------------------------------------------
 // Wall preferences
