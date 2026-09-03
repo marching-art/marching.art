@@ -1,0 +1,64 @@
+name: Wait for CI
+description: >-
+  Block until the CI workflow run for this commit has completed, and fail
+  unless it succeeded. Deploy workflows run this first on push events so a
+  red CI on main can never ship (Q-H1). The deploy's own tests still run
+  afterwards; this adds the typecheck, lint, ratchets, e2e and everything
+  else CI covers to the gate.
+
+inputs:
+  workflow:
+    description: Name of the workflow to wait for (the `name:` in its file).
+    default: CI
+  timeout-minutes:
+    description: Give up (and fail) after this long.
+    default: '45'
+  poll-seconds:
+    description: Seconds between polls.
+    default: '30'
+
+runs:
+  using: composite
+  steps:
+    - name: Wait for ${{ inputs.workflow }} on ${{ github.sha }}
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        GH_REPO: ${{ github.repository }}
+        WORKFLOW: ${{ inputs.workflow }}
+        TIMEOUT_MINUTES: ${{ inputs.timeout-minutes }}
+        POLL_SECONDS: ${{ inputs.poll-seconds }}
+        SHA: ${{ github.sha }}
+      run: |
+        set -euo pipefail
+        deadline=$(( $(date +%s) + TIMEOUT_MINUTES * 60 ))
+        # CI is triggered by the same push, so its run may not exist for a few
+        # seconds; a missing run is "not yet", not "skipped", until the deadline.
+        while :; do
+          runs=$(gh run list --workflow "$WORKFLOW" --commit "$SHA" --event push \
+                   --json databaseId,status,conclusion,url --limit 10)
+          count=$(jq 'length' <<<"$runs")
+          if [ "$count" -gt 0 ]; then
+            # Newest run for this commit wins (a re-run supersedes the original).
+            run=$(jq -c 'sort_by(.databaseId) | last' <<<"$runs")
+            status=$(jq -r '.status' <<<"$run")
+            conclusion=$(jq -r '.conclusion' <<<"$run")
+            url=$(jq -r '.url' <<<"$run")
+            if [ "$status" = "completed" ]; then
+              if [ "$conclusion" = "success" ]; then
+                echo "::notice::$WORKFLOW succeeded for $SHA — $url"
+                exit 0
+              fi
+              echo "::error::$WORKFLOW finished with conclusion '$conclusion' for $SHA — refusing to deploy. $url"
+              exit 1
+            fi
+            echo "$WORKFLOW is $status for $SHA — waiting ($url)"
+          else
+            echo "No $WORKFLOW run found yet for $SHA — waiting"
+          fi
+          if [ "$(date +%s)" -ge "$deadline" ]; then
+            echo "::error::Timed out after ${TIMEOUT_MINUTES}m waiting for $WORKFLOW on $SHA — refusing to deploy."
+            exit 1
+          fi
+          sleep "$POLL_SECONDS"
+        done

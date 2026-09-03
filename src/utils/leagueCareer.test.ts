@@ -58,12 +58,12 @@ describe('computeLeagueCareers', () => {
     expect(a.winPercentage).toBe(0.5);
   });
 
-  // The standings table beside this counts a bye as a win. Two tables
-  // disagreeing about a director's record is worse than either convention.
-  it('counts a bye as a win, the way the standings do', () => {
+  // A bye is a non-game, the same convention the server standings use
+  // (functions/src/helpers/leagueStandings.js): recorded, never a win.
+  it('records a bye without counting it as a win, the way the standings do', () => {
     const careers = computeLeagueCareers([week(1, [bye('a')])], CLASSES);
     const a = careers.get('a')!;
-    expect(a.wins).toBe(1);
+    expect(a.wins).toBe(0);
     expect(a.byes).toBe(1);
     expect(a.losses).toBe(0);
     // A bye has no opponent, so it sets no head-to-head.

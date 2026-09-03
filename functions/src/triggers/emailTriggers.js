@@ -12,6 +12,7 @@ const {
   sendMilestoneEmail,
   brevoApiKey,
   EMAIL_TYPES,
+  isEmailTypeEnabled,
 } = require("../helpers/emailService");
 
 // Streak milestones that trigger celebration emails
@@ -104,7 +105,7 @@ exports.onStreakMilestoneReached = onDocumentCreated(
 
     // Check email preferences
     const emailPreferences = profile.settings?.emailPreferences || {};
-    if (emailPreferences.allEmails === false || emailPreferences[EMAIL_TYPES.MILESTONE_ACHIEVED] === false) {
+    if (!isEmailTypeEnabled(emailPreferences, EMAIL_TYPES.MILESTONE_ACHIEVED)) {
       logger.info(`User ${userId} has opted out of milestone emails`);
       return;
     }

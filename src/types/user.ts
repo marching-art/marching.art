@@ -237,6 +237,12 @@ export interface EngagementData {
   totalLogins: number;
   recentActivity: RecentActivity[];
   weeklyProgress?: Record<CorpsClass, WeeklyProgressData>;
+  /** Server-owned weekly challenge arc (functions/src/helpers/dailyChallenges.js). */
+  weeklyLoop?: {
+    weekKey?: string;
+    countedDays?: string[];
+    rewardedDays?: number[];
+  };
 }
 
 export interface RecentActivity {

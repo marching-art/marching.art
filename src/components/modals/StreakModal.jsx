@@ -151,16 +151,19 @@ const StreakModal = ({ onClose, corpsCoin = 0 }) => {
                   {status?.hasActiveFreeze ? (
                     <div className="flex items-center gap-2 text-xs text-cyan-300">
                       <ShieldCheck className="w-4 h-4" />
-                      Freeze active — your streak is protected until{' '}
-                      {new Date(status.freezeExpiresAt).toLocaleTimeString([], {
-                        hour: 'numeric',
-                        minute: '2-digit',
+                      Freeze ready — the next day you miss won&apos;t break your streak (held
+                      through{' '}
+                      {new Date(status.freezeExpiresAt).toLocaleDateString([], {
+                        month: 'short',
+                        day: 'numeric',
                       })}
+                      )
                     </div>
                   ) : (
                     <>
                       <p className="text-xs text-muted mb-3">
-                        Protects your streak for 24 hours if you miss a day. One freeze per 7 days.
+                        Covers the next day you miss — it stays ready until you need it. One freeze
+                        per 7 days.
                       </p>
                       {status?.canPurchaseFreeze ? (
                         <button

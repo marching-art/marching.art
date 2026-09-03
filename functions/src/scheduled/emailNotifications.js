@@ -14,6 +14,7 @@ const {
   sendWinBackEmail,
   brevoApiKey,
   EMAIL_TYPES,
+  isEmailTypeEnabled,
 } = require("../helpers/emailService");
 const { createUserNotification } = require("../helpers/userNotifications");
 
@@ -40,13 +41,9 @@ function shouldSendEmail(profile, emailType) {
     [EMAIL_TYPES.MILESTONE_ACHIEVED]: true,
   };
 
-  // If user has explicitly set all emails to false, respect that
-  if (emailPreferences.allEmails === false) {
-    return false;
-  }
-
-  // Check specific preference or use default
-  return emailPreferences[emailType] ?? defaults[emailType] ?? true;
+  // allEmails:false wins; otherwise the per-type key (camelCase, as the
+  // Settings modal writes it — see EMAIL_PREFERENCE_MAP) or the default.
+  return isEmailTypeEnabled(emailPreferences, emailType, defaults[emailType] ?? true);
 }
 
 /**

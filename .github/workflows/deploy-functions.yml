@@ -8,6 +8,12 @@ name: Deploy Cloud Functions
 # and `firebase deploy` re-diffs source so only the changed functions
 # redeploy. List tags: `git tag -l 'functions-deploy/*' | sort | tail`.
 
+# GATED ON CI: on push events deploy-all first waits for the CI workflow run
+# on the same commit (.github/actions/wait-for-ci) and aborts unless it
+# succeeded — the test jobs below cover functions + rules, CI adds typecheck,
+# lint, the ratchets and e2e. workflow_dispatch skips the gate (rollbacks to a
+# functions-deploy/* tag have no CI run of their own).
+
 on:
   # Auto-deploy: a push to main that touches backend code or security rules
   # runs the deploy-all job. On push events that job diffs against the last
@@ -180,15 +186,18 @@ jobs:
     # paths (see the push trigger above).
     if: github.event_name == 'push' || inputs.deploy_target == 'all'
     needs: [test-functions, test-rules]
-    # contents: write is for creating the functions-deploy/* rollback tag only.
+    # contents: write is for creating the functions-deploy/* rollback tag only;
+    # actions: read is for the CI gate (gh run list).
     permissions:
       contents: write
+      actions: read
     runs-on: ubuntu-latest
     # A full redeploy of every function can crawl: the Firebase CLI retries
     # Cloud Run quota errors internally with 20-100s backoffs (write requests
     # per minute; regional CPU — see the cpu note in functions/index.js), so
-    # give the job headroom over the ~10 min incremental-deploy norm.
-    timeout-minutes: 60
+    # give the job headroom over the ~10 min incremental-deploy norm — plus up
+    # to ~45 min waiting on CI first.
+    timeout-minutes: 110
     steps:
       # Full history + tags: the deploy-target step below diffs HEAD against
       # the last functions-deploy/* tag to work out which functions changed.
@@ -196,6 +205,10 @@ jobs:
         with:
           fetch-depth: 0
           fetch-tags: true
+
+      - name: Wait for CI to pass on this commit
+        if: github.event_name == 'push'
+        uses: ./.github/actions/wait-for-ci
 
       - uses: actions/setup-node@v7
         with:

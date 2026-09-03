@@ -157,10 +157,9 @@ export function computeLeagueCareers(
     const [p1, p2] = matchup.pair as [string, string | null];
 
     if (!p2 || matchup.isBye) {
-      const career = careerFor(p1);
-      career.byes += 1;
-      career.wins += 1;
-      seasonFor(p1, seasonUid).wins += 1;
+      // A bye is a non-game (server: helpers/leagueStandings.js) — counted
+      // for the record but never as a win.
+      careerFor(p1).byes += 1;
       continue;
     }
 

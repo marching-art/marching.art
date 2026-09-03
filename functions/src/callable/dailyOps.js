@@ -11,6 +11,7 @@ const {
 } = require("../helpers/xpCalculations");
 const { addCoinHistoryEntryToTransaction } = require("../helpers/economy");
 const { createUserNotification } = require("../helpers/userNotifications");
+const { resolveLoginStreak, freezeHoldUntil, toFreezeDate, FREEZE_HOLD_DAYS } = require("../helpers/loginStreak");
 const { assertAuth, assertWriteBudget } = require("../helpers/callableGuards");
 const {
   CHALLENGE_POOL,
@@ -101,37 +102,19 @@ const claimDailyLogin = onCall({ cors: true }, async (request) => {
         };
       }
 
-      // Calculate streak. todayGameDay is a Date.toDateString() string (the ET
-      // game day anchored to a local-midnight Date); parse it back and step one
-      // day to name yesterday's game day. The server clock is UTC, which has no
-      // DST, so this day arithmetic is exact.
-      const yesterdayGameDay = new Date(
-        new Date(todayGameDay).getTime() - 24 * 60 * 60 * 1000
-      ).toDateString();
-
-      let newStreak = 1;
-      let streakBroken = false;
+      // Streak + Streak Freeze semantics live in helpers/loginStreak.js: a
+      // held freeze covers exactly one missed game day and is spent only by
+      // that miss — a login that didn't need it leaves it held.
       const previousStreak = engagement.loginStreak || 0;
-
-      if (lastLoginGameDay) {
-        if (lastLoginGameDay === yesterdayGameDay) {
-          // Consecutive day - increment streak
-          newStreak = previousStreak + 1;
-        } else {
-          // Check if streak freeze is active
-          const streakFreezeUntil = engagement.streakFreezeUntil
-            ? (engagement.streakFreezeUntil.toDate ? engagement.streakFreezeUntil.toDate() : new Date(engagement.streakFreezeUntil))
-            : null;
-
-          if (streakFreezeUntil && now <= streakFreezeUntil) {
-            // Streak was protected!
-            newStreak = previousStreak + 1;
-            logger.info(`User ${uid} streak protected by freeze - continuing at ${newStreak}`);
-          } else {
-            // Streak broken
-            streakBroken = previousStreak > 1;
-          }
-        }
+      const { newStreak, streakBroken, protectedByFreeze, freezeConsumed } = resolveLoginStreak({
+        previousStreak,
+        lastLoginGameDay,
+        todayGameDay,
+        streakFreezeUntil: engagement.streakFreezeUntil,
+        now,
+      });
+      if (protectedByFreeze) {
+        logger.info(`User ${uid} streak protected by freeze - continuing at ${newStreak}`);
       }
 
       // Calculate rewards
@@ -163,14 +146,18 @@ const claimDailyLogin = onCall({ cors: true }, async (request) => {
         'engagement.loginStreak': newStreak,
         'engagement.lastLogin': admin.firestore.FieldValue.serverTimestamp(),
         'engagement.totalLogins': admin.firestore.FieldValue.increment(1),
-        'engagement.streakFreezeUntil': null, // Clear any used freeze
         ...xpResult.updates,
       };
+      // Only a freeze that actually covered a miss is spent; an unused one
+      // stays held for the next missed day.
+      if (freezeConsumed) {
+        updates['engagement.streakFreezeUntil'] = null;
+      }
 
-      // Award free streak freeze at 30-day milestone
+      // Award a free streak freeze at the milestone: held for the next missed
+      // day, same as a purchased one.
       if (freeFreeze) {
-        const freezeUntil = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-        updates['engagement.streakFreezeUntil'] = freezeUntil;
+        updates['engagement.streakFreezeUntil'] = freezeHoldUntil(now);
         logger.info(`User ${uid} awarded free streak freeze for ${newStreak}-day milestone`);
       }
 
@@ -599,7 +586,8 @@ const completeDailyChallenge = onCall({ cors: true }, async (request) => {
 
 /**
  * Purchase Streak Freeze
- * Protects streak for 24 hours if user misses a day
+ * Covers the next game day the director misses (held up to FREEZE_HOLD_DAYS
+ * days; see helpers/loginStreak.js)
  * Cost: 300 CorpsCoin
  * Limit: 1 freeze per 7 days
  */
@@ -646,17 +634,15 @@ const purchaseStreakFreeze = onCall({ cors: true }, async (request) => {
         }
       }
 
-      // Check if already has active freeze
-      const streakFreezeUntil = engagement.streakFreezeUntil
-        ? (engagement.streakFreezeUntil.toDate ? engagement.streakFreezeUntil.toDate() : new Date(engagement.streakFreezeUntil))
-        : null;
+      // Check if a freeze is already held
+      const streakFreezeUntil = toFreezeDate(engagement.streakFreezeUntil);
 
       if (streakFreezeUntil && now < streakFreezeUntil) {
-        throw new HttpsError("already-exists", "You already have an active streak freeze.");
+        throw new HttpsError("already-exists", "You already have a streak freeze ready.");
       }
 
-      // Calculate freeze expiration (24 hours from now)
-      const freezeUntil = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+      // Held until it covers a missed day, or lapses unused.
+      const freezeUntil = freezeHoldUntil(now);
 
       // Deduct CorpsCoin and activate freeze
       transaction.update(profileRef, {
@@ -669,7 +655,7 @@ const purchaseStreakFreeze = onCall({ cors: true }, async (request) => {
         type: 'streak_freeze',
         amount: -STREAK_FREEZE_COST,
         balance: currentCoin - STREAK_FREEZE_COST,
-        description: 'Streak freeze protection (24h)',
+        description: `Streak freeze — covers your next missed day (held up to ${FREEZE_HOLD_DAYS} days)`,
       });
 
       return {

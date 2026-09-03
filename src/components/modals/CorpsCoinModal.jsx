@@ -224,7 +224,8 @@ const CorpsCoinModal = ({ onClose }) => {
                     <div className="p-3 bg-background border border-line">
                       <p className="text-sm font-bold text-white">Streak Freeze</p>
                       <p className="text-xs text-muted">
-                        Protect your login streak for 24 hours — 300 CC from the streak panel.
+                        Covers the next day you miss, so your login streak survives it — 300 CC from
+                        the streak panel.
                       </p>
                     </div>
                   </>

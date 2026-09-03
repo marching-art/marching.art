@@ -401,6 +401,48 @@ await check(
   )
 );
 
+// --- corps keys are a registry allowlist ---
+await freshSeed();
+await check(
+  'owner cannot add an unknown corps class (with lineup + shows)',
+  assertFails(
+    updateDoc(doc(authed(), profilePath), {
+      'corps.fakeClass': {
+        corpsName: 'Ghost Corps',
+        lineup: { GE1: 'X' },
+        selectedShows: { week3: [{ eventName: 'Every Show' }] },
+      },
+    })
+  )
+);
+
+await freshSeed();
+await check(
+  'owner cannot add an unknown corps class via merge set',
+  assertFails(
+    setDoc(
+      doc(authed(), profilePath),
+      { corps: { soundsport: { corpsName: 'Wrong Case' } } },
+      { merge: true }
+    )
+  )
+);
+
+// Positive path for the allowlist: soundSport is the one class a client
+// creates (onboarding); the competitive classes are created server-side.
+await freshSeed();
+await testEnv.withSecurityRulesDisabled(async (ctx) => {
+  await updateDoc(doc(ctx.firestore(), profilePath), { 'corps.soundSport': deleteField() });
+});
+await check(
+  'owner can add the soundSport class to a profile without one',
+  assertSucceeds(
+    updateDoc(doc(authed(), profilePath), {
+      'corps.soundSport': { corpsName: 'Fresh SS', lineup: { GE1: 'Genesis' } },
+    })
+  )
+);
+
 await freshSeed();
 await check(
   'owner cannot clear mustRename',

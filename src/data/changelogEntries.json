@@ -1,5 +1,17 @@
 [
   {
+    "id": "2026-09-03-streak-freeze-byes-notifications",
+    "date": "2026-09-03",
+    "title": "Streak Freeze works as promised, byes stop counting as wins, and notifications say what they mean",
+    "category": "fix",
+    "summary": "A Streak Freeze now covers the next day you miss, whenever that is — it stays ready until you need it, instead of quietly expiring a day after you bought it or vanishing the first time you logged in. In leagues with an odd number of directors, a bye week is now a week off, not a free win, so the table is decided by the matchups you actually played. Push notifications show their real title and message and open the page they're about.",
+    "highlights": [
+      "Unticking a single email type in Settings (weekly digest, streak alerts, and the rest) now actually stops that email.",
+      "Your league record shows byes separately; win percentage counts only the weeks you played.",
+      "The freeze panel says exactly what your freeze covers and how long it stays ready."
+    ]
+  },
+  {
     "id": "2026-09-03-deep-links-support-and-schedule",
     "date": "2026-09-03",
     "title": "Notifications land where they point, and support is one click away",

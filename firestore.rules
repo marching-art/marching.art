@@ -189,6 +189,23 @@ function touchesProtectedCorpsFields() {
        != resource.data.get(['corps', 'soundSport', 'uniformGuard'], null));
 }
 
+// The corps map may only gain REGISTRY class keys. Every per-class guard
+// above inspects the five known classes by name, so without this an owner
+// could add `corps.anythingElse` carrying a lineup and selectedShows — the
+// scorer and the show-registration index iterate every key — and bypass the
+// per-week show caps and every server-only field. Keys already on the doc are
+// grandfathered (only additions are checked) so a legacy profile can still be
+// edited; the backend skips unknown classes regardless (helpers/scoring.js,
+// helpers/showRegistrations.js). Short-circuits when the write doesn't touch
+// corps at all (see the PERF note above).
+function corpsKeysOk() {
+  return !request.resource.data.diff(resource.data).affectedKeys().hasAny(['corps']) ||
+    !(request.resource.data.get('corps', null) is map) ||
+    request.resource.data.corps.keys().hasOnly(
+      (resource.data.get('corps', null) is map ? resource.data.corps.keys() : []).concat(
+        ['worldClass', 'openClass', 'aClass', 'podiumClass', 'soundSport']));
+}
+
 // SIZE/TYPE CAPS on owner-writable free-text profile fields. profile/data is
 // world-readable (leaderboards, public profiles), so without caps oversized
 // or non-string junk written by an owner gets publicly served to every
@@ -318,7 +335,7 @@ match /artifacts/{appId}/users/{userId} {
     allow create, delete: if isAdmin();
     allow update: if isAdmin() ||
       (isOwner(userId) && !touchesProtectedProfileFields() &&
-        !touchesProtectedCorpsFields() && profileTextFieldsValid());
+        !touchesProtectedCorpsFields() && corpsKeysOk() && profileTextFieldsValid());
   }
   
   // Per-season detail (the full caption lineup + week-by-week show picks for one

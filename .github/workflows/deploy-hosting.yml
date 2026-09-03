@@ -5,6 +5,11 @@ name: Deploy Hosting
 # config. Vercel deploys separately from its own GitHub integration; this
 # workflow keeps the Firebase Hosting copy of the site equally fresh.
 #
+# GATED ON CI: on push events the job first waits for the CI workflow run on
+# the same commit (.github/actions/wait-for-ci) and aborts unless it
+# succeeded, so a red typecheck/lint/test/e2e on main never ships. Manual
+# workflow_dispatch runs skip the gate — that is the operator's call.
+#
 # REQUIRED SETUP (Settings → Secrets and variables → Actions):
 #   - FIREBASE_SERVICE_ACCOUNT (secret): service-account JSON with the
 #     "Firebase Hosting Admin" role — the same secret deploy-functions.yml
@@ -33,12 +38,25 @@ concurrency:
   group: deploy-hosting-${{ github.ref }}
   cancel-in-progress: true
 
+# Least privilege: `actions: read` is for the CI gate (gh run list);
+# checks/pull-requests write are what action-hosting-deploy's repoToken uses.
+permissions:
+  contents: read
+  actions: read
+  checks: write
+  pull-requests: write
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # Includes up to ~45 min waiting on CI before the build starts.
+    timeout-minutes: 70
     steps:
       - uses: actions/checkout@v7
+
+      - name: Wait for CI to pass on this commit
+        if: github.event_name == 'push'
+        uses: ./.github/actions/wait-for-ci
 
       - uses: actions/setup-node@v7
         with:
