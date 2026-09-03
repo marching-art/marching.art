@@ -8,18 +8,29 @@
 // the mobile bottom nav via `.above-bottom-nav`.
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { BarChart3 } from 'lucide-react';
 import { useAnalyticsConsent } from '../utils/analyticsConsent';
 
+/**
+ * Routes where the bar stays out of the way: full-height forms whose submit
+ * button sits exactly where a bottom-anchored bar lands on a phone. The
+ * question is asked on the next page instead.
+ */
+const QUIET_ROUTES = ['/login', '/register', '/forgot-password', '/onboarding'];
+
 export const AnalyticsConsentBanner: React.FC = () => {
   const { asked, grant, deny } = useAnalyticsConsent();
+  const { pathname } = useLocation();
   if (asked) return null;
+  if (QUIET_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`))) {
+    return null;
+  }
 
   return (
     <section
       aria-labelledby="analytics-consent-title"
-      className="fixed left-3 right-3 sm:left-auto sm:right-6 sm:max-w-md z-[90] above-bottom-nav bg-surface border border-line shadow-lg p-3 sm:p-4"
+      className="fixed left-3 right-3 sm:left-auto sm:right-6 sm:max-w-md z-[90] above-bottom-nav bg-surface border border-line p-3 sm:p-4"
       data-testid="analytics-consent"
     >
       <div className="flex items-start gap-3">

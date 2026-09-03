@@ -4,6 +4,10 @@ import { test, expect } from '@playwright/test';
 // visit, either answer hides it for good on this browser, and the answer is
 // changeable later under Settings → Privacy (covered by the unit tests).
 
+// The shared config seeds a "denied" decision so the bar never overlays other
+// specs; this one needs the first-visit state.
+test.use({ storageState: { cookies: [], origins: [] } });
+
 test.describe('Analytics consent bar', () => {
   test('shows once, hides on "No thanks", and stays hidden after reload', async ({ page }) => {
     await page.goto('/');

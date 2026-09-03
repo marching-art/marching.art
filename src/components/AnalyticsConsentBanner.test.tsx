@@ -8,9 +8,9 @@ import {
   setAnalyticsConsent,
 } from '../utils/analyticsConsent';
 
-const renderBanner = () =>
+const renderBanner = (path = '/') =>
   render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={[path]}>
       <AnalyticsConsentBanner />
     </MemoryRouter>
   );
@@ -37,6 +37,16 @@ describe('AnalyticsConsentBanner', () => {
     fireEvent.click(screen.getByRole('button', { name: /no thanks/i }));
     expect(localStorage.getItem(ANALYTICS_CONSENT_KEY)).toBe('denied');
     expect(screen.queryByTestId('analytics-consent')).toBeNull();
+  });
+
+  it('stays off the sign-in, sign-up, reset and onboarding forms', () => {
+    for (const path of ['/login', '/register', '/forgot-password', '/onboarding']) {
+      const { unmount } = renderBanner(path);
+      expect(screen.queryByTestId('analytics-consent')).toBeNull();
+      unmount();
+    }
+    renderBanner('/how-to-play');
+    expect(screen.getByTestId('analytics-consent')).toBeInTheDocument();
   });
 
   it('never renders once a decision exists', () => {
