@@ -1,5 +1,13 @@
 [
   {
+    "id": "2026-09-03-one-click-unsubscribe-from-any-email",
+    "date": "2026-09-03",
+    "title": "Unsubscribe from marching.art email with one click, no sign-in needed",
+    "category": "improvement",
+    "summary": "Every digest, reminder, streak and win-back email now carries a personal unsubscribe link that works without signing in, and mail apps that offer their own Unsubscribe button (Gmail, Yahoo, Apple Mail) can use it directly. One click turns all engagement email off; you can turn individual types back on under Settings → Email whenever you like. Account emails such as password resets are unaffected.",
+    "highlights": []
+  },
+  {
     "id": "2026-09-03-lighter-first-load-for-visitors",
     "date": "2026-09-03",
     "title": "The site loads lighter, especially for visitors who are not signed in",

@@ -94,6 +94,11 @@ const Privacy = () => {
                 opt out of at any time).
               </li>
               <li>
+                To send you optional engagement email (digests, reminders, streak and win-back
+                notes). Every such email carries a one-click unsubscribe link that works without
+                signing in; you can also manage each type under Settings → Email.
+              </li>
+              <li>
                 To send you the notifications you have enabled: in-app, push, and email (score
                 drops, lineup deadlines, league activity, streak reminders, digests). Each can be
                 turned off in Settings.

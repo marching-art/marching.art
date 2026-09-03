@@ -100,6 +100,16 @@ function FantasyClassRow({ entry, lead, onClick }) {
   );
 }
 
+/**
+ * @param {{
+ *   isOpen: boolean,
+ *   onClose: () => void,
+ *   rehearsalIncomplete?: boolean,
+ *   fantasyClasses?: import('../../utils/podiumLineupSwitch').FantasyLineupClass[],
+ *   onRehearse: () => void,
+ *   onSwitchToClass: (classId: string) => void,
+ * }} props
+ */
 export default function PodiumLineupSheet({
   isOpen,
   onClose,

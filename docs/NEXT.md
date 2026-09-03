@@ -8,7 +8,7 @@ burns an hour to conclude "everything's about covered." Don't. If you ship,
 cut, or discover something, edit THIS file in the same PR — that's the whole
 maintenance contract.
 
-_Last updated: 2026-09-03 (site-review row 17 — vendor-firebase trimmed, GameShell + overlays lazy for guests; row 16 — focus traps + Escape in every raw dialog, icon buttons named; row 15 — one dashboard interrupt per visit, celebrations to the inbox; row 14 — weekly XP / win bonus / finish bonus paid per director; row 13 — league weeks decided per show, percentile edge cases; row 12 — server-enforced age gate + consent-gated analytics; AI imagery now built from the full Uniform Studio design + rendered reference image; main ruleset + gazetteer PR flow; site-review Fix-first 1–11 + quick wins shipped)._
+_Last updated: 2026-09-03 (site-review row 18 — one-click unsubscribe + List-Unsubscribe headers, noindex auth wall; row 17 — vendor-firebase trimmed, GameShell + overlays lazy for guests; row 16 — focus traps + Escape in every raw dialog, icon buttons named; row 15 — one dashboard interrupt per visit, celebrations to the inbox; row 14 — weekly XP / win bonus / finish bonus paid per director; row 13 — league weeks decided per show, percentile edge cases; row 12 — server-enforced age gate + consent-gated analytics; AI imagery now built from the full Uniform Studio design + rendered reference image; main ruleset + gazetteer PR flow; site-review Fix-first 1–11 + quick wins shipped)._
 
 ## In progress
 
@@ -23,9 +23,10 @@ queue: work it top-down, and tick items off here as they ship.
 
 _(rows 1–17 — S-H1, B-H1, N-H1, F-H3, B-H3, G-H3, Q-H1, F-H2, F-H1, B-H4,
 B-H6/S-M6, S-H2/S-H3, G-H2/G-M10, G-H1/G-H7, U-H4, A-H1/A-H2, F-H4/F-M2 (+
-F-M1) — and all eight "Cross-area quick wins" shipped 2026-09-03; continue
-from row 18 (N-H2 / N-H6: `List-Unsubscribe` headers + tokenised
-unsubscribe; `noindex` protected routes) of the Part 1 table. Still open from
+F-M1), N-H2/N-H6 — and all eight "Cross-area quick wins" shipped
+2026-09-03; continue from row 19 (Q-H2 / Q-H3: coverage over all functions
+files; first tests for `admin.js` and `leagueAutomation.js`) of the Part 1
+table. Still open from
 F-H4: `re2js` (144 kB) rides in via Firestore's pipelines support — track
 upstream for a pipelines-free entry.
 Left open from G-H1's detail, outside row 14's scope: the league title still
@@ -168,9 +169,6 @@ ops step below)_
 
 ### Legal & support
 
-- **P2** Engagement emails ship no `List-Unsubscribe` /
-  `List-Unsubscribe-Post` headers (`helpers/emailService.js:81-98`) and the
-  only opt-out is login-walled (`:28`). Signed no-login `/unsubscribe`. (M)
 - **P2** Terms never mention CorpsCoin (no cash value / non-transferable /
   forfeiture), §6 covers only corps names + show concepts, no governing law
   or copyright-notice path (`pages/Terms.jsx`). (M)
@@ -319,7 +317,7 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
 
 ## Evergreen ratchets (any session, any size)
 
-- `@ts-nocheck` paydown — **75 files** at
+- `@ts-nocheck` paydown — **74 files** at
   last update; `npm run ts-nocheck:next` ranks the cheapest (no free wins
   left; `Schedule.jsx` and `Layout/GameShell.jsx` are ~30 errors each). One
   per substantive task is the CLAUDE.md habit; batches welcome.
@@ -337,6 +335,17 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
 
 ## Recently shipped (context, newest first — prune when stale)
 
+- 2026-09-03: site-review row 18 (N-H2 / N-H6). One-click unsubscribe:
+  `helpers/unsubscribeToken.js` signs `uid.hmac` tokens under a key derived
+  from `BREVO_API_KEY` (no new secret to provision), `buildSendRequest` adds
+  `List-Unsubscribe` / `List-Unsubscribe-Post` and swaps the footer link for
+  the per-recipient URL, the five engagement senders take `{ uid }`, and
+  `triggers/unsubscribe.js` (`/unsubscribe` rewrite on both hosts) merges
+  `settings.emailPreferences.allEmails: false` on GET (confirmation page) or
+  POST (RFC 8058). `ProtectedRoute` renders `AuthWallMeta` (`noindex`) while
+  loading / bouncing; robots disallows `/unsubscribe` and `/podium/preview`.
+  Privacy §2 and INTEGRATIONS.md updated; 14 new tests.
+  `DashboardModalHost.jsx` typed (ts-nocheck 75 → 74). Changelog entry added.
 - 2026-09-03: site-review row 17 (F-H4 / F-M2, + F-M1). `api/analytics.ts`
   imports `firebase/analytics` dynamically on consent; `vite.config.js`
   leaves `@firebase/{app-check,analytics}` out of the eager `vendor-firebase`

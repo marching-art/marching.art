@@ -39,6 +39,11 @@ Disallow: /styleguide
 # Password reset — a form, never a search result.
 Disallow: /forgot-password
 
+# One-click email unsubscribe (per-recipient signed links) and the Podium
+# demo, which is noindex of its own accord.
+Disallow: /unsubscribe
+Disallow: /podium/preview
+
 # Legacy redirect routes — duplicates of the canonical paths above.
 # Note: /how-to-play is intentionally crawlable — it is the public
 # fantasy drum corps guide. /hall-of-champions is also crawlable: it is

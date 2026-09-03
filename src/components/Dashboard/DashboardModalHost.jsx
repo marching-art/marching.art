@@ -1,4 +1,3 @@
-// @ts-nocheck -- mechanical extraction from Dashboard.jsx; types come with that file
 // =============================================================================
 // DASHBOARD MODAL HOST
 // =============================================================================
@@ -63,6 +62,20 @@ const ShowConceptModal = lazyWithRetry(
   'ShowConceptModal'
 );
 
+/**
+ * `modals` is the whole return of hooks/useDashboardModals and `data` the
+ * aggregated dashboard state (hooks/useDashboardData) — both untyped hook
+ * bags passed straight through, hence `any`.
+ * @param {{
+ *   modals: any,
+ *   data: any,
+ *   quickStartSteps: any[],
+ *   quickStartVariant?: 'fantasy' | 'podium',
+ *   rehearsalIncomplete?: boolean,
+ *   onRequestZone?: (zone: string) => void,
+ *   onRevealPanel?: (panel: string) => void,
+ * }} props
+ */
 const DashboardModalHost = ({
   modals,
   data,
@@ -146,11 +159,19 @@ const DashboardModalHost = ({
               setRegistrationDefaultClass(targetClass);
               setShowRegistration(true);
             }}
-            onUnretire={(retiredIndex) => handleUnretireCorps(slotPickerClass, retiredIndex)}
+            onUnretire={(/** @type {number} */ retiredIndex) =>
+              handleUnretireCorps(slotPickerClass, retiredIndex)
+            }
             corpsClass={slotPickerClass}
             retiredCorps={(profile?.retiredCorps || [])
-              .map((record, retiredIndex) => ({ record, retiredIndex }))
-              .filter((entry) => entry.record?.corpsClass === slotPickerClass)}
+              .map((/** @type {any} */ record, /** @type {number} */ retiredIndex) => ({
+                record,
+                retiredIndex,
+              }))
+              .filter(
+                (/** @type {{ record: any }} */ entry) =>
+                  entry.record?.corpsClass === slotPickerClass
+              )}
             processing={unretiring}
           />
         </Suspense>
@@ -219,7 +240,6 @@ const DashboardModalHost = ({
           corpsName={activeCorps.corpsName || activeCorps.name}
           corpsClass={activeCorpsClass}
           retiring={retiring}
-          inLeague={false}
           hasPendingWork={corpsHasPendingWork(activeCorps)}
         />
       )}

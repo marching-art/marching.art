@@ -117,6 +117,15 @@ const PublicPage = ({ name, children, ...shellProps }) => (
 // Auth context + useAuth hook live in ./context/AuthContext so this file only
 // exports components (keeps Vite fast refresh working).
 
+// A crawler that reaches an auth-walled route sees a loader and then the
+// homepage redirect; without this it indexed that spinner under the homepage
+// title. Rendered only while the wall is up — once the page renders it sets
+// its own metadata, and this unmounts (its cleanup clears the robots tag).
+const AuthWallMeta = () => {
+  useSEO({ noindex: true });
+  return null;
+};
+
 // Protected Route Component
 // requireProfile: when true (default), an authenticated user who has no profile
 // yet is redirected to onboarding. This prevents profile-less users from reaching
@@ -146,11 +155,21 @@ const ProtectedRoute = ({ children, requireProfile = true }) => {
   }, [loading, user, profile, location]);
 
   if (loading) {
-    return <LoadingScreen />;
+    return (
+      <>
+        <AuthWallMeta />
+        <LoadingScreen />
+      </>
+    );
   }
 
   if (!user) {
-    return <Navigate to="/" state={{ from: location }} replace />;
+    return (
+      <>
+        <AuthWallMeta />
+        <Navigate to="/" state={{ from: location }} replace />
+      </>
+    );
   }
 
   if (requireProfile) {

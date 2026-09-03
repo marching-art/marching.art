@@ -29,6 +29,10 @@
       "source": "/api/errors",
       "destination": "https://us-central1-marching-art.cloudfunctions.net/reportClientErrorHttp"
     },
+    {
+      "source": "/unsubscribe",
+      "destination": "https://us-central1-marching-art.cloudfunctions.net/getUnsubscribeHttp"
+    },
     { "source": "/((?!.*\\.).*)", "destination": "/index.html" }
   ],
   "headers": [

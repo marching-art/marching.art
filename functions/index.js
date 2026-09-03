@@ -310,6 +310,7 @@ const { announceArticleToDiscord } = require("./src/triggers/newsDiscord");
 const { getOgCardHttp, getShareHttp } = require("./src/triggers/shareCards");
 const { getResultsPageHttp } = require("./src/triggers/resultsPages");
 const { getPublicProfilePageHttp } = require("./src/triggers/publicProfilePages");
+const { getUnsubscribeHttp } = require("./src/triggers/unsubscribe");
 const { reportClientErrorHttp } = require("./src/triggers/clientErrors");
 const { onProfileDataWritten } = require("./src/triggers/profileMirror");
 const {
@@ -536,6 +537,9 @@ module.exports = {
   // homepage card.
   getOgCardHttp,
   getShareHttp,
+  // Backs the /unsubscribe rewrite (both hosts): the one-click, no-login
+  // email opt-out every engagement email links to (List-Unsubscribe).
+  getUnsubscribeHttp,
   // Backs the /results/** rewrite (both hosts): crawlable server-rendered
   // season/day results pages — the public SEO surface for nightly scores.
   getResultsPageHttp,
