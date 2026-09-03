@@ -195,7 +195,10 @@ jobs:
       # the test:coverage script). The job FAILS if backend coverage drops below
       # the floor, so an untested new branch in the scoring/economy/league code —
       # exactly the regression class the rules suite was created to prevent — can
-      # no longer merge green. Floors sit just under current numbers; raise them
+      # no longer merge green. Node only reports files a test actually loaded,
+      # so src/allModules.test.js requires every deployed module and the
+      # script's --test-coverage-include/exclude pin the measured set (one-off
+      # src/scripts are out). Floors sit just under current numbers; raise them
       # when a PR lifts coverage meaningfully.
       - name: Run function unit tests with coverage (gated)
         run: cd functions && npm run test:coverage
