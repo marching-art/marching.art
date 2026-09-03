@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
 import { X, Loader2, RefreshCw, RotateCcw, ChevronRight } from 'lucide-react';
 import YouTubeIcon from '../YouTubeIcon';
 import { useAuth } from '../../context/AuthContext';
 import { adminHelpers } from '../../api';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 /**
  * @param {{
@@ -24,6 +25,8 @@ import { adminHelpers } from '../../api';
  */
 const YouTubeModal = ({ videoModal, onClose, onRetry, onReset }) => {
   useEscapeKey(onClose, !!videoModal.show);
+  const dialogRef = useRef(null);
+  useFocusTrap(dialogRef, !!videoModal.show);
 
   // Admin check gates the Reset button (UI-only; the backend re-verifies the
   // admin claim before touching the nope list).
@@ -42,6 +45,7 @@ const YouTubeModal = ({ videoModal, onClose, onRetry, onReset }) => {
   return (
     <div
       className="fixed inset-0 z-[110] flex items-center justify-center p-4"
+      ref={dialogRef}
       role="dialog"
       aria-modal="true"
       aria-label={videoModal.title || 'Video player'}
@@ -60,8 +64,9 @@ const YouTubeModal = ({ videoModal, onClose, onRetry, onReset }) => {
             {videoModal.title}
           </h2>
           <button
+            aria-label="Close"
             onClick={onClose}
-            className="p-1.5 text-muted hover:text-white hover:bg-white/10 rounded-none transition-colors flex-shrink-0 ml-2"
+            className="p-1.5 text-muted hover:text-white hover:bg-white/10 rounded-none transition-colors flex-shrink-0 ml-2 min-w-[44px] min-h-[44px] inline-flex items-center justify-center"
           >
             <X className="w-5 h-5" />
           </button>

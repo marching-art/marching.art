@@ -47,7 +47,11 @@ const DeleteCorpsModal = ({ onClose, onConfirm, corpsName, corpsClass }) => {
               <AlertTriangle className="w-4 h-4" />
               Confirm Delete
             </h2>
-            <button onClick={onClose} className="p-1 text-muted hover:text-white">
+            <button
+              aria-label="Close"
+              onClick={onClose}
+              className="p-1 text-muted hover:text-white min-w-[44px] min-h-[44px] inline-flex items-center justify-center"
+            >
               <X className="w-4 h-4" />
             </button>
           </div>

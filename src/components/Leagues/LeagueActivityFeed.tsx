@@ -607,7 +607,11 @@ export const NotificationDropdown = ({
               Mark all read
             </button>
           )}
-          <button onClick={onClose} className="p-1 hover:bg-line rounded-none">
+          <button
+            aria-label="Close"
+            onClick={onClose}
+            className="p-1 hover:bg-line rounded-none min-w-[44px] min-h-[44px] inline-flex items-center justify-center"
+          >
             <X className="w-4 h-4 text-muted" />
           </button>
         </div>

@@ -2,11 +2,13 @@
 // and the leave-league confirmation modal. Extracted verbatim from
 // LeagueDetailView.jsx.
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { m } from 'framer-motion';
 import { Send, LogOut, AlertTriangle, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { postLeagueMessageCF as postLeagueMessage } from '../../api/functions';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 // Quick Smack Talk Input - Compact inline form
 interface SmackTalkInputProps {
@@ -84,18 +86,15 @@ export const LeaveLeagueModal = ({
   isLastMember = false,
   escrowReturned = 0,
 }: LeaveLeagueModalProps) => {
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
-  }, [onClose]);
+  useEscapeKey(onClose);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(dialogRef);
 
   return (
     <div
       className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4"
       onClick={onClose}
+      ref={dialogRef}
       role="dialog"
       aria-modal="true"
     >
@@ -112,7 +111,11 @@ export const LeaveLeagueModal = ({
             <AlertTriangle className="w-3.5 h-3.5" />
             Leave League
           </h2>
-          <button onClick={onClose} className="p-1 text-muted hover:text-white">
+          <button
+            aria-label="Close"
+            onClick={onClose}
+            className="p-1 text-muted hover:text-white min-w-[44px] min-h-[44px] inline-flex items-center justify-center"
+          >
             <X className="w-4 h-4" />
           </button>
         </div>

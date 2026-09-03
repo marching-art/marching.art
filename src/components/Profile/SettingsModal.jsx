@@ -5,7 +5,7 @@
 // Account, notification, and privacy settings. Extracted from Profile.jsx to
 // keep that page focused on the profile view.
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Mail,
   AtSign,
@@ -30,6 +30,7 @@ import { useEscapeKey } from '../../hooks/useEscapeKey';
 import { usePWAInstall } from '../../hooks/usePWAInstall';
 import PWAInstallInstructions from '../PWAInstallInstructions';
 import { friendlyCallableError } from '../../utils/callableErrors';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 // =============================================================================
 // TOGGLE
@@ -61,6 +62,8 @@ const Toggle = ({ checked, onChange, label, description }) => (
 const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
   const { signOut } = useAuth();
   useEscapeKey(onClose, isOpen);
+  const dialogRef = useRef(null);
+  useFocusTrap(dialogRef, isOpen);
   const [activeTab, setActiveTab] = useState(initialTab);
 
   // Tooltip preferences
@@ -367,6 +370,7 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
     <div
       className="fixed inset-0 z-50 bg-black/80 flex items-end sm:items-center justify-center"
       onClick={onClose}
+      ref={dialogRef}
       role="dialog"
       aria-modal="true"
       aria-label="Settings"

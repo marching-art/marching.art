@@ -1,12 +1,13 @@
 // src/components/Dashboard/QuickStartGuide.jsx
 // Accessible quick start guide for new users
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { X, ChevronRight, Check, HelpCircle, BookOpen, Zap, Star, ArrowRight } from 'lucide-react';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
 import { Heading } from '../ui';
 import { QUICK_START_STEPS, PODIUM_QUICK_START_STEPS } from './quickStartSteps';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 /** @type {Record<string, { bg: string, border: string, text: string, button: string }>} */
 const colorClasses = {
@@ -51,6 +52,8 @@ const QuickStartGuide = ({
 }) => {
   const [expandedStep, setExpandedStep] = useState(/** @type {string | null} */ (null));
   useEscapeKey(onClose, isOpen);
+  const dialogRef = useRef(null);
+  useFocusTrap(dialogRef, isOpen);
 
   if (!isOpen) return null;
 
@@ -65,6 +68,7 @@ const QuickStartGuide = ({
         exit={{ opacity: 0 }}
         className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"
         onClick={onClose}
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label="Quick start guide"
@@ -89,8 +93,9 @@ const QuickStartGuide = ({
                 </div>
               </div>
               <button
+                aria-label="Close"
                 onClick={onClose}
-                className="p-2 hover:bg-white/10 rounded-none transition-colors"
+                className="p-2 hover:bg-white/10 rounded-none transition-colors min-w-[44px] min-h-[44px] inline-flex items-center justify-center"
               >
                 <X className="w-5 h-5 text-muted" />
               </button>

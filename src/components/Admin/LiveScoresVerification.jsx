@@ -481,6 +481,7 @@ const LiveScoresVerification = () => {
           {/* Scroll Controls */}
           <div className="flex items-center justify-between">
             <button
+              aria-label="Scroll left"
               onClick={handleScrollLeft}
               disabled={!canScrollLeft}
               className={`p-1 rounded-none transition-all ${
@@ -489,13 +490,14 @@ const LiveScoresVerification = () => {
                   : 'bg-charcoal-900/50 text-muted/30 cursor-not-allowed'
               }`}
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="w-4 h-4 min-w-[44px] min-h-[44px] inline-flex items-center justify-center" />
             </button>
             <span className="text-[10px] text-muted font-mono">
               Showing days {columns.length === 0 ? 0 : scrollPosition + 1}-
               {Math.min(scrollPosition + VISIBLE_COLUMNS, columns.length)} of {columns.length}
             </span>
             <button
+              aria-label="Scroll right"
               onClick={handleScrollRight}
               disabled={!canScrollRight}
               className={`p-1 rounded-none transition-all ${
@@ -504,7 +506,7 @@ const LiveScoresVerification = () => {
                   : 'bg-charcoal-900/50 text-muted/30 cursor-not-allowed'
               }`}
             >
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-4 h-4 min-w-[44px] min-h-[44px] inline-flex items-center justify-center" />
             </button>
           </div>
 

@@ -2,10 +2,11 @@
 // empty states. Split out to keep the page under the ~700-line guidance in
 // ARCHITECTURE.md — pure render, no data access.
 
-import React from 'react';
+import React, { useRef } from 'react';
 import { Plus, Trophy, Users, X } from 'lucide-react';
 
 import { useEscapeKey } from '../hooks/useEscapeKey';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 // =============================================================================
 // QUICK JOIN MODAL
@@ -25,10 +26,13 @@ export const QuickJoinModal = ({
   isJoining?: boolean;
 }) => {
   useEscapeKey(onClose);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(dialogRef);
   return (
     <div
       className="fixed inset-0 bg-black/80 z-50 flex items-end sm:items-center justify-center"
       onClick={onClose}
+      ref={dialogRef}
       role="dialog"
       aria-modal="true"
       aria-label="Join league by invite code"
@@ -47,6 +51,7 @@ export const QuickJoinModal = ({
             Join by Code
           </span>
           <button
+            aria-label="Close"
             onClick={onClose}
             className="p-2 -mr-2 text-muted hover:text-white min-w-touch min-h-touch flex items-center justify-center"
           >

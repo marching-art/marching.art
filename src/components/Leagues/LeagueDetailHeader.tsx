@@ -80,8 +80,9 @@ const LeagueDetailHeader = ({
       <div className="flex items-center gap-2">
         {isCommissioner && (
           <button
+            aria-label="League settings"
             onClick={onOpenSettings}
-            className="p-1.5 bg-surface-raised hover:bg-line transition-colors"
+            className="p-1.5 bg-surface-raised hover:bg-line transition-colors min-w-[44px] min-h-[44px] inline-flex items-center justify-center"
           >
             <Settings className="w-4 h-4 text-muted" />
           </button>

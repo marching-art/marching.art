@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
 import { Activity, TrendingUp, TrendingDown, X, Play } from 'lucide-react';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 /**
  * One ranked row from useLandingScores' standings computation.
@@ -24,12 +25,15 @@ import { Activity, TrendingUp, TrendingDown, X, Play } from 'lucide-react';
  */
 const StandingsModal = ({ show, liveScores, displayDay, onClose, onYoutubeClick }) => {
   useEscapeKey(onClose, !!show);
+  const dialogRef = useRef(null);
+  useFocusTrap(dialogRef, !!show);
 
   if (!show) return null;
 
   return (
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+      ref={dialogRef}
       role="dialog"
       aria-modal="true"
       aria-label="Full standings"
@@ -54,8 +58,9 @@ const StandingsModal = ({ show, liveScores, displayDay, onClose, onYoutubeClick 
             )}
           </div>
           <button
+            aria-label="Close"
             onClick={onClose}
-            className="p-1.5 text-muted hover:text-white hover:bg-white/10 rounded-none transition-colors"
+            className="p-1.5 text-muted hover:text-white hover:bg-white/10 rounded-none transition-colors min-w-[44px] min-h-[44px] inline-flex items-center justify-center"
           >
             <X className="w-5 h-5" />
           </button>

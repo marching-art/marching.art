@@ -1,7 +1,7 @@
 // SettingsTab - Commissioner settings for league management
 // Includes matchup generation, league settings, and invite code management
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { m } from 'framer-motion';
 import {
   Settings,
@@ -35,6 +35,7 @@ import CommissionerTransfer from './CommissionerTransfer';
 import CoCommissionerManager from './CoCommissionerManager';
 import ResultCorrection from './ResultCorrection';
 import ScoringFormatCard from './ScoringFormatCard';
+import { useFocusTrap } from '../../../hooks/useFocusTrap';
 
 // Corps class icons for visual display
 const CORPS_CLASS_CONFIG = {
@@ -68,10 +69,13 @@ const ConfirmRemoveMemberModal = ({
   isRemoving?: boolean;
 }) => {
   useEscapeKey(onCancel);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(dialogRef);
   return (
     <div
       className="fixed inset-0 bg-black/80 z-50 flex items-end sm:items-center justify-center"
       onClick={onCancel}
+      ref={dialogRef}
       role="dialog"
       aria-modal="true"
       aria-label="Confirm member removal"
@@ -372,8 +376,9 @@ const SettingsTab = ({
       <div className="flex items-center gap-3 mb-4">
         {onBack && (
           <button
+            aria-label="Back"
             onClick={onBack}
-            className="p-2 bg-surface-raised hover:bg-line transition-colors"
+            className="p-2 bg-surface-raised hover:bg-line transition-colors min-w-[44px] min-h-[44px] inline-flex items-center justify-center"
           >
             <ChevronLeft className="w-4 h-4 text-muted" />
           </button>
@@ -401,9 +406,10 @@ const SettingsTab = ({
             <p className="text-xs text-muted mb-2">Select week to generate matchups for:</p>
             <div className="flex items-center gap-2">
               <button
+                aria-label="Previous week"
                 onClick={() => setSelectedWeek(Math.max(1, selectedWeek - 1))}
                 disabled={selectedWeek <= 1}
-                className="p-2 bg-surface-raised hover:bg-line disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                className="p-2 bg-surface-raised hover:bg-line disabled:opacity-30 disabled:cursor-not-allowed transition-colors min-w-[44px] min-h-[44px] inline-flex items-center justify-center"
               >
                 <ChevronLeft className="w-4 h-4 text-muted" />
               </button>
@@ -441,11 +447,12 @@ const SettingsTab = ({
               </div>
 
               <button
+                aria-label="Next week"
                 onClick={() =>
                   setSelectedWeek(Math.min(GAME_CONFIG.season.totalWeeks, selectedWeek + 1))
                 }
                 disabled={selectedWeek >= GAME_CONFIG.season.totalWeeks}
-                className="p-2 bg-surface-raised hover:bg-line disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                className="p-2 bg-surface-raised hover:bg-line disabled:opacity-30 disabled:cursor-not-allowed transition-colors min-w-[44px] min-h-[44px] inline-flex items-center justify-center"
               >
                 <ChevronRight className="w-4 h-4 text-muted" />
               </button>

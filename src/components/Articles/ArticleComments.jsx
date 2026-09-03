@@ -145,8 +145,9 @@ function Comment({ comment, currentUserId, onEdit, onDelete, onReport }) {
         {currentUserId && (
           <div className="relative" ref={menuRef}>
             <button
+              aria-label="Comment options"
               onClick={() => setShowMenu(!showMenu)}
-              className="p-1 text-muted hover:text-white transition-colors"
+              className="p-1 text-muted hover:text-white transition-colors min-w-[44px] min-h-[44px] inline-flex items-center justify-center"
             >
               <MoreVertical className="w-4 h-4" />
             </button>
@@ -213,8 +214,9 @@ function Comment({ comment, currentUserId, onEdit, onDelete, onReport }) {
             <div className="bg-surface-raised px-4 py-3 border-b border-line flex items-center justify-between">
               <h3 className="text-xs font-bold uppercase text-muted">Report Comment</h3>
               <button
+                aria-label="Close"
                 onClick={() => setShowReportModal(false)}
-                className="text-muted hover:text-white"
+                className="text-muted hover:text-white min-w-[44px] min-h-[44px] inline-flex items-center justify-center"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -455,7 +457,11 @@ export default function ArticleComments({
           <h3 className="text-xs font-bold uppercase tracking-wider text-muted">Comments</h3>
           <span className="text-xs text-muted font-data tabular-nums">({commentCount})</span>
         </div>
-        <button onClick={() => setIsExpanded(false)} className="text-muted hover:text-white">
+        <button
+          aria-label="Close"
+          onClick={() => setIsExpanded(false)}
+          className="text-muted hover:text-white min-w-[44px] min-h-[44px] inline-flex items-center justify-center"
+        >
           <X className="w-4 h-4" />
         </button>
       </div>

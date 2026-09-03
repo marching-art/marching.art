@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // =============================================================================
 // CORPSCOIN WALLET MODAL - balance, transaction history, and earning guide
 // =============================================================================
@@ -15,6 +14,7 @@ import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { getCorpsCoinHistory, getEarningOpportunities } from '../../api/functions';
 
 // Callable results serialize Firestore Timestamps to {_seconds,...}
+/** @param {any} ts */
 const toDate = (ts) => {
   if (!ts) return null;
   if (typeof ts === 'string') return new Date(ts);
@@ -23,6 +23,7 @@ const toDate = (ts) => {
   return null;
 };
 
+/** @type {Record<string, string>} */
 const CLASS_REWARD_LABELS = {
   soundSport: 'SoundSport',
   aClass: 'A Class',
@@ -30,6 +31,14 @@ const CLASS_REWARD_LABELS = {
   worldClass: 'World Class',
 };
 
+/**
+ * @typedef {import('../../api/functions').CorpsCoinTransaction} CorpsCoinTransaction
+ * @typedef {import('../../api/functions').EarningOpportunity} EarningOpportunity
+ * @typedef {import('../../api/functions').SpendingOption} SpendingOption
+ * @typedef {{ opportunities: Record<string, EarningOpportunity>, spending: Record<string, SpendingOption> }} EarningGuide
+ */
+
+/** @param {{ onClose: () => void }} props */
 const CorpsCoinModal = ({ onClose }) => {
   useEscapeKey(onClose);
   const dialogRef = useRef(null);
@@ -37,9 +46,9 @@ const CorpsCoinModal = ({ onClose }) => {
   useFocusTrap(dialogRef);
 
   const [tab, setTab] = useState('history');
-  const [balance, setBalance] = useState(null);
-  const [history, setHistory] = useState([]);
-  const [earning, setEarning] = useState(null);
+  const [balance, setBalance] = useState(/** @type {number | null} */ (null));
+  const [history, setHistory] = useState(/** @type {CorpsCoinTransaction[]} */ ([]));
+  const [earning, setEarning] = useState(/** @type {EarningGuide | null} */ (null));
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -94,7 +103,11 @@ const CorpsCoinModal = ({ onClose }) => {
                 )}
               </div>
             </div>
-            <button onClick={onClose} className="p-1 text-muted hover:text-white">
+            <button
+              aria-label="Close"
+              onClick={onClose}
+              className="p-1 text-muted hover:text-white min-w-[44px] min-h-[44px] inline-flex items-center justify-center"
+            >
               <X className="w-4 h-4" />
             </button>
           </div>

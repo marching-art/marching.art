@@ -119,8 +119,9 @@ const ClassPurchaseModal: React.FC<ClassPurchaseModalProps> = ({
               {isEarlyUnlock ? 'Early Unlock' : 'Unlock Class'}
             </h2>
             <button
+              aria-label="Close"
               onClick={onClose}
-              className="p-1 text-muted hover:text-white"
+              className="p-1 text-muted hover:text-white min-w-[44px] min-h-[44px] inline-flex items-center justify-center"
               disabled={isPurchasing}
             >
               <X className="w-4 h-4" />

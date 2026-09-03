@@ -8,7 +8,7 @@ burns an hour to conclude "everything's about covered." Don't. If you ship,
 cut, or discover something, edit THIS file in the same PR — that's the whole
 maintenance contract.
 
-_Last updated: 2026-09-03 (site-review row 15 — one dashboard interrupt per visit, celebrations to the inbox; row 14 — weekly XP / win bonus / finish bonus paid per director; row 13 — league weeks decided per show, percentile edge cases; row 12 — server-enforced age gate + consent-gated analytics; AI imagery now built from the full Uniform Studio design + rendered reference image; main ruleset + gazetteer PR flow; site-review Fix-first 1–11 + quick wins shipped)._
+_Last updated: 2026-09-03 (site-review row 16 — focus traps + Escape in every raw dialog, icon buttons named; row 15 — one dashboard interrupt per visit, celebrations to the inbox; row 14 — weekly XP / win bonus / finish bonus paid per director; row 13 — league weeks decided per show, percentile edge cases; row 12 — server-enforced age gate + consent-gated analytics; AI imagery now built from the full Uniform Studio design + rendered reference image; main ruleset + gazetteer PR flow; site-review Fix-first 1–11 + quick wins shipped)._
 
 ## In progress
 
@@ -21,11 +21,11 @@ code-first review of the whole product (security, backend, frontend, UX,
 a11y, quality, economy, SEO/comms). Its **Part 1 backlog table** is the
 queue: work it top-down, and tick items off here as they ship.
 
-_(rows 1–15 — S-H1, B-H1, N-H1, F-H3, B-H3, G-H3, Q-H1, F-H2, F-H1, B-H4,
-B-H6/S-M6, S-H2/S-H3, G-H2/G-M10, G-H1/G-H7, U-H4 — and all eight "Cross-area
-quick wins" shipped 2026-09-03; continue from row 16 (A-H1 / A-H2:
-`useFocusTrap` + `useEscapeKey` in the raw dialogs; `IconButton` for the
-unlabeled icon buttons) of the Part 1 table.
+_(rows 1–16 — S-H1, B-H1, N-H1, F-H3, B-H3, G-H3, Q-H1, F-H2, F-H1, B-H4,
+B-H6/S-M6, S-H2/S-H3, G-H2/G-M10, G-H1/G-H7, U-H4, A-H1/A-H2 — and all eight
+"Cross-area quick wins" shipped 2026-09-03; continue from row 17 (F-H4 / F-M2:
+trim `vendor-firebase` — app-check, analytics out; lazy-load `GameShell` for
+guests) of the Part 1 table.
 Left open from G-H1's detail, outside row 14's scope: the league title still
 sums a director's Finals night across every class (`leagueArchival.js`
 `finalsByUid`) — decide it on a flagship class or the mean class percentile;
@@ -121,15 +121,10 @@ ops step below)_
 
 ### SEO, accessibility & UX
 
-- **P2** 12 dialogs render `role="dialog" aria-modal` without `useFocusTrap`
-  (`Profile/SettingsModal.jsx:361`, `Sidebar/StandingsModal.jsx:33`,
-  `Sidebar/YouTubeModal.jsx:45`, `Leagues/CreateLeagueModal.tsx:120`,
-  `Leagues/tabs/SettingsTab.tsx:75`, `Dashboard/OnboardingTour.jsx:195`,
-  `pages/LeaguesParts.tsx:32`, `pages/CorpsHistory.jsx:784`, …). 32
-  icon-only buttons have no accessible name (11 hand-rolled modal close
-  buttons under `components/modals/`, `LeagueDetailHeader.tsx:82`, 8 in
-  Admin). Dashboard and NotFound have no `<h1>`. This quantifies the
-  `ui/Modal` adoption ratchet. (M)
+- **P3** Dashboard and NotFound have no `<h1>`. (Focus traps, Escape and
+  icon-button names shipped 2026-09-03 — `dialogFocusTrap.test.ts` now fails
+  on any new `role="dialog"` without `useFocusTrap`; the `ui/Modal` /
+  `IconButton` adoption ratchet remains.) (S)
 - **P3** `a11y/RouteChangeFocus.tsx:24-33` scrolls `window` (a no-op under
   `game-shell-active`) and focuses `#main-content` before the lazy chunk
   resolves. (M)
@@ -321,7 +316,7 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
 
 ## Evergreen ratchets (any session, any size)
 
-- `@ts-nocheck` paydown — **77 files** at
+- `@ts-nocheck` paydown — **76 files** at
   last update; `npm run ts-nocheck:next` ranks the cheapest (no free wins
   left; `Schedule.jsx` and `Layout/GameShell.jsx` are ~30 errors each). One
   per substantive task is the CLAUDE.md habit; batches welcome.
@@ -330,14 +325,23 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
   touched (functions are held to 70/80/85).
 - ESLint warnings downward — 14 today, no ceiling yet (see DX above).
 - React Query migration of the remaining manual-fetch components.
-- `ui/Button` / `ui/Modal` adoption; authed-app axe pass (12 untrapped
-  dialogs + 32 unlabeled icon buttons is the current tally).
+- `ui/Button` / `ui/Modal` / `IconButton` adoption; authed-app axe pass (the
+  untrapped-dialog and unlabeled-icon-button tallies are at zero as of
+  2026-09-03; `dialogFocusTrap.test.ts` keeps the first one there).
 - The two 700+-line league components (`MatchupsTabParts.tsx`,
   `MatchupDetailView.tsx`) want a split by concern — not by size — when
   next touched; sixteen more files are past the line (list above).
 
 ## Recently shipped (context, newest first — prune when stale)
 
+- 2026-09-03: site-review row 16 (A-H1 / A-H2). `useFocusTrap` (and, where
+  missing, `useEscapeKey`) in the 13 hand-rolled dialogs that lacked them;
+  `components/a11y/dialogFocusTrap.test.ts` fails on any `role="dialog"`
+  file without a trap (allowlist for hook-delegated traps). ~40 icon-only
+  buttons got `aria-label`s and 44px hit areas (modal close buttons, week /
+  scroll arrows, league settings, copy invite code, template load / delete,
+  comment options, send test email). `CorpsCoinModal.jsx` typed (ts-nocheck
+  77 → 76). Changelog entry added.
 - 2026-09-03: site-review row 15 (U-H4). `useModalQueue` shows at most one
   automated interrupt per dashboard visit (`MAX_INTERRUPTS_PER_VISIT`); the
   rest stay queued and re-enqueue from their profile flags next mount, and

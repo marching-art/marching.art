@@ -9,11 +9,12 @@
 // leaveLeague now auto-promotes a successor, but a deliberate handover should
 // not require quitting your own league.
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Crown, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { transferCommissioner } from '../../../api/functions';
 import { useEscapeKey } from '../../../hooks/useEscapeKey';
+import { useFocusTrap } from '../../../hooks/useFocusTrap';
 
 /** A roster row as SettingsTab builds it. */
 export interface RosterMember {
@@ -49,10 +50,13 @@ const ConfirmTransferModal = ({
   isTransferring,
 }: ConfirmProps) => {
   useEscapeKey(onCancel);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(dialogRef);
   return (
     <div
       className="fixed inset-0 bg-black/80 z-50 flex items-end sm:items-center justify-center"
       onClick={onCancel}
+      ref={dialogRef}
       role="dialog"
       aria-modal="true"
       aria-label="Confirm commissioner transfer"

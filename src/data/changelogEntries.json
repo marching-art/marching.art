@@ -1,5 +1,13 @@
 [
   {
+    "id": "2026-09-03-keyboard-and-screen-reader-friendly-dialogs",
+    "date": "2026-09-03",
+    "title": "Dialogs keep keyboard focus inside them and every icon button has a name",
+    "category": "improvement",
+    "summary": "Thirteen dialogs — the lineup editor's template and corps pickers, Settings, standings, video, the guest lineup picker, league creation, league settings, commissioner transfer, the leave-league confirm, the quick-start guide, the onboarding tour, and the mobile season detail on Corps History — now keep Tab inside the dialog, return focus to where you were when they close, and all close on Escape. Forty-odd icon-only buttons (close buttons, week and scroll arrows, league settings, copy invite code, template load and delete) now announce what they do to screen readers and have a full-size touch target.",
+    "highlights": []
+  },
+  {
     "id": "2026-09-03-one-dashboard-interruption-per-visit",
     "date": "2026-09-03",
     "title": "The dashboard now interrupts you at most once per visit",
