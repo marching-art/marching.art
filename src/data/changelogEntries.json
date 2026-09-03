@@ -1,5 +1,16 @@
 [
   {
+    "id": "2026-09-03-one-dashboard-interruption-per-visit",
+    "date": "2026-09-03",
+    "title": "The dashboard now interrupts you at most once per visit",
+    "category": "improvement",
+    "summary": "Opening the dashboard could stack several dialogs in front of the page: the season recap, then the new-season setup, then a class-unlock celebration, then an achievement, then the install nudge. Now only one automatic dialog opens per visit; anything else waits for your next visit. Achievements and class unlocks no longer open a dialog at all — they land in your inbox with a link, and you see a brief toast when they happen.",
+    "highlights": [
+      "Class unlock rows in the inbox deep-link straight to corps registration.",
+      "The install-app nudge stays out of the way on a visit that already showed a dialog."
+    ]
+  },
+  {
     "id": "2026-09-03-rewards-paid-per-director-not-per-corps",
     "date": "2026-09-03",
     "title": "Weekly XP, league-win bonuses and the season finish bonus are now paid per director",

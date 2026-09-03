@@ -14,12 +14,10 @@
 
 import React, { Suspense } from 'react';
 import {
-  ClassUnlockCongratsModal,
   CorpsRegistrationModal,
   DeleteConfirmModal,
   RetireConfirmModal,
   MoveCorpsModal,
-  AchievementModal,
   OnboardingTour,
   QuickStartGuide,
   CLASS_DISPLAY_NAMES,
@@ -108,9 +106,6 @@ const DashboardModalHost = ({
     setShowWalletModal,
     handleTourComplete,
     handlePodiumTourComplete,
-    handleSetupNewClass,
-    handleDeclineSetup,
-    handleAchievementClose,
     handleSeasonRecapClose,
     handlePodiumSeasonRecapClose,
     handlePodiumSeasonRecapSetup,
@@ -125,38 +120,19 @@ const DashboardModalHost = ({
     closeCaptionSelection,
   } = modals;
 
-  const {
-    profile,
-    corps,
-    activeCorps,
-    activeCorpsClass,
-    seasonData,
-    unlockedClasses,
-    newlyUnlockedClass,
-    clearNewlyUnlockedClass,
-    newAchievement,
-  } = data;
+  const { profile, corps, activeCorps, activeCorpsClass, seasonData, unlockedClasses } = data;
 
   return (
     <>
-      {modalQueue.isActive('classUnlock') && newlyUnlockedClass && (
-        <ClassUnlockCongratsModal
-          unlockedClass={newlyUnlockedClass}
-          onSetup={handleSetupNewClass}
-          onDecline={handleDeclineSetup}
-        />
-      )}
-
       {showRegistration && (
         <CorpsRegistrationModal
           onClose={() => {
             setShowRegistration(false);
             setRegistrationDefaultClass(null);
-            clearNewlyUnlockedClass();
           }}
           onSubmit={handleCorpsRegistration}
           unlockedClasses={unlockedClasses}
-          defaultClass={registrationDefaultClass || newlyUnlockedClass}
+          defaultClass={registrationDefaultClass}
         />
       )}
 
@@ -258,14 +234,6 @@ const DashboardModalHost = ({
           existingCorps={corps}
           transferring={transferring}
           hasPendingWork={corpsHasPendingWork(activeCorps)}
-        />
-      )}
-
-      {modalQueue.isActive('achievement') && newAchievement && (
-        <AchievementModal
-          onClose={handleAchievementClose}
-          achievements={profile?.achievements || []}
-          newAchievement={newAchievement}
         />
       )}
 

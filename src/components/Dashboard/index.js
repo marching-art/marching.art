@@ -1,13 +1,10 @@
 // src/components/Dashboard/index.js
-// Export modal components used by Dashboard
-export {
-  ClassUnlockCongratsModal,
-  CorpsRegistrationModal,
-  DeleteConfirmModal,
-  RetireConfirmModal,
-  MoveCorpsModal,
-  AchievementModal,
-} from './DashboardModals';
+// Modal components used by Dashboard (the celebration modals — class unlock,
+// achievement — are gone: those moments are inbox rows plus a toast now).
+export { default as CorpsRegistrationModal } from '../modals/CorpsRegistrationModal';
+export { default as DeleteConfirmModal } from '../modals/DeleteCorpsModal';
+export { default as RetireConfirmModal } from '../modals/RetireCorpsModal';
+export { default as MoveCorpsModal } from '../modals/MoveCorpsModal';
 
 // Onboarding and quick start components
 export { default as OnboardingTour } from './OnboardingTour';

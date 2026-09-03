@@ -8,7 +8,7 @@ burns an hour to conclude "everything's about covered." Don't. If you ship,
 cut, or discover something, edit THIS file in the same PR — that's the whole
 maintenance contract.
 
-_Last updated: 2026-09-03 (site-review row 14 — weekly XP / win bonus / finish bonus paid per director; row 13 — league weeks decided per show, percentile edge cases; row 12 — server-enforced age gate + consent-gated analytics; AI imagery now built from the full Uniform Studio design + rendered reference image; main ruleset + gazetteer PR flow; site-review Fix-first 1–11 + quick wins shipped)._
+_Last updated: 2026-09-03 (site-review row 15 — one dashboard interrupt per visit, celebrations to the inbox; row 14 — weekly XP / win bonus / finish bonus paid per director; row 13 — league weeks decided per show, percentile edge cases; row 12 — server-enforced age gate + consent-gated analytics; AI imagery now built from the full Uniform Studio design + rendered reference image; main ruleset + gazetteer PR flow; site-review Fix-first 1–11 + quick wins shipped)._
 
 ## In progress
 
@@ -21,10 +21,11 @@ code-first review of the whole product (security, backend, frontend, UX,
 a11y, quality, economy, SEO/comms). Its **Part 1 backlog table** is the
 queue: work it top-down, and tick items off here as they ship.
 
-_(rows 1–14 — S-H1, B-H1, N-H1, F-H3, B-H3, G-H3, Q-H1, F-H2, F-H1, B-H4,
-B-H6/S-M6, S-H2/S-H3, G-H2/G-M10, G-H1/G-H7 — and all eight "Cross-area quick
-wins" shipped 2026-09-03; continue from row 15 (U-H4: one auto-interrupt per
-Dashboard visit; move achievement/unlock to the inbox) of the Part 1 table.
+_(rows 1–15 — S-H1, B-H1, N-H1, F-H3, B-H3, G-H3, Q-H1, F-H2, F-H1, B-H4,
+B-H6/S-M6, S-H2/S-H3, G-H2/G-M10, G-H1/G-H7, U-H4 — and all eight "Cross-area
+quick wins" shipped 2026-09-03; continue from row 16 (A-H1 / A-H2:
+`useFocusTrap` + `useEscapeKey` in the raw dialogs; `IconButton` for the
+unlabeled icon buttons) of the Part 1 table.
 Left open from G-H1's detail, outside row 14's scope: the league title still
 sums a director's Finals night across every class (`leagueArchival.js`
 `finalsByUid`) — decide it on a flagship class or the mean class percentile;
@@ -320,7 +321,7 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
 
 ## Evergreen ratchets (any session, any size)
 
-- `@ts-nocheck` paydown — **78 files** at
+- `@ts-nocheck` paydown — **77 files** at
   last update; `npm run ts-nocheck:next` ranks the cheapest (no free wins
   left; `Schedule.jsx` and `Layout/GameShell.jsx` are ~30 errors each). One
   per substantive task is the CLAUDE.md habit; batches welcome.
@@ -337,6 +338,17 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
 
 ## Recently shipped (context, newest first — prune when stale)
 
+- 2026-09-03: site-review row 15 (U-H4). `useModalQueue` shows at most one
+  automated interrupt per dashboard visit (`MAX_INTERRUPTS_PER_VISIT`); the
+  rest stay queued and re-enqueue from their profile flags next mount, and
+  the queue stamps `sessionStorage` (`ma:interruptShown`) so
+  `PWAInstallPrompt` yields for the session. Achievements and class unlocks
+  no longer queue a modal: the claim's reward moments are built by
+  `helpers/rewardMoments.js` (achievement_unlocked, level_up, new
+  `class_unlocked` deep-linking to `/dashboard?panel=register`; backstop
+  unlocks silent; 7 tests) and the dashboard shows a toast.
+  `AchievementModal`, `ClassUnlockModal` and the `DashboardModals` re-export
+  shim are deleted (ts-nocheck 78 → 77). Changelog entry added.
 - 2026-09-03: site-review row 14 (G-H1 / G-H7). Weekly participation XP is
   one grant per director (`payWeeklyParticipationXP`, no `× classes.size`).
   The weekly-win CC + XP bonus is paid once per class per week across every

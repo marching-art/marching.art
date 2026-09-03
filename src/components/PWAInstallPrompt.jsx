@@ -4,6 +4,7 @@ import { m, AnimatePresence } from 'framer-motion';
 import { Download, X, Smartphone, Monitor } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { usePWAInstall } from '../hooks/usePWAInstall';
+import { wasInterruptShownThisSession } from '../hooks/useModalQueue';
 import PWAInstallInstructions from './PWAInstallInstructions';
 import { Heading } from './ui';
 
@@ -28,6 +29,11 @@ const PWAInstallPrompt = () => {
     // Only nudge when there's actually something to offer: a native prompt, or
     // manual steps for a platform that supports installation.
     if (!canPromptInstall && !needsManualInstall) return;
+
+    // One interruption per visit: if the dashboard already put a dialog in
+    // front of this session (season recap, setup, tour), the nudge waits for
+    // another day rather than stacking on top of it.
+    if (wasInterruptShownThisSession()) return;
 
     // Don't re-nudge if dismissed within the last 7 days.
     const dismissed = localStorage.getItem('pwa-install-dismissed');

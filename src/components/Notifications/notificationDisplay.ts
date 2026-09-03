@@ -31,6 +31,7 @@ import {
   Swords,
   TrendingUp,
   Trophy,
+  Unlock,
   UserPlus,
   type LucideIcon,
 } from 'lucide-react';
@@ -85,6 +86,7 @@ const DISPLAY_BY_TYPE: Record<AppNotificationType, NotificationDisplay> = {
   prize_payout: { Icon: Coins, color: 'text-brand', bg: 'bg-brand/20' },
   achievement_unlocked: { Icon: Award, color: 'text-brand', bg: 'bg-brand/20' },
   level_up: { Icon: Sparkles, color: 'text-brand', bg: 'bg-brand/20' },
+  class_unlocked: { Icon: Unlock, color: 'text-brand', bg: 'bg-brand/20' },
 
   // Social / status types.
   new_comment: { Icon: MessageSquare, color: 'text-green-400', bg: 'bg-green-500/20' },

@@ -172,21 +172,33 @@ export function useDashboardModals(user, dashboardData, podiumContext = {}) {
     }
   }, [profile?.podiumFirstVisit, isPodiumSelected, podiumExists, enqueueModal]);
 
+  // Celebrations are NOT interrupts. A class unlock and an achievement each
+  // land in the inbox server-side (helpers/rewardMoments.js) where they wait
+  // for the director; here they get a passing toast and nothing stands in
+  // front of the page. The toast for an unlock points at the control bar,
+  // which already carries the "register a corps" affordance for it.
   useEffect(() => {
-    if (newlyUnlockedClass) {
-      enqueueModal('classUnlock', MODAL_PRIORITY.CLASS_UNLOCK, {
-        unlockedClass: newlyUnlockedClass,
-      });
-    }
-  }, [newlyUnlockedClass, enqueueModal]);
+    if (!newlyUnlockedClass) return;
+    const name = CLASS_DISPLAY_NAMES[newlyUnlockedClass] || newlyUnlockedClass;
+    toast.success(
+      `${name} unlocked! Register a corps from the control bar whenever you're ready.`,
+      {
+        id: `class-unlock-${newlyUnlockedClass}`,
+        duration: 6000,
+      }
+    );
+    clearNewlyUnlockedClass();
+  }, [newlyUnlockedClass, clearNewlyUnlockedClass]);
 
   useEffect(() => {
-    if (newAchievement) {
-      enqueueModal('achievement', MODAL_PRIORITY.ACHIEVEMENT, {
-        achievement: newAchievement,
-      });
-    }
-  }, [newAchievement, enqueueModal]);
+    if (!newAchievement) return;
+    toast.success(`Achievement unlocked: ${newAchievement.title}`, {
+      id: `achievement-${newAchievement.id}`,
+      duration: 6000,
+      icon: '🏆',
+    });
+    clearNewAchievement();
+  }, [newAchievement, clearNewAchievement]);
 
   useEffect(() => {
     const userModalOpen =
@@ -241,22 +253,6 @@ export function useDashboardModals(user, dashboardData, podiumContext = {}) {
       }
     }
   }, [modalQueue, profile?.podiumFirstVisit, user]);
-
-  const handleSetupNewClass = useCallback(() => {
-    modalQueue.dequeue();
-    setShowRegistration(true);
-  }, [modalQueue, setShowRegistration]);
-
-  const handleDeclineSetup = useCallback(() => {
-    modalQueue.dequeue();
-    clearNewlyUnlockedClass();
-    toast.success('You can register your new corps anytime!');
-  }, [modalQueue, clearNewlyUnlockedClass]);
-
-  const handleAchievementClose = useCallback(() => {
-    modalQueue.dequeue();
-    clearNewAchievement();
-  }, [modalQueue, clearNewAchievement]);
 
   // Dismissing the season recap clears the one-shot pendingSeasonRecap field
   // (a client-writable field; the rewards themselves were applied server-side).
@@ -506,9 +502,6 @@ export function useDashboardModals(user, dashboardData, podiumContext = {}) {
     // Handlers
     handleTourComplete,
     handlePodiumTourComplete,
-    handleSetupNewClass,
-    handleDeclineSetup,
-    handleAchievementClose,
     handleSeasonRecapClose,
     handlePodiumSeasonRecapClose,
     handlePodiumSeasonRecapSetup,
