@@ -25,6 +25,19 @@ export default defineConfig({
   use: {
     /* Base URL to use in actions like `await page.goto('/')` */
     baseURL: 'http://localhost:3000',
+    /* Every context starts with analytics already declined: the consent bar
+       is a fixed overlay that would otherwise sit on top of whatever a spec
+       is trying to click (it took out the mobile login form). The consent
+       spec opts back out with an empty storageState of its own. */
+    storageState: {
+      cookies: [],
+      origins: [
+        {
+          origin: 'http://localhost:3000',
+          localStorage: [{ name: 'ma:analyticsConsent', value: 'denied' }],
+        },
+      ],
+    },
     /* Collect trace when retrying the failed test */
     trace: 'on-first-retry',
     /* Take screenshot on failure */
