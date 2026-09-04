@@ -47,10 +47,11 @@ function showsOf(recap) {
  * WITHIN ITS OWN DIVISION that night (the number that matters to it — a
  * division crowns its own winner, §5.7), not its rank in the mixed field.
  *
- * The medal is derived from that same placement (utils/podiumMedals), never
- * read off the row: the server now medals per division too, but recaps written
- * before it did medalled the mixed field, and an icon that disagrees with the
- * place printed beside it is worse than no icon.
+ * The medal is derived from that same placement (utils/podiumMedals) — the
+ * division's podium, at a show with a real field — never read off the row: the
+ * server now medals per division too, but recaps written before it did
+ * medalled the mixed field, and an icon that disagrees with the place printed
+ * beside it is worse than no icon.
  * @param {Array<{ day: number, recap: any }>} days
  * @param {string|null|undefined} uid
  * @param {string|null|undefined} userCorpsName
@@ -86,7 +87,7 @@ function buildLedger(days, uid, userCorpsName) {
         totalScore: mine.totalScore,
         place: place > 0 ? place : null,
         fieldSize: divisionField.length,
-        medal: podiumMedalForPlace(place > 0 ? place : null, divisionField.length),
+        medal: podiumMedalForPlace(place > 0 ? place : null, results.length),
       });
     }
   }

@@ -37,11 +37,10 @@ describe("rerankRecap", () => {
     const result = rerankRecap(recap, cfg);
     assert.equal(result.changed, true);
     const byUid = Object.fromEntries(recap.shows[0].results.map((r) => [r.uid, r]));
-    // The A Class corps that was "3rd with a bronze" is 1/3 — a win, no medal.
-    assert.deepEqual(
-      [byUid.a1.place, byUid.a1.fieldSize, byUid.a1.medal],
-      [1, 3, null]
-    );
+    // The A Class corps that was "3rd with a bronze" is 1/3 — its division's
+    // gold, at a seven-corps show.
+    assert.deepEqual([byUid.a1.place, byUid.a1.fieldSize, byUid.a1.medal], [1, 3, "gold"]);
+    assert.deepEqual([byUid.a3.place, byUid.a3.fieldSize, byUid.a3.medal], [3, 3, "bronze"]);
     // World's third took no medal before; it does in a four-corps division.
     assert.deepEqual([byUid.w3.place, byUid.w3.fieldSize, byUid.w3.medal], [3, 4, "bronze"]);
     assert.deepEqual([byUid.w4.place, byUid.w4.medal], [4, null]);
@@ -65,6 +64,27 @@ describe("rerankRecap", () => {
     assert.equal(second.changed, false);
     assert.equal(second.rowsChanged, 0);
     assert.equal(JSON.stringify(recap), after);
+  });
+
+  test("a show under the minimum field is ranked but never medalled", () => {
+    const recap = {
+      shows: [
+        {
+          results: [
+            { uid: "o1", division: "openClass", totalScore: 80, place: 1, medal: "gold" },
+            { uid: "a1", division: "aClass", totalScore: 70, place: 2, medal: "silver" },
+          ],
+        },
+      ],
+    };
+    rerankRecap(recap, cfg);
+    assert.deepEqual(
+      recap.shows[0].results.map((r) => [r.uid, r.place, r.fieldSize, r.medal]),
+      [
+        ["o1", 1, 1, null],
+        ["a1", 1, 1, null],
+      ]
+    );
   });
 
   test("an empty or joint-rehearsal-only recap is a no-op", () => {

@@ -270,14 +270,13 @@ ops step below)_
 
 ## Operational — owner only, standing until done
 
-- **Run the Podium medal correction** (Actions → "Correct Podium medals" →
-  Run workflow, dry run first, then with `commit` checked). Until it runs,
-  every recap written before 2026-09-04 still carries mixed-field `place` /
-  `medal` on its rows and the live season's `podium/state.medals` (+ the
-  profile mirror) counts podiums that were never shown. The ledger and the
-  recap sheet already derive medals from the division placement on screen, so
-  the visible mismatch is gone; this makes the stored data and the counters
-  agree with it. Idempotent — a second run is a no-op.
+- **Re-run the Podium medal correction** (Actions → "Correct Podium medals"
+  → Run workflow, dry run first, then with `commit` checked) once the
+  show-field gate deploys. The first run (2026-09-04 15:29Z) gated medals on
+  the DIVISION's field, which zeroed every Open and World Class counter for
+  the season; the rule now gates on the show's field and the script re-stamps
+  rows and rebuilds the counters from them. Idempotent — a later run that
+  finds nothing is a no-op.
 - **Re-enable the Buy Me a Coffee webhook.** BMAC auto-disabled it (email
   "Action Required | Webhook Disabled", 2026-09-03) because the endpoint URL
   in BMAC → Integrations → Webhooks had been set to the compute
@@ -393,12 +392,15 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
   so a "1/3" sat beside a silver and a "2/3" beside a gold. One rule now
   (`functions/src/helpers/podium/showRanking.js`, mirrored on the client by
   `src/utils/podiumMedals.ts` with a config-sync test): place, field size and
-  medal are decided within the division, medals only from
-  `balance.medals.minFieldSize` corps. The ledger and the recap sheet derive
-  the icon from the on-screen place (so pre-fix recaps render correctly too);
-  `correctPodiumMedals.js` + its workflow repair the stored rows and the
-  medal counters (see Operational). `@ts-nocheck` ratchet: 69 → 68
-  (`src/components/Podium/PodiumTrajectoryCard.jsx`).
+  medal are decided within the division, medals only at shows of
+  `balance.medals.minFieldSize` corps (the SHOW's field — gating on the
+  division's field, the first cut, zeroed every Open/World medal in a season
+  where those divisions field two a night). The ledger and the recap sheet
+  derive the icon from the on-screen place (so pre-fix recaps render
+  correctly too); `correctPodiumMedals.js` + its workflow repair the stored
+  rows and the medal counters (see Operational). `@ts-nocheck` ratchet:
+  69 → 68 (`PodiumTrajectoryCard.jsx`), then 65 → 64
+  (`Dashboard/sections/PredictionGamePanel.jsx`) with the show-field follow-up.
 - 2026-09-04 (later still): `npm run ts-nocheck:next` no longer lies. It ran
   `npx tsc`, which in a fresh web container (no `npm ci` yet) falls back to
   the image's global TypeScript 6; that compiler rejects the tsconfig's

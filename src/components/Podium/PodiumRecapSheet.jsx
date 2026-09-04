@@ -244,9 +244,10 @@ function ShowCard({ show, day, sortBy, seasonName, userCorpsName, cut = null }) 
                 {section.rows.map(({ row, place }, rowIndex) => {
                   const isMine = userCorpsName && row.corpsName === userCorpsName;
                   const advances = advancing.has(row.uid);
-                  // The medal this place earns in THIS division's field — the
-                  // same rule the season ledger and the nightly run apply.
-                  const medal = podiumMedalForPlace(place, section.rows.length);
+                  // The medal this place earns on its division's podium, at a
+                  // show with a real field — the same rule the season ledger
+                  // and the nightly run apply.
+                  const medal = podiumMedalForPlace(place, show.results?.length);
                   return (
                     <tr
                       key={row.uid}
