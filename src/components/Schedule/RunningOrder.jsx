@@ -1,8 +1,25 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 import React, { useState, useEffect } from 'react';
 import { Clock, Star } from 'lucide-react';
 import { getRunningOrderStatus } from '../../utils/scheduleUtils';
 import { normalizeCorpsName as normalize, highlightLabel } from '../../utils/pickHighlights';
+
+/**
+ * @typedef {import('../../utils/scheduleUtils').LineupEntry} LineupEntry
+ *
+ * @typedef {Object} EncoreEntry
+ * @property {string} [corps]
+ * @property {string|null} [uid]
+ * @property {string} [reason] - Why this corps performs in exhibition.
+ *
+ * Structurally a subset of showday's ShowLike, so either shape can be passed.
+ * @typedef {Object} RunningOrderShow
+ * @property {LineupEntry[]|null} [lineup] - Timed running order, in performance order.
+ * @property {Array<{uid?: string|null, corps?: string}>|null} [overflow] - "Also competing": scored but un-timed.
+ * @property {EncoreEntry|null} [encore] - Cosmetic encore corps, after scores.
+ * @property {string|null} [timezone]
+ * @property {string|null} [startsAt]
+ * @property {string|null} [scoresAt]
+ */
 
 /**
  * RunningOrder
@@ -21,7 +38,7 @@ import { normalizeCorpsName as normalize, highlightLabel } from '../../utils/pic
  * Renders nothing when the show has no lineup, so it's safe to drop in anywhere.
  *
  * @param {Object} props
- * @param {Object} props.show - Enriched show ({ lineup, timezone, startsAt, scoresAt }).
+ * @param {RunningOrderShow} props.show - Enriched show ({ lineup, timezone, startsAt, scoresAt }).
  * @param {Map<string,{tier:string,corps:string,captions:string[],sourceYear:any}>} [props.highlights]
  * @param {Set<string>} [props.highlightCorps] - Legacy: normalized names, full tier.
  * @param {string} [props.myUid] - The viewing director's uid. Their own corps
@@ -48,7 +65,9 @@ const RunningOrder = ({ show, highlights, highlightCorps, myUid, compact = false
   const encore = show?.encore && show.encore.corps ? show.encore : null;
   const encoreMine = !!(encore && myUid && encore.uid === myUid);
 
-  const { current, next } = getRunningOrderStatus(show, now);
+  const status = getRunningOrderStatus(show, now);
+  const current = /** @type {LineupEntry|null} */ (status.current);
+  const next = /** @type {LineupEntry|null} */ (status.next);
   const currentOrder = current?.order ?? null;
   const nextOrder = next?.order ?? null;
 

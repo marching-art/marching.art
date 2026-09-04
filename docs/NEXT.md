@@ -190,10 +190,13 @@ ops step below)_
   `trades`/`comments`). Prune; drop from the path filter; add an indexes
   diff step. (S)
 - **P2** `firebase-admin` major drift: `functions/` on `^13`, scraper /
-  `scripts/` / root on `^14`; `functions` `npm audit --omit=dev` reports 11
-  transitive vulns (2 high, via `google-gax`/`uuid`) that the bump likely
-  clears. `.npmrc` `legacy-peer-deps=true` hides the React 19 peer
-  conflicts. (M)
+  `scripts/` / root on `^14`. (The high/critical prod advisories this used to
+  carry are gone as of 2026-09-04's Dependabot sweep; the audit baseline is
+  now 0 everywhere except the scraper's 3, which sit behind the deliberate
+  `puppeteer-core` major hold.) `.npmrc` `legacy-peer-deps=true` hides the
+  React 19 peer conflicts — and it also breaks Dependabot's lockfile
+  regeneration for `functions/`, whose lockfile was generated _without_ it
+  (see the 2026-09-04 dependencies entry below). (M)
 - **P3** `hosting.ignore` doesn't exclude `**/*.map`, so hidden source maps
   are publicly fetchable (`firebase.json:36`, `vite.config.js:55`). (S)
 - **P3** No root `engines` / `.nvmrc` (functions pin Node 22, `@types/node`
@@ -364,6 +367,18 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
 
 ## Recently shipped (context, newest first — prune when stale)
 
+- 2026-09-04 (dependencies): 17 Dependabot security PRs reviewed. The three
+  root/`scripts` ones merged as-is; the other 14 were consolidated into one
+  branch because Dependabot's three `functions/` PRs regenerated that lockfile
+  under the root `.npmrc` `legacy-peer-deps=true` and dropped the jest peer
+  tree, so `npm ci` failed with "Missing … from lock file". Re-done with the
+  repo's own npm from each sub-package: `functions` (brace-expansion, jest,
+  qs, undici), `functions-scraper` (qs), `firestore-tests` (fast-uri,
+  body-parser, re2, ip-address, @hono/node-server, undici, js-yaml,
+  brace-expansion, hono, tar). Audit-ratchet baseline 2/7/0/5/7 → 0/0/0/3/0
+  (root/functions/firestore-tests/scraper/scripts). `@ts-nocheck` ratchet:
+  68 → 67 (`RunningOrder.jsx`: the show prop is typed as a structural subset
+  of showday's `ShowLike`).
 - 2026-09-04 (medals): Podium medals now follow the division placement
   beside them. The processor ranked the mixed show field and medalled its top
   three while the ledger and recap sheet numbered each division on its own,
