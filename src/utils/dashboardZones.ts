@@ -60,3 +60,25 @@ const PANEL_ZONES: Record<string, DashboardZoneId> = {
 export function zoneForPanel(panelId: string): DashboardZoneId | null {
   return PANEL_ZONES[panelId] ?? null;
 }
+
+/**
+ * The onboarding checklist's DOM id. Both the fantasy First Season Journey and
+ * the Podium Rookie Journey render under it (they never render together — the
+ * dashboard picks one for the active surface), so one link serves both games.
+ */
+export const JOURNEY_PANEL_ID = 'journey-panel';
+
+/** Query key that asks the dashboard to reveal a panel on arrival. */
+export const REVEAL_PARAM = 'reveal';
+
+/**
+ * A link that lands on the dashboard with `panelId` revealed — its zone
+ * switched to on mobile, then scrolled into view (hooks/useRevealParam).
+ *
+ * This is how the help menu and the mobile More sheet point at the onboarding
+ * checklist: the checklist is an inline panel, not a modal, so it has no
+ * `?panel=` route of its own.
+ */
+export function dashboardPanelLink(panelId: string): string {
+  return `/dashboard?${REVEAL_PARAM}=${encodeURIComponent(panelId)}`;
+}

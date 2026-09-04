@@ -1,4 +1,4 @@
-// GAME GUIDE — SEARCH (/guide). Flat index across the guide's data; each
+// GAME GUIDE — SEARCH (/how-to-play, signed in). Flat index across the guide's data; each
 // result jumps to a section. Split out of howToPlaySections.jsx so that file
 // holds only section bodies. Game facts come from howToPlayData.js /
 // progressionGuide.js so search can never drift from the rendered guide.

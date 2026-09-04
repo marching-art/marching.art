@@ -10,6 +10,7 @@ import toast from 'react-hot-toast';
 import { completeJourneyStep } from '../../api/functions';
 import { useProfileStore } from '../../store/profileStore';
 import { PODIUM_JOURNEY } from './podiumConstants';
+import { JOURNEY_PANEL_ID } from '../../utils/dashboardZones';
 import { friendlyCallableError } from '../../utils/callableErrors';
 
 export default function PodiumJourneyPanel() {
@@ -42,7 +43,13 @@ export default function PodiumJourneyPanel() {
   const doneCount = PODIUM_JOURNEY.length - remaining.length;
 
   return (
-    <div className="bg-surface-card border border-line rounded-none p-4 space-y-2">
+    // Shares the fantasy journey's id so one help-menu link (?reveal=) lands on
+    // whichever checklist the active surface renders; scroll-mt clears the
+    // fixed shell chrome plus the sticky ControlBar.
+    <div
+      id={JOURNEY_PANEL_ID}
+      className="bg-surface-card border border-line rounded-none p-4 space-y-2 scroll-mt-24"
+    >
       <div className="flex items-center justify-between">
         <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted">
           <Map className="w-3 h-3" /> Rookie Journey

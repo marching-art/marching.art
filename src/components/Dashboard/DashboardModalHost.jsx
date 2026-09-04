@@ -18,7 +18,6 @@ import {
   RetireConfirmModal,
   MoveCorpsModal,
   OnboardingTour,
-  QuickStartGuide,
   CLASS_DISPLAY_NAMES,
   CLASS_UNLOCK_LEVELS,
   CLASS_UNLOCK_COSTS,
@@ -69,8 +68,6 @@ const ShowConceptModal = lazyWithRetry(
  * @param {{
  *   modals: any,
  *   data: any,
- *   quickStartSteps: any[],
- *   quickStartVariant?: 'fantasy' | 'podium',
  *   rehearsalIncomplete?: boolean,
  *   onRequestZone?: (zone: string) => void,
  *   onRevealPanel?: (panel: string) => void,
@@ -79,8 +76,6 @@ const ShowConceptModal = lazyWithRetry(
 const DashboardModalHost = ({
   modals,
   data,
-  quickStartSteps,
-  quickStartVariant = 'fantasy',
   rehearsalIncomplete = false,
   onRequestZone,
   onRevealPanel,
@@ -109,8 +104,6 @@ const DashboardModalHost = ({
     setShowRetireConfirm,
     retiring,
     transferring,
-    showQuickStartGuide,
-    setShowQuickStartGuide,
     classToPurchase,
     setClassToPurchase,
     showStreakModal,
@@ -129,7 +122,6 @@ const DashboardModalHost = ({
     handleCorpsRegistration,
     handleUnretireCorps,
     handleConfirmClassPurchase,
-    openCaptionSelection,
     closeCaptionSelection,
   } = modals;
 
@@ -308,24 +300,6 @@ const DashboardModalHost = ({
         onClose={() => modalQueue.dequeue()}
         onComplete={handlePodiumTourComplete}
         onRequestZone={onRequestZone}
-      />
-
-      <QuickStartGuide
-        isOpen={showQuickStartGuide}
-        onClose={() => setShowQuickStartGuide(false)}
-        variant={quickStartVariant}
-        onAction={(action) => {
-          if (action === 'lineup') {
-            openCaptionSelection();
-            return;
-          }
-          // Podium steps point at panels behind the guide (podium-planner,
-          // podium-plan-editor): close the guide, then reveal the panel — which
-          // switches to its zone on mobile before scrolling.
-          setShowQuickStartGuide(false);
-          onRevealPanel?.(action);
-        }}
-        completedSteps={quickStartSteps}
       />
 
       {classToPurchase && profile && (

@@ -6,7 +6,7 @@
 // for different reasons.
 //
 // Desktop shows all four zones at once, so its tour is a guided read of a
-// layout already on screen — that list is unchanged.
+// layout already on screen.
 //
 // Mobile has no such layout to read. It has a hero that names the next move,
 // a scorecard, and three tabbed sections, so its tour teaches the *controls*:
@@ -46,15 +46,11 @@ export interface TourStep {
   zone?: DashboardZoneId;
 }
 
+// No generic welcome card on desktop: the tour fires right after the signup
+// celebration already said welcome, so it opens straight on the first thing
+// worth pointing at. Mobile keeps its card because it sets up the four-stop
+// structure; Podium's names the founded corps.
 export const DESKTOP_TOUR_STEPS: TourStep[] = [
-  {
-    id: 'welcome',
-    title: 'Welcome to Your Dashboard!',
-    description: "This is your command center. Let's take a quick tour of the key features.",
-    icon: 'sparkles',
-    target: null,
-    position: 'center',
-  },
   {
     id: 'control-bar',
     title: 'Corps Command Bar',

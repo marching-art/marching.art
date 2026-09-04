@@ -98,23 +98,25 @@ describe('BottomNav', () => {
     expect(screen.queryByRole('link', { name: /needs attention/ })).not.toBeInTheDocument();
   });
 
-  it('offers the Quick Start guide to a new director', () => {
+  it('points a new director at the onboarding checklist on the dashboard', () => {
+    // The checklist is an inline panel (under Today on mobile), so the link
+    // asks the dashboard to reveal it rather than opening a modal.
     renderNav();
     fireEvent.click(screen.getByRole('button', { name: 'More' }));
     const sheet = screen.getByRole('navigation', { name: 'More destinations' });
-    expect(within(sheet).getByRole('link', { name: 'Quick Start' })).toHaveAttribute(
+    expect(within(sheet).getByRole('link', { name: 'Journey' })).toHaveAttribute(
       'href',
-      '/dashboard?panel=quickstart'
+      '/dashboard?reveal=journey-panel'
     );
   });
 
-  it('retires Quick Start once the director has finished a season', () => {
+  it('retires the Journey link once the director has finished a season', () => {
     // First-run scaffolding shouldn't take the top slot in a veteran's sheet.
     mockProfile = { corps: { worldClass: { seasonHistory: [{ seasonName: '2025' }] } } };
     renderNav();
     fireEvent.click(screen.getByRole('button', { name: 'More' }));
     const sheet = screen.getByRole('navigation', { name: 'More destinations' });
-    expect(within(sheet).queryByRole('link', { name: 'Quick Start' })).not.toBeInTheDocument();
+    expect(within(sheet).queryByRole('link', { name: 'Journey' })).not.toBeInTheDocument();
     // The rest of the sheet is unaffected.
     expect(within(sheet).getByRole('link', { name: 'News' })).toBeInTheDocument();
   });

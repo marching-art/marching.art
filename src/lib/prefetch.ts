@@ -23,7 +23,9 @@ const routeImports: Record<string, () => Promise<unknown>> = {
   '/records': () => import('../pages/Records'),
   '/studio': () => import('../pages/Studio'),
   '/exchange': () => import('../pages/Exchange'),
-  '/guide': () => import('../pages/HowToPlay'),
+  // One route, two pages by auth state (App.jsx HowToPlayEntry); warm both.
+  '/how-to-play': () =>
+    Promise.all([import('../pages/HowToPlay'), import('../pages/HowToPlayPublic')]),
   '/updates': () => import('../pages/Updates'),
   '/install': () => import('../pages/InstallApp'),
 };

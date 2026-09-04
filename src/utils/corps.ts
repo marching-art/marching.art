@@ -310,7 +310,7 @@ export function canEditCorpsThisSeason(corps: CorpsRecord | null | undefined): b
  * rollover (see the profile's Season History / CorpsHistory surfaces), and a
  * corps carries that history with it across class moves. A director with any
  * such entry is past the new-player phase — used to retire first-run scaffolding
- * like the Quick Start guide.
+ * like the help-menu link to the First Season Journey checklist.
  */
 export function hasCompletedSeason(
   profile: { corps?: Record<string, unknown> | null } | null | undefined

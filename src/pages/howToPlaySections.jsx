@@ -1,4 +1,4 @@
-// GAME GUIDE — SECTION CONTENT (/guide). The body of the How-to-Play document,
+// GAME GUIDE — SECTION CONTENT (/how-to-play, signed in). The body of the How-to-Play document,
 // split out of HowToPlay.jsx so the shell stays small. Ordering + icons live in
 // HowToPlay.jsx's SECTIONS list; this file supplies the matching content. Game
 // facts come from howToPlayData.js / progressionGuide.js so nothing can drift.
@@ -27,6 +27,7 @@ import {
   Shield,
 } from 'lucide-react';
 import { Card, DataRow, SectionHead } from './howToPlayPrimitives';
+import { JOURNEY_PANEL_ID, dashboardPanelLink } from '../utils/dashboardZones';
 import { LeaguesSection, CaptionWarsSection } from './howToPlayLeagueSections';
 import {
   CAPTIONS,
@@ -166,6 +167,19 @@ const StartSection = () => (
         </div>
       ))}
     </div>
+    {/* The dashboard's checklist is the live version of this list: it tracks
+        each step against the director's real state and pays XP + CorpsCoin
+        per claim. This guide explains; the Journey does. */}
+    <p className="text-xs text-muted leading-relaxed mt-4">
+      Your dashboard&apos;s{' '}
+      <Link
+        to={dashboardPanelLink(JOURNEY_PANEL_ID)}
+        className="text-interactive hover:text-interactive-hover font-semibold"
+      >
+        First Season Journey
+      </Link>{' '}
+      checks these steps off as you do them and pays XP and CorpsCoin for each one.
+    </p>
   </>
 );
 

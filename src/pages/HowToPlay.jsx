@@ -1,11 +1,12 @@
 // =============================================================================
-// GAME GUIDE - THE COMPLETE, COHESIVE HOW-TO-PLAY DOCUMENT (/guide)
+// GAME GUIDE - THE COMPLETE, COHESIVE HOW-TO-PLAY DOCUMENT (/how-to-play, signed in)
 // =============================================================================
 // One scrolling document that tells the whole story in order — what the game
 // is, how you start, how you score, how you progress, and the second way to
 // play (Podium Class), all in a single consistent format. A sticky section
 // navigator (left rail on desktop, chip bar on mobile) with scroll-spy keeps
-// it easy to jump around. Public mirror: /how-to-play (HowToPlayPublic.jsx).
+// it easy to jump around. Signed out, the same route renders the public,
+// crawlable mirror (HowToPlayPublic.jsx); App.jsx HowToPlayEntry picks.
 //
 // This file is the shell (header, navigator, scroll-spy, search). The section
 // bodies live in howToPlaySections.jsx.

@@ -1,4 +1,4 @@
-// GAME GUIDE — LEAGUE SECTIONS (/guide). The Leagues and Caption Wars section
+// GAME GUIDE — LEAGUE SECTIONS (/how-to-play, signed in). The Leagues and Caption Wars section
 // bodies, split out of howToPlaySections.jsx to keep that file under its size
 // cap. Ordering + icons live in HowToPlay.jsx's SECTIONS list. Every fact here
 // comes from howToPlayData.js, which mirrors the server constants, so the guide

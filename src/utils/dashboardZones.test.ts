@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { DASHBOARD_ZONES, DEFAULT_DASHBOARD_ZONE, zoneForPanel } from './dashboardZones';
+import {
+  DASHBOARD_ZONES,
+  DEFAULT_DASHBOARD_ZONE,
+  JOURNEY_PANEL_ID,
+  REVEAL_PARAM,
+  dashboardPanelLink,
+  zoneForPanel,
+} from './dashboardZones';
 
 describe('DASHBOARD_ZONES', () => {
   it('opens on My Corps, where the lineup is', () => {
@@ -40,5 +47,19 @@ describe('zoneForPanel', () => {
     for (const panel of ['directors-report', 'journey-panel']) {
       expect(ids.has(zoneForPanel(panel)!)).toBe(true);
     }
+  });
+});
+
+describe('dashboardPanelLink', () => {
+  it('lands on the dashboard with the panel named in the reveal param', () => {
+    const url = new URL(dashboardPanelLink(JOURNEY_PANEL_ID), 'https://marching.art');
+    expect(url.pathname).toBe('/dashboard');
+    expect(url.searchParams.get(REVEAL_PARAM)).toBe(JOURNEY_PANEL_ID);
+  });
+
+  it('points the onboarding checklist link at a panel the zone map knows', () => {
+    // The help menu and the More sheet link here; on mobile the panel lives
+    // under Today, so the reveal has to know which tab to switch to.
+    expect(zoneForPanel(JOURNEY_PANEL_ID)).toBe('today');
   });
 });

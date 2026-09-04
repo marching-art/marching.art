@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // src/App.jsx
 import React, { useEffect, useMemo, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
@@ -98,13 +97,33 @@ const PodiumGuide = lazyWithRetry(() => import('./pages/PodiumGuide'), 'PodiumGu
 const NotFound = lazyWithRetry(() => import('./pages/NotFound'), 'NotFound');
 const GuestDashboard = lazyWithRetry(() => import('./pages/GuestDashboard'), 'GuestDashboard');
 
-// Helper component to wrap pages with error boundaries
+/**
+ * The auth value for components rendered inside AuthContext.Provider. Every
+ * route element below is, so the null `useAuth()` returns outside the provider
+ * cannot occur here — and throwing on it beats a cast that would hide a
+ * future misuse.
+ * @returns {import('./context/AuthContext').AuthContextValue}
+ */
+const useAppAuth = () => {
+  const value = useAuth();
+  if (!value) throw new Error('useAppAuth must be used inside AuthContext.Provider');
+  return value;
+};
+
+/**
+ * Helper component to wrap pages with error boundaries
+ * @param {{ name: string, children: React.ReactNode }} props
+ */
 const Page = ({ name, children }) => <PageErrorBoundary name={name}>{children}</PageErrorBoundary>;
 
 // Public page: the shared shell (header, footer, bottom nav) plus the same
 // error boundary and suspense treatment the app routes get. Public routes used
 // to have neither — a render crash on /privacy or /article escalated to the
 // root boundary and white-screened the whole app.
+/**
+ * @param {{ name: string, children: React.ReactNode } &
+ *   Omit<React.ComponentProps<typeof PublicShell>, 'children'>} props
+ */
 const PublicPage = ({ name, children, ...shellProps }) => (
   <PublicShell {...shellProps}>
     {/* Inline (not fullScreen) so the shell's header and nav stay put while the
@@ -132,8 +151,9 @@ const AuthWallMeta = () => {
 // yet is redirected to onboarding. This prevents profile-less users from reaching
 // the dashboard and hammering backend callables (registerCorps, claimDailyLogin,
 // etc.) that 404 with "profile not found". The onboarding route itself opts out.
+/** @param {{ children: React.ReactNode, requireProfile?: boolean }} props */
 const ProtectedRoute = ({ children, requireProfile = true }) => {
-  const { user, loading } = useAuth();
+  const { user, loading } = useAppAuth();
   const location = useLocation();
   const profile = useProfileStore((state) => state.profile);
   const profileLoading = useProfileStore((state) => state.loading);
@@ -201,7 +221,7 @@ const ProtectedRoute = ({ children, requireProfile = true }) => {
 // page. External redirects can't use React Router's <Navigate>, so we use
 // window.location for that leg.
 const SupportersEntry = () => {
-  const { user, loading } = useAuth();
+  const { user, loading } = useAppAuth();
   useEffect(() => {
     if (!loading && !user) {
       window.location.replace(BMAC_URL);
@@ -222,8 +242,9 @@ const ScoresDateRedirect = () => {
 // Auth pages bounce already-authenticated users onward. The destination is the
 // route they were originally trying to reach (ProtectedRoute's `state.from`),
 // not an unconditional /dashboard.
+/** @param {{ children: React.ReactNode }} props */
 const RedirectIfAuthed = ({ children }) => {
-  const { user } = useAuth();
+  const { user } = useAppAuth();
   const target = useAuthRedirectTarget();
   return user ? <Navigate to={target} replace /> : children;
 };
@@ -238,7 +259,7 @@ const RedirectIfAuthed = ({ children }) => {
 // lives in this route wrapper rather than the shared page component so the two
 // shells it can render in agree on one canonical URL.
 const HallOfChampionsEntry = () => {
-  const { user } = useAuth();
+  const { user } = useAppAuth();
 
   useSEO({
     title: 'Hall of Champions — Every marching.art Season Champion',
@@ -256,6 +277,41 @@ const HallOfChampionsEntry = () => {
   );
 
   return user ? <GameShell>{content}</GameShell> : <PublicShell>{content}</PublicShell>;
+};
+
+// One How-to-Play route. Signed-out visitors (and crawlers) get the public,
+// SEO-shaped guide in PublicShell; signed-in directors get the complete in-app
+// Game Guide (section rail, search, scroll-spy) in GameShell. These used to be
+// two menu entries — "Game Guide" at the protected /guide, "How to Play" at the
+// public /how-to-play — and a signed-out click on the first bounced to /.
+// /guide now redirects here. SEO lives in this wrapper so both branches agree
+// on one canonical URL, as HallOfChampionsEntry does.
+const HowToPlayEntry = () => {
+  const { user } = useAppAuth();
+
+  useSEO({
+    title: 'How to Play Fantasy Drum Corps — Free DCI Fantasy Game | marching.art',
+    description:
+      'Learn how fantasy drum corps works: draft 8 DCI captions from real corps seasons, manage a point budget, and score points from real competition results. Free to play.',
+    path: '/how-to-play',
+  });
+
+  if (user) {
+    return (
+      <GameShell>
+        <Suspense fallback={<DashboardSkeleton />}>
+          <Page name="Guide">
+            <HowToPlay />
+          </Page>
+        </Suspense>
+      </GameShell>
+    );
+  }
+  return (
+    <PublicPage name="How to Play">
+      <HowToPlayPublic />
+    </PublicPage>
+  );
 };
 
 // Main App Component
@@ -276,11 +332,13 @@ function App() {
       loading,
       error,
       // Analytics funnel events fire here so every auth entry point is counted
+      /** @param {string} email @param {string} password */
       signIn: async (email, password) => {
         const result = await authHelpers.signInWithEmail(email, password);
         analytics.logLogin('email');
         return result;
       },
+      /** @param {string} email @param {string} password @param {string} [displayName] */
       signUp: async (email, password, displayName) => {
         const result = await authHelpers.signUpWithEmail(email, password, displayName);
         analytics.logSignUp('email');
@@ -543,31 +601,11 @@ function App() {
                       }
                     />
 
-                    {/* Game Guide - accessible to all authenticated users */}
-                    <Route
-                      path="/guide"
-                      element={
-                        <ProtectedRoute>
-                          <GameShell>
-                            <Suspense fallback={<DashboardSkeleton />}>
-                              <Page name="Guide">
-                                <HowToPlay />
-                              </Page>
-                            </Suspense>
-                          </GameShell>
-                        </ProtectedRoute>
-                      }
-                    />
-                    {/* Public, crawlable guide — the SEO landing page for "fantasy drum
-              corps" searches. Authenticated users get the in-app /guide. */}
-                    <Route
-                      path="/how-to-play"
-                      element={
-                        <PublicPage name="How to Play">
-                          <HowToPlayPublic />
-                        </PublicPage>
-                      }
-                    />
+                    {/* The one guide: public and crawlable signed out (the SEO landing
+                        page for "fantasy drum corps" searches), the complete in-app
+                        Game Guide signed in. The old protected /guide path redirects. */}
+                    <Route path="/how-to-play" element={<HowToPlayEntry />} />
+                    <Route path="/guide" element={<Navigate to="/how-to-play" replace />} />
                     {/* Player-facing changelog + roadmap — crawlable, no auth
                         (docs/FMA_LESSONS.md lesson 2: make the update cadence visible) */}
                     <Route
@@ -805,7 +843,7 @@ function App() {
 
                     {/* SoundSport rules were consolidated into the unified Game
                         Guide — keep the old path working for existing links. */}
-                    <Route path="/soundsport" element={<Navigate to="/guide" replace />} />
+                    <Route path="/soundsport" element={<Navigate to="/how-to-play" replace />} />
 
                     {/* 404 Route — inside the shell so a wrong URL still leaves
                         the visitor somewhere they can navigate from. */}
