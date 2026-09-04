@@ -20,19 +20,25 @@
 // Usage:
 //   node scripts/auditRatchet.mjs            # CI gate: fail if any count rose
 //   node scripts/auditRatchet.mjs --update   # rewrite baseline to current counts
+//   node scripts/auditRatchet.mjs --tolerate-outage
+//       CI mode: a registry outage that outlasts every retry degrades to a
+//       warning instead of a red run — see "Registry outages" below.
 //
 // Zero runtime dependencies (Node >= 18, ESM).
 
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, appendFileSync, existsSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
+import { dirname, join, relative } from 'node:path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(__dirname, '..');
 const BASELINE_PATH = join(__dirname, 'audit-baseline.json');
 
 const update = process.argv.includes('--update');
+const tolerateOutage =
+  process.argv.includes('--tolerate-outage') || isTruthy(process.env.AUDIT_TOLERATE_OUTAGE);
+const IS_GITHUB = isTruthy(process.env.GITHUB_ACTIONS);
 
 /**
  * Registry stalls are the only way this gate has ever gone red without a real
@@ -41,27 +47,45 @@ const update = process.argv.includes('--update');
  * with exponential backoff) can hold the step for the whole 15-minute job
  * budget, and every deploy gated on that run aborts with it.
  *
- * Three layers keep a hiccup from becoming a failed run:
+ * Layers, in the order they engage:
  *   1. npm is told to fail fast (short --fetch-timeout, no internal retries),
  *      so a stalled request surfaces as an npm error instead of a silent hang.
  *   2. A hard wall-clock cap per attempt (SIGKILL) backs that up in case npm
  *      ignores its own timeout (it has, in the wild).
  *   3. The wrapper retries transient failures with a short backoff — a stall
  *      that clears in a minute no longer needs a human to click "Re-run".
+ *   4. Once ONE manifest has exhausted its retries the registry is treated as
+ *      down for the whole run: the remaining manifests are not probed (they
+ *      would only burn the job budget reproducing the same stall) and the run
+ *      moves to the outage path below.
+ *
+ * Registry outages (all retries spent):
+ *   The gate's question is "did THIS change introduce a high/critical prod
+ *   advisory?", and that question has a registry-free answer for most PRs:
+ *   if a manifest's package.json + lockfile are byte-identical to the base
+ *   branch (AUDIT_BASE_REF, e.g. `origin/main`), its dependency graph did not
+ *   change, so its count cannot have risen — it is reported as verified via
+ *   the lockfile. Only manifests whose dependencies DID change are left
+ *   genuinely unverified. Those fail the run unless `--tolerate-outage` is set,
+ *   in which case they are surfaced as a GitHub warning annotation + step
+ *   summary and the run passes; the weekly security.yml audit is the backstop.
+ *   `--update` never tolerates an outage — a baseline needs real counts.
  *
  * npm tries the bulk advisory endpoint and then falls back to the quick one,
  * so one stalled attempt costs up to 2 × fetch-timeout before npm gives up;
- * the hard cap sits just above that. Worst case per manifest is
- * 3 × 45s + 20s backoff ≈ 2.6 min, ≈ 13 min across all five manifests — still
- * inside the job's 15-minute budget, and reached only when EVERY attempt for
- * EVERY manifest hangs the full cap (an outage, not a hiccup). Real transients
- * fail in seconds and retry quickly.
+ * the hard cap sits just above that. Worst case for the whole run is one
+ * manifest's retry ladder — 3 × 75s + 20s backoff ≈ 4 min — because the first
+ * exhausted manifest short-circuits the rest. Real transients fail in seconds
+ * and retry quickly.
  *
  * Knobs, overridable for local debugging / a slow proxy:
- *   AUDIT_FETCH_TIMEOUT_MS  npm's per-request timeout (default 15000)
+ *   AUDIT_FETCH_TIMEOUT_MS  npm's per-request timeout (default 30000)
  *   AUDIT_ATTEMPTS          attempts per manifest (default 3)
+ *   AUDIT_BASE_REF          git ref for the lockfile-unchanged fallback
+ *                           (default: origin/main when that ref exists)
+ *   AUDIT_TOLERATE_OUTAGE   same as --tolerate-outage
  */
-const AUDIT_FETCH_TIMEOUT_MS = positiveInt(process.env.AUDIT_FETCH_TIMEOUT_MS, 15_000);
+const AUDIT_FETCH_TIMEOUT_MS = positiveInt(process.env.AUDIT_FETCH_TIMEOUT_MS, 30_000);
 const AUDIT_TIMEOUT_MS = AUDIT_FETCH_TIMEOUT_MS * 2 + 15_000;
 const AUDIT_ATTEMPTS = positiveInt(process.env.AUDIT_ATTEMPTS, 3);
 /** Backoff before attempt n (1-based) — 0, 5s, 15s. */
@@ -71,6 +95,11 @@ const RETRY_DELAYS_MS = [0, 5_000, 15_000];
 function positiveInt(raw, fallback) {
   const n = Number(raw);
   return Number.isInteger(n) && n > 0 ? n : fallback;
+}
+
+/** @param {string | undefined} raw */
+function isTruthy(raw) {
+  return /^(1|true|yes|on)$/i.test(String(raw ?? '').trim());
 }
 
 /**
@@ -106,6 +135,20 @@ class TransientAuditError extends Error {
     super(message);
     this.name = 'TransientAuditError';
     this.detail = detail;
+  }
+}
+
+/** Thrown when a manifest's retry ladder is spent — the registry is down. */
+class RegistryOutageError extends Error {
+  /** @param {string} dir @param {TransientAuditError} last */
+  constructor(dir, last) {
+    super(
+      `npm audit for "${dir}" ${last.message} on all ${AUDIT_ATTEMPTS} attempts — ` +
+        'the registry advisory endpoint is stalled or unreachable.'
+    );
+    this.name = 'RegistryOutageError';
+    this.dir = dir;
+    this.detail = last.detail;
   }
 }
 
@@ -179,7 +222,10 @@ function runAuditOnce(dir) {
   );
 }
 
-/** High+critical prod-dependency advisory count for one manifest directory. */
+/**
+ * High+critical prod-dependency advisory count for one manifest directory.
+ * Throws RegistryOutageError once every attempt has failed transiently.
+ */
 function highCriticalCount(dir) {
   let lastErr;
   for (let attempt = 1; attempt <= AUDIT_ATTEMPTS; attempt++) {
@@ -198,24 +244,116 @@ function highCriticalCount(dir) {
       lastErr = err;
     }
   }
-  throw new Error(
-    `npm audit for "${dir}" ${lastErr.message} on all ${AUDIT_ATTEMPTS} attempts — ` +
-      'the registry advisory endpoint is stalled or unreachable. Re-run the job; ' +
-      'this is not a dependency regression.' +
-      (lastErr.detail ? `\n    last npm error: ${lastErr.detail}` : '')
-  );
+  throw new RegistryOutageError(dir, lastErr);
 }
+
+// -----------------------------------------------------------------------------
+// Outage fallback: "did this change touch the manifest's dependency graph?"
+// -----------------------------------------------------------------------------
+
+/** @param {string[]} args @param {{ allowFail?: boolean }} [opts] */
+function git(args, opts = {}) {
+  try {
+    return execFileSync('git', args, {
+      cwd: repoRoot,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+      timeout: 60_000,
+    }).trim();
+  } catch (err) {
+    if (opts.allowFail) return null;
+    throw err;
+  }
+}
+
+/** The git ref the lockfile-unchanged fallback diffs against, or null. */
+function resolveBaseRef() {
+  const explicit = process.env.AUDIT_BASE_REF?.trim();
+  const ref = explicit || 'origin/main';
+  // Refresh the remote-tracking ref first: a shallow CI checkout
+  // (actions/checkout fetch-depth 1) doesn't carry the base branch at all, and
+  // a long-lived local clone carries a stale one. Offline, fall back to
+  // whatever is already there.
+  const m = ref.match(/^([^/]+)\/(.+)$/);
+  if (m) {
+    git(
+      ['fetch', '--depth=1', '--quiet', m[1], `+refs/heads/${m[2]}:refs/remotes/${m[1]}/${m[2]}`],
+      {
+        allowFail: true,
+      }
+    );
+  }
+  return git(['rev-parse', '--verify', '--quiet', `${ref}^{commit}`], { allowFail: true })
+    ? ref
+    : null;
+}
+
+/** Files that define a manifest's production dependency graph. */
+function graphFiles(dir) {
+  return ['package.json', 'package-lock.json', 'npm-shrinkwrap.json']
+    .map((f) => relative(repoRoot, join(repoRoot, dir, f)))
+    .filter((p) => existsSync(join(repoRoot, p)));
+}
+
+/**
+ * True when the manifest's dependency graph is identical to the base ref,
+ * meaning the audit count cannot have risen in this change. Null when it
+ * can't be determined (no base ref, git error).
+ */
+function graphUnchangedSince(dir, baseRef) {
+  if (!baseRef) return null;
+  const files = graphFiles(dir);
+  if (files.length === 0) return null;
+  // Worktree state (not HEAD) is what CI installs from, so diff against it.
+  const diff = git(['diff', '--quiet', baseRef, '--', ...files], { allowFail: true });
+  if (diff === null) {
+    // Exit 1 = differences (execFileSync throws); distinguish from a real
+    // git failure by re-running with --stat.
+    const stat = git(['diff', '--stat', baseRef, '--', ...files], { allowFail: true });
+    return stat === null ? null : false;
+  }
+  return true;
+}
+
+/** @param {string} title @param {string} body */
+function annotate(title, body) {
+  const flat = body.replace(/\r?\n/g, ' ');
+  console.warn(IS_GITHUB ? `::warning title=${title}::${flat}` : `WARNING: ${title} — ${flat}`);
+  if (process.env.GITHUB_STEP_SUMMARY) {
+    appendFileSync(process.env.GITHUB_STEP_SUMMARY, `### ⚠️ ${title}\n\n${body}\n\n`);
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Main
+// -----------------------------------------------------------------------------
 
 const baselineDoc = JSON.parse(readFileSync(BASELINE_PATH, 'utf8'));
 const baseline = baselineDoc.baseline;
 const dirs = Object.keys(baseline);
 
+/** @type {Record<string, number>} */
 const current = {};
+/** @type {RegistryOutageError | null} */
+let outage = null;
 for (const dir of dirs) {
-  current[dir] = highCriticalCount(dir);
+  try {
+    current[dir] = highCriticalCount(dir);
+  } catch (err) {
+    if (!(err instanceof RegistryOutageError)) throw err;
+    outage = err;
+    break; // Registry is down; probing the rest only burns the job budget.
+  }
 }
 
 if (update) {
+  if (outage) {
+    console.error(
+      `\n✗ ${outage.message}\n  --update needs real counts; re-run once the registry answers.`
+    );
+    if (outage.detail) console.error(`    last npm error: ${outage.detail}`);
+    process.exit(1);
+  }
   writeFileSync(
     BASELINE_PATH,
     `${JSON.stringify({ ...baselineDoc, baseline: current }, null, 2)}\n`
@@ -227,9 +365,29 @@ if (update) {
 
 const rose = [];
 const fell = [];
+/** Manifests the registry never answered for, split by the lockfile fallback. */
+const viaLockfile = [];
+const unverified = [];
+const baseRef = outage ? resolveBaseRef() : null;
+
 for (const dir of dirs) {
   const before = baseline[dir];
   const after = current[dir];
+  if (after === undefined) {
+    const unchanged = graphUnchangedSince(dir, baseRef);
+    if (unchanged) {
+      viaLockfile.push(dir);
+      console.log(
+        `  = ${dir}: registry unavailable; dependency graph unchanged vs ${baseRef} → cannot have risen`
+      );
+    } else {
+      unverified.push(dir);
+      console.log(
+        `  ? ${dir}: registry unavailable; dependency graph ${unchanged === false ? `differs from ${baseRef}` : 'has no base ref to compare to'} → UNVERIFIED`
+      );
+    }
+    continue;
+  }
   const mark = after > before ? '✗' : after < before ? '↓' : '·';
   console.log(`  ${mark} ${dir}: ${after} (baseline ${before}) high+critical prod advisories`);
   if (after > before) rose.push({ dir, before, after });
@@ -244,6 +402,43 @@ if (rose.length > 0) {
     );
   }
   process.exit(1);
+}
+
+if (outage) {
+  const detail = outage.detail ? `\nlast npm error: ${outage.detail}` : '';
+  if (unverified.length > 0) {
+    const body =
+      `${outage.message}\nUnverified manifest(s) whose dependencies changed in this run: ` +
+      `${unverified.map((d) => `\`${d}\``).join(', ')}.` +
+      (viaLockfile.length > 0
+        ? `\nVerified via unchanged lockfile: ${viaLockfile.map((d) => `\`${d}\``).join(', ')}.`
+        : '') +
+      detail;
+    if (!tolerateOutage) {
+      console.error(
+        `\n✗ ${body}\n  Re-run the job once the registry answers; this is not a dependency regression.`
+      );
+      process.exit(1);
+    }
+    annotate(
+      'Dependency-audit ratchet: registry outage, changed manifests unverified',
+      `${body}\nPassing under --tolerate-outage; the weekly security.yml audit is the backstop. ` +
+        'Re-run this job to get a real verdict.'
+    );
+    console.log(
+      '\n⚠ Dependency-audit ratchet passed with UNVERIFIED manifests (registry outage tolerated).'
+    );
+    process.exit(0);
+  }
+  annotate(
+    'Dependency-audit ratchet: registry outage, verified via lockfiles',
+    `${outage.message}\nEvery unreached manifest (${viaLockfile.map((d) => `\`${d}\``).join(', ')}) ` +
+      `has a dependency graph identical to ${baseRef}, so no count can have risen.${detail}`
+  );
+  console.log(
+    '\n✓ Dependency-audit ratchet passed (registry outage; unchanged lockfiles verified).'
+  );
+  process.exit(0);
 }
 
 if (fell.length > 0) {

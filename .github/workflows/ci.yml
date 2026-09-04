@@ -169,10 +169,16 @@ jobs:
       # the report-only security.yml job — without sitting red on the existing
       # debt Dependabot is already working down. Reads committed lockfiles only.
       # Registry stalls are retried inside the script (fast-fail fetch timeout,
-      # 3 attempts per manifest) so a transient advisory-endpoint hiccup does
-      # not fail the run — see scripts/auditRatchet.mjs.
+      # 3 attempts per manifest). If the registry stays down past that, the
+      # script answers from git instead: a manifest whose package.json +
+      # lockfile are identical to the base branch cannot have gained an
+      # advisory in this change. Only manifests whose dependencies changed are
+      # left unverified, and --tolerate-outage turns those into a warning
+      # annotation rather than a red run — see scripts/auditRatchet.mjs.
       - name: Dependency-audit ratchet
-        run: npm run audit:check
+        run: npm run audit:check -- --tolerate-outage
+        env:
+          AUDIT_BASE_REF: origin/${{ github.base_ref || 'main' }}
 
   functions:
     name: Functions check + tests
