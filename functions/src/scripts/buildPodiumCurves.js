@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered when functions checkJs landed (functions/tsconfig.json); remove when this file is typed or cleaned up
 /**
  * Podium Phase 0.2 — Curve miner.
  *
@@ -371,8 +370,18 @@ function fitLogistic(points, maxValue) {
     }
     return sse;
   };
-  let best = null;
-  const search = (Ls, ks, d0s) => {
+  /** @typedef {{ L: number, k: number, d0: number, sse: number }} CurveFit */
+  /**
+   * Grid-search (L, k, d0) and return the lowest-SSE fit, seeded with the
+   * incumbent to beat (null for the coarse pass).
+   * @param {number[]} Ls
+   * @param {number[]} ks
+   * @param {number[]} d0s
+   * @param {CurveFit | null} seed
+   * @returns {CurveFit | null}
+   */
+  const search = (Ls, ks, d0s, seed) => {
+    let best = seed;
     for (const L of Ls) {
       for (const k of ks) {
         for (const d0 of d0s) {
@@ -381,23 +390,28 @@ function fitLogistic(points, maxValue) {
         }
       }
     }
+    return best;
   };
   const range = (from, to, step) => {
     const out = [];
     for (let v = from; v <= to + 1e-9; v += step) out.push(Number(v.toFixed(4)));
     return out;
   };
-  search(
+  const coarse = search(
     range(maxObserved, Math.min(maxValue * 1.05, maxObserved * 1.35), Math.max(0.1, maxObserved * 0.02)),
     range(0.02, 0.4, 0.02),
-    range(-20, 40, 2)
+    range(-20, 40, 2),
+    null
   );
+  if (!coarse) throw new Error('fitLogistic: empty search grid');
   // Refine around the coarse optimum.
-  search(
-    range(Math.max(maxObserved, best.L - 0.5), best.L + 0.5, 0.1),
-    range(Math.max(0.005, best.k - 0.02), best.k + 0.02, 0.005),
-    range(best.d0 - 2, best.d0 + 2, 0.5)
-  );
+  const best =
+    search(
+      range(Math.max(maxObserved, coarse.L - 0.5), coarse.L + 0.5, 0.1),
+      range(Math.max(0.005, coarse.k - 0.02), coarse.k + 0.02, 0.005),
+      range(coarse.d0 - 2, coarse.d0 + 2, 0.5),
+      coarse
+    ) ?? coarse;
   return {
     L: Number(best.L.toFixed(3)),
     k: Number(best.k.toFixed(4)),
