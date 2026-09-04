@@ -353,7 +353,7 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
 
 ## Evergreen ratchets (any session, any size)
 
-- `@ts-nocheck` paydown — **69 files** at
+- `@ts-nocheck` paydown — **63 files** at
   last update; `npm run ts-nocheck:next` ranks the cheapest (no free wins
   left — the cheapest `src/` files are ~12 errors; `Schedule.jsx` and
   `Layout/GameShell.jsx` are ~30 each). It needs `npm ci` first and refuses
