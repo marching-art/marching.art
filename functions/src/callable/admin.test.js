@@ -10,7 +10,9 @@ const { test, describe, beforeEach, after } = require("node:test");
 const assert = require("node:assert/strict");
 
 const { setDbForTesting } = require("../config");
-const adminCallables = require("./admin");
+// The live-score scrape callables live in adminLiveScores.js (split for the
+// max-lines gate) but are gated and validated as one admin surface here.
+const adminCallables = { ...require("./admin"), ...require("./adminLiveScores") };
 
 const ADMIN_CALLABLES = [
   "startNewOffSeason",

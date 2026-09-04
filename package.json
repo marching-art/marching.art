@@ -63,7 +63,7 @@
     "rehearse": "npm --prefix firestore-tests exec -- firebase emulators:exec --only firestore --project demo-rehearsal --config functions/rehearsal/firebase.json 'node functions/rehearsal/run.js'",
     "rehearse:scale": "npm --prefix firestore-tests exec -- firebase emulators:exec --only firestore --project demo-rehearsal --config functions/rehearsal/firebase.json 'node functions/rehearsal/run.js --scale'",
     "typecheck": "tsc --noEmit && tsc -p functions",
-    "lint": "eslint .",
+    "lint": "eslint . --max-warnings 0",
     "lint:fix": "eslint . --fix",
     "census": "node scripts/designCensus.mjs",
     "census:check": "node scripts/designCensus.mjs --check",

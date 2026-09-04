@@ -1,5 +1,15 @@
 [
   {
+    "id": "2026-09-04-rivalry-history-counts-every-past-week",
+    "date": "2026-09-04",
+    "title": "Leagues: the matchup Rivalry tab now counts every earlier week",
+    "category": "fix",
+    "summary": "Open a league matchup and the Rivalry tab is meant to show your running head-to-head against that opponent across the season so far. It was building that history from the current week alone, repeated once per earlier week, so the record and battle-point totals said nothing about what actually happened before. Each past week is now scored on its own shows, so the head-to-head record, the battle-point totals and the streak reflect the real season.",
+    "highlights": [
+      "Weeks where neither of you scored a show are left out of the record rather than counted as a tie."
+    ]
+  },
+  {
     "id": "2026-09-04-install-the-app-in-three-taps",
     "date": "2026-09-04",
     "title": "Getting the app on your phone is now a three-tap job",

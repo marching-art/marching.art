@@ -19,7 +19,6 @@ import type {
 } from '../../types/uniform';
 import {
   NAMED_COLORS,
-  NECK_OPTIONS,
   TORSO_PRINT_OPTIONS,
   TORSO_STYLE_OPTIONS,
   UNIFORM_PRESETS,
@@ -48,6 +47,7 @@ import {
 } from './StudioControls';
 import { ArmControls, LegControls } from './StudioLimbControls';
 import ChestSection from './StudioChestControls';
+import ShouldersSection from './StudioShouldersControls';
 import HeadwearSection from './StudioHeadwearControls';
 import { StudioColorwayContext } from './studioColorContext';
 import {
@@ -173,26 +173,6 @@ export default function StudioEditor({
       ...design,
       colorway: cw,
       figure: withDerivedFlags(applyColorway(fresh.figure, cw)),
-    });
-  };
-
-  const neckValue = figure.cowl
-    ? 'cowl'
-    : figure.mockNeck
-      ? 'mock'
-      : figure.collar
-        ? 'collar'
-        : figure.crew
-          ? 'crew'
-          : 'none';
-
-  const setNeck = (v: string) => {
-    setFigure({
-      collar: v === 'collar' ? safeHex(figure.jacket || design.colorway.primary) : null,
-      collarTrim: v === 'collar' ? design.colorway.secondary : null,
-      mockNeck: v === 'mock' ? safeHex(figure.jacket || design.colorway.primary) : null,
-      cowl: v === 'cowl' ? darkenHex(design.colorway.primary, 0.25) : null,
-      crew: v === 'crew',
     });
   };
 
@@ -419,153 +399,12 @@ export default function StudioEditor({
 
         {sec(
           'shoulders',
-          <section>
-            <h3 className={SECTION_LABEL}>Shoulders &amp; neck</h3>
-            <Pills
-              options={NECK_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
-              value={neckValue}
-              onSelect={setNeck}
-            />
-            <div className="grid grid-cols-2 gap-2 mt-2">
-              {neckValue === 'collar' && (
-                <>
-                  <ChannelRow
-                    label="Collar"
-                    value={figure.collar}
-                    onChange={(v) => setFigure({ collar: v })}
-                  />
-                  <ChannelRow
-                    label="Collar trim"
-                    value={figure.collarTrim}
-                    onChange={(v) => setFigure({ collarTrim: v })}
-                    clearable
-                  />
-                </>
-              )}
-              {neckValue === 'mock' && (
-                <ChannelRow
-                  label="Mock neck"
-                  value={
-                    typeof figure.mockNeck === 'string' && !figure.mockNeck.startsWith('url:')
-                      ? figure.mockNeck
-                      : null
-                  }
-                  onChange={(v) => setFigure({ mockNeck: v })}
-                />
-              )}
-              {neckValue === 'cowl' && (
-                <ChannelRow
-                  label="Cowl"
-                  value={figure.cowl}
-                  onChange={(v) => setFigure({ cowl: v })}
-                />
-              )}
-            </div>
-            <div className="flex flex-wrap gap-3 mt-1">
-              <Toggle
-                label="Epaulets"
-                checked={Boolean(figure.epaulet)}
-                onChange={(v) => setFigure({ epaulet: v ? design.colorway.secondary : null })}
-              />
-              <Toggle
-                label="Suspenders"
-                checked={Boolean(figure.suspenders)}
-                onChange={(v) =>
-                  setFigure({ suspenders: v ? darkenHex(design.colorway.secondary, 0.3) : null })
-                }
-              />
-              <Toggle
-                label="Neckerchief"
-                checked={Boolean(figure.scarf)}
-                onChange={(v) => setFigure({ scarf: v ? design.colorway.accent : null })}
-              />
-              <Toggle
-                label="Sequin tie"
-                checked={Boolean(figure.tie)}
-                onChange={(v) => setFigure({ tie: v ? design.colorway.accent : null })}
-              />
-              <Toggle
-                label={packLabel('Shoulder cape', 'pack_military_outfitters')}
-                checked={Boolean(figure.cape)}
-                onChange={(v) =>
-                  setFigure({
-                    cape: v
-                      ? {
-                          color: design.colorway.secondary,
-                          lining: design.colorway.accent,
-                        }
-                      : null,
-                  })
-                }
-              />
-              {figure.cape && (
-                <Toggle
-                  label="Other shoulder"
-                  checked={figure.cape.side === 'right'}
-                  onChange={(v) =>
-                    setFigure({ cape: { ...figure.cape!, side: v ? 'right' : 'left' } })
-                  }
-                />
-              )}
-              <Toggle
-                label={packLabel('Drum major cord', 'title_drum_major')}
-                checked={Boolean(figure.aiguillette)}
-                onChange={(v) => setFigure({ aiguillette: v ? design.colorway.accent : null })}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              {figure.epaulet && (
-                <ChannelRow
-                  label="Epaulets"
-                  value={figure.epaulet}
-                  onChange={(v) => setFigure({ epaulet: v })}
-                />
-              )}
-              {figure.suspenders && (
-                <ChannelRow
-                  label="Suspenders"
-                  value={figure.suspenders}
-                  onChange={(v) => setFigure({ suspenders: v })}
-                />
-              )}
-              {figure.scarf && (
-                <ChannelRow
-                  label="Neckerchief"
-                  value={figure.scarf}
-                  onChange={(v) => setFigure({ scarf: v })}
-                />
-              )}
-              {figure.tie && (
-                <ChannelRow
-                  label="Tie"
-                  value={figure.tie}
-                  onChange={(v) => setFigure({ tie: v })}
-                />
-              )}
-              {figure.aiguillette && (
-                <ChannelRow
-                  label="Cord"
-                  value={figure.aiguillette}
-                  onChange={(v) => setFigure({ aiguillette: v })}
-                />
-              )}
-              {figure.cape && (
-                <>
-                  <ChannelRow
-                    label="Cape"
-                    value={figure.cape.color}
-                    onChange={(v) => setFigure({ cape: { ...figure.cape!, color: v || '' } })}
-                  />
-                  <ChannelRow
-                    label="Cape lining"
-                    value={figure.cape.lining}
-                    onChange={(v) => setFigure({ cape: { ...figure.cape!, lining: v } })}
-                    clearable
-                  />
-                </>
-              )}
-            </div>
-          </section>
+          <ShouldersSection
+            figure={figure}
+            colorway={design.colorway}
+            onPatch={setFigure}
+            packLabel={packLabel}
+          />
         )}
 
         {sec(

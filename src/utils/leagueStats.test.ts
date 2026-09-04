@@ -495,14 +495,8 @@ describe('cross-class matchups', () => {
   });
 
   it('scores each side of a cross-class matchup in its OWN class', () => {
-    // a fields two classes; only the worldClass run belongs to this matchup.
-    const recaps = [
-      crossDay(1, [
-        ['a', 'worldClass', 85],
-        ['a', 'soundSport', 40],
-        ['b', 'soundSport', 60],
-      ]),
-    ];
+    // a fields two classes; the stored per-side classes are what tell the
+    // scorer which of a's runs belongs to this matchup.
     const members = ['a', 'b'];
     const weekDoc = {
       id: 'week-1',

@@ -1,10 +1,145 @@
 // @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
-// Show registration sub-parts: the per-corps selection rows (fantasy + Podium).
+// Show registration sub-parts: the per-corps selection rows (fantasy + Podium)
+// and the championship auto-enrollment panel.
 // Extracted from ShowRegistrationModal.jsx for file-size hygiene.
 
-import { Check, Landmark, Users } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { AlertTriangle, Check, Landmark, Trophy, Users, X } from 'lucide-react';
 import { formatEventName } from '../../utils/season';
 import { CLASS_CONFIG, sameDayShowFor } from './showRegistrationConfig';
+
+// =============================================================================
+// CHAMPIONSHIP ENROLLMENT PANEL
+// =============================================================================
+// Championship Week shows (Days 45-49) auto-enroll every eligible corps by
+// class, so instead of the selection list the modal shows who is in, who is
+// not, and which classes the event admits. The modal computes the splits and
+// passes them in; this only renders.
+
+export const ChampionshipEnrollmentPanel = ({
+  enrolledCorps,
+  ineligibleCorps,
+  userCorpsClasses,
+  eligibleClasses,
+  corps,
+  onClose,
+}) => (
+  <div className="px-4 py-6">
+    {/* Auto-Enrollment Banner */}
+    <div className="flex items-start gap-3 p-4 bg-brand/10 border border-brand/30 mb-4">
+      <Trophy className="w-5 h-5 text-brand flex-shrink-0 mt-0.5" />
+      <div>
+        <p className="text-sm font-bold text-brand mb-1">Championship Event</p>
+        <p className="text-xs text-muted">
+          Eligible corps are automatically enrolled. No manual registration required.
+        </p>
+      </div>
+    </div>
+
+    {/* Enrolled Corps */}
+    {enrolledCorps.length > 0 && (
+      <div className="mb-4">
+        <div className="text-[10px] font-bold text-muted uppercase tracking-wider mb-3">
+          <Check className="w-3 h-3 inline mr-1 text-green-500" />
+          Automatically Enrolled
+        </div>
+        <div className="space-y-2">
+          {enrolledCorps.map((corpsClass) => {
+            const corpsData = corps[corpsClass];
+            const config = CLASS_CONFIG[corpsClass];
+            return (
+              <div
+                key={corpsClass}
+                className="flex items-center gap-3 p-3 bg-green-500/10 border border-green-500/30"
+              >
+                <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <span className="font-bold text-white text-sm">
+                    {corpsData.corpsName || corpsData.name || 'Unnamed Corps'}
+                  </span>
+                  <span className={`ml-2 text-[10px] font-bold uppercase ${config.color}`}>
+                    {config.shortName}
+                  </span>
+                </div>
+                <span className="text-[10px] text-green-400 font-bold px-2 py-1 bg-green-500/20">
+                  ENROLLED
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    )}
+
+    {/* Ineligible Corps */}
+    {ineligibleCorps.length > 0 && (
+      <div>
+        <div className="text-[10px] font-bold text-muted uppercase tracking-wider mb-3">
+          <X className="w-3 h-3 inline mr-1 text-red-400" />
+          Not Eligible
+        </div>
+        <div className="space-y-2">
+          {ineligibleCorps.map((corpsClass) => {
+            const corpsData = corps[corpsClass];
+            const config = CLASS_CONFIG[corpsClass];
+            return (
+              <div
+                key={corpsClass}
+                className="flex items-center gap-3 p-3 bg-surface-raised border border-line opacity-60"
+              >
+                <X className="w-4 h-4 text-red-400 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <span className="font-medium text-muted text-sm">
+                    {corpsData.corpsName || corpsData.name || 'Unnamed Corps'}
+                  </span>
+                  <span className={`ml-2 text-[10px] font-bold uppercase ${config.color}`}>
+                    {config.shortName}
+                  </span>
+                </div>
+                <span className="text-[10px] text-muted font-medium">Class not eligible</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    )}
+
+    {/* No Corps Message */}
+    {userCorpsClasses.length === 0 && (
+      <div className="text-center py-6">
+        <AlertTriangle className="w-10 h-10 text-muted mx-auto mb-3" />
+        <p className="text-sm text-muted">No corps registered yet.</p>
+        <Link
+          to="/"
+          onClick={onClose}
+          className="inline-block mt-3 px-4 py-2 bg-interactive text-white text-xs font-bold uppercase"
+        >
+          Create a Corps
+        </Link>
+      </div>
+    )}
+
+    {/* Eligible Classes Info */}
+    <div className="mt-4 p-3 bg-surface-sunken border border-line">
+      <p className="text-[10px] font-bold text-muted uppercase tracking-wider mb-2">
+        Eligible Classes for This Event
+      </p>
+      <div className="flex flex-wrap gap-2">
+        {eligibleClasses.map((cls) => {
+          const config = CLASS_CONFIG[cls];
+          return (
+            <span
+              key={cls}
+              className={`px-2 py-1 text-xs font-bold ${config?.bgColor || 'bg-charcoal-500/10'} ${config?.color || 'text-muted'}`}
+            >
+              {config?.name || cls}
+            </span>
+          );
+        })}
+      </div>
+    </div>
+  </div>
+);
 
 // =============================================================================
 // HOSTED SHOW PANEL

@@ -224,19 +224,19 @@ ops step below)_
   `newsFantasyArticles`, `podium.js` (callable), `newsData`, `newsEditorial`,
   `podium/processor`, `newsAdmin`, `rookieLeague`, `scrimmagePass`,
   `articleComments` — all under 30% lines. (M)
-- **P3** `lint` has no `--max-warnings` (13 warnings today; the one CI
-  signal without a ratchet); `e2e/**`, `scripts/**` match no ESLint block and
-  `tsconfig.json` includes only `src`; no type-aware rules
+- **P3** `lint` is at zero warnings and gated (`--max-warnings 0`, 2026-09-04),
+  so any new warning fails CI; still open: `e2e/**`, `scripts/**` match no
+  ESLint block and `tsconfig.json` includes only `src`; no type-aware rules
   (`no-floating-promises`) in a codebase that is almost all async I/O. (M)
-- **P3** Nine backend files and seven frontend files sit past the 700-line
-  `max-lines` warning beyond the two league components already listed:
+- **P3** `max-lines` (700) no longer warns anywhere the ESLint blocks reach
+  (the 2026-09-04 split of `MatchupsTabParts`, `MatchupDetailView`,
+  `uniformFigureParts`, `StudioEditor`, `ShowRegistrationModal`,
+  `CorpsHistory`, `Onboarding`, `callable/admin.js`, `emailService.js`,
+  `seasonRollover.test.js`). Files the rule does not see are still long —
   `helpers/scoring.js` (1215), `callable/leagues.js`, `callable/lineups.js`,
   `triggers/newsGeneration.js`, `helpers/podium/{processor,career}.js`,
-  `triggers/newsSubmissions.js`, `callable/corps.js`, `callable/admin.js`;
-  `uniform/uniformFigureParts.tsx`, `Schedule/ShowRegistrationModal.jsx`,
-  `pages/Onboarding.jsx`, `hooks/useTickerData.ts`,
-  `pages/GuestDashboard.jsx`, `pages/CorpsHistory.jsx`,
-  `uniform/StudioEditor.tsx`. Split by concern when next touched. (L)
+  `triggers/newsSubmissions.js`, `callable/corps.js`, `hooks/useTickerData.ts`,
+  `pages/GuestDashboard.jsx` — split by concern when next touched. (L)
 - **P3** Hygiene: `paydown-cleaned.txt` (empty, tracked) — delete;
   `.gitignore:71` `/admin# React build` is one literal pattern;
   `.runtimeconfig.json` is a tracked UTF-16 Gen-1 leftover;
@@ -356,17 +356,25 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
 - Frontend coverage floor upward — actual is ~29% statements against a
   15.9% floor; raise the floor to within a point of actual whenever it's
   touched (functions are held to 70/80/85).
-- ESLint warnings downward — 14 today, no ceiling yet (see DX above).
+- ESLint warnings: held at zero by `lint --max-warnings 0` — fix, never
+  suppress, anything that shows up.
 - React Query migration of the remaining manual-fetch components.
 - `ui/Button` / `ui/Modal` / `IconButton` adoption; authed-app axe pass (the
   untrapped-dialog and unlabeled-icon-button tallies are at zero as of
   2026-09-03; `dialogFocusTrap.test.ts` keeps the first one there).
-- The two 700+-line league components (`MatchupsTabParts.tsx`,
-  `MatchupDetailView.tsx`) want a split by concern — not by size — when
-  next touched; sixteen more files are past the line (list above).
+- Long files: the `max-lines` warning is clear; the files it cannot see
+  (list above) still want a split by concern — not by size — when next
+  touched.
 
 ## Recently shipped (context, newest first — prune when stale)
 
+- 2026-09-04 (lint): every ESLint warning cleared and `npm run lint` now
+  runs with `--max-warnings 0`. Ten files split by concern (see DX above);
+  the matchup-detail recap folding (`matchupDetailRecaps.ts`) and the
+  onboarding username rules (`onboardingUsername.ts`) are now pure, tested
+  modules — and the head-to-head history on the matchup detail view now
+  actually walks the earlier weeks (it re-scored the current week once per
+  past week before).
 - 2026-09-04 (dependencies): 17 Dependabot security PRs reviewed. The three
   root/`scripts` ones merged as-is; the other 14 were consolidated into one
   branch because Dependabot's three `functions/` PRs regenerated that lockfile

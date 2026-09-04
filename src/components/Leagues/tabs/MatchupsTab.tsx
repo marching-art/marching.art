@@ -16,16 +16,16 @@ import {
   YourSeasonHistory,
   HeadToHeadSection,
   EmptyMatchupsState,
-  VersusStrip,
-  CORPS_CLASS_CONFIG,
 } from './MatchupsTabParts';
+import VersusStrip from './VersusStrip';
+import { CORPS_CLASS_CONFIG } from './matchupsTabConfig';
 // OPTIMIZATION #9: Lazy-load heavy MatchupDetailView component (1058 lines)
 const MatchupDetailView = lazy(() => import('../MatchupDetailView'));
 
 // Registry-derived (Phase 7.4): mirrors the server's MATCHUP_CLASSES, so
 // Podium matchups render automatically when the class registry enables it.
 import { ENABLED_CLASSES as CORPS_CLASSES } from '../../../utils/classRegistry';
-import type { TabMatchup } from './MatchupsTabParts';
+import type { TabMatchup } from './matchupsTabConfig';
 import type { LeagueMatchup } from '../../../utils/leagueStats';
 
 /** A `week-N` matchup document: one array per corps class. */
