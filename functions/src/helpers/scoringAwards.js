@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered when functions checkJs landed (functions/tsconfig.json); remove when this file is typed or cleaned up
 // Championship and trophy processing for scoring runs: season standings
 // cutoffs, championship day config, CorpsCoin awards, regional and class
 // trophies, and finals champions. Extracted verbatim from scoring.js.
@@ -7,6 +6,15 @@
 const { paths } = require("./paths");
 const { logger } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
+
+/**
+ * @typedef {FirebaseFirestore.Firestore} Firestore
+ * @typedef {{ set: (ref: any, data: any, options?: any) => any, update: (ref: any, data: Record<string, any>) => any }} BatchLike
+ *   A Firestore WriteBatch or a ChunkedWriter — only set/update are used.
+ * @typedef {{ docs: Array<any>, size?: number, empty?: boolean }} SnapshotLike
+ *   A QuerySnapshot or the paged ProfilesSnapshot helpers/scoring.js builds.
+ * @typedef {import('./chunkedWriter').ChunkedWriter} ChunkedWriter
+ */
 const {
   TRANSACTION_TYPES,
   addCoinHistoryEntryToBatch,
@@ -270,7 +278,7 @@ function buildChampionshipConfig(scoredDay, recapsByDay, allRecaps) {
  * unmarked behavior.
  *
  * @param {Array} coinAwards - Array of { uid, corpsClass, showName, amount }
- * @param {WriteBatch|ChunkedWriter} batch - Firestore batch (or ChunkedWriter) to add updates to
+ * @param {BatchLike} batch - Firestore batch (or ChunkedWriter) to add updates to
  * @param {Firestore} db - Firestore database instance
  * @param {Object} [options]
  * @param {string} [options.seasonUid] - Enables per-day idempotency markers.
@@ -378,7 +386,7 @@ async function processCoinAwardsBatch(coinAwards, batch, db, options = {}) {
 /**
  * Award regional trophies for specified trophy days.
  *
- * @param {WriteBatch|ChunkedWriter} batch - Firestore batch (or ChunkedWriter) to add updates to
+ * @param {BatchLike} batch - Firestore batch (or ChunkedWriter) to add updates to
  * @param {Object} dailyRecap - The day's recap with shows and results
  * @param {number} scoredDay - The day being scored
  * @param {Object} seasonData - Season configuration data
@@ -476,7 +484,7 @@ async function awardRegionalTrophies(batch, dailyRecap, scoredDay, seasonData, d
 /**
  * Award Day 46 Open and A Class Finals trophies.
  *
- * @param {WriteBatch|ChunkedWriter} batch - Firestore batch (or ChunkedWriter) to add updates to
+ * @param {BatchLike} batch - Firestore batch (or ChunkedWriter) to add updates to
  * @param {Object} dailyRecap - The day's recap with shows and results
  * @param {Object} seasonData - Season configuration data
  * @param {Firestore} db - Firestore database instance
@@ -555,7 +563,7 @@ function awardClassChampionshipTrophies(batch, dailyRecap, seasonData, db) {
  * overall placement — that placement must NOT overwrite their class titles —
  * so the Open/A podiums are pulled from the Day 46 recap.
  *
- * @param {WriteBatch|ChunkedWriter} batch - Firestore batch (or ChunkedWriter) to add updates to
+ * @param {BatchLike} batch - Firestore batch (or ChunkedWriter) to add updates to
  * @param {Object} dailyRecap - The day's recap with shows and results
  * @param {Object} seasonData - Season configuration data
  * @param {Firestore} db - Firestore database instance
@@ -727,7 +735,7 @@ async function awardFinalsAndSaveChampions(batch, dailyRecap, seasonData, db) {
  * both days. The sort is deterministic so Day 41 and Day 42 scoring runs agree
  * on the assignment.
  *
- * @param {QuerySnapshot} profilesSnapshot - Snapshot of active user profiles
+ * @param {SnapshotLike} profilesSnapshot - Snapshot of active user profiles
  * @param {string} eventName - Eastern Classic show event name
  * @param {number} week - Week number containing Days 41/42 (week 6)
  * @param {number} scoredDay - Either 41 (Friday) or 42 (Saturday)

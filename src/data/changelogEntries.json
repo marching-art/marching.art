@@ -1,5 +1,13 @@
 [
   {
+    "id": "2026-09-03-podium-block-cap-no-longer-shrinks-mid-day",
+    "date": "2026-09-03",
+    "title": "Podium: the day's block count no longer shrinks underneath you",
+    "category": "fix",
+    "summary": "A director could log eleven rehearsal blocks against a twelve-block day and then, after a refresh, see \"11 / 8\" and be unable to log the last one. The cap is now judged against the stamina your corps started the day with everywhere — the planner, the block logger, and the nightly run all agree — so a day never shows fewer blocks than you have already used. Anyone caught by this today can log their remaining blocks as normal.",
+    "highlights": []
+  },
+  {
     "id": "2026-09-03-supporter-shout-outs-in-discord",
     "date": "2026-09-03",
     "title": "New supporters get a shout-out in Discord",

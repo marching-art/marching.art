@@ -594,14 +594,11 @@ exports.allocateRehearsalBlock = onCall({ cors: true }, async (request) => {
     const isShowDay = store.isShowDayFor(state, uid, competitionDay, easternAssignments);
     const isSpringTraining = seasonData.status === "live-season" && competitionDay < 1;
     // Base the daily block cap on the stamina the day BEGAN with, not the live
-    // (already-drained) value, so the cap stays fixed as blocks are used. A day
-    // rolled before this snapshot existed lacks startStamina; treat it as rested
-    // (== threshold ⇒ no penalty) so an in-progress day is never stranded below
-    // the blocks already played instead of applying today's depleted stamina.
-    const staminaForCap =
-      typeof state.today.startStamina === "number"
-        ? state.today.startStamina
-        : store.balance.condition.lowStaminaThreshold;
+    // (already-drained) value, so the cap stays fixed as blocks are used. The
+    // fallback for a day with no snapshot is store.staminaForBlockCap — the
+    // same rule getPodiumState reads with, so what this accepts and what the
+    // planner shows can never disagree.
+    const staminaForCap = store.staminaForBlockCap(state, state.today);
     const maxBlocks = engine.blocksAvailable(
       state,
       { isShowDay, isSpringTraining, staminaForCap },
@@ -682,6 +679,9 @@ exports.allocateRehearsalBlock = onCall({ cors: true }, async (request) => {
       today: state.today,
       condition: state.condition,
       blocksRemaining: maxBlocks - state.today.blocksUsed,
+      // The cap the block was accepted against, so the planner's "n / cap"
+      // keeps its denominator through a run of taps.
+      maxBlocksToday: maxBlocks,
     };
   });
 

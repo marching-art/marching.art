@@ -431,28 +431,52 @@ function showPickFor(state, day) {
  * stamina the new day would begin with — exactly what the next write normalizes.
  *
  * @param {object} state hydrated podium state
- * @param {{calendarDay: number, competitionDay: number, isShowDay: boolean}} dayCtx
+ * @param {{calendarDay: number, competitionDay: number, isShowDay: boolean, isSpringTraining?: boolean}} dayCtx
+ *   `isSpringTraining` should carry the caller's own rule (the live season's
+ *   preseason only); it is inferred from competitionDay when omitted.
  * @returns {{maxBlocksToday: number, blocksUsedToday: number,
  *   blocksRemainingToday: number, restDayToday: boolean}}
  */
-function computeTodayBlockBudget(state, { calendarDay, competitionDay, isShowDay }) {
-  const isSpringTraining = competitionDay < 1;
+function computeTodayBlockBudget(state, { calendarDay, competitionDay, isShowDay, isSpringTraining }) {
+  const springTraining =
+    typeof isSpringTraining === "boolean" ? isSpringTraining : competitionDay < 1;
   const todayIsCurrent = Boolean(state.today && state.today.calendarDay === calendarDay);
   const blocksUsedToday = todayIsCurrent ? state.today.blocksUsed || 0 : 0;
   const restDayToday = todayIsCurrent ? Boolean(state.today.restDay) : false;
-  const staminaForCap =
-    todayIsCurrent && typeof state.today.startStamina === "number"
-      ? state.today.startStamina
-      : state.condition
-        ? state.condition.stamina
-        : balance.condition.lowStaminaThreshold;
+  const staminaForCap = staminaForBlockCap(state, todayIsCurrent ? state.today : null);
   const maxBlocksToday = engine.blocksAvailable(
     state,
-    { isShowDay, isSpringTraining, staminaForCap },
+    { isShowDay, isSpringTraining: springTraining, staminaForCap },
     balance
   );
   const blocksRemainingToday = restDayToday ? 0 : Math.max(0, maxBlocksToday - blocksUsedToday);
   return { maxBlocksToday, blocksUsedToday, blocksRemainingToday, restDayToday };
+}
+
+/**
+ * The stamina the daily block cap is judged against — ONE rule, shared by the
+ * block-logging callable, getPodiumState and the nightly processor, because
+ * the three used to disagree and a director could log 11 blocks against a
+ * 12-cap and then read back "11 / 8" ("the 8 blocks bug").
+ *
+ *  1. The day's start-of-day snapshot (`today.startStamina`) when it has one.
+ *  2. A day that has already been played but carries no snapshot (rolled by
+ *     an older nightly) is treated as rested: its live stamina is already
+ *     drained by the blocks it played, and shrinking the cap under blocks
+ *     already used strands the player.
+ *  3. An untouched day's live stamina IS its start-of-day value.
+ *
+ * @param {any} state hydrated podium state
+ * @param {any} today the current day's record, or null when none is current
+ * @returns {number}
+ */
+function staminaForBlockCap(state, today) {
+  if (today && typeof today.startStamina === "number") return today.startStamina;
+  const played = Boolean(today && ((today.blocksUsed || 0) > 0 || today.restDay));
+  if (played || !state.condition || typeof state.condition.stamina !== "number") {
+    return balance.condition.lowStaminaThreshold;
+  }
+  return state.condition.stamina;
 }
 
 /** Base per-plan-type block caps (not stamina-adjusted) — the plan-editor caps. */
@@ -704,6 +728,7 @@ function dehydrateState(state) {
 }
 
 module.exports = {
+  staminaForBlockCap,
   MAJOR_DAYS,
   EASTERN_DAYS,
   EASTERN_PUBLISH_DAY,

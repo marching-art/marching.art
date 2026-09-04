@@ -247,8 +247,7 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
       // would understate an interactively-played day's true cap). A never-played
       // day has no snapshot — live stamina here already IS its start-of-day
       // value, so it falls back to the prior behavior unchanged.
-      const staminaForCap =
-        typeof dayInfo.startStamina === "number" ? dayInfo.startStamina : state.condition.stamina;
+      const staminaForCap = store.staminaForBlockCap(state, dayInfo);
       const maxBlocks = engine.blocksAvailable(
         state,
         { isShowDay, isSpringTraining, staminaForCap },
@@ -603,6 +602,11 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
         blocks: [],
         restDay: false,
         warmupUsed: false,
+        // Tomorrow's cap is judged against the stamina it begins with —
+        // post-recovery, as of this write. Without the snapshot the day fell
+        // back to whatever stamina was live at read time, and after eleven
+        // blocks that read "11 / 8".
+        startStamina: state.condition ? state.condition.stamina : undefined,
       };
       state.updatedAt = new Date().toISOString();
       const written = store.dehydrateState(state);

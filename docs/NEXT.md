@@ -8,7 +8,7 @@ burns an hour to conclude "everything's about covered." Don't. If you ship,
 cut, or discover something, edit THIS file in the same PR — that's the whole
 maintenance contract.
 
-_Last updated: 2026-09-03 (site-review row 18 — one-click unsubscribe + List-Unsubscribe headers, noindex auth wall; row 17 — vendor-firebase trimmed, GameShell + overlays lazy for guests; row 16 — focus traps + Escape in every raw dialog, icon buttons named; row 15 — one dashboard interrupt per visit, celebrations to the inbox; row 14 — weekly XP / win bonus / finish bonus paid per director; row 13 — league weeks decided per show, percentile edge cases; row 12 — server-enforced age gate + consent-gated analytics; AI imagery now built from the full Uniform Studio design + rendered reference image; main ruleset + gazetteer PR flow; site-review Fix-first 1–11 + quick wins shipped)._
+_Last updated: 2026-09-03 (site-review row 19 — honest functions coverage gate, first admin / league-automation tests; row 18 — one-click unsubscribe + List-Unsubscribe headers, noindex auth wall; row 17 — vendor-firebase trimmed, GameShell + overlays lazy for guests; row 16 — focus traps + Escape in every raw dialog, icon buttons named; row 15 — one dashboard interrupt per visit, celebrations to the inbox; row 14 — weekly XP / win bonus / finish bonus paid per director; row 13 — league weeks decided per show, percentile edge cases; row 12 — server-enforced age gate + consent-gated analytics; AI imagery now built from the full Uniform Studio design + rendered reference image; main ruleset + gazetteer PR flow; site-review Fix-first 1–11 + quick wins shipped)._
 
 ## In progress
 
@@ -23,10 +23,10 @@ queue: work it top-down, and tick items off here as they ship.
 
 _(rows 1–17 — S-H1, B-H1, N-H1, F-H3, B-H3, G-H3, Q-H1, F-H2, F-H1, B-H4,
 B-H6/S-M6, S-H2/S-H3, G-H2/G-M10, G-H1/G-H7, U-H4, A-H1/A-H2, F-H4/F-M2 (+
-F-M1), N-H2/N-H6 — and all eight "Cross-area quick wins" shipped
-2026-09-03; continue from row 19 (Q-H2 / Q-H3: coverage over all functions
-files; first tests for `admin.js` and `leagueAutomation.js`) of the Part 1
-table. Still open from
+F-M1), N-H2/N-H6, Q-H2/Q-H3 — and all eight "Cross-area quick wins"
+shipped 2026-09-03; continue from row 20 (U-H1 / U-H6: one onboarding
+checklist (JourneyPanel) and one How-to-Play route) of the Part 1 table —
+the last row, and the largest. Still open from
 F-H4: `re2js` (144 kB) rides in via Firestore's pipelines support — track
 upstream for a pipelines-free entry.
 Left open from G-H1's detail, outside row 14's scope: the league title still
@@ -215,7 +215,12 @@ ops step below)_
   `helpers/leagueEconomy.js`, `helpers/rateLimit.js`,
   `helpers/leagueArchival.js`, `helpers/engagementRewards.js`,
   `helpers/xpCalculations.js`, `callable/seasonLadder.js`,
-  `callable/dailyOps.js` claim/streak, `scheduled/lifetimeLeaderboard.js`. (M)
+  `callable/dailyOps.js` claim/streak, `scheduled/lifetimeLeaderboard.js`.
+  The functions coverage gate now counts every deployed module (honest
+  floor 66 / 79 / 76); the least-covered are `newsDciArticles`,
+  `newsFantasyArticles`, `podium.js` (callable), `newsData`, `newsEditorial`,
+  `podium/processor`, `newsAdmin`, `rookieLeague`, `scrimmagePass`,
+  `articleComments` — all under 30% lines. (M)
 - **P3** `lint` has no `--max-warnings` (13 warnings today; the one CI
   signal without a ratchet); `e2e/**`, `scripts/**` match no ESLint block and
   `tsconfig.json` includes only `src`; no type-aware rules
@@ -331,7 +336,7 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
 
 ## Evergreen ratchets (any session, any size)
 
-- `@ts-nocheck` paydown — **74 files** at
+- `@ts-nocheck` paydown — **72 files** at
   last update; `npm run ts-nocheck:next` ranks the cheapest (no free wins
   left; `Schedule.jsx` and `Layout/GameShell.jsx` are ~30 errors each). One
   per substantive task is the CLAUDE.md habit; batches welcome.
@@ -349,6 +354,17 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
 
 ## Recently shipped (context, newest first — prune when stale)
 
+- 2026-09-03: site-review row 19 (Q-H2 / Q-H3). The functions coverage gate
+  is honest: `src/allModules.test.js` requires every deployed module (46
+  were never loaded by any test, so Node's loaded-files coverage never
+  counted them) and `test:coverage` pins
+  `--test-coverage-include/exclude` (one-off `src/scripts` out). Re-baselined
+  from a hollow 70/80/85 to a real 66/79/76 (measured 67.0 / 80.0 / 77.0).
+  First tests for `callable/admin.js` (all six callables admin-gated via the
+  custom claim, unknown job → not-found, day-range validation, test-email
+  guard; 21 tests) and `scheduled/leagueAutomation.js`
+  (`triggerMatchupGeneration` guard chain + a real generation; 11 tests).
+  `helpers/scoringAwards.js` typed (ts-nocheck 73 → 72).
 - 2026-09-03: supporter shout-outs. `helpers/supporterDiscord.js` posts a
   new/upgraded supporter to #announcements (existing webhook secret, no new
   ops) on a tier gain only; `writeSupporterState` now returns the transition
