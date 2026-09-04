@@ -22,6 +22,7 @@ const STATIC_ROUTES = [
   { path: "/how-to-play", changefreq: "monthly", priority: "0.9" },
   { path: "/podium-guide", changefreq: "monthly", priority: "0.8" },
   { path: "/updates", changefreq: "weekly", priority: "0.7" },
+  { path: "/install", changefreq: "monthly", priority: "0.6" },
   { path: "/preview", changefreq: "weekly", priority: "0.8" },
   { path: "/hall-of-champions", changefreq: "weekly", priority: "0.7" },
   { path: "/privacy", changefreq: "yearly", priority: "0.3" },

@@ -163,6 +163,7 @@ const FOOTER_LINKS = [
   { href: "/how-to-play", label: "How to Play" },
   { href: "/podium-guide", label: "Podium Guide" },
   { href: "/hall-of-champions", label: "Hall of Champions" },
+  { href: "/install", label: "Get the App" },
   { href: "/results", label: "Results" },
   { href: "mailto:support@marching.art", label: "Support" },
   { href: "/privacy", label: "Privacy" },

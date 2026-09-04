@@ -10,7 +10,7 @@ import { test, expect } from '@playwright/test';
  * (Pixel 5) viewport.
  */
 
-const PUBLIC_ROUTES = ['/', '/login', '/register', '/how-to-play', '/privacy'];
+const PUBLIC_ROUTES = ['/', '/login', '/register', '/how-to-play', '/install', '/privacy'];
 
 test.describe('Mobile Experience', () => {
   for (const route of PUBLIC_ROUTES) {

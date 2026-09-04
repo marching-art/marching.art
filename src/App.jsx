@@ -93,6 +93,7 @@ const Article = lazyWithRetry(() => import('./pages/Article'), 'Article');
 const HowToPlay = lazyWithRetry(() => import('./pages/HowToPlay'), 'HowToPlay');
 const HowToPlayPublic = lazyWithRetry(() => import('./pages/HowToPlayPublic'), 'HowToPlayPublic');
 const Updates = lazyWithRetry(() => import('./pages/Updates'), 'Updates');
+const InstallApp = lazyWithRetry(() => import('./pages/InstallApp'), 'InstallApp');
 const PodiumGuide = lazyWithRetry(() => import('./pages/PodiumGuide'), 'PodiumGuide');
 const NotFound = lazyWithRetry(() => import('./pages/NotFound'), 'NotFound');
 const GuestDashboard = lazyWithRetry(() => import('./pages/GuestDashboard'), 'GuestDashboard');
@@ -574,6 +575,16 @@ function App() {
                       element={
                         <PublicPage name="Updates">
                           <Updates />
+                        </PublicPage>
+                      }
+                    />
+                    {/* "How do I get the app?" — device-aware install guide, public so
+                        it can be sent to a phone or pasted into Discord. */}
+                    <Route
+                      path="/install"
+                      element={
+                        <PublicPage name="Install App">
+                          <InstallApp />
                         </PublicPage>
                       }
                     />

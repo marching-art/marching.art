@@ -25,6 +25,7 @@ import { DISCORD_URL } from '../../utils/siteLinks';
 import { APP_CONFIG } from '../../config';
 import { usePodiumEnabled } from '../../hooks/useFeatures';
 import { useUnseenUpdates } from '../../hooks/useUnseenUpdates';
+import { usePWAInstall } from '../../hooks/usePWAInstall';
 
 // This menu is help: guides, what's-new, the public results surface, and legal.
 // Game destinations (Shop, Achievements, Records, and the archive galleries)
@@ -39,6 +40,9 @@ const MENU_LINKS = [
   { to: '/how-to-play', label: 'How to Play' },
   // Podium Guide is appended at render time only while the game is on.
   { to: '/hall-of-champions', label: 'Hall of Champions' },
+  // Device-aware install guide. Dropped at render time once the director is
+  // already inside the installed app.
+  { to: '/install', label: 'Get the App' },
 ];
 
 const LEGAL_LINKS = [
@@ -51,13 +55,15 @@ const itemClass =
 
 const SiteLinksMenu = () => {
   const podiumEnabled = usePodiumEnabled();
+  const { isInstalled } = usePWAInstall();
+  const baseLinks = isInstalled ? MENU_LINKS.filter((l) => l.to !== '/install') : MENU_LINKS;
   const menuLinks = podiumEnabled
     ? [
-        ...MENU_LINKS.slice(0, 3),
+        ...baseLinks.slice(0, 3),
         { to: '/podium-guide', label: 'Podium Guide' },
-        ...MENU_LINKS.slice(3),
+        ...baseLinks.slice(3),
       ]
-    : MENU_LINKS;
+    : baseLinks;
   const [open, setOpen] = useState(false);
   const { unseenCount, hasUnseen } = useUnseenUpdates();
   /** @type {React.MutableRefObject<HTMLDivElement | null>} */

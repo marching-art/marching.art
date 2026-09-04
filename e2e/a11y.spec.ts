@@ -13,6 +13,7 @@ const PAGES: Array<{ path: string; name: string }> = [
   { path: '/', name: 'landing' },
   { path: '/preview', name: 'guest preview' },
   { path: '/how-to-play', name: 'how to play' },
+  { path: '/install', name: 'install guide' },
   { path: '/login', name: 'login' },
   { path: '/register', name: 'register' },
 ];

@@ -237,7 +237,14 @@ describe("buildDayResultsHtml", () => {
     assert.ok(html.includes('class="site-header"'));
     assert.ok(html.includes("/logo192.svg"));
     // Same footer link set as src/components/Layout/SiteFooter.jsx
-    for (const path of ["/how-to-play", "/podium-guide", "/hall-of-champions", "/privacy", "/terms"]) {
+    for (const path of [
+      "/how-to-play",
+      "/podium-guide",
+      "/hall-of-champions",
+      "/install",
+      "/privacy",
+      "/terms",
+    ]) {
       assert.ok(html.includes(`href="https://marching.art${path}"`), `missing footer link ${path}`);
     }
   });

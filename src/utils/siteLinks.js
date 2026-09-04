@@ -12,6 +12,7 @@ export const PUBLIC_LINKS = [
   { to: '/how-to-play', label: 'How to Play' },
   { to: '/podium-guide', label: 'Podium Guide' },
   { to: '/hall-of-champions', label: 'Hall of Champions' },
+  { to: '/install', label: 'Get the App' },
 ];
 
 export const LEGAL_LINKS = [

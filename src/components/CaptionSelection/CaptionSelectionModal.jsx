@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // =============================================================================
 // CAPTION SELECTION MODAL - CONSOLIDATED CAPTION-FOCUSED DESIGN
 // =============================================================================
@@ -19,6 +18,16 @@ import {
 import { Heading } from '../ui';
 import { useCaptionSelectionModal } from './useCaptionSelectionModal';
 
+/**
+ * @param {{
+ *   onClose: () => void,
+ *   onSubmit: () => void,
+ *   corpsClass: string,
+ *   currentLineup: Record<string, string>,
+ *   seasonId: string,
+ *   initialCaption?: string | null,
+ * }} props
+ */
 const CaptionSelectionModal = ({
   onClose,
   onSubmit,
@@ -30,8 +39,8 @@ const CaptionSelectionModal = ({
   const {
     dialogRef,
     captions,
-    categoryColors,
-    pointLimit,
+    categoryColors: categoryColorMap,
+    pointLimit: classPointLimit,
     selections,
     totalPoints,
     remainingPoints,
@@ -83,6 +92,12 @@ const CaptionSelectionModal = ({
     seasonId,
     initialCaption,
   });
+
+  // Every enabled class with a lineup has a cap, but the registry map is
+  // typed loosely; treat a missing cap as 0 rather than crash the meter.
+  const pointLimit = classPointLimit ?? 0;
+  /** @type {Record<string, string>} */
+  const categoryColors = categoryColorMap;
 
   return (
     <Portal>
@@ -196,7 +211,7 @@ const CaptionSelectionModal = ({
             <div className="h-2 bg-line overflow-hidden rounded-none">
               <div
                 className={`h-full transition-all ${isOverLimit ? 'bg-red-500' : 'bg-interactive'}`}
-                style={{ width: `${Math.min((totalPoints / pointLimit) * 100, 100)}%` }}
+                style={{ width: `${Math.min((totalPoints / (pointLimit || 1)) * 100, 100)}%` }}
               />
             </div>
           </div>

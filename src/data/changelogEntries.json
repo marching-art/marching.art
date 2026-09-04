@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-09-04-install-the-app-in-three-taps",
+    "date": "2026-09-04",
+    "title": "Getting the app on your phone is now a three-tap job",
+    "category": "improvement",
+    "summary": "Ask \"how do I install marching.art?\" and the answer used to be a two-line tip buried in Settings that assumed Safari. There is now a proper Get the App page at marching.art/install that recognises your phone and browser and shows exactly where the button is — the Share sheet at the bottom of Safari on iPhone, the ⋮ menu in Chrome, Samsung Internet's \"Add page to\", Chrome on iPhone, Edge, Firefox and desktop too. If you opened the link from inside Instagram, Facebook, TikTok, Discord or Gmail, it tells you that mini browser can't install apps and gives you a one-tap \"Open in Safari / Chrome\" button before the steps. Browsers that support one-tap install get a single Install button.",
+    "highlights": [
+      "Get the App lives in the footer, the ? menu, the home page and Settings, and the install nudge now takes you straight there instead of trying to explain it in a toast.",
+      "Send marching.art/install to a friend or a parent — it opens to the steps for their device, and you can switch to a different device to help them from your own.",
+      "A troubleshooting list covers the usual dead ends: the missing \"Add to Home Screen\", Android saying \"Open\" instead of \"Install\", and notifications after installing.",
+      "Directors who already run the installed app just see \"You're all set\"."
+    ]
+  },
+  {
     "id": "2026-09-04-podium-medals-match-your-division-placement",
     "date": "2026-09-04",
     "title": "Podium: medals now match the placement beside them",
