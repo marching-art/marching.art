@@ -34,6 +34,15 @@ const BASELINE_PATH = join(__dirname, 'audit-baseline.json');
 
 const update = process.argv.includes('--update');
 
+/**
+ * Hard cap on one `npm audit` call. The audit is a network round trip to the
+ * registry's advisory endpoint; when that stalls, npm waits on its own (long)
+ * fetch retries and the CI step sat for 12 minutes until the job's 15-minute
+ * timeout cancelled it — which also aborted the deploys gated on that run.
+ * Failing fast here turns a registry hiccup into a clear, re-runnable error.
+ */
+const AUDIT_TIMEOUT_MS = 120_000;
+
 /** High+critical prod-dependency advisory count for one manifest directory. */
 function highCriticalCount(dir) {
   let json;
@@ -43,8 +52,17 @@ function highCriticalCount(dir) {
       cwd: join(repoRoot, dir),
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'ignore'],
+      timeout: AUDIT_TIMEOUT_MS,
+      killSignal: 'SIGKILL',
     });
   } catch (err) {
+    if (err.code === 'ETIMEDOUT' || err.signal === 'SIGKILL') {
+      throw new Error(
+        `npm audit for "${dir}" did not answer within ${AUDIT_TIMEOUT_MS / 1000}s — ` +
+          'the registry advisory endpoint is stalled or unreachable. Re-run the job; ' +
+          'this is not a dependency regression.'
+      );
+    }
     json = err.stdout ? err.stdout.toString() : '';
   }
   if (!json) throw new Error(`npm audit produced no output for "${dir}"`);
