@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // PodiumTrajectoryCard — historical shadows (design §6, decision 29): your
 // season score line drawn against eight real corps arcs from the committed
 // 2000-2025 corpus. The cast is drawn per season from the banded pool
@@ -16,15 +15,23 @@ const W = 960;
 const H = 240;
 const PAD = { top: 10, right: 128, bottom: 22, left: 34 };
 
+/** @typedef {{ day: number, total: number }} ScoreHistoryEntry */
+
+/** @param {number} day */
 function scaleX(day) {
   return PAD.left + ((day - 1) / 48) * (W - PAD.left - PAD.right);
 }
 
+/** @param {{ podium: { data?: { state?: any } } }} props */
 export default function PodiumTrajectoryCard({ podium }) {
   const state = podium.data?.state;
-  const [hovered, setHovered] = useState(null); // shadow corps name
+  const [hovered, setHovered] = useState(/** @type {string|null} */ (null)); // shadow corps name
+  /** @type {ScoreHistoryEntry[]} */
   const history = useMemo(
-    () => (state?.scoreHistory || []).filter((e) => e && e.day >= 1 && e.day <= 49),
+    () =>
+      (state?.scoreHistory || []).filter(
+        (/** @type {ScoreHistoryEntry|null} */ e) => e && e.day >= 1 && e.day <= 49
+      ),
     [state]
   );
   // Re-drawn only when the season changes: the cast is this season's, and it
@@ -41,12 +48,14 @@ export default function PodiumTrajectoryCard({ podium }) {
   ];
   const yMin = Math.max(40, Math.floor((Math.min(...allValues) - 4) / 5) * 5);
   const yMax = 100;
+  /** @param {number} value */
   const scaleY = (value) =>
     H - PAD.bottom - ((value - yMin) / (yMax - yMin)) * (H - PAD.top - PAD.bottom);
 
   const gridValues = [];
   for (let v = Math.ceil(yMin / 10) * 10; v <= 100; v += 10) gridValues.push(v);
 
+  /** @param {number[]} totals */
   const shadowPath = (totals) =>
     totals
       .map((t, i) => `${i === 0 ? 'M' : 'L'}${scaleX(i + 1).toFixed(1)},${scaleY(t).toFixed(1)}`)

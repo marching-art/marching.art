@@ -30,6 +30,7 @@ const staffMarket = require("./staffMarket");
 const assessment = require("./assessment");
 const joint = require("./joint");
 const { runScrimmagePass } = require("./scrimmagePass");
+const { rankShowResults } = require("./showRanking");
 const { processCoinAwardsBatch } = require("../scoringAwards");
 const { SHOW_PARTICIPATION_REWARDS } = require("../classRegistry");
 const { ChunkedWriter } = require("../chunkedWriter");
@@ -641,24 +642,18 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
     // --- 3. Recap doc (per SHOW) --------------------------------------------
     // Each show is ranked on its own — placement and medals reset per show, so
     // two corps competing at different shows on the same night are never ranked
-    // against each other. The recap mirrors the fantasy `shows: [...]` shape.
+    // against each other — and WITHIN EACH DIVISION: every division crowns its
+    // own winner (§5.7), so a row's `place` / `fieldSize` are its rank and
+    // field among its division-mates that night, exactly what the recap sheet
+    // sections and the season ledger prints. Per-show medals (design §14.1.3)
+    // follow the same field: top 3 of a meaningfully-sized division bank a
+    // lifetime counter — the FMA "70+ regular-season golds" collector hook.
+    // One rule, in showRanking.js, shared with the correction script.
+    // The recap mirrors the fantasy `shows: [...]` shape.
     const medalByUid = {};
     const recapShows = [];
     for (const group of showGroups.values()) {
-      group.results.sort((a, b) => b.totalScore - a.totalScore);
-      group.results.forEach((entry, index) => {
-        entry.place = index + 1;
-      });
-      // Per-show medals (design §14.1.3): top 3 at any meaningfully-sized
-      // show bank a lifetime counter — the FMA "70+ regular-season golds"
-      // collector hook.
-      if (group.results.length >= store.balance.medals.minFieldSize) {
-        const medalNames = ["gold", "silver", "bronze"];
-        group.results.slice(0, 3).forEach((entry, index) => {
-          medalByUid[entry.uid] = medalNames[index];
-          entry.medal = medalNames[index];
-        });
-      }
+      Object.assign(medalByUid, rankShowResults(group.results, store.balance.medals).medalByUid);
       recapShows.push(group);
     }
     // Credit the director on every recap row (username preferred, mirroring the

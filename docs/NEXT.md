@@ -267,6 +267,14 @@ ops step below)_
 
 ## Operational — owner only, standing until done
 
+- **Run the Podium medal correction** (Actions → "Correct Podium medals" →
+  Run workflow, dry run first, then with `commit` checked). Until it runs,
+  every recap written before 2026-09-04 still carries mixed-field `place` /
+  `medal` on its rows and the live season's `podium/state.medals` (+ the
+  profile mirror) counts podiums that were never shown. The ledger and the
+  recap sheet already derive medals from the division placement on screen, so
+  the visible mismatch is gone; this makes the stored data and the counters
+  agree with it. Idempotent — a second run is a no-op.
 - **Re-enable the Buy Me a Coffee webhook.** BMAC auto-disabled it (email
   "Action Required | Webhook Disabled", 2026-09-03) because the endpoint URL
   in BMAC → Integrations → Webhooks had been set to the compute
@@ -356,6 +364,18 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
 
 ## Recently shipped (context, newest first — prune when stale)
 
+- 2026-09-04 (medals): Podium medals now follow the division placement
+  beside them. The processor ranked the mixed show field and medalled its top
+  three while the ledger and recap sheet numbered each division on its own,
+  so a "1/3" sat beside a silver and a "2/3" beside a gold. One rule now
+  (`functions/src/helpers/podium/showRanking.js`, mirrored on the client by
+  `src/utils/podiumMedals.ts` with a config-sync test): place, field size and
+  medal are decided within the division, medals only from
+  `balance.medals.minFieldSize` corps. The ledger and the recap sheet derive
+  the icon from the on-screen place (so pre-fix recaps render correctly too);
+  `correctPodiumMedals.js` + its workflow repair the stored rows and the
+  medal counters (see Operational). `@ts-nocheck` ratchet: 69 → 68
+  (`src/components/Podium/PodiumTrajectoryCard.jsx`).
 - 2026-09-04 (later still): `npm run ts-nocheck:next` no longer lies. It ran
   `npx tsc`, which in a fresh web container (no `npm ci` yet) falls back to
   the image's global TypeScript 6; that compiler rejects the tsconfig's

@@ -8,12 +8,11 @@
 
 import React from 'react';
 import { Loader2, TrendingUp, Medal } from 'lucide-react';
+import { MEDAL_TEXT_CLASS } from '../../utils/podiumMedals';
 import { ShareButton } from './SheetPrimitives';
 import { SHEET_CARD } from './sheetTokens';
 import { fmtScore } from './seasonLedgerUtils';
 import { CAPTION_IDS } from '../../data/captions';
-
-const MEDAL_COLORS = { gold: 'text-brand', silver: 'text-secondary', bronze: 'text-amber-700' };
 
 // Signed total movement between consecutive outings — the "how am I trending"
 // glyph. Positive is a green climb, negative a red slip, first outing a dash.
@@ -182,7 +181,7 @@ export default function SeasonLedgerView({
                         {showMedals && entry.medal && (
                           <Medal
                             className={`w-3 h-3 flex-shrink-0 ${
-                              MEDAL_COLORS[entry.medal] || 'text-muted'
+                              MEDAL_TEXT_CLASS[entry.medal] || 'text-muted'
                             }`}
                             aria-label={`${entry.medal} medal`}
                           />
