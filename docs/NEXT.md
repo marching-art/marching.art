@@ -354,6 +354,15 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
 
 ## Recently shipped (context, newest first — prune when stale)
 
+- 2026-09-04: CI: the dependency-audit ratchet no longer fails a run on a
+  registry stall. `scripts/auditRatchet.mjs` tells npm to fail fast
+  (`--fetch-timeout` 15s, no internal retries) with a hard cap just above npm's
+  bulk→quick fallback, classifies network/5xx errors as transient (JSON
+  `error.code`, npm 10's `message: "network timeout at …"`, or stderr), and
+  retries each manifest up to 3× with 0/5/15s backoff before giving up with the
+  "re-run, not a regression" error. Worst case stays inside the job's 15-min
+  budget. `AUDIT_FETCH_TIMEOUT_MS` / `AUDIT_ATTEMPTS` override for slow
+  proxies. `@ts-nocheck` ratchet: 72 → 71 (`HallOfChampions.test.jsx`).
 - 2026-09-03: site-review row 19 (Q-H2 / Q-H3). The functions coverage gate
   is honest: `src/allModules.test.js` requires every deployed module (46
   were never loaded by any test, so Node's loaded-files coverage never
