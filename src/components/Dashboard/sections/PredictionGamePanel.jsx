@@ -18,7 +18,16 @@ import { buildQuestions } from '../../../utils/dailyPredictions';
 
 // `embedded` renders the same content without the outer card chrome, for
 // composition inside the Director's Report (the unified Zone-B daily card).
-const PredictionGamePanel = memo(({ recentResults, corpsClass, embedded = false }) => {
+/** @typedef {import('../../../utils/directorsReport').RecentResult} RecentResult */
+
+/**
+ * @param {{
+ *   recentResults?: RecentResult[] | null,
+ *   corpsClass?: string | null,
+ *   embedded?: boolean,
+ * }} props
+ */
+const PredictionGamePanelInner = ({ recentResults, corpsClass, embedded = false }) => {
   const { trigger: haptic } = useHaptic();
   const profile = useProfileStore((state) => state.profile);
   const submitPrediction = useProfileStore((state) => state.submitPrediction);
@@ -197,7 +206,9 @@ const PredictionGamePanel = memo(({ recentResults, corpsClass, embedded = false 
       ) : null}
     </div>
   );
-});
+};
+
+const PredictionGamePanel = memo(PredictionGamePanelInner);
 
 PredictionGamePanel.displayName = 'PredictionGamePanel';
 
