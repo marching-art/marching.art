@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // PredictionGamePanel - Daily prediction questions that resolve when new scores arrive
 // Creates a natural "check back tomorrow" engagement loop between 2 AM scoring cycles.
 //
@@ -19,6 +18,19 @@ import { buildQuestions } from '../../../utils/dailyPredictions';
 // `embedded` renders the same content without the outer card chrome, for
 // composition inside the Director's Report (the unified Zone-B daily card).
 /** @typedef {import('../../../utils/directorsReport').RecentResult} RecentResult */
+/** @typedef {{ pick?: string, threshold?: number|null }} PredictionPick */
+/** @typedef {{ isCorrect?: boolean, answer?: string|number|null }} PredictionResult */
+/**
+ * One game day's bucket on the profile's `predictions` ledger, as
+ * submitPrediction / resolvePredictions write it.
+ * @typedef {{
+ *   picks?: Record<string, PredictionPick>,
+ *   results?: Record<string, PredictionResult>,
+ *   resolved?: boolean,
+ *   corpsClass?: string|null,
+ *   snapshotEvent?: string|null,
+ * }} PredictionBucket
+ */
 
 /**
  * @param {{
@@ -35,16 +47,18 @@ const PredictionGamePanelInner = ({ recentResults, corpsClass, embedded = false 
 
   const gameDay = getGameDay();
 
-  const bucket = profile?.predictions?.[gameDay] || {};
+  const bucket = /** @type {PredictionBucket} */ (profile?.predictions?.[gameDay] || {});
   const picks = bucket.picks || {};
   const results = bucket.results || {};
   const isResolved = !!bucket.resolved;
-  const stats = profile?.predictionStats || { correct: 0, total: 0 };
+  const stats = /** @type {{ correct: number, total: number }} */ (
+    profile?.predictionStats || { correct: 0, total: 0 }
+  );
 
   // Generate questions from current data. SoundSport gets the placement-only
   // set (medal + improvement) — its numeric scores stay hidden.
   const questions = useMemo(
-    () => buildQuestions(recentResults, corpsClass),
+    () => buildQuestions(recentResults || [], corpsClass),
     [recentResults, corpsClass]
   );
 
@@ -63,9 +77,20 @@ const PredictionGamePanelInner = ({ recentResults, corpsClass, embedded = false 
 
   // Handle user picking an option
   const handlePick = useCallback(
+    /**
+     * @param {string} questionId
+     * @param {string} option
+     * @param {number|null} threshold
+     */
     (questionId, option, threshold) => {
       haptic?.();
-      submitPrediction(questionId, option, threshold, corpsClass, latestEvent);
+      submitPrediction(
+        questionId,
+        option,
+        threshold,
+        /** @type {string} */ (corpsClass),
+        latestEvent
+      );
     },
     [submitPrediction, corpsClass, latestEvent, haptic]
   );

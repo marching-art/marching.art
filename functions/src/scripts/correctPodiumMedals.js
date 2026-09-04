@@ -16,8 +16,10 @@
  * the data already written into line with it:
  *
  *   1. RECAPS: for every `podium-recaps/{season}/days/{day}` show, re-stamp each
- *      row's `place`, `fieldSize` and `medal` from its division field. Rows are
- *      never added or removed and every other field is left alone.
+ *      row's `place` and `fieldSize` from its division field and its `medal`
+ *      from that division's podium (at a show of `balance.medals.minFieldSize`
+ *      or more corps). Rows are never added or removed and every other field
+ *      is left alone.
  *   2. COUNTERS: tally the corrected medals per corps per season and reconcile
  *      the counters that display them —
  *        - the live season's `podium/state.medals` and its profile mirror
@@ -156,7 +158,9 @@ async function run({ commit }) {
   const medalsCfg = store.balance.medals;
 
   // ---- 1. Recaps ----------------------------------------------------------
-  console.log(`Re-ranking Podium recaps within division (medals from ${medalsCfg.minFieldSize}+ corps)…`);
+  console.log(
+    `Re-ranking Podium recaps within division (medals at shows of ${medalsCfg.minFieldSize}+ corps)…`
+  );
   const seasonRefs = await db.collection("podium-recaps").listDocuments();
   /** @type {Map<string, Record<string, { gold: number, silver: number, bronze: number }>>} */
   const tallyBySeason = new Map();

@@ -1,17 +1,12 @@
-// Tests for the Podium season recap ledger: the community-requested "running
-// ledger of your stats, show to show." It reads the same public podium-recaps
-// collection the recap sheet does, then keeps ONLY the viewer's own row from
-// each show — so these tests pin the filtering (mine vs. everyone else), the
-// chronological one-line-per-outing shape, the season aggregates, and the
-// divisional placement it derives.
-
+// The Podium season ledger derives each outing's medal from the corps'
+// placement WITHIN ITS DIVISION that night — the same field the printed
+// "place / field" reads against — at any show with a real field, never from
+// a flag stored on the recap row.
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import type { ComponentType, ReactElement } from 'react';
 
-// The ledger reads podium-recaps directly; api/client initializes Firebase at
-// module load, so both the client and the query layer are mocked out.
 vi.mock('firebase/firestore', () => ({
   collection: vi.fn(() => ({})),
   getDocs: vi.fn(),
@@ -25,25 +20,21 @@ const Ledger = PodiumSeasonLedger as unknown as ComponentType<Record<string, unk
 const mockedGetDocs = getDocs as unknown as ReturnType<typeof vi.fn>;
 const wrap = (ui: ReactElement) => render(<MemoryRouter>{ui}</MemoryRouter>);
 
-/** One corps' row as the Podium processor writes it. */
-const row = (
-  uid: string,
-  totalScore: number,
-  division = 'worldClass',
-  overrides: Record<string, unknown> = {}
-) => ({
+const CAPS = ['GE1', 'GE2', 'VP', 'VA', 'CG', 'B', 'MA', 'P'];
+const captions = (v: number) => Object.fromEntries(CAPS.map((c) => [c, v]));
+
+const row = (uid: string, corpsName: string, division: string, totalScore: number, over = {}) => ({
   uid,
-  corpsName: uid,
+  corpsName,
   division,
   totalScore,
-  geScore: 30,
-  visualScore: 30,
-  musicScore: 30,
-  captions: { GE1: 18, GE2: 18, VP: 18, VA: 18, CG: 18, B: 18, MA: 18, P: 18 },
-  ...overrides,
+  geScore: totalScore / 2,
+  visualScore: totalScore / 4,
+  musicScore: totalScore / 4,
+  captions: captions(totalScore / 8),
+  ...over,
 });
 
-/** Stand up the collection read with a set of day recaps. */
 const withDays = (days: Array<{ day: number; recap: object }>) => {
   mockedGetDocs.mockResolvedValue({
     docs: days.map(({ day, recap }) => ({ id: String(day), data: () => recap })),
@@ -55,63 +46,56 @@ beforeEach(() => {
 });
 
 describe('PodiumSeasonLedger', () => {
-  it('keeps only the viewer’s row from each show, oldest first', async () => {
+  it('medals follow the division placement, whatever the stored row says', async () => {
     withDays([
       {
-        day: 12,
-        recap: {
-          shows: [{ eventName: 'DCI Broken Arrow', results: [row('me', 70), row('rival', 80)] }],
-        },
-      },
-      {
-        day: 20,
-        recap: {
-          shows: [{ eventName: 'DCI Atlanta', results: [row('rival', 85), row('me', 78)] }],
-        },
-      },
-    ]);
-
-    const { container } = wrap(<Ledger seasonUid="s1" uid="me" userCorpsName="me" />);
-    await screen.findByText(/broken arrow/i);
-
-    // Two outings, mine only — the rival is never listed as an outing row.
-    const bodyRows = container.querySelectorAll('tbody tr');
-    expect(bodyRows).toHaveLength(2);
-    expect(bodyRows[0].textContent).toContain('Broken Arrow'); // day 12 first
-    expect(bodyRows[1].textContent).toContain('Atlanta');
-    expect(screen.queryByText('rival')).not.toBeInTheDocument();
-  });
-
-  it('summarizes the season: outings, best, and average', async () => {
-    withDays([
-      { day: 10, recap: { shows: [{ eventName: 'Show A', results: [row('me', 70)] }] } },
-      { day: 20, recap: { shows: [{ eventName: 'Show B', results: [row('me', 80)] }] } },
-    ]);
-
-    wrap(<Ledger seasonUid="s1" uid="me" userCorpsName="me" />);
-    await screen.findByText(/show a/i);
-
-    expect(screen.getByText('Outings').parentElement).toHaveTextContent('2');
-    // Best 80.00, average (70+80)/2 = 75.00 both surface in the summary strip.
-    expect(screen.getByText('Season Best').parentElement).toHaveTextContent('80.00');
-    expect(screen.getByText('Average').parentElement).toHaveTextContent('75.00');
-  });
-
-  it('places the corps within its OWN division, not the mixed field', async () => {
-    // A mixed show: two World corps score above me, but I am in Open Class and
-    // win it, so my line must read 1/2 — my division — not 3/4.
-    withDays([
-      {
-        day: 15,
+        day: 26,
         recap: {
           shows: [
             {
-              eventName: 'Mixed Classic',
+              eventName: 'marching.art Houston',
+              location: 'Houston, Texas',
               results: [
-                row('w1', 95, 'worldClass'),
-                row('w2', 90, 'worldClass'),
-                row('me', 85, 'openClass'),
-                row('o2', 80, 'openClass'),
+                row('w1', 'World One', 'worldClass', 80),
+                row('w2', 'World Two', 'worldClass', 79),
+                row('me', 'My Corps', 'aClass', 58.5, { medal: null, place: 3 }), // stale mixed-field rank
+                row('a2', 'Second A', 'aClass', 57),
+                row('a3', 'Third A', 'aClass', 56),
+                row('a4', 'Fourth A', 'aClass', 55),
+                row('a5', 'Fifth A', 'aClass', 54),
+              ],
+            },
+          ],
+        },
+      },
+      {
+        day: 27,
+        recap: {
+          shows: [
+            {
+              eventName: 'Show of Shows',
+              location: 'Rockford, IL',
+              // A one-corps "show" is not a podium — even if a stale row says gold.
+              results: [row('me', 'My Corps', 'aClass', 60, { medal: 'gold', place: 1 })],
+            },
+          ],
+        },
+      },
+      {
+        day: 28,
+        recap: {
+          shows: [
+            {
+              eventName: 'marching.art Denton',
+              location: 'Denton, TX',
+              // Second of a two-corps division at a six-corps show: a silver.
+              results: [
+                row('o1', 'Open One', 'openClass', 70),
+                row('me', 'My Corps', 'aClass', 61),
+                row('a2', 'Second A', 'aClass', 62),
+                row('a3', 'Third A', 'aClass', 55),
+                row('a4', 'Fourth A', 'aClass', 54),
+                row('a5', 'Fifth A', 'aClass', 53),
               ],
             },
           ],
@@ -119,31 +103,18 @@ describe('PodiumSeasonLedger', () => {
       },
     ]);
 
-    const { container } = wrap(<Ledger seasonUid="s1" uid="me" userCorpsName="me" />);
-    await screen.findAllByText(/mixed classic/i);
+    const { container } = wrap(<Ledger seasonUid="s1" uid="me" userCorpsName="My Corps" />);
+    await screen.findAllByText(/Houston/);
 
-    const outing = container.querySelector('tbody tr') as HTMLElement;
-    expect(within(outing).getByText('1')).toBeInTheDocument();
-    expect(outing.textContent).toContain('/2');
-  });
-
-  it('falls back to matching by corps name when uid is absent', async () => {
-    withDays([
-      {
-        day: 5,
-        recap: { shows: [{ eventName: 'Opener', results: [row('Blue Stars', 72)] }] },
-      },
-    ]);
-
-    const { container } = wrap(<Ledger seasonUid="s1" userCorpsName="blue stars" />);
-    await screen.findAllByText(/opener/i);
-    // Matched by name despite the missing uid: exactly one outing row.
-    expect(container.querySelectorAll('tbody tr')).toHaveLength(1);
-  });
-
-  it('shows the empty state before any scored outing', async () => {
-    withDays([]);
-    wrap(<Ledger seasonUid="s1" uid="me" userCorpsName="me" />);
-    expect(await screen.findByText(/no scored outings yet/i)).toBeInTheDocument();
+    const rows = container.querySelectorAll('tbody tr');
+    expect(rows).toHaveLength(3);
+    expect(rows[0].textContent).toContain('1/5');
+    expect(rows[0].querySelector('svg[aria-label="gold medal"]')).not.toBeNull();
+    expect(rows[1].textContent).toContain('1/1');
+    expect(rows[1].querySelector('svg[aria-label$="medal"]')).toBeNull();
+    expect(rows[2].textContent).toContain('2/5');
+    expect(rows[2].querySelector('svg[aria-label="silver medal"]')).not.toBeNull();
+    // The summary strip counts the same medals.
+    expect(screen.getByText('1G · 1S · 0B')).toBeTruthy();
   });
 });

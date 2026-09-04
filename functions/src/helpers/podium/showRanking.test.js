@@ -17,7 +17,7 @@ describe("medalForPlace", () => {
     assert.equal(medalForPlace(4, MIN, MIN), null);
   });
 
-  test("a field under the minimum is not a podium", () => {
+  test("a show under the minimum field is not a podium", () => {
     assert.equal(medalForPlace(1, MIN - 1, MIN), null);
     assert.equal(medalForPlace(1, 1, MIN), null);
   });
@@ -76,21 +76,40 @@ describe("rankShowResults", () => {
     });
   });
 
-  test("a division below the minimum field places but does not medal", () => {
+  test("a small division at a real show still medals — the gate is the show's field", () => {
+    // The live shape of a young season: A Class fields eight, Open and World
+    // two each. Every division's podium counts; the "/N" still reads per division.
     const results = [
       row("o1", "openClass", 80),
       row("o2", "openClass", 79),
-      row("o3", "openClass", 78),
+      row("w1", "worldClass", 85),
       row("a1", "aClass", 70),
+      row("a2", "aClass", 69),
+      row("a3", "aClass", 68),
+      row("a4", "aClass", 67),
     ];
     const { results: ranked, medalByUid } = rankShowResults(results, { minFieldSize: MIN });
     const byUid = Object.fromEntries(ranked.map((r) => [r.uid, r]));
-    assert.equal(byUid.o1.place, 1);
-    assert.equal(byUid.o1.fieldSize, 3);
-    assert.equal(byUid.o1.medal, null);
-    assert.equal(byUid.a1.place, 1);
-    assert.equal(byUid.a1.fieldSize, 1);
-    assert.equal(byUid.a1.medal, null);
+    assert.deepEqual([byUid.o1.place, byUid.o1.fieldSize, byUid.o1.medal], [1, 2, "gold"]);
+    assert.deepEqual([byUid.o2.place, byUid.o2.fieldSize, byUid.o2.medal], [2, 2, "silver"]);
+    assert.deepEqual([byUid.w1.place, byUid.w1.fieldSize, byUid.w1.medal], [1, 1, "gold"]);
+    assert.deepEqual([byUid.a4.place, byUid.a4.fieldSize, byUid.a4.medal], [4, 4, null]);
+    assert.deepEqual(medalByUid, {
+      o1: "gold",
+      o2: "silver",
+      w1: "gold",
+      a1: "gold",
+      a2: "silver",
+      a3: "bronze",
+    });
+  });
+
+  test("a show under the minimum field places but does not medal, whatever the division", () => {
+    const results = [row("o1", "openClass", 80), row("a1", "aClass", 70), row("a2", "aClass", 69)];
+    const { results: ranked, medalByUid } = rankShowResults(results, { minFieldSize: MIN });
+    const byUid = Object.fromEntries(ranked.map((r) => [r.uid, r]));
+    assert.deepEqual([byUid.o1.place, byUid.o1.fieldSize, byUid.o1.medal], [1, 1, null]);
+    assert.deepEqual([byUid.a1.place, byUid.a1.fieldSize, byUid.a1.medal], [1, 2, null]);
     assert.deepEqual(medalByUid, {});
   });
 
@@ -101,7 +120,7 @@ describe("rankShowResults", () => {
     }
     const { results: ranked } = rankShowResults(results, { minFieldSize: MIN });
     for (const r of ranked) {
-      assert.equal(r.medal, medalForPlace(r.place, r.fieldSize, MIN), r.uid);
+      assert.equal(r.medal, medalForPlace(r.place, ranked.length, MIN), r.uid);
     }
   });
 
