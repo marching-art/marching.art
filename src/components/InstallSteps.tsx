@@ -187,7 +187,7 @@ export const InstallGuideBody: React.FC<InstallGuideBodyProps> = ({
       {guide.kind === 'open-in-browser' && (
         <OpenInBrowserCard guide={guide} compact={compact} href={href} />
       )}
-      {guide.kind === 'unsupported' && <UnsupportedBrowserCopy href={href} />}
+      {guide.kind === 'unsupported' && <SwitchBrowserCard guide={guide} href={href} />}
       <div>
         {stepsTitle && (
           <p className="text-[11px] font-bold uppercase tracking-wider text-muted mb-2">
@@ -203,23 +203,52 @@ export const InstallGuideBody: React.FC<InstallGuideBodyProps> = ({
   );
 };
 
-const UnsupportedBrowserCopy: React.FC<{ href?: string }> = ({ href = currentHref() }) => {
+/**
+ * For a browser that can't install: why, a one-tap "Open in Chrome/Safari"
+ * where the platform supports the hand-off, and a copy-link fallback.
+ */
+const SwitchBrowserCard: React.FC<{ guide: InstallGuide; href?: string }> = ({
+  guide,
+  href = currentHref(),
+}) => {
   const [copied, setCopied] = useState(false);
+  const target = guide.switchTo;
+  const url = target ? buildOpenInBrowserUrl(guide.platform, href) : null;
   return (
-    <button
-      type="button"
-      onClick={async () => {
-        if (await copyLink(href)) setCopied(true);
-      }}
-      className="w-full min-h-[44px] px-4 py-2.5 bg-interactive text-white font-bold text-sm rounded-none hover:bg-interactive-hover transition-colors flex items-center justify-center gap-2"
-    >
-      {copied ? (
-        <Check className="w-4 h-4" aria-hidden="true" />
-      ) : (
-        <Copy className="w-4 h-4" aria-hidden="true" />
+    <div className="bg-warning/10 border border-warning/40 rounded-none p-3 sm:p-4 space-y-3">
+      {target && <p className="text-sm text-white">{target.reason}</p>}
+      {url && target && (
+        <a
+          href={url}
+          className="w-full min-h-[44px] px-4 py-2.5 bg-interactive text-white font-bold text-sm rounded-none hover:bg-interactive-hover transition-colors flex items-center justify-center gap-2"
+        >
+          <ExternalLink className="w-4 h-4" aria-hidden="true" />
+          Open in {target.browserName}
+        </a>
       )}
-      {copied ? 'Link copied' : 'Copy the link'}
-    </button>
+      <button
+        type="button"
+        onClick={async () => {
+          if (await copyLink(href)) setCopied(true);
+        }}
+        className={`w-full min-h-[44px] px-4 py-2.5 text-sm font-medium rounded-none transition-colors flex items-center justify-center gap-2 ${
+          url
+            ? 'border border-line text-secondary hover:text-white hover:border-line-strong'
+            : 'bg-interactive text-white font-bold hover:bg-interactive-hover'
+        }`}
+      >
+        {copied ? (
+          <Check className="w-4 h-4 text-green-400" aria-hidden="true" />
+        ) : (
+          <Copy className="w-4 h-4" aria-hidden="true" />
+        )}
+        {copied
+          ? 'Link copied'
+          : url
+            ? `Or copy the link and paste it in ${target?.browserName ?? 'that browser'}`
+            : 'Copy the link'}
+      </button>
+    </div>
   );
 };
 

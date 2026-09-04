@@ -212,6 +212,7 @@ describe('getInstallGuide', () => {
     const g = guideFor(UA.iosOldChrome);
     expect(g.kind).toBe('unsupported');
     expect(g.headline).toMatch(/Safari/);
+    expect(g.switchTo?.browserName).toBe('Safari');
     expect(g.steps[0].icon).toBe('share');
   });
 
@@ -223,11 +224,12 @@ describe('getInstallGuide', () => {
 
   it('Android browsers each get their own menu path', () => {
     expect(guideFor(UA.androidChrome).steps[0].icon).toBe('menu-vertical');
-    expect(
-      guideFor(UA.androidSamsung)
-        .steps.map((s) => s.text)
-        .join(' ')
-    ).toMatch(/Add page to/);
+    // Samsung Internet's packaged app is rejected by Android 14+ — route to Chrome.
+    const samsung = guideFor(UA.androidSamsung);
+    expect(samsung.kind).toBe('unsupported');
+    expect(samsung.switchTo?.browserName).toBe('Chrome');
+    expect(samsung.intro).toMatch(/older version of Android/);
+    expect(samsung.steps[0].icon).toBe('menu-vertical');
     expect(guideFor(UA.androidFirefox).steps[1].text).toMatch(/Install/);
     expect(guideFor(UA.androidEdge).steps[1].text).toMatch(/Add to phone/);
     expect(guideFor(UA.androidChrome).kind).toBe('manual');
