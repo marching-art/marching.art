@@ -354,6 +354,19 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
 
 ## Recently shipped (context, newest first — prune when stale)
 
+- 2026-09-04 (later): the retry ladder alone wasn't enough — a registry
+  outage outlasted all three attempts and went red again. `auditRatchet.mjs`
+  now stops probing once one manifest exhausts its retries (bounds the run to
+  ≈4 min instead of 13) and answers the gate's real question from git: a
+  manifest whose package.json + lockfile match `AUDIT_BASE_REF` (CI passes
+  `origin/<base branch>`, fetched fresh) cannot have gained an advisory, so it
+  passes as verified-via-lockfile. Only manifests whose dependencies changed
+  stay unverified; `--tolerate-outage` (set in ci.yml) downgrades those to a
+  GitHub warning annotation + step summary instead of a failure, with the
+  weekly security.yml audit as the backstop. `--update` still refuses to write
+  a baseline during an outage. Default `--fetch-timeout` raised 15s → 30s.
+  `@ts-nocheck` ratchet: 71 → 70 (`RehearsalPlanner.jsx`; `usePodium`'s
+  `lastPanel` state is now typed).
 - 2026-09-04: CI: the dependency-audit ratchet no longer fails a run on a
   registry stall. `scripts/auditRatchet.mjs` tells npm to fail fast
   (`--fetch-timeout` 15s, no internal retries) with a hard cap just above npm's

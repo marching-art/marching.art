@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // RehearsalPlanner — the Podium Class daily verb (Phase 2, design §6.1).
 // One screen: pick today's rehearsal blocks (12 on a normal day, 20 in spring
 // training, 8 on a show day at half value each), watch the Action Complete
@@ -8,6 +7,14 @@ import React, { useState } from 'react';
 import { Flame, BatteryCharging, Moon, Loader2, Coins, Trophy } from 'lucide-react';
 import { BLOCKS, CAPTION_LABELS } from './podiumConstants';
 
+/**
+ * @param {{
+ *   label: string;
+ *   value: number;
+ *   icon: React.ComponentType<{ className?: string }>;
+ *   color: string;
+ * }} props
+ */
 function ConditionBar({ label, value, icon: Icon, color }) {
   return (
     <div className="flex items-center gap-2 flex-1 min-w-[120px]">
@@ -28,10 +35,13 @@ function ConditionBar({ label, value, icon: Icon, color }) {
   );
 }
 
+/**
+ * @param {{ podium: ReturnType<typeof import('../../hooks/usePodium').usePodium> }} props
+ */
 export default function RehearsalPlanner({ podium }) {
   const { data, lastPanel, queueAllocate, declareRestDay, pending = {} } = podium;
   const [restBusy, setRestBusy] = useState(false);
-  const [actionError, setActionError] = useState(null);
+  const [actionError, setActionError] = useState(/** @type {string | null} */ (null));
 
   const state = data?.state;
   if (!state) return null;
@@ -79,6 +89,7 @@ export default function RehearsalPlanner({ podium }) {
   // director can enter a whole day's blocks in a rapid thumb-run without the
   // grid freezing between each. Errors surface via podium.error (the queue
   // clears and resyncs on a bounce).
+  /** @param {string} blockType */
   const handleAllocate = (blockType) => {
     setActionError(null);
     queueAllocate(blockType);
@@ -90,7 +101,7 @@ export default function RehearsalPlanner({ podium }) {
     try {
       await declareRestDay();
     } catch (err) {
-      setActionError(err?.message || 'Could not declare a rest day.');
+      setActionError(/** @type {Error} */ (err)?.message || 'Could not declare a rest day.');
     } finally {
       setRestBusy(false);
     }
@@ -185,7 +196,9 @@ export default function RehearsalPlanner({ podium }) {
         {!exhausted && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 flex-1 content-start">
             {BLOCKS.map((block) => {
-              const confirmedCount = (today.blocks || []).filter((b) => b === block.id).length;
+              const confirmedCount = (today.blocks || []).filter(
+                (/** @type {string} */ b) => b === block.id
+              ).length;
               const pendingCount = pending[block.id] || 0;
               const count = confirmedCount + pendingCount;
               const budgetSpent = blocksRemainingToday !== null && blocksRemainingToday <= 0;
@@ -264,7 +277,7 @@ export default function RehearsalPlanner({ podium }) {
 
           <div className="mt-2 flex-1 space-y-1 min-h-[2rem]">
             {today.blocks?.length > 0 ? (
-              today.blocks.map((b, i) => (
+              today.blocks.map((/** @type {string} */ b, /** @type {number} */ i) => (
                 <div
                   key={`${b}-${i}`}
                   className="flex items-center gap-1.5 text-[10px] text-secondary"
@@ -305,19 +318,19 @@ export default function RehearsalPlanner({ podium }) {
         <div className="border border-green-500/30 bg-green-500/10 rounded-none px-3 py-2">
           <div className="text-[10px] font-bold uppercase tracking-wider text-green-400 mb-1">
             Action complete — {BLOCKS.find((b) => b.id === lastPanel.blockType)?.label}
-            {lastPanel.repeatMult < 1 && (
+            {(lastPanel.repeatMult ?? 1) < 1 && (
               <span className="text-warning"> · repeat yield ×{lastPanel.repeatMult}</span>
             )}
           </div>
           <div className="flex flex-wrap gap-x-4 gap-y-0.5">
-            {lastPanel.budgetEarned > 0 && (
+            {(lastPanel.budgetEarned ?? 0) > 0 && (
               <span className="text-[11px] text-brand tabular-nums font-bold">
                 +{lastPanel.budgetEarned} Corps Budget
               </span>
             )}
             {Object.entries(lastPanel.gains || {}).map(([caption, gain]) => (
               <span key={caption} className="text-[11px] text-secondary tabular-nums">
-                {CAPTION_LABELS[caption] || caption}:{' '}
+                {CAPTION_LABELS[/** @type {keyof typeof CAPTION_LABELS} */ (caption)] || caption}:{' '}
                 <span className="text-green-400">+{(gain.content * 100).toFixed(1)}%</span> content
                 {gain.clean > 0.0005 && (
                   <>

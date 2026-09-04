@@ -32,7 +32,17 @@ export function usePodium(enabled) {
   // yet, and leaving this as `useState(null)` infers `null`, which breaks
   // every consumer that reads `podium.data?.x`.
   const [data, setData] = useState(/** @type {any} */ (null)); // PodiumStateResponse
-  const [lastPanel, setLastPanel] = useState(null); // most recent Action Complete panel
+  /**
+   * Most recent Action Complete panel (the server's `panel` payload from a
+   * confirmed allocation). Fields are all optional: older backends omit some.
+   * @typedef {{
+   *   blockType?: string;
+   *   repeatMult?: number;
+   *   budgetEarned?: number;
+   *   gains?: Record<string, { content: number; clean: number }>;
+   * }} PodiumActionPanel
+   */
+  const [lastPanel, setLastPanel] = useState(/** @type {PodiumActionPanel | null} */ (null));
   // Optimistic block queue (see queueAllocate). `pending` is a per-block-type
   // count of taps accepted but not yet confirmed by the server, so the grid can
   // stay live while allocations drain one at a time in the background.
