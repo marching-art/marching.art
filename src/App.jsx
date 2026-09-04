@@ -258,6 +258,41 @@ const HallOfChampionsEntry = () => {
   return user ? <GameShell>{content}</GameShell> : <PublicShell>{content}</PublicShell>;
 };
 
+// One How-to-Play route. Signed-out visitors (and crawlers) get the public,
+// SEO-shaped guide in PublicShell; signed-in directors get the complete in-app
+// Game Guide (section rail, search, scroll-spy) in GameShell. These used to be
+// two menu entries — "Game Guide" at the protected /guide, "How to Play" at the
+// public /how-to-play — and a signed-out click on the first bounced to /.
+// /guide now redirects here. SEO lives in this wrapper so both branches agree
+// on one canonical URL, as HallOfChampionsEntry does.
+const HowToPlayEntry = () => {
+  const { user } = useAuth();
+
+  useSEO({
+    title: 'How to Play Fantasy Drum Corps — Free DCI Fantasy Game | marching.art',
+    description:
+      'Learn how fantasy drum corps works: draft 8 DCI captions from real corps seasons, manage a point budget, and score points from real competition results. Free to play.',
+    path: '/how-to-play',
+  });
+
+  if (user) {
+    return (
+      <GameShell>
+        <Suspense fallback={<DashboardSkeleton />}>
+          <Page name="Guide">
+            <HowToPlay />
+          </Page>
+        </Suspense>
+      </GameShell>
+    );
+  }
+  return (
+    <PublicPage name="How to Play">
+      <HowToPlayPublic />
+    </PublicPage>
+  );
+};
+
 // Main App Component
 function App() {
   const [user, loading, error] = useAuthState(auth);
@@ -543,31 +578,11 @@ function App() {
                       }
                     />
 
-                    {/* Game Guide - accessible to all authenticated users */}
-                    <Route
-                      path="/guide"
-                      element={
-                        <ProtectedRoute>
-                          <GameShell>
-                            <Suspense fallback={<DashboardSkeleton />}>
-                              <Page name="Guide">
-                                <HowToPlay />
-                              </Page>
-                            </Suspense>
-                          </GameShell>
-                        </ProtectedRoute>
-                      }
-                    />
-                    {/* Public, crawlable guide — the SEO landing page for "fantasy drum
-              corps" searches. Authenticated users get the in-app /guide. */}
-                    <Route
-                      path="/how-to-play"
-                      element={
-                        <PublicPage name="How to Play">
-                          <HowToPlayPublic />
-                        </PublicPage>
-                      }
-                    />
+                    {/* The one guide: public and crawlable signed out (the SEO landing
+                        page for "fantasy drum corps" searches), the complete in-app
+                        Game Guide signed in. The old protected /guide path redirects. */}
+                    <Route path="/how-to-play" element={<HowToPlayEntry />} />
+                    <Route path="/guide" element={<Navigate to="/how-to-play" replace />} />
                     {/* Player-facing changelog + roadmap — crawlable, no auth
                         (docs/FMA_LESSONS.md lesson 2: make the update cadence visible) */}
                     <Route
@@ -805,7 +820,7 @@ function App() {
 
                     {/* SoundSport rules were consolidated into the unified Game
                         Guide — keep the old path working for existing links. */}
-                    <Route path="/soundsport" element={<Navigate to="/guide" replace />} />
+                    <Route path="/soundsport" element={<Navigate to="/how-to-play" replace />} />
 
                     {/* 404 Route — inside the shell so a wrong URL still leaves
                         the visitor somewhere they can navigate from. */}

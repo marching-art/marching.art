@@ -8,6 +8,11 @@
 // with the mobile Next Action hero, which counts claimable steps); this file
 // owns only how each step is presented — its icon and which surface its
 // shortcut opens.
+//
+// This is THE onboarding checklist. The Quick Start modal that used to restate
+// its first three steps (with no rewards and its own completion rules) is gone;
+// the help menu and the mobile More sheet link straight here instead
+// (utils/dashboardZones dashboardPanelLink).
 
 import React, { memo, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -28,6 +33,7 @@ import toast from 'react-hot-toast';
 import { completeJourneyStep, joinRookieLeague } from '../../../api/functions';
 import { showXPGain, showCoinGain } from '../../xpFeedbackTrigger';
 import { getJourneySteps, JOURNEY_STEPS } from '../../../utils/journeyProgress';
+import { JOURNEY_PANEL_ID } from '../../../utils/dashboardZones';
 
 // How each shared step is presented here: its icon, and the shortcut offered
 // while it is still out of reach. Keyed by the step ids in journeyProgress.
@@ -106,9 +112,10 @@ const JourneyPanelInner = ({ profile, resultCount = 0, onEditLineup, onSetConcep
 
   return (
     // scroll-mt clears the fixed shell chrome plus the sticky ControlBar when
-    // the Next Action hero scrolls the page to a claimable step.
+    // the Next Action hero (or a ?reveal= link from the help menu) scrolls the
+    // page to this checklist.
     <div
-      id="journey-panel"
+      id={JOURNEY_PANEL_ID}
       className="bg-surface-card border border-line overflow-hidden scroll-mt-24"
     >
       {/* Header */}

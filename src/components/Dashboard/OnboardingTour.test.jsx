@@ -137,8 +137,8 @@ describe('OnboardingTour', () => {
     target.scrollIntoView = vi.fn();
     document.body.appendChild(target);
 
+    // The control bar is the desktop tour's first stop (no welcome card).
     const { unmount } = renderTour();
-    fireEvent.click(screen.getByRole('button', { name: /Next/ })); // -> control-bar
     await flushFrame();
     expect(target.classList.contains('tour-highlight')).toBe(true);
 

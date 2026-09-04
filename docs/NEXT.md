@@ -8,7 +8,7 @@ burns an hour to conclude "everything's about covered." Don't. If you ship,
 cut, or discover something, edit THIS file in the same PR — that's the whole
 maintenance contract.
 
-_Last updated: 2026-09-04 (device-aware install guide at /install — in-app-browser detection with an Open-in-Safari/Chrome escape hatch, per-browser steps, one-tap native install, linked from footer / ? menu / home / Settings / the nudge; site-review row 19 — honest functions coverage gate, first admin / league-automation tests; row 18 — one-click unsubscribe + List-Unsubscribe headers, noindex auth wall; row 17 — vendor-firebase trimmed, GameShell + overlays lazy for guests; row 16 — focus traps + Escape in every raw dialog, icon buttons named; row 15 — one dashboard interrupt per visit, celebrations to the inbox; row 14 — weekly XP / win bonus / finish bonus paid per director; row 13 — league weeks decided per show, percentile edge cases; row 12 — server-enforced age gate + consent-gated analytics; AI imagery now built from the full Uniform Studio design + rendered reference image; main ruleset + gazetteer PR flow; site-review Fix-first 1–11 + quick wins shipped)._
+_Last updated: 2026-09-04 (site-review row 20 — one onboarding checklist (the Journey; Quick Start modal deleted, `?reveal=` deep link) and one How-to-Play route by auth state; device-aware install guide at /install — in-app-browser detection with an Open-in-Safari/Chrome escape hatch, per-browser steps, one-tap native install, linked from footer / ? menu / home / Settings / the nudge; site-review row 19 — honest functions coverage gate, first admin / league-automation tests; row 18 — one-click unsubscribe + List-Unsubscribe headers, noindex auth wall; row 17 — vendor-firebase trimmed, GameShell + overlays lazy for guests; row 16 — focus traps + Escape in every raw dialog, icon buttons named; row 15 — one dashboard interrupt per visit, celebrations to the inbox; row 14 — weekly XP / win bonus / finish bonus paid per director; row 13 — league weeks decided per show, percentile edge cases; row 12 — server-enforced age gate + consent-gated analytics; AI imagery now built from the full Uniform Studio design + rendered reference image; main ruleset + gazetteer PR flow; site-review Fix-first 1–11 + quick wins shipped)._
 
 ## In progress
 
@@ -21,12 +21,19 @@ code-first review of the whole product (security, backend, frontend, UX,
 a11y, quality, economy, SEO/comms). Its **Part 1 backlog table** is the
 queue: work it top-down, and tick items off here as they ship.
 
-_(rows 1–17 — S-H1, B-H1, N-H1, F-H3, B-H3, G-H3, Q-H1, F-H2, F-H1, B-H4,
-B-H6/S-M6, S-H2/S-H3, G-H2/G-M10, G-H1/G-H7, U-H4, A-H1/A-H2, F-H4/F-M2 (+
-F-M1), N-H2/N-H6, Q-H2/Q-H3 — and all eight "Cross-area quick wins"
-shipped 2026-09-03; continue from row 20 (U-H1 / U-H6: one onboarding
-checklist (JourneyPanel) and one How-to-Play route) of the Part 1 table —
-the last row, and the largest. Still open from
+_(**All 20 rows shipped.** Rows 1–17 — S-H1, B-H1, N-H1, F-H3, B-H3, G-H3,
+Q-H1, F-H2, F-H1, B-H4, B-H6/S-M6, S-H2/S-H3, G-H2/G-M10, G-H1/G-H7, U-H4,
+A-H1/A-H2, F-H4/F-M2 (+ F-M1), N-H2/N-H6, Q-H2/Q-H3 — and all eight
+"Cross-area quick wins" shipped 2026-09-03; row 20 (U-H1 / U-H6, with U-L9)
+shipped 2026-09-04: the Quick Start modal and its `?panel=quickstart` route
+are deleted, the First Season Journey / Podium Rookie Journey is the one
+checklist (reached by `/dashboard?reveal=journey-panel` from the ? menu, the
+mobile More sheet and the guide's Getting Started — `hooks/useRevealParam`),
+the desktop tour lost its generic welcome card, and `/how-to-play` is the one
+guide route (`App.jsx HowToPlayEntry`: the in-app Game Guide signed in, the
+public page signed out; `/guide` and `/soundsport` redirect). The remaining
+Part 1 items are the mediums/lows in the review's per-area findings — pick
+from the audit backlog below. Still open from
 F-H4: `re2js` (144 kB) rides in via Firestore's pipelines support — track
 upstream for a pipelines-free entry.
 Left open from G-H1's detail, outside row 14's scope: the league title still
@@ -367,6 +374,16 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
 
 ## Recently shipped (context, newest first — prune when stale)
 
+- 2026-09-04 (onboarding): site-review row 20. One checklist — the Quick
+  Start modal (three unrewarded steps restating the Journey's first three,
+  with its own completion rules) is gone; `JourneyPanel` / `PodiumJourneyPanel`
+  share the `journey-panel` id and a `?reveal=<panel>` dashboard deep link
+  (`utils/dashboardZones dashboardPanelLink`, honored by `useRevealParam`,
+  which switches zone on mobile then scrolls) replaces `?panel=quickstart` in
+  the ? menu, the More sheet and the guide. One guide — `/how-to-play` renders
+  the in-app Game Guide signed in and the public page signed out
+  (`HowToPlayEntry`, SEO in the wrapper); `/guide` redirects. Desktop tour
+  opens on the control bar. Changelog entry added.
 - 2026-09-04 (lint): every ESLint warning cleared and `npm run lint` now
   runs with `--max-warnings 0`. Ten files split by concern (see DX above);
   the matchup-detail recap folding (`matchupDetailRecaps.ts`) and the

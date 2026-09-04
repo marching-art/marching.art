@@ -25,9 +25,9 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import {
-  BookOpen,
   Calendar,
   LayoutDashboard,
+  Map,
   MoreHorizontal,
   Music,
   Newspaper,
@@ -42,6 +42,7 @@ import { useAuth } from '../context/AuthContext';
 import { adminHelpers } from '../api';
 import { useProfileStore } from '../store/profileStore';
 import { hasCompletedSeason } from '../utils/corps';
+import { JOURNEY_PANEL_ID, dashboardPanelLink } from '../utils/dashboardZones';
 import { triggerHaptic } from '../hooks/useHaptic';
 import { prefetchRoute } from '../lib/prefetch';
 import { useNavBadges } from '../hooks/useNavBadges';
@@ -82,15 +83,16 @@ const PRIMARY_ITEMS: NavItem[] = [
   { to: '/scores', prefetch: '/scores', label: 'Scores', icon: Trophy },
 ];
 
-// The Quick Start guide had no caller anywhere in the app until it was given a
-// URL; this is the mobile way back to it. It leads the sheet for new directors
+// The onboarding checklist — the First Season Journey (Podium: the Rookie
+// Journey) — is an inline dashboard panel under the Today tab, so this is how
+// a phone gets back to it from anywhere. It leads the sheet for new directors
 // but retires once they've finished a season (see hasCompletedSeason) — a
 // veteran doesn't need first-run scaffolding taking the top slot.
-const QUICK_START_ITEM: NavItem = {
-  to: '/dashboard?panel=quickstart',
+const JOURNEY_ITEM: NavItem = {
+  to: dashboardPanelLink(JOURNEY_PANEL_ID),
   prefetch: '/dashboard',
-  label: 'Quick Start',
-  icon: BookOpen,
+  label: 'Journey',
+  icon: Map,
 };
 
 /** Destinations that moved into the More sheet. */
@@ -143,7 +145,7 @@ const BottomNav: React.FC = () => {
   const [moreOpen, setMoreOpen] = useState(false);
   const badges = useNavBadges();
   const profile = useProfileStore((state) => state.profile);
-  const showQuickStart = !hasCompletedSeason(profile);
+  const showJourney = !hasCompletedSeason(profile);
 
   // Check if user is admin (mirrors the desktop TopNav in GameShell)
   useEffect(() => {
@@ -161,7 +163,7 @@ const BottomNav: React.FC = () => {
   }, [location.pathname, location.search]);
 
   const moreItems: NavItem[] = [
-    ...(showQuickStart ? [QUICK_START_ITEM] : []),
+    ...(showJourney ? [JOURNEY_ITEM] : []),
     ...MORE_ITEMS,
     ...(isAdmin ? [ADMIN_ITEM] : []),
   ];

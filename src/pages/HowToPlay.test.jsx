@@ -1,4 +1,4 @@
-// Smoke test for the consolidated Game Guide (/guide). Verifies the document
+// Smoke test for the consolidated Game Guide (/how-to-play, signed in). Verifies the document
 // mounts, renders every section, surfaces the consolidated SoundSport ratings
 // and Podium Division content, and that search filters the flat index.
 import React from 'react';
@@ -14,7 +14,7 @@ const renderGuide = () =>
     </MemoryRouter>
   );
 
-describe('HowToPlay (/guide)', () => {
+describe('HowToPlay (signed-in /how-to-play)', () => {
   it('renders the full document with every section heading', () => {
     renderGuide();
     // Section navigator (desktop rail + mobile chips both render the labels).

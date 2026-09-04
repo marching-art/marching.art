@@ -2,10 +2,12 @@
 // PUBLIC HOW-TO-PLAY PAGE - /how-to-play
 // =============================================================================
 // Fully public, crawlable long-form guide targeting "fantasy drum corps"
-// searches. Unlike the authenticated /guide (tabs + accordions), every section
-// renders in the document so search engines index the complete content.
-// Game facts (captions, classes, glossary, FAQ) are imported from HowToPlay
-// so the two pages never drift apart.
+// searches — what /how-to-play renders signed out. Signed in, the same route
+// renders the complete in-app Game Guide (HowToPlay.jsx) instead; App.jsx
+// HowToPlayEntry picks, and owns the SEO tags for both. Every section renders
+// in the document so search engines index the complete content. Game facts
+// (captions, classes, glossary, FAQ) come from howToPlayData so the two pages
+// never drift apart.
 
 import React from 'react';
 import { Link } from 'react-router-dom';
@@ -21,7 +23,6 @@ import {
   Play,
   Medal,
 } from 'lucide-react';
-import { useSEO } from '../hooks/useSEO';
 import { usePodiumEnabled } from '../hooks/useFeatures';
 import { CAPTIONS, CLASSES, GLOSSARY, FAQ, RATINGS, SCORING_MODEL } from './howToPlayData';
 import { Heading } from '../components/ui';
@@ -69,12 +70,6 @@ const SectionHeading = ({ icon: Icon, children }) => (
 const HowToPlayPublic = () => {
   // Podium marketing only while the game is switched on (game-settings/features).
   const podiumEnabled = usePodiumEnabled();
-  useSEO({
-    title: 'How to Play Fantasy Drum Corps — Free DCI Fantasy Game | marching.art',
-    description:
-      'Learn how fantasy drum corps works: draft 8 DCI captions from real corps seasons, manage a point budget, and score points from real competition results. Free to play.',
-    path: '/how-to-play',
-  });
 
   return (
     <>
@@ -104,9 +99,9 @@ const HowToPlayPublic = () => {
           marching.art is free to play, runs year-round, and takes about two minutes to get started.
         </p>
 
-        {/* Quick start */}
+        {/* Getting started — the same three beats the in-app guide opens with */}
         <section className="mb-10">
-          <SectionHeading icon={Trophy}>Quick Start</SectionHeading>
+          <SectionHeading icon={Trophy}>Getting Started</SectionHeading>
           <ol className="space-y-4">
             {[
               [

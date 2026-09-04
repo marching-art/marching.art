@@ -1,4 +1,4 @@
-// GAME GUIDE — SHARED PRIMITIVES (/guide). The small presentational pieces the
+// GAME GUIDE — SHARED PRIMITIVES (/how-to-play, signed in). The small presentational pieces the
 // guide's section bodies are built from. Split out of howToPlaySections.jsx so
 // that file stays under its size cap and the league sections can reuse them
 // without importing back into it.

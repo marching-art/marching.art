@@ -29,13 +29,12 @@ import { useModalRoute } from './useModalRoute';
  * skip it for good. The destructive confirms (delete/retire/move) are absent
  * for the same reason in reverse: a confirm is a question, not a destination.
  *
- * `quickstart` is here mostly so it exists at all: the Quick Start guide had
- * no caller anywhere in the app, so nothing could open it. A URL gives the
- * help menu and the mobile More sheet something to link to.
+ * The onboarding checklist (JourneyPanel) is not a modal and is not here: it
+ * is an inline panel, reached by `?reveal=journey-panel` (hooks/useRevealParam).
  */
 // `streak` is routed so a push/inbox deep link (/dashboard?panel=streak) can
 // open the streak panel with the freeze offer directly.
-export const DASHBOARD_PANELS = ['lineup', 'concept', 'register', 'quickstart', 'streak'];
+export const DASHBOARD_PANELS = ['lineup', 'concept', 'register', 'streak'];
 
 /**
  * @param {{ uid: string }} user
@@ -89,13 +88,6 @@ export function useDashboardModals(user, dashboardData, podiumContext = {}) {
     (next) => (next ? openPanel('concept') : closePanel()),
     [openPanel, closePanel]
   );
-  const showQuickStartGuide = modalRoute.isOpen('quickstart');
-  /** @type {(next: boolean) => void} */
-  const setShowQuickStartGuide = useCallback(
-    (next) => (next ? openPanel('quickstart') : closePanel()),
-    [openPanel, closePanel]
-  );
-
   const [registrationDefaultClass, setRegistrationDefaultClass] = useState(null);
   const [slotPickerClass, setSlotPickerClass] = useState(null);
   const [unretiring, setUnretiring] = useState(false);
@@ -205,7 +197,6 @@ export function useDashboardModals(user, dashboardData, podiumContext = {}) {
       showRegistration ||
       showCaptionSelection ||
       showConceptModal ||
-      showQuickStartGuide ||
       showDeleteConfirm ||
       showMoveCorps ||
       showRetireConfirm ||
@@ -220,7 +211,6 @@ export function useDashboardModals(user, dashboardData, podiumContext = {}) {
     showRegistration,
     showCaptionSelection,
     showConceptModal,
-    showQuickStartGuide,
     showDeleteConfirm,
     showMoveCorps,
     showRetireConfirm,
@@ -491,8 +481,6 @@ export function useDashboardModals(user, dashboardData, podiumContext = {}) {
     setShowRetireConfirm,
     retiring,
     transferring,
-    showQuickStartGuide,
-    setShowQuickStartGuide,
     classToPurchase,
     setClassToPurchase,
     showStreakModal,

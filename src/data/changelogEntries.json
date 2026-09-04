@@ -1,5 +1,17 @@
 [
   {
+    "id": "2026-09-04-one-onboarding-checklist-one-guide",
+    "date": "2026-09-04",
+    "title": "One onboarding checklist and one How to Play",
+    "category": "improvement",
+    "summary": "New directors were being taught the same first steps three times over: a Quick Start pop-up, the First Season Journey checklist on the dashboard, and the guide's Getting Started page — each with its own idea of what counted as done. The Journey is now the one checklist. It already tracks every step against your real corps and pays XP and CorpsCoin per claim, so the Quick Start pop-up is gone and the ? menu, the mobile More sheet and the guide all point straight at it. The two \"Game Guide\" and \"How to Play\" entries in the help menu are now one page at marching.art/how-to-play: the full in-app Game Guide when you are signed in, the public guide when you are not.",
+    "highlights": [
+      "The Journey link in the ? menu and the More sheet lands on the checklist itself — on a phone it switches to the Today tab and scrolls to it.",
+      "The desktop dashboard tour opens on your control bar instead of a generic welcome card; you were just welcomed a screen ago.",
+      "Old links to /guide and /soundsport carry on working — they land on the same page."
+    ]
+  },
+  {
     "id": "2026-09-04-rivalry-history-counts-every-past-week",
     "date": "2026-09-04",
     "title": "Leagues: the matchup Rivalry tab now counts every earlier week",

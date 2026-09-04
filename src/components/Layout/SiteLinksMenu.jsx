@@ -9,8 +9,8 @@
 // The consequence, before this menu existed, was that a signed-in director had
 // no path from any app page to /privacy, /terms, /how-to-play, /podium-guide,
 // /hall-of-champions, or the public results pages. The help icon in the top nav
-// linked only to /guide. This turns that single icon into the same link set the
-// footer carries.
+// linked only to the guide. This turns that single icon into the same link set
+// the footer carries.
 //
 // This menu is now rendered in BOTH shells — GameShell's TopNav and the public
 // SiteHeader's signed-in branch — so the ❓ is identical no matter which side of
@@ -26,17 +26,18 @@ import { APP_CONFIG } from '../../config';
 import { usePodiumEnabled } from '../../hooks/useFeatures';
 import { useUnseenUpdates } from '../../hooks/useUnseenUpdates';
 import { usePWAInstall } from '../../hooks/usePWAInstall';
+import { useProfileStore } from '../../store/profileStore';
+import { hasCompletedSeason } from '../../utils/corps';
+import { JOURNEY_PANEL_ID, dashboardPanelLink } from '../../utils/dashboardZones';
 
 // This menu is help: guides, what's-new, the public results surface, and legal.
 // Game destinations (Shop, Achievements, Records, and the archive galleries)
 // used to live here too, which made the ❓ a junk drawer — they now have their
 // own home in ExploreMenu, shared across both shells.
+// One guide: /how-to-play renders the full in-app Game Guide when signed in
+// (it used to sit beside a second "Game Guide" entry for /guide — two guides in
+// one menu, and the protected one bounced signed-out visitors to /).
 const MENU_LINKS = [
-  // Routed panel on the dashboard (hooks/useDashboardModals DASHBOARD_PANELS).
-  // The Quick Start guide existed but had no caller anywhere in the app, so
-  // nobody had ever seen it.
-  { to: '/dashboard?panel=quickstart', label: 'Quick Start' },
-  { to: '/guide', label: 'Game Guide' },
   { to: '/how-to-play', label: 'How to Play' },
   // Podium Guide is appended at render time only while the game is on.
   { to: '/hall-of-champions', label: 'Hall of Champions' },
@@ -56,14 +57,25 @@ const itemClass =
 const SiteLinksMenu = () => {
   const podiumEnabled = usePodiumEnabled();
   const { isInstalled } = usePWAInstall();
+  const profile = useProfileStore((state) => state.profile);
+  // The onboarding checklist (the dashboard's First Season Journey / Podium
+  // Rookie Journey) is an inline panel; this link asks the dashboard to reveal
+  // it. Leads the menu for new directors, retires once a season is finished —
+  // the same rule the mobile More sheet applies.
+  const journeyLinks = hasCompletedSeason(profile)
+    ? []
+    : [{ to: dashboardPanelLink(JOURNEY_PANEL_ID), label: 'First Season Journey' }];
   const baseLinks = isInstalled ? MENU_LINKS.filter((l) => l.to !== '/install') : MENU_LINKS;
-  const menuLinks = podiumEnabled
-    ? [
-        ...baseLinks.slice(0, 3),
-        { to: '/podium-guide', label: 'Podium Guide' },
-        ...baseLinks.slice(3),
-      ]
-    : baseLinks;
+  const menuLinks = [
+    ...journeyLinks,
+    ...(podiumEnabled
+      ? [
+          ...baseLinks.slice(0, 1),
+          { to: '/podium-guide', label: 'Podium Guide' },
+          ...baseLinks.slice(1),
+        ]
+      : baseLinks),
+  ];
   const [open, setOpen] = useState(false);
   const { unseenCount, hasUnseen } = useUnseenUpdates();
   /** @type {React.MutableRefObject<HTMLDivElement | null>} */

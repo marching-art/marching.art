@@ -1,5 +1,5 @@
 // =============================================================================
-// GAME GUIDE DATA - SHARED BY /guide (in-app) AND /how-to-play (public)
+// GAME GUIDE DATA - SHARED BY THE IN-APP GAME GUIDE AND THE PUBLIC PAGE (both at /how-to-play)
 // =============================================================================
 // Kept in its own module (not exported from a component file) so game facts
 // stay in one place without breaking React fast refresh.

@@ -66,6 +66,7 @@ import {
 import { ModalLoadingFallback, Modal } from '../components/ui';
 import { PullToRefresh } from '../components/ui/PullToRefresh';
 import { useDashboardZones } from '../hooks/useDashboardZones';
+import { useRevealParam } from '../hooks/useRevealParam';
 import { useDashboardRefresh } from '../hooks/useDashboardRefresh';
 import ShowdayStrip from '../components/Dashboard/ShowdayStrip';
 import { useScheduleStore } from '../store/scheduleStore';
@@ -183,7 +184,6 @@ const Dashboard = () => {
     activeCorps,
     activeCorpsClass,
     seasonData,
-    currentWeek,
     corpsNeedingSetup,
     clearNewlyUnlockedClass,
     refreshProfile,
@@ -269,11 +269,6 @@ const Dashboard = () => {
 
   const bestInShowCount = useBestInShowCount(activeCorps, activeCorpsClass, allShows);
 
-  const thisWeekShows = useMemo(() => {
-    if (!activeCorps?.selectedShows) return [];
-    return (activeCorps.selectedShows[`week${currentWeek}`] || []).slice(0, 3);
-  }, [activeCorps?.selectedShows, currentWeek]);
-
   // The director's actual next competition. Every caption competes together at
   // the shows the director registered for, so this is a single corps-level fact
   // shared by all lineup slots — not the source corps' real-world schedule.
@@ -312,34 +307,6 @@ const Dashboard = () => {
     return recentResults.reduce((a, b) => ((a.score || 0) > (b.score || 0) ? a : b));
   }, [recentResults]);
 
-  // Which Quick Start steps are already done — the guide is rendered by the
-  // modal host, but only this page holds the three facts it checks.
-  const quickStartSteps = useMemo(
-    () => [
-      ...(lineupCount === 8 ? ['lineup'] : []),
-      ...(thisWeekShows.length > 0 ? ['schedule'] : []),
-      ...(myLeagues?.length > 0 ? ['league'] : []),
-    ],
-    [lineupCount, thisWeekShows.length, myLeagues?.length]
-  );
-
-  // Podium's quick-start completion signals, read from the same podium state
-  // the Next Action resolver uses (hooks/usePodiumNextAction): rehearsed today
-  // (or resting), registered/auto-enrolled for a show, and an assistant plan
-  // saved. The ids match PODIUM_QUICK_START_STEPS in QuickStartGuide.
-  const podiumQuickStartSteps = useMemo(() => {
-    const state = podium.data?.state || {};
-    const rehearsed = Boolean(state.today?.restDay) || (podium.data?.blocksUsedToday ?? 0) > 0;
-    const hasShows =
-      (state.selectedShowDays?.length ?? 0) > 0 || (podium.data?.autoDays?.length ?? 0) > 0;
-    const hasPlan = (state.planTemplate?.length ?? 0) > 0;
-    return [
-      ...(rehearsed ? ['rehearse'] : []),
-      ...(hasShows ? ['shows'] : []),
-      ...(hasPlan ? ['plan'] : []),
-    ];
-  }, [podium.data]);
-
   // Today's rehearsal is unfinished when blocks remain and it isn't a rest day
   // — the same signal utils/podiumNextAction ranks the daily verb on. Drives
   // the Podium Lineup sheet's ordering (rehearse leads until this is false).
@@ -370,6 +337,11 @@ const Dashboard = () => {
     isPodium: isPodiumSelected,
     podium: podiumFacts,
   });
+
+  // `/dashboard?reveal=<panel>` — the help menu and the mobile More sheet link
+  // to the onboarding checklist this way. The zones (and the checklist inside
+  // one of them) render only once the director has a corps on this surface.
+  useRevealParam({ ready: Boolean(profile && activeCorps), revealPanel });
 
   // The one imperative the mobile stack opens with. Fantasy classes rank it
   // from utils/nextAction; Podium — a different game — ranks it on its own
@@ -772,8 +744,6 @@ const Dashboard = () => {
       <DashboardModalHost
         modals={modals}
         data={dashboardData}
-        quickStartSteps={isPodiumSelected ? podiumQuickStartSteps : quickStartSteps}
-        quickStartVariant={isPodiumSelected ? 'podium' : 'fantasy'}
         rehearsalIncomplete={podiumRehearsalIncomplete}
         onRequestZone={setActiveZone}
         onRevealPanel={revealPanel}

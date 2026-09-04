@@ -14,11 +14,6 @@ const ALL = [
 ];
 
 describe.each(ALL)('%s tour steps', (_name, steps) => {
-  it('opens on a welcome card with no target', () => {
-    expect(steps[0].id).toBe('welcome');
-    expect(steps[0].target).toBeNull();
-  });
-
   it('has unique step ids', () => {
     expect(new Set(steps.map((s) => s.id)).size).toBe(steps.length);
   });
@@ -43,6 +38,12 @@ describe.each(ALL)('%s tour steps', (_name, steps) => {
 });
 
 describe('mobile tour', () => {
+  it('opens on a welcome card with no target', () => {
+    // The card sets up the four-stop structure the rest of the tour follows.
+    expect(MOBILE_TOUR_STEPS[0].id).toBe('welcome');
+    expect(MOBILE_TOUR_STEPS[0].target).toBeNull();
+  });
+
   it('reveals the zone holding the lineup before pointing at it', () => {
     // My Corps happens to be the default zone, but the tour must not depend
     // on that — a director can switch tabs before the tour fires.
@@ -64,14 +65,16 @@ describe('mobile tour', () => {
 });
 
 describe('desktop tour', () => {
-  it('is unchanged — it walks the grid that is already on screen', () => {
+  it('walks the grid that is already on screen, with no generic welcome card', () => {
+    // The signup celebration already said welcome; a second "let's take a
+    // tour" card in front of the dashboard was one interrupt too many.
     expect(DESKTOP_TOUR_STEPS.map((s) => s.id)).toEqual([
-      'welcome',
       'control-bar',
       'lineup',
       'recent-results',
       'scorecard',
     ]);
+    expect(DESKTOP_TOUR_STEPS.every((s) => s.target)).toBe(true);
   });
 
   it('needs no zone reveals, because desktop hides nothing', () => {
@@ -80,6 +83,11 @@ describe('desktop tour', () => {
 });
 
 describe('podium tour', () => {
+  it('opens on a card that names the founded corps, with no target', () => {
+    expect(PODIUM_TOUR_STEPS[0].id).toBe('welcome');
+    expect(PODIUM_TOUR_STEPS[0].target).toBeNull();
+  });
+
   it('teaches the director-sim daily loop, not a drafted lineup', () => {
     // The fantasy steps point at a caption table Podium doesn't have; the
     // Podium tour walks the four panels the sim actually loops on.
