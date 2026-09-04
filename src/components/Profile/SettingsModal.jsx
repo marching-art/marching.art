@@ -6,18 +6,7 @@
 // keep that page focused on the profile view.
 
 import React, { useState, useEffect, useRef } from 'react';
-import {
-  Mail,
-  AtSign,
-  AlertCircle,
-  Bell,
-  Trash2,
-  LogOut,
-  X,
-  Download,
-  CheckCircle2,
-  BarChart3,
-} from 'lucide-react';
+import { Mail, AtSign, AlertCircle, Bell, Trash2, LogOut, X, BarChart3 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import SupporterPanel from './SupporterPanel';
 import { updateProfile } from '../../api/profile';
@@ -27,8 +16,7 @@ import toast from 'react-hot-toast';
 import { useTooltipPreference } from '../../hooks/useTooltipPreference';
 import { useAnalyticsConsent } from '../../utils/analyticsConsent';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
-import { usePWAInstall } from '../../hooks/usePWAInstall';
-import PWAInstallInstructions from '../PWAInstallInstructions';
+import InstallAppSetting from './InstallAppSetting';
 import { friendlyCallableError } from '../../utils/callableErrors';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 
@@ -72,26 +60,6 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
   // Analytics consent (per browser — Privacy §7 promises it is opt-in and
   // withdrawable; this is the "withdraw" half, the consent bar is the ask).
   const { enabled: analyticsEnabled, setEnabled: setAnalyticsEnabled } = useAnalyticsConsent();
-
-  // PWA install — a persistent, always-reachable way to install the app, so
-  // users who dismissed or missed the transient prompt can still find it here.
-  const { platform, isInstalled, canPromptInstall, promptInstall } = usePWAInstall();
-  const [showInstallHelp, setShowInstallHelp] = useState(false);
-
-  const handleInstallApp = async () => {
-    if (canPromptInstall) {
-      const outcome = await promptInstall();
-      if (outcome === 'accepted') {
-        toast.success('Installing marching.art...');
-      } else if (outcome === 'unavailable') {
-        // The native prompt slipped away — fall back to manual steps.
-        setShowInstallHelp(true);
-      }
-      return;
-    }
-    // No native prompt (iOS, or the browser hasn't offered one): reveal steps.
-    setShowInstallHelp((prev) => !prev);
-  };
 
   useEffect(() => {
     if (isOpen) {
@@ -525,30 +493,8 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
               </div>
 
               {/* Install App — always available here so it never becomes a
-                  dead end after the transient prompt is dismissed. Hidden once
-                  the app is running as an installed PWA. */}
-              {isInstalled ? (
-                <div className="w-full py-3 min-h-[44px] bg-surface-sunken border border-line text-muted text-sm font-bold rounded-none flex items-center justify-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-green-500" />
-                  App Installed
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <button
-                    onClick={handleInstallApp}
-                    className="w-full py-3 min-h-[44px] bg-interactive/15 border border-interactive/40 text-interactive text-sm font-bold hover:bg-interactive/25 active:bg-interactive/35 transition-all press-feedback rounded-none flex items-center justify-center gap-2"
-                    aria-expanded={!canPromptInstall ? showInstallHelp : undefined}
-                  >
-                    <Download className="w-4 h-4" />
-                    {canPromptInstall ? 'Install App' : 'How to Install App'}
-                  </button>
-                  {!canPromptInstall && showInstallHelp && (
-                    <div className="bg-surface-sunken border border-line p-3 rounded-none">
-                      <PWAInstallInstructions platform={platform} />
-                    </div>
-                  )}
-                </div>
-              )}
+                  dead end after the transient prompt is dismissed. */}
+              <InstallAppSetting onNavigate={onClose} />
 
               <SupporterPanel supporter={supporter} onRefresh={loadSettings} />
 

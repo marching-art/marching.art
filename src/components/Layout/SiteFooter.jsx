@@ -43,6 +43,9 @@ const SiteFooter = ({ className = '' }) => {
         <Link to="/updates" className="hover:text-white transition-colors">
           What&apos;s New
         </Link>
+        <Link to="/install" className="hover:text-white transition-colors">
+          Get the App
+        </Link>
         <a href="/results" className="hover:text-white transition-colors">
           Results
         </a>

@@ -493,6 +493,10 @@ export const FAQ = [
     a: "Yes! Caption changes are unlimited for the first two weeks, through Day 14 at 8:00 PM ET. From Week 3 on you get 3 changes per week per class — use them one at a time or all at once. Changes always lock from Saturday 8:00 PM ET until 2:00 AM ET, once that night's scores are final. No changes are allowed on Days 43-44. During Championship Week (Days 45-49) each competing class gets 2 changes per day, resetting nightly at 8:00 PM ET — only Open and A Class compete on Days 45-46, all classes on Day 47, and World Class and SoundSport in the Days 48-49 Finals. That works out to the same 6 total changes for every class across the days it is guaranteed to compete, so it stays fair even if an Open or A Class corps advances to Finals.",
   },
   {
+    q: 'Is there a mobile app?',
+    a: 'Yes — marching.art installs as an app on iPhone, iPad, Android and desktop straight from your browser, with no App Store or Play Store. Open marching.art/install on your device for a one-tap install or exact steps for your phone and browser (including how to get out of the Instagram, Facebook or Discord mini browser first). The installed app is also what delivers score-drop notifications on iPhone.',
+  },
+  {
     q: 'What happens when a season ends?',
     a: 'Leaderboards reset and a new season begins. Your XP, level, unlocked classes, and CorpsCoin carry over.',
   },

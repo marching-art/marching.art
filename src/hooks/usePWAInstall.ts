@@ -12,10 +12,21 @@
 // discoverable "Install" action for the rest of the session — not just the
 // transient prompt. Components subscribe via `usePWAInstall`.
 // -----------------------------------------------------------------------------
-import { useCallback, useSyncExternalStore } from 'react';
+import { useCallback, useMemo, useSyncExternalStore } from 'react';
 import { trackFunnelEvent, CLIENT_FUNNEL_EVENTS } from '../api/funnel';
+import {
+  detectBrowser,
+  detectInAppBrowser,
+  detectIOSVersion,
+  detectPlatform as detectPlatformFromUA,
+  getInstallGuide,
+  type InAppBrowser,
+  type InstallBrowser,
+  type InstallGuide,
+  type InstallPlatform,
+} from '../utils/installGuide';
 
-export type PWAPlatform = 'ios' | 'ipados' | 'android' | 'macos' | 'windows' | 'other';
+export type PWAPlatform = InstallPlatform;
 
 // The event isn't in the standard lib DOM types yet.
 interface BeforeInstallPromptEvent extends Event {
@@ -32,26 +43,23 @@ interface PWAInstallState {
 
 let deferredPrompt: BeforeInstallPromptEvent | null = null;
 
-const detectPlatform = (): PWAPlatform => {
-  if (typeof navigator === 'undefined') return 'other';
-  const ua = navigator.userAgent || navigator.vendor || '';
-  const isIPad =
-    /iPad/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  const isIPhone = /iPhone/.test(ua);
-  const isAndroid = /android/i.test(ua);
-  const isMac = /Macintosh|MacIntel/.test(ua) && !isIPad;
-  const isWindows = /Win/.test(ua);
+const readUA = (): string => (typeof navigator === 'undefined' ? '' : navigator.userAgent || '');
 
-  if (isIPhone) return 'ios';
-  if (isIPad) return 'ipados';
-  if (isAndroid) return 'android';
-  if (isMac) return 'macos';
-  if (isWindows) return 'windows';
-  return 'other';
-};
-
-// Platform never changes for the life of the tab, so compute it once.
-const platform: PWAPlatform = detectPlatform();
+// Platform, browser and host app never change for the life of the tab, so
+// compute them once. Detection lives in utils/installGuide (pure, tested).
+const ua = readUA();
+const detectOptions =
+  typeof navigator === 'undefined'
+    ? {}
+    : {
+        navigatorPlatform: navigator.platform,
+        maxTouchPoints: navigator.maxTouchPoints,
+        isBrave: Boolean((navigator as Navigator & { brave?: unknown }).brave),
+      };
+const platform: PWAPlatform = detectPlatformFromUA(ua, detectOptions);
+const browser: InstallBrowser = detectBrowser(ua, detectOptions);
+const inAppBrowser: InAppBrowser | null = detectInAppBrowser(ua);
+const iosVersion: number | null = detectIOSVersion(ua);
 
 const detectInstalled = (): boolean => {
   if (typeof window === 'undefined') return false;
@@ -160,6 +168,16 @@ export const promptInstall = async (): Promise<PromptInstallResult> => {
 
 export interface UsePWAInstall extends PWAInstallState {
   platform: PWAPlatform;
+  /** The browser engine/vendor the page is running in. */
+  browser: InstallBrowser;
+  /**
+   * Non-null when the page is inside another app's embedded browser
+   * (Instagram, Facebook, TikTok, Discord…). Those cannot install anything;
+   * the director has to open the page in a real browser first.
+   */
+  inAppBrowser: InAppBrowser | null;
+  /** The full, platform-and-browser-specific install guide for this session. */
+  guide: InstallGuide;
   /**
    * True when the app can be installed but only via manual, platform-specific
    * steps (iOS share sheet, or a desktop/Android browser where the native
@@ -176,10 +194,25 @@ export interface UsePWAInstall extends PWAInstallState {
 export function usePWAInstall(): UsePWAInstall {
   const snapshot = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const doPrompt = useCallback(() => promptInstall(), []);
+  const guide = useMemo(
+    () =>
+      getInstallGuide({
+        platform,
+        browser,
+        inApp: inAppBrowser,
+        canPromptInstall: snapshot.canPromptInstall,
+        isInstalled: snapshot.isInstalled,
+        iosVersion,
+      }),
+    [snapshot.canPromptInstall, snapshot.isInstalled]
+  );
 
   return {
     ...snapshot,
     platform,
+    browser,
+    inAppBrowser,
+    guide,
     needsManualInstall: !snapshot.isInstalled && !snapshot.canPromptInstall,
     promptInstall: doPrompt,
   };

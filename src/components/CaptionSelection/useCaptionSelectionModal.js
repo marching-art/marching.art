@@ -163,14 +163,17 @@ export function useCaptionSelectionModal({
   const availableCorps = useMemo(() => {
     const corps = (corpsQuery.data ?? [])
       .filter((c) => (c.points || 0) <= DRAFT_POOL_MAX_POINTS)
-      .map((c) => ({
-        ...c,
-        performanceData: {
-          avgScore: c.avgScore || 80,
-          // Value calculation: good score per point ratio
-          isValue: (c.avgScore || 80) / c.points > 4.5,
-        },
-      }));
+      .map(
+        (c) =>
+          /** @type {import('./CaptionSelectionParts').PoolCorps} */ ({
+            ...c,
+            performanceData: {
+              avgScore: c.avgScore || 80,
+              // Value calculation: good score per point ratio
+              isValue: (c.avgScore || 80) / c.points > 4.5,
+            },
+          })
+      );
     corps.sort((a, b) => b.points - a.points);
     return corps;
   }, [corpsQuery.data]);

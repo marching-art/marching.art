@@ -97,6 +97,13 @@ export const CLIENT_FUNNEL_EVENTS = Object.freeze({
   /** The PWA install prompt was accepted. */
   PWA_INSTALLED: 'pwa_installed',
   /**
+   * The install guide (/install, or the steps inside the nudge / Settings)
+   * was shown. `kind` is the guide branch (native, manual, open-in-browser,
+   * unsupported), `platform` / `browser` / `in_app` say why — the split that
+   * tells us which devices still can't find the button.
+   */
+  INSTALL_GUIDE_VIEWED: 'install_guide_viewed',
+  /**
    * The director opened the app and saw results they had not seen before —
    * the conversion event for the nightly score drop and its notifications.
    */

@@ -90,3 +90,32 @@ export async function shareLink({ title, url }: { title?: string; url: string })
     await copyToClipboard();
   }
 }
+
+/**
+ * Copy a single URL to the clipboard with toast feedback, falling back to a
+ * hidden textarea + execCommand for the in-app webviews (Instagram, Facebook)
+ * that still lack navigator.clipboard. Returns true when the copy succeeded so
+ * the caller can flash a "Copied" state.
+ */
+export async function copyLink(href: string): Promise<boolean> {
+  try {
+    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(href);
+    } else {
+      const ta = document.createElement('textarea');
+      ta.value = href;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    }
+    toast.success('Link copied — paste it into your browser');
+    return true;
+  } catch {
+    toast.error(`Couldn't copy. The address is ${href}`);
+    return false;
+  }
+}

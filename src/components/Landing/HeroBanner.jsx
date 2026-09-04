@@ -10,7 +10,18 @@ import { usePodiumEnabled } from '../../hooks/useFeatures';
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { m, AnimatePresence } from 'framer-motion';
-import { Trophy, Users, Zap, ChevronRight, X, Play, Clock, Medal, Target } from 'lucide-react';
+import {
+  Trophy,
+  Users,
+  Zap,
+  ChevronRight,
+  X,
+  Play,
+  Clock,
+  Medal,
+  Target,
+  Smartphone,
+} from 'lucide-react';
 import JargonTooltip from '../JargonTooltip';
 import { Heading } from '../ui';
 import { useUrgencyTriggers } from '../../hooks/useUrgencyTriggers';
@@ -191,6 +202,13 @@ const HeroBanner = ({ onDismiss }) => {
               >
                 How to play
                 <ChevronRight className="w-4 h-4" />
+              </Link>
+              <Link
+                to="/install"
+                className="inline-flex items-center gap-1 min-h-[48px] px-4 text-muted font-medium text-sm hover:text-white transition-colors press-feedback"
+              >
+                <Smartphone className="w-4 h-4" />
+                Get the app
               </Link>
               <button
                 onClick={onDismiss}
