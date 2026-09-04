@@ -19,12 +19,7 @@ import { useBodyScroll } from '../hooks/useBodyScroll';
 import { getSeasonData } from '../api/season';
 import { useCorpsValues } from '../hooks/useCorpsValues';
 import { mergeProfile } from '../api/profile';
-import {
-  checkUsername,
-  createUserProfile,
-  selectUserShows,
-  joinRookieLeague,
-} from '../api/functions';
+import { checkUsername, createUserProfile, joinRookieLeague } from '../api/functions';
 import toast from 'react-hot-toast';
 import { useSeasonStore } from '../store/seasonStore';
 import { useScheduleStore } from '../store/scheduleStore';
@@ -45,6 +40,8 @@ import { usePodiumEnabled } from '../hooks/useFeatures';
 // refused are reported (`reason` is what says which gate is costing signups).
 import { trackFunnelEvent, errorCodeOf, CLIENT_FUNNEL_EVENTS } from '../api/funnel';
 import { GuidedCaptionSelection } from './OnboardingParts';
+import { usernameFormatError, usernameCheckFailure } from './onboardingUsername';
+import { autoRegisterForShows } from './onboardingAutoRegister';
 import {
   StepWelcome,
   StepChooseGame,
@@ -203,29 +200,9 @@ const Onboarding = () => {
       return;
     }
 
-    // Basic format validation (3-15 chars, alphanumeric + underscore)
-    if (username.length < 3) {
-      setUsernameStatus({
-        checking: false,
-        valid: false,
-        message: 'Username must be at least 3 characters',
-      });
-      return;
-    }
-    if (username.length > 15) {
-      setUsernameStatus({
-        checking: false,
-        valid: false,
-        message: 'Username must be 15 characters or less',
-      });
-      return;
-    }
-    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-      setUsernameStatus({
-        checking: false,
-        valid: false,
-        message: 'Only letters, numbers, and underscores allowed',
-      });
+    const formatError = usernameFormatError(username);
+    if (formatError) {
+      setUsernameStatus({ checking: false, valid: false, message: formatError });
       return;
     }
 
@@ -238,21 +215,7 @@ const Onboarding = () => {
         await checkUsername({ username });
         setUsernameStatus({ checking: false, valid: true, message: 'Username is available!' });
       } catch (error) {
-        if (error.code === 'functions/already-exists') {
-          setUsernameStatus({
-            checking: false,
-            valid: false,
-            message: 'This username is already taken',
-          });
-        } else if (error.code === 'functions/invalid-argument') {
-          setUsernameStatus({ checking: false, valid: false, message: error.message });
-        } else {
-          setUsernameStatus({
-            checking: false,
-            valid: false,
-            message: 'Could not verify username',
-          });
-        }
+        setUsernameStatus(usernameCheckFailure(error));
       }
     }, 500);
   };
@@ -409,7 +372,12 @@ const Onboarding = () => {
 
       // Auto-register for current week's shows
       try {
-        await autoRegisterForShows(seasonData, 'soundSport');
+        await autoRegisterForShows({
+          season: seasonData,
+          corpsClass: 'soundSport',
+          currentWeek: globalCurrentWeek,
+          getWeekShows,
+        });
       } catch (regError) {
         console.warn('Could not auto-register for shows:', regError);
         // Non-blocking - continue even if this fails
@@ -546,45 +514,6 @@ const Onboarding = () => {
   };
 
   // Auto-register user for current week's shows
-  const autoRegisterForShows = async (season, corpsClass) => {
-    if (!season?.schedule || !season?.seasonUid) return;
-
-    try {
-      // Use currentWeek from global store (already calculated)
-      const currentWeek = globalCurrentWeek;
-
-      // Get shows from global schedule store (skip championship shows)
-      const weekShows = getWeekShows(currentWeek, { skipChampionship: true });
-
-      if (weekShows.length === 0) {
-        console.log('[Onboarding] No shows found for week', currentWeek);
-        return;
-      }
-
-      // Map to the format expected by the backend
-      const currentWeekShows = weekShows.map((show) => ({
-        eventName: show.eventName,
-        date: show.date,
-        location: show.location,
-        day: show.day,
-      }));
-
-      // Register for up to 4 shows
-      if (currentWeekShows.length > 0) {
-        const showsToRegister = currentWeekShows.slice(0, 4);
-
-        await selectUserShows({
-          week: currentWeek,
-          shows: showsToRegister,
-          corpsClass: corpsClass,
-        });
-      }
-    } catch (error) {
-      console.error('Error auto-registering for shows:', error);
-      throw error;
-    }
-  };
-
   const handleCelebrationComplete = () => {
     toast.success(
       `Welcome to marching.art! Here's ${NEW_DIRECTOR_CORPSCOIN.toLocaleString()} CorpsCoin to get started!`

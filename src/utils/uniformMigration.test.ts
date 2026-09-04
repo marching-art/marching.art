@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { planUniformMigration } from './uniformMigration';
+import type { EquippedUniform } from '../types/uniform';
+import type { CorpsUniformDesign } from '../types';
 
 const v2Snapshot = (extra: Record<string, unknown> = {}) => ({
   designId: 'd1',
@@ -10,7 +12,7 @@ const v2Snapshot = (extra: Record<string, unknown> = {}) => ({
   ...extra,
 });
 
-const v1Design = (extra: Record<string, unknown> = {}) => ({
+const v1Design = (extra: Partial<CorpsUniformDesign> = {}): Partial<CorpsUniformDesign> => ({
   primaryColor: 'crimson red',
   secondaryColor: 'gold',
   accentColor: 'cream',
@@ -79,7 +81,7 @@ describe('planUniformMigration', () => {
     const plan = planUniformMigration({
       corps: { openClass: { corpsName: 'Legacy Corps', uniformDesign: v1Design() } },
     });
-    const snap = plan.sets['corps.openClass.uniform'] as any;
+    const snap = plan.sets['corps.openClass.uniform'] as EquippedUniform & { migratedFrom: string };
     expect(snap).toBeTruthy();
     expect(snap.migratedFrom).toBe('v1');
     // Real converter output: a hex colorway + a figure.

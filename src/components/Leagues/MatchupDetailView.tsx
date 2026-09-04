@@ -11,80 +11,14 @@ import BattleBreakdown, { BattleScoreHeader, BattleSummaryBar } from './BattleBr
 import RivalryHistoryCard from './RivalryHistoryCard';
 import CaptionWarsScoreboard from './CaptionWarsScoreboard';
 import { Heading } from '../ui';
-import type { CaptionsBlock } from '../../utils/captionWars';
-import type {
-  CaptionGroupScores,
-  ExtendedHeadToHead,
-  MatchupBattleBreakdown,
-  RivalryData,
-} from '../../types';
+import type { ExtendedHeadToHead, MatchupBattleBreakdown, RivalryData } from '../../types';
 import { MatchupOverviewPanel, MatchupShowsPanel, type SideBreakdown } from './MatchupDetailParts';
 import {
-  calculateMatchupBattles,
-  calculateHeadToHead,
-  createWeeklyPerformance,
-} from '../../utils/matchupScoring';
-
-/**
- * The three caption groups a show result actually carries.
- *
- * This file used to manufacture all eight lineup captions here by dividing each
- * group evenly — `GE1 = GE2 = geScore / 2` — and render them as judged numbers.
- * They were never real: both directors got the same even split, so GE1 and GE2
- * always had the identical winner, as did the three visual and the three music
- * captions. The eight are deliberately unrecorded per show, because publishing
- * them would let an opponent read a director's lineup straight off the recap
- * (docs/CAPTION_WARS_SPEC.md §7), so the fix is to show the three that exist.
- */
-/** One scored day, as fantasy_recaps writes it. */
-interface DayRecap {
-  offSeasonDay: number;
-  shows?: Array<{
-    showId?: string;
-    eventName?: string;
-    results?: Array<{
-      uid: string;
-      corpsClass?: string;
-      totalScore?: number;
-      geScore?: number;
-      visualScore?: number;
-      musicScore?: number;
-      placement?: number;
-    }>;
-  }>;
-}
-
-/** One show as the battle system consumes it. */
-/** One show as createWeeklyPerformance consumes it. */
-interface ShowEntry {
-  showId: string;
-  showName: string;
-  score: number;
-  placement?: number;
-  captions?: CaptionGroupScores;
-}
-
-interface DetailMatchup {
-  user1: string;
-  user2: string;
-  week?: number;
-  status?: string;
-  corpsClass?: string;
-  captions?: CaptionsBlock;
-  /** Cross-class matchup: each side plays in its own class and the week is
-   *  decided on class percentile, not raw totals. Passed through from the
-   *  stored matchup so this view can never contradict the settled result. */
-  crossClass?: boolean;
-  classes?: Record<string, string>;
-  normalized?: Record<string, number>;
-  /** Each side's per-show average across the week — the number the default
-   *  format decided on (functions/src/helpers/leagueScoring.js). */
-  averages?: Record<string, number>;
-  /** Each side's best single show, on a league running One-Night Slate. */
-  best?: Record<string, { score?: number; showName?: string | null } | undefined>;
-  winner?: string | null;
-  completed?: boolean;
-}
+  foldMatchupRecaps,
+  ordinal,
+  type DayRecap,
+  type DetailMatchup,
+} from './matchupDetailRecaps';
 
 interface MatchupDetailViewProps {
   matchup: DetailMatchup;
@@ -105,35 +39,6 @@ interface MatchupDetailViewProps {
   rivalry?: RivalryData | null;
   recaps?: DayRecap[] | null;
 }
-
-/** True when this recap result row belongs to `uid` for THIS matchup. On a
- *  cross-class matchup each side is scored in its own class, so a director
- *  fielding several classes must not have their other corps' shows summed in. */
-const resultCountsFor = (
-  matchup: DetailMatchup,
-  result: { uid?: string; corpsClass?: string },
-  uid: string
-) =>
-  result.uid === uid &&
-  (!matchup.classes?.[uid] || !result.corpsClass || result.corpsClass === matchup.classes[uid]);
-
-/** 1 -> "1st", 42 -> "42nd", 100 -> "100th". */
-const ordinal = (n: number) => {
-  const rem100 = n % 100;
-  if (rem100 >= 11 && rem100 <= 13) return `${n}th`;
-  const suffix = ['th', 'st', 'nd', 'rd'][n % 10] ?? 'th';
-  return `${n}${suffix}`;
-};
-
-const captionGroupScores = (result: {
-  geScore?: number;
-  visualScore?: number;
-  musicScore?: number;
-}) => ({
-  ge: result.geScore || 0,
-  visual: result.visualScore || 0,
-  music: result.musicScore || 0,
-});
 
 const MatchupDetailView = ({
   matchup,
@@ -216,205 +121,12 @@ const MatchupDetailView = ({
         }
 
         if (recaps && recaps.length > 0) {
-          // The matchup always carries a week in practice; this is the one
-          // place that has to say so for the arithmetic below.
-          const week = matchup.week ?? 0;
-          let score1 = 0,
-            score2 = 0;
-          let prevWeekScore1 = 0,
-            prevWeekScore2 = 0;
-          const breakdown1: SideBreakdown = {
-            shows: [],
-            geTotal: 0,
-            visualTotal: 0,
-            musicTotal: 0,
-          };
-          const breakdown2: SideBreakdown = {
-            shows: [],
-            geTotal: 0,
-            visualTotal: 0,
-            musicTotal: 0,
-          };
-          const user1Shows: ShowEntry[] = [];
-          const user2Shows: ShowEntry[] = [];
-
-          (recaps as DayRecap[]).forEach((dayRecap) => {
-            const weekNum = Math.ceil(dayRecap.offSeasonDay / 7);
-
-            // Current week data
-            if (weekNum === matchup.week) {
-              dayRecap.shows?.forEach((show) => {
-                show.results?.forEach((result) => {
-                  if (resultCountsFor(matchup, result, matchup.user1)) {
-                    score1 += result.totalScore || 0;
-                    const showData = {
-                      showId: show.showId || show.eventName || '',
-                      showName: show.eventName || '',
-                      score: result.totalScore || 0,
-                      placement: result.placement,
-                      captions: captionGroupScores(result),
-                    };
-                    user1Shows.push(showData);
-                    breakdown1.shows.push({
-                      eventName: show.eventName,
-                      score: result.totalScore || 0,
-                      geScore: result.geScore || 0,
-                      visualScore: result.visualScore || 0,
-                      musicScore: result.musicScore || 0,
-                    });
-                    breakdown1.geTotal += result.geScore || 0;
-                    breakdown1.visualTotal += result.visualScore || 0;
-                    breakdown1.musicTotal += result.musicScore || 0;
-                  }
-                  if (resultCountsFor(matchup, result, matchup.user2)) {
-                    score2 += result.totalScore || 0;
-                    const showData = {
-                      showId: show.showId || show.eventName || '',
-                      showName: show.eventName || '',
-                      score: result.totalScore || 0,
-                      placement: result.placement,
-                      captions: captionGroupScores(result),
-                    };
-                    user2Shows.push(showData);
-                    breakdown2.shows.push({
-                      eventName: show.eventName,
-                      score: result.totalScore || 0,
-                      geScore: result.geScore || 0,
-                      visualScore: result.visualScore || 0,
-                      musicScore: result.musicScore || 0,
-                    });
-                    breakdown2.geTotal += result.geScore || 0;
-                    breakdown2.visualTotal += result.visualScore || 0;
-                    breakdown2.musicTotal += result.musicScore || 0;
-                  }
-                });
-              });
-            }
-
-            // Previous week data (for momentum calculation)
-            if (weekNum === (matchup.week ?? 0) - 1) {
-              dayRecap.shows?.forEach((show) => {
-                show.results?.forEach((result) => {
-                  if (resultCountsFor(matchup, result, matchup.user1)) {
-                    prevWeekScore1 += result.totalScore || 0;
-                  }
-                  if (resultCountsFor(matchup, result, matchup.user2)) {
-                    prevWeekScore2 += result.totalScore || 0;
-                  }
-                });
-              });
-            }
-          });
-
-          setWeeklyScores({ user1: score1, user2: score2 });
-          setWeeklyShows({ user1: user1Shows.length, user2: user2Shows.length });
-          setScoreBreakdown({ user1: breakdown1, user2: breakdown2 });
-
-          // Calculate battle breakdown if we have data
-          // Battle points compare raw caption numbers, which mean nothing
-          // between different classes — a cross-class matchup shows the
-          // percentile verdict instead of a battle scoreboard.
-          if (!matchup.crossClass && (user1Shows.length > 0 || user2Shows.length > 0)) {
-            const user1Performance = createWeeklyPerformance(
-              matchup.user1,
-              week,
-              user1Shows,
-              prevWeekScore1 > 0 ? prevWeekScore1 : undefined
-            );
-            const user2Performance = createWeeklyPerformance(
-              matchup.user2,
-              week,
-              user2Shows,
-              prevWeekScore2 > 0 ? prevWeekScore2 : undefined
-            );
-
-            const battles = calculateMatchupBattles(
-              `${league?.id || 'league'}-w${week}`,
-              week,
-              matchup.user1,
-              matchup.user2,
-              user1Performance,
-              user2Performance
-            );
-
-            setBattleBreakdown(battles);
-          }
-
-          // Calculate head-to-head history from all past matchups
-          const allBreakdowns: MatchupBattleBreakdown[] = [];
-          for (let pastWeek = 1; pastWeek < week; pastWeek++) {
-            const weekUser1Shows: ShowEntry[] = [];
-            const weekUser2Shows: ShowEntry[] = [];
-            let weekPrevScore1 = 0;
-            let weekPrevScore2 = 0;
-
-            recaps.forEach((dayRecap) => {
-              const weekNum = Math.ceil(dayRecap.offSeasonDay / 7);
-              if (weekNum === week) {
-                dayRecap.shows?.forEach((show) => {
-                  show.results?.forEach((result) => {
-                    if (resultCountsFor(matchup, result, matchup.user1)) {
-                      weekUser1Shows.push({
-                        showId: show.showId || show.eventName || '',
-                        showName: show.eventName || '',
-                        score: result.totalScore || 0,
-                        placement: result.placement,
-                        captions: captionGroupScores(result),
-                      });
-                    }
-                    if (resultCountsFor(matchup, result, matchup.user2)) {
-                      weekUser2Shows.push({
-                        showId: show.showId || show.eventName || '',
-                        showName: show.eventName || '',
-                        score: result.totalScore || 0,
-                        placement: result.placement,
-                        captions: captionGroupScores(result),
-                      });
-                    }
-                  });
-                });
-              }
-              if (weekNum === week - 1) {
-                dayRecap.shows?.forEach((show) => {
-                  show.results?.forEach((result) => {
-                    if (resultCountsFor(matchup, result, matchup.user1))
-                      weekPrevScore1 += result.totalScore || 0;
-                    if (resultCountsFor(matchup, result, matchup.user2))
-                      weekPrevScore2 += result.totalScore || 0;
-                  });
-                });
-              }
-            });
-
-            if (weekUser1Shows.length > 0 || weekUser2Shows.length > 0) {
-              const perf1 = createWeeklyPerformance(
-                matchup.user1,
-                week,
-                weekUser1Shows,
-                weekPrevScore1 > 0 ? weekPrevScore1 : undefined
-              );
-              const perf2 = createWeeklyPerformance(
-                matchup.user2,
-                week,
-                weekUser2Shows,
-                weekPrevScore2 > 0 ? weekPrevScore2 : undefined
-              );
-              const weekBreakdown = calculateMatchupBattles(
-                `${league?.id || 'league'}-w${week}`,
-                week,
-                matchup.user1,
-                matchup.user2,
-                perf1,
-                perf2
-              );
-              allBreakdowns.push(weekBreakdown);
-            }
-          }
-
-          if (allBreakdowns.length > 0) {
-            const h2h = calculateHeadToHead(matchup.user1, matchup.user2, allBreakdowns);
-            setHeadToHead(h2h);
-          }
+          const folded = foldMatchupRecaps(recaps, matchup, league?.id);
+          setWeeklyScores(folded.scores);
+          setWeeklyShows(folded.showCounts);
+          setScoreBreakdown(folded.breakdown);
+          if (folded.battleBreakdown) setBattleBreakdown(folded.battleBreakdown);
+          if (folded.headToHead) setHeadToHead(folded.headToHead);
         }
       } catch (error) {
         console.error('Error processing recaps:', error);

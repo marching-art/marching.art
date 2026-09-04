@@ -75,8 +75,6 @@ const DEFAULTS = {
   attrMinSize: 3,
 };
 
-const DAY_MS = 24 * 60 * 60 * 1000;
-
 /**
  * Coerce a Firestore Timestamp, Date, ISO string, or epoch number to a Date.
  * Profiles carry all of these shapes (see the same helper in retentionStats).

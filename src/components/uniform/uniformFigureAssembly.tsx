@@ -22,7 +22,6 @@ import {
   fillOf,
   mirrored,
   belt,
-  chest,
   collar,
   cowlScarf,
   crewNeck,
@@ -52,6 +51,7 @@ import {
   velvetSheen,
   type Node,
 } from './uniformFigureParts';
+import { chest } from './uniformFigureChest';
 
 function armSide(a: ArmConfig, cw: NormalizedFigure, uid: string, kp: string): Node[] {
   if (a.type === 'none') return [];

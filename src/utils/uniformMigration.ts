@@ -33,8 +33,24 @@ export interface UniformMigrationPlan {
   droppedV1: number;
 }
 
+/**
+ * The slice of a profile's `corps.{class}` entry the planner reads. Profile
+ * documents come straight off Firestore, so every field is optional and the
+ * v2 snapshot is only trusted once its colorway checks out.
+ */
+interface MigratableCorps {
+  corpsName?: string;
+  name?: string;
+  /** The legacy prose design; old rows can be missing any of its fields. */
+  uniformDesign?: Partial<CorpsUniformDesign> | null;
+  uniform?: {
+    colorway?: { primary?: unknown } | null;
+    aiHints?: unknown;
+  } | null;
+}
+
 /** Pull the three prose enrichments off a v1 design into a v2 aiHints object. */
-function extractAiHints(v1: CorpsUniformDesign | undefined | null): UniformAiHints | null {
+function extractAiHints(v1: Partial<CorpsUniformDesign> | undefined | null): UniformAiHints | null {
   if (!v1 || typeof v1 !== 'object') return null;
   const hints: UniformAiHints = {};
   if (v1.mascotOrEmblem) hints.mascotOrEmblem = v1.mascotOrEmblem;
@@ -70,7 +86,7 @@ function snapshotFromDesign(design: UniformDesignV2): Record<string, unknown> {
  * @returns the sets/deletes to apply, plus counters for the run report.
  */
 export function planUniformMigration(
-  profileData: { corps?: Record<string, any> } | null | undefined
+  profileData: { corps?: Record<string, MigratableCorps | null | undefined> } | null | undefined
 ): UniformMigrationPlan {
   const corps = (profileData && profileData.corps) || {};
   const sets: Record<string, unknown> = {};
@@ -85,9 +101,8 @@ export function planUniformMigration(
     const v1 = c.uniformDesign;
     const hasV1 = v1 && typeof v1 === 'object';
     const snap = c.uniform;
-    const hasV2 = Boolean(snap && snap.colorway && typeof snap.colorway.primary === 'string');
 
-    if (hasV2) {
+    if (snap && typeof snap.colorway?.primary === 'string') {
       // v2-first: keep the equipped design untouched. Only fold in aiHints the
       // snapshot is missing, then retire the legacy v1.
       if (snap.aiHints == null && hasV1) {

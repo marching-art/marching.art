@@ -209,9 +209,11 @@ const {
   startNewLiveSeason,
   manualTrigger,
   sendTestEmail,
+} = require("./src/callable/admin");
+const {
   scrapeLiveScoresNow,
   backfillLiveScoresForDayRange,
-} = require("./src/callable/admin");
+} = require("./src/callable/adminLiveScores");
 const { searchYoutubeVideo, resetYoutubeVideo } = require("./src/callable/youtube");
 
 // Scheduled Functions
