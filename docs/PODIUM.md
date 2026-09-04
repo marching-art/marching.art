@@ -1705,6 +1705,11 @@ additions; conflicts are things that **must** be resolved before Phase 1 code.
 3. **Per-show medals.** FMA profiles accumulate lifetime gold/silver/bronze medals for every
    regular-season event (veterans flaunt "70+ golds"). Cheap collector hook: top-3 at any Podium
    show banks a medal counter on the profile. Distinct from trophies (majors/finals hardware).
+   _Shipped:_ medals are decided **within the division** a corps competed in that night — the
+   same field its `place` is numbered against (§5.7: every division crowns its own) — and only
+   when that division fielded at least `balance.medals.minFieldSize` corps. One rule,
+   `helpers/podium/showRanking.js`, shared by the nightly run, the recap sheet, the season
+   ledger and the correction script.
 4. **Director skill tree — sidegrades only.** FMA's director levels → skill points → buffs was a
    core long-game hook we dropped entirely (to avoid power compounding). Recoverable as
    **specializations with tradeoffs** (e.g. "Brass pedagogue: +5% brass block yield, −2% guard")

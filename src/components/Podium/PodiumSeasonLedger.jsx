@@ -17,6 +17,7 @@ import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../../api';
 import { formatEventName } from '../../utils/season';
 import { CLASS_LABELS } from '../../utils/scoresUtils';
+import { podiumMedalForPlace } from '../../utils/podiumMedals';
 import SeasonLedgerView from '../scores/SeasonLedgerView';
 import { fmtScore, summarizeLedger } from '../scores/seasonLedgerUtils';
 import { PODIUM_CAPTIONS } from './podiumConstants';
@@ -45,6 +46,11 @@ function showsOf(recap) {
  * one scored show: its caption line, subtotals, total, and the corps' placement
  * WITHIN ITS OWN DIVISION that night (the number that matters to it — a
  * division crowns its own winner, §5.7), not its rank in the mixed field.
+ *
+ * The medal is derived from that same placement (utils/podiumMedals), never
+ * read off the row: the server now medals per division too, but recaps written
+ * before it did medalled the mixed field, and an icon that disagrees with the
+ * place printed beside it is worse than no icon.
  * @param {Array<{ day: number, recap: any }>} days
  * @param {string|null|undefined} uid
  * @param {string|null|undefined} userCorpsName
@@ -80,7 +86,7 @@ function buildLedger(days, uid, userCorpsName) {
         totalScore: mine.totalScore,
         place: place > 0 ? place : null,
         fieldSize: divisionField.length,
-        medal: mine.medal || null,
+        medal: podiumMedalForPlace(place > 0 ? place : null, divisionField.length),
       });
     }
   }
@@ -174,8 +180,8 @@ export default function PodiumSeasonLedger({
       emptyText="No scored outings yet — your ledger fills in one line at a time as your corps competes. The first entry posts after your next scored show."
       legendText={
         <>
-          Your caption bests in <span className="text-brand font-bold">gold</span> · place is within
-          division
+          Your caption bests in <span className="text-brand font-bold">gold</span> · place and
+          medals are within division
         </>
       }
       formatEventName={formatEventName}

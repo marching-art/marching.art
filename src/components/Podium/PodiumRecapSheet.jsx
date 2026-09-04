@@ -17,10 +17,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { collection, getDocs } from 'firebase/firestore';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Medal } from 'lucide-react';
 import { db } from '../../api';
 import { formatEventName } from '../../utils/season';
 import { CLASS_LABELS } from '../../utils/scoresUtils';
+import { MEDAL_TEXT_CLASS, podiumMedalForPlace } from '../../utils/podiumMedals';
 import { TeamAvatar } from '../ui/TeamAvatar';
 import { AdvancesTag, CutBanner, ShareButton } from '../scores/SheetPrimitives';
 import { SHEET_CARD, groupByClass } from '../scores/sheetTokens';
@@ -243,6 +244,9 @@ function ShowCard({ show, day, sortBy, seasonName, userCorpsName, cut = null }) 
                 {section.rows.map(({ row, place }, rowIndex) => {
                   const isMine = userCorpsName && row.corpsName === userCorpsName;
                   const advances = advancing.has(row.uid);
+                  // The medal this place earns in THIS division's field — the
+                  // same rule the season ledger and the nightly run apply.
+                  const medal = podiumMedalForPlace(place, section.rows.length);
                   return (
                     <tr
                       key={row.uid}
@@ -260,6 +264,12 @@ function ShowCard({ show, day, sortBy, seasonName, userCorpsName, cut = null }) 
                             CorpsIdentity in ScoresParts). */}
                         <div className="flex items-center gap-1.5 min-w-0">
                           <span className="text-muted flex-shrink-0">{place}.</span>
+                          {medal && (
+                            <Medal
+                              className={`w-3 h-3 flex-shrink-0 ${MEDAL_TEXT_CLASS[medal]}`}
+                              aria-label={`${medal} medal`}
+                            />
+                          )}
                           <TeamAvatar name={row.corpsName} logoUrl={row.avatarUrl} size="xs" />
                           <div className="min-w-0">
                             <div className="flex items-baseline gap-1.5 min-w-0">

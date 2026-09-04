@@ -1,0 +1,79 @@
+name: Correct Podium medals
+
+# One-off (re-runnable) data migration that re-ranks every Podium recap within
+# its division and rebuilds the medal counters from the corrected rows.
+#
+# WHY: every division crowns its own winner (docs/PODIUM.md §5.7) — the recap
+# sheet and the season ledger both number a corps against its division-mates —
+# but the nightly processor used to rank the MIXED field and hand gold / silver
+# / bronze to its top three. Directors saw a silver beside "1/3" and a gold
+# beside "2/3", and the profile's medal counters counted podiums nobody was
+# shown. The processor now ranks per division (helpers/podium/showRanking.js);
+# this reconciles the recaps and counters already written under the old logic.
+# See functions/src/scripts/correctPodiumMedals.js.
+#
+# HOW TO RUN (no console needed — all from the Actions tab):
+#   1. Actions → "Correct Podium medals" → Run workflow.
+#   2. Leave "commit" UNCHECKED for a dry run: the log lists every recap day it
+#      would re-rank and every counter it would change, with a final total.
+#   3. Review the dry-run log, then Run workflow again with "commit" CHECKED to
+#      apply the writes. The script is idempotent (already-correct rows and
+#      counters are skipped), so a second commit run is a safe no-op.
+#
+# Only `place` / `fieldSize` / `medal` on recap rows, `podium/state.medals` (+
+# its `corps.podiumClass.medals` profile mirror) for the live season, and
+# `podium/career.history[].medals` for archived seasons are touched. This job
+# writes to Firestore only — it makes no repo commits.
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: 'Apply the writes (leave unchecked for a dry run)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  # Never let two correction runs write the same recaps at once.
+  group: correct-podium-medals
+  cancel-in-progress: false
+
+jobs:
+  correct:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Install function dependencies
+        run: cd functions && npm ci
+
+      - name: Run correction (${{ inputs.commit && 'COMMIT' || 'dry run' }})
+        env:
+          # Same Firestore credentials the deploy workflow uses.
+          GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          # Production data namespace (paths.userPodiumState / userProfile
+          # resolve here); matches functions/.env.marching-art.
+          DATA_NAMESPACE: marching-art
+        run: |
+          echo "$GOOGLE_APPLICATION_CREDENTIALS_JSON" > /tmp/sa-key.json
+          export GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa-key.json
+          trap 'rm -f /tmp/sa-key.json' EXIT
+
+          cd functions
+          if [ "${{ inputs.commit }}" = "true" ]; then
+            echo "Running WITH --commit: changes will be written to Firestore."
+            node src/scripts/correctPodiumMedals.js --commit
+          else
+            echo "Dry run: no writes. Check 'commit' to apply."
+            node src/scripts/correctPodiumMedals.js --dry-run
+          fi
