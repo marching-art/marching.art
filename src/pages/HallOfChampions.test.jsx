@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Verifies the two behaviors changed for the SoundSport / mobile-nav work:
 //   1. A SoundSport "Best in Show" division is surfaced in the Hall of Champions.
 //   2. The season list stays reachable — selecting a season and then going
@@ -23,6 +22,7 @@ vi.mock('../api/functions', () => ({
 import { getSeasonChampions } from '../api/season';
 import { queryClient } from '../lib/queryClient';
 
+/** @type {import('../api/season').SeasonChampions[]} */
 const SEASONS = [
   {
     id: 'live_2025',
@@ -61,14 +61,28 @@ const renderPage = () =>
     </MemoryRouter>
   );
 
-const getSidebar = () => screen.getByText('Hall of Champions').closest('.border-r');
+/** @returns {HTMLElement} */
+const getSidebar = () => {
+  const el = screen.getByText('Hall of Champions').closest('.border-r');
+  if (!(el instanceof HTMLElement)) throw new Error('sidebar not rendered');
+  return el;
+};
+
+/** @param {HTMLElement} scope @param {RegExp} re */
+const findSeasonButton = (scope, re) => {
+  const btn = within(scope)
+    .getAllByRole('button')
+    .find((b) => re.test(b.textContent || ''));
+  if (!btn) throw new Error(`no season button matching ${re}`);
+  return btn;
+};
 
 beforeEach(() => {
   // The page reads through the shared react-query cache — clear it so each
   // test's mock value is actually fetched instead of served from a previous
   // test's cache entry.
   queryClient.clear();
-  getSeasonChampions.mockResolvedValue(SEASONS);
+  vi.mocked(getSeasonChampions).mockResolvedValue(SEASONS);
 });
 
 describe('HallOfChampions — SoundSport division', () => {
@@ -105,11 +119,7 @@ describe('HallOfChampions — mobile season navigation', () => {
     expect(getSidebar().className).not.toContain('hidden');
 
     // Selecting a season collapses the sidebar (mobile shows the detail view).
-    const sidebar = getSidebar();
-    const seasonBtn = within(sidebar)
-      .getAllByRole('button')
-      .find((b) => /Blue Devils/.test(b.textContent));
-    fireEvent.click(seasonBtn);
+    fireEvent.click(findSeasonButton(getSidebar(), /Blue Devils/));
     await waitFor(() => expect(getSidebar().className).toContain('hidden'));
 
     // Tapping the mobile "Seasons" back control returns to the list — and it
@@ -119,11 +129,7 @@ describe('HallOfChampions — mobile season navigation', () => {
     expect(getSidebar().className).not.toContain('hidden');
 
     // The list is genuinely browsable: a different season can now be opened.
-    const crownSeasonBtn = within(getSidebar())
-      .getAllByRole('button')
-      .find((b) => /Carolina Crown/.test(b.textContent));
-    expect(crownSeasonBtn).toBeTruthy();
-    fireEvent.click(crownSeasonBtn);
+    fireEvent.click(findSeasonButton(getSidebar(), /Carolina Crown/));
     await waitFor(() => expect(getSidebar().className).toContain('hidden'));
     expect(screen.getAllByText('Carolina Crown').length).toBeGreaterThan(0);
   });
