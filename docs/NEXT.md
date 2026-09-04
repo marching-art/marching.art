@@ -336,10 +336,12 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
 
 ## Evergreen ratchets (any session, any size)
 
-- `@ts-nocheck` paydown — **72 files** at
+- `@ts-nocheck` paydown — **69 files** at
   last update; `npm run ts-nocheck:next` ranks the cheapest (no free wins
-  left; `Schedule.jsx` and `Layout/GameShell.jsx` are ~30 errors each). One
-  per substantive task is the CLAUDE.md habit; batches welcome.
+  left — the cheapest `src/` files are ~12 errors; `Schedule.jsx` and
+  `Layout/GameShell.jsx` are ~30 each). It needs `npm ci` first and refuses
+  to report on any other compiler. One per substantive task is the CLAUDE.md
+  habit; batches welcome.
 - Frontend coverage floor upward — actual is ~29% statements against a
   15.9% floor; raise the floor to within a point of actual whenever it's
   touched (functions are held to 70/80/85).
@@ -354,6 +356,18 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
 
 ## Recently shipped (context, newest first — prune when stale)
 
+- 2026-09-04 (later still): `npm run ts-nocheck:next` no longer lies. It ran
+  `npx tsc`, which in a fresh web container (no `npm ci` yet) falls back to
+  the image's global TypeScript 6; that compiler rejects the tsconfig's
+  deprecated options and exits before checking a file, so zero per-file
+  errors were attributed and all 70 headers were reported as "free wins".
+  `scripts/tsNocheckNext.mjs` now runs `node_modules/typescript` directly,
+  refuses to run when it is missing or differs from the lockfile pin, aborts
+  on any config-level diagnostic or a diagnostic-free non-zero exit, warns
+  when headerless files are already red, and captures up to 256 MB of tsc
+  output so a long report can't be truncated. `@ts-nocheck` ratchet: 70 → 69
+  (`functions/src/scripts/buildPodiumCurves.js`: the logistic grid search
+  returns its best fit instead of mutating a closure variable).
 - 2026-09-04 (later): the retry ladder alone wasn't enough — a registry
   outage outlasted all three attempts and went red again. `auditRatchet.mjs`
   now stops probing once one manifest exhausts its retries (bounds the run to
