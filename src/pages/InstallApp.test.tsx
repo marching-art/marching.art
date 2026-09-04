@@ -84,8 +84,25 @@ describe('InstallApp (/install)', () => {
     // Not the detected device any more, so no "Detected" badge.
     expect(screen.queryByText(/Detected:/)).not.toBeInTheDocument();
 
+    // Samsung Internet is blocked on Android 14+ — the guide hands off to Chrome.
     fireEvent.click(screen.getByRole('button', { name: 'Samsung Internet' }));
-    expect(screen.getByText(/Tap "Add page to", then "Home screen"/)).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { level: 2, name: /Install on Android — use Chrome/ })
+    ).toBeInTheDocument();
+    expect(screen.getByText(/Chrome installs it in three taps/)).toBeInTheDocument();
+  });
+
+  it('gives a Samsung Internet visitor a one-tap Open in Chrome hand-off', () => {
+    hookState = { ...hookState, platform: 'android', browser: 'samsung' };
+    renderPage();
+    const open = screen.getByRole('link', { name: /Open in Chrome/ });
+    expect(open).toHaveAttribute(
+      'href',
+      expect.stringMatching(
+        /^intent:\/\/marching\.art\/install#Intent;scheme=https;package=com\.android\.chrome;/
+      )
+    );
+    expect(screen.getByText(/Tap the ⋮ menu/)).toBeInTheDocument();
   });
 
   it('offers a one-tap install when the browser has a native prompt', async () => {

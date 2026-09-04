@@ -85,8 +85,12 @@ const TROUBLESHOOTING: Array<{ q: string; a: string }> = [
     a: 'That means it is already installed. Look for the marching.art icon on your home screen or in your app drawer and open it from there.',
   },
   {
+    q: 'My phone says "This app was built for an older version of Android and doesn\'t include the latest privacy protections"',
+    a: 'You are installing from Samsung Internet (the default browser on Galaxy phones). On Android 14 and newer the phone rejects the package Samsung Internet builds, so the install is blocked. Nothing is wrong with your phone or the site — open marching.art/install in Chrome instead (it is on every Android phone) and install from there. The app looks and works exactly the same.',
+  },
+  {
     q: 'There is no install option on Android',
-    a: 'Open the page in Chrome itself, not the mini browser inside Instagram, Facebook or Discord. Samsung Internet hides the option under ≡ → "Add page to" → "Home screen". Firefox lists it as "Install" in its ⋮ menu.',
+    a: 'Open the page in Chrome itself, not the mini browser inside Instagram, Facebook or Discord, and not Samsung Internet. Firefox lists it as "Install" in its ⋮ menu; Edge as "Add to phone".',
   },
   {
     q: 'I installed it but I am not getting notifications',

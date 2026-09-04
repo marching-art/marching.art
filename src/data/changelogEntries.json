@@ -4,10 +4,11 @@
     "date": "2026-09-04",
     "title": "Getting the app on your phone is now a three-tap job",
     "category": "improvement",
-    "summary": "Ask \"how do I install marching.art?\" and the answer used to be a two-line tip buried in Settings that assumed Safari. There is now a proper Get the App page at marching.art/install that recognises your phone and browser and shows exactly where the button is — the Share sheet at the bottom of Safari on iPhone, the ⋮ menu in Chrome, Samsung Internet's \"Add page to\", Chrome on iPhone, Edge, Firefox and desktop too. If you opened the link from inside Instagram, Facebook, TikTok, Discord or Gmail, it tells you that mini browser can't install apps and gives you a one-tap \"Open in Safari / Chrome\" button before the steps. Browsers that support one-tap install get a single Install button.",
+    "summary": "Ask \"how do I install marching.art?\" and the answer used to be a two-line tip buried in Settings that assumed Safari. There is now a proper Get the App page at marching.art/install that recognises your phone and browser and shows exactly where the button is — the Share sheet at the bottom of Safari on iPhone, the ⋮ menu in Chrome, Chrome on iPhone, Edge, Firefox and desktop too. If you opened the link from inside Instagram, Facebook, TikTok, Discord or Gmail, it tells you that mini browser can't install apps and gives you a one-tap \"Open in Safari / Chrome\" button before the steps. Browsers that support one-tap install get a single Install button.",
     "highlights": [
       "Get the App lives in the footer, the ? menu, the home page and Settings, and the install nudge now takes you straight there instead of trying to explain it in a toast.",
       "Send marching.art/install to a friend or a parent — it opens to the steps for their device, and you can switch to a different device to help them from your own.",
+      "Galaxy phone owners: Samsung Internet's install is blocked on Android 14+ with a \"built for an older version of Android\" message. The guide recognises Samsung Internet, explains that, and gives you a one-tap Open in Chrome button — Chrome installs it fine.",
       "A troubleshooting list covers the usual dead ends: the missing \"Add to Home Screen\", Android saying \"Open\" instead of \"Install\", and notifications after installing.",
       "Directors who already run the installed app just see \"You're all set\"."
     ]

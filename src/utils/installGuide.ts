@@ -99,6 +99,15 @@ export interface InstallGuide {
     /** Steps to break out of the host app's webview. */
     steps: InstallStep[];
   };
+  /**
+   * For 'unsupported': the browser the director should switch to and why.
+   * The renderer turns this into a one-tap "Open in Chrome/Safari" button on
+   * mobile (buildOpenInBrowserUrl) with a copy-link fallback.
+   */
+  switchTo?: {
+    browserName: string;
+    reason: string;
+  };
   /** A caveat worth reading before starting (OS version requirement etc.). */
   note?: string;
   /** Once installed, what the director should look for. */
@@ -302,20 +311,6 @@ const androidChromeSteps = (): InstallStep[] => [
   { icon: 'check', text: 'Tap "Install"' },
 ];
 
-const androidSamsungSteps = (): InstallStep[] => [
-  {
-    icon: 'download',
-    text: 'Tap the download icon in the address bar, if you see one',
-    hint: 'Samsung Internet shows a small "install" arrow at the right end of the address bar for installable sites.',
-  },
-  { icon: 'menu-lines', text: 'Otherwise tap the ≡ menu at the bottom right' },
-  {
-    icon: 'add-square',
-    text: 'Tap "Add page to", then "Home screen"',
-    hint: 'Then confirm with "Add".',
-  },
-];
-
 const androidFirefoxSteps = (): InstallStep[] => [
   { icon: 'menu-vertical', text: 'Tap the ⋮ menu' },
   { icon: 'download', text: 'Tap "Install" (or "Add to Home screen")' },
@@ -497,8 +492,12 @@ export function getInstallGuide(input: GuideInput): InstallGuide {
             ...base,
             kind: 'unsupported',
             headline: `Use Safari to install on ${device}`,
-            intro: `${BROWSER_LABEL[browser]} can only add web apps to the home screen on iOS 16.4 or newer. Copy the link, open Safari, paste it, then follow these steps.`,
+            intro: `${BROWSER_LABEL[browser]} can only add web apps to the home screen on iOS 16.4 or newer. Open this page in Safari, then follow these steps.`,
             steps: iosSafariSteps(platform),
+            switchTo: {
+              browserName: 'Safari',
+              reason: `${BROWSER_LABEL[browser]} needs iOS 16.4 or newer to add web apps. Safari can always do it.`,
+            },
             afterInstall: IOS_AFTER,
           };
         }
@@ -521,24 +520,47 @@ export function getInstallGuide(input: GuideInput): InstallGuide {
           ...base,
           kind: 'unsupported',
           headline: `Use Safari to install on ${device}`,
-          intro: `${BROWSER_LABEL[browser] === 'your browser' ? 'This browser' : BROWSER_LABEL[browser]} can't add web apps to the home screen. Copy the link, open Safari, paste it, then follow these steps.`,
+          intro: `${BROWSER_LABEL[browser] === 'your browser' ? 'This browser' : BROWSER_LABEL[browser]} can't add web apps to the home screen. Open this page in Safari, then follow these steps.`,
           steps: iosSafariSteps(platform),
+          switchTo: {
+            browserName: 'Safari',
+            reason:
+              'Only Safari (and, on iOS 16.4+, Chrome, Edge and Firefox) can add web apps to the home screen.',
+          },
           afterInstall: IOS_AFTER,
         };
     }
   }
 
   if (platform === 'android') {
+    if (browser === 'samsung') {
+      // Samsung Internet packages the app through its own server, and on
+      // Android 14+ the phone refuses the package: "This app was built for an
+      // older version of Android and doesn't include the latest privacy
+      // protections." Chrome on the same phone installs fine, so send the
+      // director there instead of walking them into the wall.
+      return {
+        ...base,
+        kind: 'unsupported',
+        headline: 'Install on Android — use Chrome',
+        intro:
+          'Samsung Internet can\'t install marching.art on Android 14 or newer: the phone blocks it with "This app was built for an older version of Android". Chrome installs it in three taps, and the app works the same afterwards.',
+        steps: androidChromeSteps(),
+        switchTo: {
+          browserName: 'Chrome',
+          reason: "Samsung Internet's app installer is blocked by Android 14+. Chrome's is not.",
+        },
+        afterInstall: ANDROID_AFTER,
+      };
+    }
     const steps =
-      browser === 'samsung'
-        ? androidSamsungSteps()
-        : browser === 'firefox'
-          ? androidFirefoxSteps()
-          : browser === 'edge'
-            ? androidEdgeSteps()
-            : browser === 'opera'
-              ? androidOperaSteps()
-              : androidChromeSteps();
+      browser === 'firefox'
+        ? androidFirefoxSteps()
+        : browser === 'edge'
+          ? androidEdgeSteps()
+          : browser === 'opera'
+            ? androidOperaSteps()
+            : androidChromeSteps();
     return {
       ...base,
       kind: 'manual',
