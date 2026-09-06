@@ -390,6 +390,7 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
   — the old `?tab=submissions` param was never read (`Admin.jsx` tab now lives
   in the URL; `SubmissionsManagement` opens the linked status tab, highlights
   the row, widens to All if it has since moved). Changelog (fix) entry added.
+  `@ts-nocheck` ratchet: 61 → 60 (`Landing/NewsFeedCards.jsx`).
 - 2026-09-06 (assistant decay): the roster audit for `overture_2026-27`
   found all 59 Day-28 corps registered THIS season (15 on rollover day, ~20
   in one two-hour group session on Aug 20) and zero orphans — the

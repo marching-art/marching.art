@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // News feed presentational cards + state views. Extracted from NewsFeed.jsx.
 
 import { memo, useState } from 'react';
@@ -22,6 +21,38 @@ import {
 import { NewsFeedSkeleton } from './NewsFeedSkeletons';
 import { Heading } from '../ui';
 
+/**
+ * A feed story as NewsFeed.jsx hands it down: a NewsEntry plus the fields the
+ * feed endpoint adds (reading time, day/season, weekly change on trending corps).
+ * @typedef {Omit<import('../../types').NewsEntry, 'trendingCorps'> & {
+ *   trendingCorps?: Array<
+ *     import('../../types').TrendingCorps & { weeklyChange?: number, fantasyValue?: string }
+ *   > | null,
+ *   fantasyMetrics?: Record<string, unknown> | null,
+ *   readingTime?: string,
+ *   reportDay?: number,
+ *   seasonId?: string,
+ * }} FeedStory
+ */
+
+/**
+ * Per-article engagement as getArticleEngagement returns it (see
+ * Articles/ArticleReactions.jsx EngagementSummary for the consumer).
+ * @typedef {{
+ *   reactionCounts?: { total?: number, [reaction: string]: number | undefined } | null,
+ *   userReaction?: string | null,
+ *   commentCount?: number,
+ * }} StoryEngagement
+ */
+
+/**
+ * @param {{
+ *   activeCategory: string,
+ *   onCategoryChange: (category: string) => void,
+ *   storyCount: number,
+ *   isLive: boolean,
+ * }} props
+ */
 function NewsMasthead({ activeCategory, onCategoryChange, storyCount, isLive }) {
   return (
     <div className="mb-6">
@@ -77,6 +108,14 @@ function NewsMasthead({ activeCategory, onCategoryChange, storyCount, isLive }) 
   );
 }
 
+/**
+ * @param {{
+ *   story: FeedStory,
+ *   onClick?: (story: FeedStory) => void,
+ *   storyNumber: number,
+ *   engagement?: StoryEngagement | null,
+ * }} props
+ */
 function HeroStory({ story, onClick, storyNumber, engagement }) {
   const config = getCategoryConfig(story.category);
   const Icon = config.icon;
@@ -102,7 +141,7 @@ function HeroStory({ story, onClick, storyNumber, engagement }) {
             alt={story.headline}
             className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500"
             loading="eager"
-            fetchpriority="high"
+            fetchPriority="high"
             onError={() => setImageFailed(true)}
           />
         ) : (
@@ -228,61 +267,71 @@ function HeroStory({ story, onClick, storyNumber, engagement }) {
   );
 }
 
-const TextStoryRow = memo(({ story, onClick, engagement }) => {
-  const config = getCategoryConfig(story.category);
-  const urgency = getUrgencyBadge(story.createdAt);
+const TextStoryRow = memo(
+  /**
+   * @param {{
+   *   story: FeedStory,
+   *   onClick?: (story: FeedStory) => void,
+   *   engagement?: StoryEngagement | null,
+   * }} props
+   */
+  ({ story, onClick, engagement }) => {
+    const config = getCategoryConfig(story.category);
+    const urgency = getUrgencyBadge(story.createdAt);
 
-  return (
-    <article
-      className="py-4 border-b border-line/60 break-inside-avoid cursor-pointer group"
-      onClick={() => onClick?.(story)}
-    >
-      {/* Kicker: category + urgency */}
-      <div className="flex items-center gap-2 mb-1.5">
-        <span className={`text-[10px] font-bold uppercase tracking-widest ${config.textClass}`}>
-          {config.label}
-        </span>
-        {urgency && <UrgencyBadge urgency={urgency} />}
-      </div>
-
-      {/* Headline */}
-      <Heading
-        level="title"
-        className="leading-snug mb-1.5 group-hover:underline decoration-gray-500 decoration-1 underline-offset-[3px]"
+    return (
+      <article
+        className="py-4 border-b border-line/60 break-inside-avoid cursor-pointer group"
+        onClick={() => onClick?.(story)}
       >
-        {safeString(story.headline)}
-      </Heading>
+        {/* Kicker: category + urgency */}
+        <div className="flex items-center gap-2 mb-1.5">
+          <span className={`text-[10px] font-bold uppercase tracking-widest ${config.textClass}`}>
+            {config.label}
+          </span>
+          {urgency && <UrgencyBadge urgency={urgency} />}
+        </div>
 
-      {/* Summary line */}
-      <p className="text-sm text-muted leading-relaxed line-clamp-2 mb-2">
-        {safeString(story.summary)}
-      </p>
+        {/* Headline */}
+        <Heading
+          level="title"
+          className="leading-snug mb-1.5 group-hover:underline decoration-gray-500 decoration-1 underline-offset-[3px]"
+        >
+          {safeString(story.headline)}
+        </Heading>
 
-      {/* Meta */}
-      <div className="flex items-center justify-between">
-        <span className="text-[10px] text-muted uppercase tracking-wide">
-          {formatTimestamp(story.createdAt)}
-          {(story.authorUsername || story.authorName) && (
-            <span className="text-muted"> · By {story.authorUsername || story.authorName}</span>
+        {/* Summary line */}
+        <p className="text-sm text-muted leading-relaxed line-clamp-2 mb-2">
+          {safeString(story.summary)}
+        </p>
+
+        {/* Meta */}
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] text-muted uppercase tracking-wide">
+            {formatTimestamp(story.createdAt)}
+            {(story.authorUsername || story.authorName) && (
+              <span className="text-muted"> · By {story.authorUsername || story.authorName}</span>
+            )}
+          </span>
+          {engagement && (
+            <EngagementSummary
+              reactionCounts={engagement.reactionCounts}
+              userReaction={engagement.userReaction}
+              commentCount={engagement.commentCount}
+            />
           )}
-        </span>
-        {engagement && (
-          <EngagementSummary
-            reactionCounts={engagement.reactionCounts}
-            userReaction={engagement.userReaction}
-            commentCount={engagement.commentCount}
-          />
-        )}
-      </div>
-    </article>
-  );
-});
+        </div>
+      </article>
+    );
+  }
+);
 
 function LoadingState() {
   // Use skeleton loading for professional perceived performance
   return <NewsFeedSkeleton />;
 }
 
+/** @param {{ onRetry: () => void }} props */
 function ErrorState({ onRetry }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 text-muted">
@@ -298,6 +347,7 @@ function ErrorState({ onRetry }) {
   );
 }
 
+/** @param {{ category: string }} props */
 function EmptyState({ category }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 text-muted">
