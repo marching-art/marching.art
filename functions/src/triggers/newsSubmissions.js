@@ -177,6 +177,12 @@ exports.submitNewsForApproval = onCall(
           summary: submission.summary,
           authorName: submission.authorName,
           category: submission.category,
+          // A trusted author's article is not waiting in the pending queue —
+          // it is scheduled. The email must say so (and link to the right
+          // tab), or the admin opens an empty queue looking for it.
+          status: submission.status,
+          autoPublish: isTrustedAuthor,
+          scheduledPublishAt: scheduledPublishAt ? scheduledPublishAt.toISOString() : null,
         });
       } catch (notifyErr) {
         logger.warn("Failed to notify admins of new submission:", notifyErr.message);

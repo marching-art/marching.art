@@ -7,6 +7,7 @@
 // Laws: App Shell, Telemetry Strip, Process Tables, no glow
 
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   Shield,
   Database,
@@ -41,6 +42,7 @@ import {
   SectionHeader,
   InfoRow,
 } from '../components/Admin/AdminUI';
+import { ADMIN_TAB_IDS } from '../components/Admin/adminTabs';
 import UsersTab from '../components/Admin/UsersTab';
 import JobsTab from '../components/Admin/JobsTab';
 import LiveScoresTab from '../components/Admin/LiveScoresTab';
@@ -352,7 +354,27 @@ const Admin = () => {
   const { user } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('overview');
+  // The active tab lives in the URL (?tab=content) so admin emails can deep
+  // link straight to the relevant panel instead of always landing on Overview.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlTab = searchParams.get('tab');
+  const activeTab = ADMIN_TAB_IDS.has(urlTab) ? urlTab : 'overview';
+  const setActiveTab = (tab) => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (tab === 'overview') next.delete('tab');
+        else next.set('tab', tab);
+        // Panel-specific deep-link params belong to the tab they were minted for.
+        if (tab !== urlTab) {
+          next.delete('status');
+          next.delete('submission');
+        }
+        return next;
+      },
+      { replace: true }
+    );
+  };
   const [seasonData, setSeasonData] = useState(null);
   const [stats, setStats] = useState({ totalUsers: 0, activeUsers: 0, totalCorps: 0 });
 

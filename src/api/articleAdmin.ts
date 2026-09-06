@@ -216,7 +216,12 @@ export interface NewsSubmission {
   fullStory: string;
   category: NewsCategory;
   imageUrl: string | null;
-  status: 'pending' | 'approved' | 'rejected';
+  status: 'pending' | 'scheduled' | 'approved' | 'rejected';
+  /** Author's header-image preference, honored on publish. */
+  imageOption?: 'generate' | 'submitted' | 'none';
+  /** True for a trusted author's submission, which publishes itself at 2 PM ET. */
+  autoPublish?: boolean;
+  scheduledPublishAt?: string | null;
   authorUid: string;
   authorName: string;
   authorEmail: string | null;
@@ -228,7 +233,7 @@ export interface NewsSubmission {
 }
 
 export interface ListPendingSubmissionsData {
-  status?: 'pending' | 'approved' | 'rejected' | 'all';
+  status?: 'pending' | 'scheduled' | 'approved' | 'rejected' | 'all';
   limit?: number;
 }
 

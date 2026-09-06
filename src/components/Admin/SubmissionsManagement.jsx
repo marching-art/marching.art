@@ -3,7 +3,8 @@
 // Admin interface for reviewing and managing user-submitted articles
 // Follows Admin panel dark theme: bg-background, bg-surface-card, bg-surface-raised
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   FileText,
   RefreshCw,
@@ -48,11 +49,26 @@ const CATEGORY_LABELS = {
   press: 'Press Release',
 };
 
+const STATUS_FILTERS = ['pending', 'scheduled', 'approved', 'rejected', 'all'];
+
 const SubmissionsManagement = () => {
+  // Deep link from the admin notification email:
+  //   /admin?tab=content&status=scheduled&submission=<id>
+  // `status` opens the right tab (a trusted author's article sits under
+  // Scheduled, never Pending) and `submission` highlights the row.
+  const [searchParams] = useSearchParams();
+  const linkedStatus = searchParams.get('status');
+  const linkedSubmissionId = searchParams.get('submission');
+
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [statusFilter, setStatusFilter] = useState('pending');
+  const [statusFilter, setStatusFilter] = useState(
+    STATUS_FILTERS.includes(linkedStatus) ? linkedStatus : 'pending'
+  );
+  // Once the linked submission is not found under its emailed status (it was
+  // approved, rejected, or auto-published since), widen to All exactly once.
+  const widenedForLinkRef = useRef(false);
   const [previewSubmission, setPreviewSubmission] = useState(null);
   const [processingId, setProcessingId] = useState(null);
 
@@ -62,6 +78,15 @@ const SubmissionsManagement = () => {
       const result = await listPendingSubmissions({ status: statusFilter });
       if (result.data.success) {
         setSubmissions(result.data.submissions);
+        if (
+          linkedSubmissionId &&
+          statusFilter !== 'all' &&
+          !widenedForLinkRef.current &&
+          !result.data.submissions.some((s) => s.id === linkedSubmissionId)
+        ) {
+          widenedForLinkRef.current = true;
+          setStatusFilter('all');
+        }
       }
     } catch (error) {
       console.error('Error loading submissions:', error);
@@ -69,11 +94,18 @@ const SubmissionsManagement = () => {
     } finally {
       setLoading(false);
     }
-  }, [statusFilter]);
+  }, [statusFilter, linkedSubmissionId]);
 
   useEffect(() => {
     loadSubmissions();
   }, [loadSubmissions]);
+
+  // Scroll the deep-linked row into view once it is on screen.
+  useEffect(() => {
+    if (!linkedSubmissionId || loading) return;
+    const el = document.getElementById(`submission-${linkedSubmissionId}`);
+    el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }, [linkedSubmissionId, loading, submissions]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -160,7 +192,7 @@ const SubmissionsManagement = () => {
       {/* Header with status tabs */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          {['pending', 'scheduled', 'approved', 'rejected', 'all'].map((status) => (
+          {STATUS_FILTERS.map((status) => (
             <button
               key={status}
               onClick={() => setStatusFilter(status)}
@@ -208,6 +240,7 @@ const SubmissionsManagement = () => {
               onReject={() => handleReject(submission)}
               formatDate={formatDate}
               isProcessing={processingId === submission.id}
+              isLinked={submission.id === linkedSubmissionId}
             />
           ))}
         </div>
@@ -236,8 +269,14 @@ const SubmissionRow = ({
   onReject,
   formatDate,
   isProcessing,
+  isLinked = false,
 }) => (
-  <div className="bg-surface-card border border-line rounded-none overflow-hidden">
+  <div
+    id={`submission-${submission.id}`}
+    className={`bg-surface-card border rounded-none overflow-hidden ${
+      isLinked ? 'border-interactive ring-1 ring-interactive' : 'border-line'
+    }`}
+  >
     <div className="flex items-center justify-between p-4">
       <div className="flex-1 min-w-0 mr-4">
         <div className="flex items-center gap-2 mb-1">

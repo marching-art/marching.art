@@ -8,7 +8,7 @@ burns an hour to conclude "everything's about covered." Don't. If you ship,
 cut, or discover something, edit THIS file in the same PR — that's the whole
 maintenance contract.
 
-_Last updated: 2026-09-06 (assistant director fades with consecutive days
+_Last updated: 2026-09-06 (director-authored articles exempt from the score-reveal gate — dead Discord/notification links fixed; scheduled-vs-pending admin email + working admin deep link; assistant director fades with consecutive days
 away; Podium field = the registered field; majors and championship rounds
 carry the Podium roster; roster audit workflow; season re-mint guard). Previous: 2026-09-04 (site-review row 20 — one onboarding checklist (the Journey; Quick Start modal deleted, `?reveal=` deep link) and one How-to-Play route by auth state; device-aware install guide at /install — in-app-browser detection with an Open-in-Safari/Chrome escape hatch, per-browser steps, one-tap native install, linked from footer / ? menu / home / Settings / the nudge; site-review row 19 — honest functions coverage gate, first admin / league-automation tests; row 18 — one-click unsubscribe + List-Unsubscribe headers, noindex auth wall; row 17 — vendor-firebase trimmed, GameShell + overlays lazy for guests; row 16 — focus traps + Escape in every raw dialog, icon buttons named; row 15 — one dashboard interrupt per visit, celebrations to the inbox; row 14 — weekly XP / win bonus / finish bonus paid per director; row 13 — league weeks decided per show, percentile edge cases; row 12 — server-enforced age gate + consent-gated analytics; AI imagery now built from the full Uniform Studio design + rendered reference image; main ruleset + gazetteer PR flow; site-review Fix-first 1–11 + quick wins shipped)._
 
@@ -376,6 +376,20 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
 
 ## Recently shipped (context, newest first — prune when stale)
 
+- 2026-09-06 (article queue / dead Discord link): a trusted author's 2 PM
+  auto-published article announced to Discord but opened as "Article Not
+  Found" until that night's drop. Root cause: `publishSubmission` /
+  `publishPressReleaseArticle` stamp the day **in progress**, and the client
+  score-reveal gate (`useMaxVisibleArticleDay`) hid every reportDay past the
+  revealed one — including director-authored articles that carry no spoiler.
+  Fix: `seasonProgress.isArticleDayGated` (shared by `Article.jsx` and
+  `NewsFeed.jsx`) exempts articles with an `authorUid` and prior-season
+  articles; generated coverage is gated exactly as before. Same PR: the admin
+  "needs review" email now says **scheduled** for a trusted author (subject,
+  copy, 2 PM ET time) and deep links `/admin?tab=content&status=…&submission=…`
+  — the old `?tab=submissions` param was never read (`Admin.jsx` tab now lives
+  in the URL; `SubmissionsManagement` opens the linked status tab, highlights
+  the row, widens to All if it has since moved). Changelog (fix) entry added.
 - 2026-09-06 (assistant decay): the roster audit for `overture_2026-27`
   found all 59 Day-28 corps registered THIS season (15 on rollover day, ~20
   in one two-hour group session on Aug 20) and zero orphans — the

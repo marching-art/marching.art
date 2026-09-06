@@ -72,7 +72,26 @@ test("admin submission email escapes headline, summary, author, and category", (
   assert.ok(!html.includes(XSS));
   assert.ok(html.includes(XSS_ESCAPED));
   // The submission id is URL-encoded into the review link, not interpolated raw.
-  assert.ok(html.includes("id=sub%3C%3E%26123"));
+  assert.ok(html.includes("submission=sub%3C%3E%26123"));
+  // A new author's article waits in the Pending queue; the link lands there.
+  assert.ok(html.includes("/admin?tab=content&status=pending&"));
+  assert.ok(html.includes("New article needs review"));
+});
+
+test("admin submission email for a trusted author says scheduled and links the Scheduled tab", () => {
+  const html = adminArticleSubmissionEmailTemplate({
+    headline: "Bluecoats unveil the closer",
+    summary: "A look at the new ballad.",
+    authorName: "Chris",
+    category: "fantasy",
+    submissionId: "abc123",
+    autoPublish: true,
+    scheduledPublishAt: "2026-09-07T18:00:00.000Z", // 2:00 PM ET
+  });
+  assert.ok(html.includes("Trusted-author article scheduled"));
+  assert.ok(html.includes("2:00 PM ET"));
+  assert.ok(html.includes("/admin?tab=content&status=scheduled&submission=abc123"));
+  assert.ok(!html.includes("New article needs review"));
 });
 
 test("admin comment report email escapes reason, excerpt, and names", () => {
