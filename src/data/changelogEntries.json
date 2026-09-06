@@ -1,5 +1,17 @@
 [
   {
+    "id": "2026-09-06-podium-field-is-the-registered-field",
+    "date": "2026-09-06",
+    "title": "Podium: only corps registered this season take the field, and majors show their Podium lineup",
+    "category": "fix",
+    "summary": "The first off-season Southwestern Championship in the Podium Division listed corps whose directors never registered for this season. A Podium corps is on the field only when its director registers it for the season; any corps left over from a past season is now dropped from the night's field, the standings sheet and the power rankings, and stays out of every show roster and running order. The results of the shows already scored are being corrected the same way. Separately, the branded majors and Championship Week never showed a Podium field: your corps is auto-entered there, but the show page's running order, the registered-corps list and the hosted-show rosters only counted the shows you picked by hand. Those shows now carry the full Podium field, night by night.",
+    "highlights": [
+      "The Southwestern and Southeastern Championships, each Eastern Classic night and every Championship Week round list their Podium running order alongside the fantasy one, worst-to-best by recent form, with the Podium encore.",
+      "On Championship Week cut rounds the running order shows only the corps that advanced once the prior round has scored.",
+      "Admins can no longer accidentally restart the season that is already running; regenerating it in place is a separate, confirmed step."
+    ]
+  },
+  {
     "id": "2026-09-04-one-onboarding-checklist-one-guide",
     "date": "2026-09-04",
     "title": "One onboarding checklist and one How to Play",

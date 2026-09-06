@@ -8,7 +8,9 @@ burns an hour to conclude "everything's about covered." Don't. If you ship,
 cut, or discover something, edit THIS file in the same PR — that's the whole
 maintenance contract.
 
-_Last updated: 2026-09-04 (site-review row 20 — one onboarding checklist (the Journey; Quick Start modal deleted, `?reveal=` deep link) and one How-to-Play route by auth state; device-aware install guide at /install — in-app-browser detection with an Open-in-Safari/Chrome escape hatch, per-browser steps, one-tap native install, linked from footer / ? menu / home / Settings / the nudge; site-review row 19 — honest functions coverage gate, first admin / league-automation tests; row 18 — one-click unsubscribe + List-Unsubscribe headers, noindex auth wall; row 17 — vendor-firebase trimmed, GameShell + overlays lazy for guests; row 16 — focus traps + Escape in every raw dialog, icon buttons named; row 15 — one dashboard interrupt per visit, celebrations to the inbox; row 14 — weekly XP / win bonus / finish bonus paid per director; row 13 — league weeks decided per show, percentile edge cases; row 12 — server-enforced age gate + consent-gated analytics; AI imagery now built from the full Uniform Studio design + rendered reference image; main ruleset + gazetteer PR flow; site-review Fix-first 1–11 + quick wins shipped)._
+_Last updated: 2026-09-06 (Podium field = the registered field; majors and
+championship rounds carry the Podium roster; roster audit workflow; season
+re-mint guard). Previous: 2026-09-04 (site-review row 20 — one onboarding checklist (the Journey; Quick Start modal deleted, `?reveal=` deep link) and one How-to-Play route by auth state; device-aware install guide at /install — in-app-browser detection with an Open-in-Safari/Chrome escape hatch, per-browser steps, one-tap native install, linked from footer / ? menu / home / Settings / the nudge; site-review row 19 — honest functions coverage gate, first admin / league-automation tests; row 18 — one-click unsubscribe + List-Unsubscribe headers, noindex auth wall; row 17 — vendor-firebase trimmed, GameShell + overlays lazy for guests; row 16 — focus traps + Escape in every raw dialog, icon buttons named; row 15 — one dashboard interrupt per visit, celebrations to the inbox; row 14 — weekly XP / win bonus / finish bonus paid per director; row 13 — league weeks decided per show, percentile edge cases; row 12 — server-enforced age gate + consent-gated analytics; AI imagery now built from the full Uniform Studio design + rendered reference image; main ruleset + gazetteer PR flow; site-review Fix-first 1–11 + quick wins shipped)._
 
 ## In progress
 
@@ -277,6 +279,22 @@ ops step below)_
 
 ## Operational — owner only, standing until done
 
+- **Run the Podium roster audit** (Actions → "Audit Podium roster" → Run
+  workflow, dry run first, then with `commit` checked) once the roster
+  partition deploys. The first off-season Southwestern Championship (Day 28,
+  2026-09-05) scored Podium corps whose directors had not registered for the
+  season. The dry-run log is the diagnostic: every roster entry prints as
+  ACTIVE or ORPHAN with its registration time and the season its state doc
+  holds (`functions/src/scripts/auditPodiumRoster.js`). If every suspect
+  corps is ACTIVE with a registration time inside this season, the directors
+  did register (assistant autoplay then carried them, Path 4 in the
+  investigation) and nothing needs removing. The commit run drops orphan rows
+  from every recap day, standings sheet and power column and deletes the
+  orphan roster docs; if a removed row held a medal, run "Correct Podium
+  medals" afterwards. Also check `podium-config/podiumSeasons` — if `current`
+  is this season but `history` has no entry for `live_2026-26`, the boundary
+  never ran and `settlePodiumSeasonBoundary` needs a nudge (register-time
+  lazy settlement will do it).
 - **Re-run the Podium medal correction** (Actions → "Correct Podium medals"
   → Run workflow, dry run first, then with `commit` checked) once the
   show-field gate deploys. The first run (2026-09-04 15:29Z) gated medals on
@@ -374,6 +392,24 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
 
 ## Recently shipped (context, newest first — prune when stale)
 
+- 2026-09-06 (Podium field): the nightly processor now partitions the season
+  roster (`store.partitionRoster`) — a roster doc whose state is missing or
+  holds another season is an orphan: dropped from the night's field, the
+  standings sheet, the power column and the rank/medal write-back (which used
+  to stamp this season's rank onto archived states), and pruned from the
+  roster so every roster reader agrees. `startNewOffSeason` /
+  `startNewLiveSeason` refuse to re-mint the active seasonUid
+  (`assertNotReminting`; the admin override retries with a confirmed
+  `force`, the scheduler's malformed-doc repair passes it). Registration and
+  running orders now include the auto-attended field: `store.autoAttendsShow`
+  resolves a branded major on its fixed day (Eastern on the corps' assigned
+  night) and the championship rounds the corps' division marches (cut
+  survivors on 46/48/49 via `loadPodiumAdvancing`), folded in by
+  `collectPodiumRegistrations` for `getShowRegistrations` and
+  `scheduleRunningOrder` (which builds the Podium side for championship
+  comps too — fantasy keeps heritage synthesis there). New
+  `auditPodiumRoster.js` + workflow (see Operational). Changelog entry added.
+  `@ts-nocheck` ratchet: 63 → 62 (`dailyLoginPayoff.test.js`).
 - 2026-09-04 (onboarding): site-review row 20. One checklist — the Quick
   Start modal (three unrewarded steps restating the Journey's first three,
   with its own completion rules) is gone; `JourneyPanel` / `PodiumJourneyPanel`

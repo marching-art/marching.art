@@ -1,19 +1,23 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // The daily-login payoff surfacing: claimDailyLogin's response used to be
 // discarded entirely, so these tests pin that every reward in the response
 // becomes a visible event (XP/coin pills, milestone celebration, level-up).
 import { describe, it, expect, beforeEach } from 'vitest';
 import { surfaceDailyLoginPayoff } from './dailyLoginPayoff';
 
+/** @typedef {Record<'xp-feedback' | 'celebration' | 'level-up', any[]>} CapturedEvents */
+
+/** @returns {CapturedEvents} */
 const captureEvents = () => {
+  /** @type {CapturedEvents} */
   const events = { 'xp-feedback': [], celebration: [], 'level-up': [] };
-  for (const name of Object.keys(events)) {
-    window.addEventListener(name, (e) => events[name].push(e.detail));
+  for (const name of /** @type {(keyof CapturedEvents)[]} */ (Object.keys(events))) {
+    window.addEventListener(name, (e) => events[name].push(/** @type {CustomEvent} */ (e).detail));
   }
   return events;
 };
 
 describe('surfaceDailyLoginPayoff', () => {
+  /** @type {CapturedEvents} */
   let events;
   beforeEach(() => {
     events = captureEvents();
@@ -39,7 +43,7 @@ describe('surfaceDailyLoginPayoff', () => {
       loginStreak: 7,
       xpAwarded: 125,
       coinAwarded: 100,
-      milestoneReached: { days: 7, title: 'Week Warrior!', xp: 100, coin: 100 },
+      milestoneReached: { title: 'Week Warrior!' },
     });
 
     expect(events.celebration).toHaveLength(1);

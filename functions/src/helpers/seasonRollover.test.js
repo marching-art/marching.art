@@ -28,6 +28,7 @@ const {
   archiveAndResetProfiles,
   archiveSeasonResultsLogic,
   corpsParticipatedThisSeason,
+  assertNotReminting,
 } = require("./season");
 const { RARITY_CC } = require("./achievements");
 const {
@@ -38,6 +39,21 @@ const {
   participatingCorps,
   lineupOnlyCorps,
 } = require("./__fixtures__/seasonRolloverFakes");
+
+describe("assertNotReminting (a season is started once)", () => {
+  test("a genuinely new seasonUid passes", () => {
+    assert.doesNotThrow(() => assertNotReminting({ seasonUid: "live_2026-26" }, "overture_2026-27", false));
+    assert.doesNotThrow(() => assertNotReminting(null, "overture_2026-27", false));
+  });
+
+  test("re-starting the active season is refused unless forced", () => {
+    assert.throws(
+      () => assertNotReminting({ seasonUid: "overture_2026-27" }, "overture_2026-27", false),
+      /already the active season/
+    );
+    assert.doesNotThrow(() => assertNotReminting({ seasonUid: "overture_2026-27" }, "overture_2026-27", true));
+  });
+});
 
 describe("corpsParticipatedThisSeason", () => {
   test("competing or scoring counts; a lineup alone does not", () => {

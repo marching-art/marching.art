@@ -34,13 +34,16 @@ exports.seasonScheduler = onSchedule({
   // Manual finals-date overrides (game-settings/config) win over the computed
   // 2nd Saturday when routing live-vs-off, matching what startNew*Season use.
   const finalsOverrides = await getFinalsDateOverrides(getDb());
-  const startCurrentPhase = async () => {
+  // `force` is only for the malformed-doc repair below: that path deliberately
+  // regenerates the season the calendar says is current, which may carry the
+  // same seasonUid as the broken doc (helpers/season.js assertNotReminting).
+  const startCurrentPhase = async ({ force = false } = {}) => {
     if (isLiveSeasonTime(now, finalsOverrides)) {
       logger.info("It's time for the live season! Starting now.");
-      await startNewLiveSeason();
+      await startNewLiveSeason({ force });
     } else {
       logger.info("Starting a new off-season.");
-      await startNewOffSeason();
+      await startNewOffSeason({ force });
     }
     await announceSeasonStart(getDb());
   };
@@ -54,7 +57,7 @@ exports.seasonScheduler = onSchedule({
   const seasonData = seasonDoc.data();
   if (!seasonData.schedule || !seasonData.schedule.endDate) {
     logger.warn("Season doc is malformed. Starting the current season to correct.");
-    await startCurrentPhase();
+    await startCurrentPhase({ force: true });
     return;
   }
 

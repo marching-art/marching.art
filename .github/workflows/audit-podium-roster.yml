@@ -1,0 +1,87 @@
+name: Audit Podium roster
+
+# Audit the Podium season roster against the corps that actually registered,
+# and repair what a stray corps left behind.
+#
+# WHY: a Podium corps takes the field only by registering for the season, which
+# writes its roster doc and stamps the season onto its state doc together. A
+# roster entry whose state doc is missing or still holds LAST season names a
+# corps that did not register — and until the nightly processor learned to
+# prune such orphans, they rode into the standings sheets and power columns
+# and had this season's rank written back onto their archived state. This
+# job lists every roster entry (ACTIVE / ORPHAN with the registration time and
+# the season its state holds), drops orphan rows from every recap day (re-ranking
+# the show within division), from every standings sheet and power column, and
+# deletes the orphan roster docs. See functions/src/scripts/auditPodiumRoster.js.
+#
+# HOW TO RUN (no console needed — all from the Actions tab):
+#   1. Actions → "Audit Podium roster" → Run workflow.
+#   2. Leave "commit" UNCHECKED for a dry run: the log lists the roster
+#      classification and every recap row / sheet entry it would remove.
+#   3. Review the dry-run log, then Run workflow again with "commit" CHECKED to
+#      apply the writes. Idempotent — a later run that finds nothing is a no-op.
+#   4. If a removed row held a medal, run "Correct Podium medals" afterwards so
+#      the counters of the remaining corps are rebuilt from the corrected rows.
+#
+# Writes to Firestore only — it makes no repo commits.
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: 'Apply the writes (leave unchecked for a dry run)'
+        type: boolean
+        default: false
+      season:
+        description: 'Season uid to audit (blank = the active season)'
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  # Never let two correction runs write the same recaps at once.
+  group: audit-podium-roster
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Install function dependencies
+        run: cd functions && npm ci
+
+      - name: Run audit (${{ inputs.commit && 'COMMIT' || 'dry run' }})
+        env:
+          # Same Firestore credentials the deploy workflow uses.
+          GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          # Production data namespace (paths.userPodiumState / userProfile
+          # resolve here); matches functions/.env.marching-art.
+          DATA_NAMESPACE: marching-art
+        run: |
+          echo "$GOOGLE_APPLICATION_CREDENTIALS_JSON" > /tmp/sa-key.json
+          export GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa-key.json
+          trap 'rm -f /tmp/sa-key.json' EXIT
+
+          cd functions
+          SEASON_ARGS=""
+          if [ -n "${{ inputs.season }}" ]; then
+            SEASON_ARGS="--season ${{ inputs.season }}"
+          fi
+          if [ "${{ inputs.commit }}" = "true" ]; then
+            echo "Running WITH --commit: changes will be written to Firestore."
+            node src/scripts/auditPodiumRoster.js --commit $SEASON_ARGS
+          else
+            echo "Dry run: no writes. Check 'commit' to apply."
+            node src/scripts/auditPodiumRoster.js --dry-run $SEASON_ARGS
+          fi

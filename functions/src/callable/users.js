@@ -13,6 +13,8 @@ const {
   showRegistrationEventKey,
   registrationEntryKey,
   collectPodiumRegistrations,
+  loadPodiumAdvancing,
+  PODIUM_REGISTRATION_FIELDS,
 } = require("../helpers/showRegistrations");
 const { homeGeoFor } = require("../helpers/corpsGeo");
 const podiumStore = require("../helpers/podium/store");
@@ -325,7 +327,10 @@ exports.getShowRegistrations = onCall({ cors: true }, async (request) => {
   // Podium corps pick shows day-based, in their own podium/state docs — outside
   // the fantasy registration index. When the caller passes the show's day (the
   // hosted-show roster does), fold in every Podium corps whose pick for that day
-  // names this show, so the roster and slot count include the Podium field.
+  // names this show — plus the corps that AUTO-attend it (the branded majors on
+  // their fixed days, each corps' assigned Eastern night, and the championship
+  // rounds its division marches; helpers/showRegistrations) — so the roster and
+  // slot count include the whole Podium field the nightly processor will score.
   //
   // The efficient lookup would be a collection-group array-contains query on
   // `podium.selectedShowDays`, but that needs a COLLECTION_GROUP index and the
@@ -349,14 +354,28 @@ exports.getShowRegistrations = onCall({ cors: true }, async (request) => {
         const chunkUids = rosterUids.slice(i, i + GETALL_CHUNK);
         const snaps = await db.getAll(
           ...chunkUids.map((uid) => podiumStore.stateRef(db, uid)),
-          { fieldMask: ["seasonUid", "corpsName", "selectedShows"] }
+          { fieldMask: [...PODIUM_REGISTRATION_FIELDS] }
         );
         snaps.forEach((snap, j) => {
           if (snap.exists) entries.push({ uid: chunkUids[j], state: snap.data() });
         });
       }
+      // Two small reads that only matter on auto-attended days: the published
+      // Eastern night snake and, on an advancement round, the prior cut.
+      const [easternAssignments, advancing] = await Promise.all([
+        podiumStore.EASTERN_DAYS.includes(day)
+          ? podiumStore.loadEasternAssignments(db, activeSeasonId)
+          : null,
+        loadPodiumAdvancing(db, activeSeasonId, day),
+      ]);
       registrations.push(
-        ...collectPodiumRegistrations(entries, { day, eventName, activeSeasonId })
+        ...collectPodiumRegistrations(entries, {
+          day,
+          eventName,
+          activeSeasonId,
+          easternAssignments,
+          advancing,
+        })
       );
     } catch (podiumError) {
       logger.warn("Could not fold Podium corps into show registrations:", podiumError.message);

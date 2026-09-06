@@ -20,6 +20,8 @@
  * clients cannot read or write it directly.
  */
 
+const podiumStore = require("./podium/store");
+
 const { homeGeoFor } = require("./corpsGeo");
 const { getClass } = require("./classRegistry");
 
@@ -117,6 +119,17 @@ function buildEventDocs(pairs) {
  * are strings once round-tripped through Firestore, so both the numeric and
  * string forms of `day` are tried.
  *
+ * Auto-attended shows are folded in the same way: the branded regional majors
+ * on their fixed days (the Eastern Classic on each corps' assigned night) and
+ * the championship-week rounds the corps' division marches never appear in
+ * `selectedShows` (they are not selectable), so they are resolved through
+ * `store.autoAttendsShow` from the show's schedule metadata / name. Without
+ * this every regional and championship roster and running order showed an
+ * empty Podium field while the nightly processor scored the whole division
+ * there. `show` (the schedule entry), `easternAssignments` (the published
+ * Day-39 night snake) and `advancing` (the cut survivors on 46/48/49) are all
+ * optional refinements; the name-and-day fallback stands without them.
+ *
  * `lastTotal` (the corps' most recent Podium score, from the state doc) rides
  * along so the running-order builder can slot the podium field by recent form
  * without a second read; it's null until the corps has been scored.
@@ -127,18 +140,27 @@ function buildEventDocs(pairs) {
  * fantasy field uses. Null when the state predates the structured home.
  *
  * @param {Array<{uid: string, state: Object}>} entries roster uid + state data
- * @param {{day: number, eventName: string, activeSeasonId: string}} params
+ * @param {{day: number, eventName: string, activeSeasonId: string,
+ *   show?: Object|null, easternAssignments?: Record<string, number>|null,
+ *   advancing?: Set<string>|null}} params
  * @returns {Array<{uid: string|null, corpsName: string, corpsClass: string,
- *   username: null, lastTotal: number|null,
+ *   username: null, lastTotal: number|null, auto: boolean,
  *   homeGeo: {lat:number, lng:number, venueId?:string}|null}>}
  */
-function collectPodiumRegistrations(entries, { day, eventName, activeSeasonId }) {
+function collectPodiumRegistrations(
+  entries,
+  { day, eventName, activeSeasonId, show = null, easternAssignments = null, advancing = null }
+) {
   const out = [];
   for (const { uid, state } of entries || []) {
     if (!state || state.seasonUid !== activeSeasonId) continue;
     const picks = state.selectedShows || {};
     const pick = picks[day] || picks[String(day)] || null;
-    if (!pick || pick.eventName !== eventName) continue;
+    const picked = Boolean(pick && pick.eventName === eventName);
+    const auto =
+      !picked &&
+      podiumStore.autoAttendsShow(state, uid, { day, eventName, show, easternAssignments, advancing });
+    if (!picked && !auto) continue;
     const home = state.home || null;
     const homeGeo =
       home && Number.isFinite(home.lat) && Number.isFinite(home.lng)
@@ -150,11 +172,43 @@ function collectPodiumRegistrations(entries, { day, eventName, activeSeasonId })
       corpsClass: "podiumClass",
       username: null,
       lastTotal: Number.isFinite(state.lastTotal) ? state.lastTotal : null,
+      auto,
       homeGeo,
     });
   }
   return out;
 }
+
+/**
+ * The cut survivors entering an advancement round (46/48/49), read from the
+ * prior round's Podium recap — or null when the day is not an advancement day
+ * or no prior results exist yet (the whole eligible field attends). One doc
+ * read at most; a read failure degrades to null rather than emptying the field.
+ * @param {FirebaseFirestore.Firestore} db
+ * @param {string} seasonUid
+ * @param {number} day
+ * @returns {Promise<Set<string>|null>}
+ */
+async function loadPodiumAdvancing(db, seasonUid, day) {
+  const spec = podiumStore.CHAMPIONSHIP_ADVANCEMENT[day];
+  if (!spec) return null;
+  try {
+    const priorSnap = await podiumStore.recapDayRef(db, seasonUid, spec.priorDay).get();
+    return podiumStore.advancingUids(priorSnap.exists ? priorSnap.data() : null, day, podiumStore.balance);
+  } catch {
+    return null;
+  }
+}
+
+/** State fields a Podium registration fold needs (getAll field mask). */
+const PODIUM_REGISTRATION_FIELDS = Object.freeze([
+  "seasonUid",
+  "corpsName",
+  "division",
+  "selectedShows",
+  "lastTotal",
+  "home",
+]);
 
 module.exports = {
   showRegistrationEventKey,
@@ -162,4 +216,6 @@ module.exports = {
   collectRegistrationsFromProfile,
   buildEventDocs,
   collectPodiumRegistrations,
+  loadPodiumAdvancing,
+  PODIUM_REGISTRATION_FIELDS,
 };

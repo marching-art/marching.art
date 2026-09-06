@@ -14,8 +14,11 @@
 // writes nothing. Runs a few times a day; the evening pass refreshes today's
 // field a couple hours before the ~9 p.m. drop.
 //
-// Championship days (45-49) are intentionally skipped — they keep the pool-driven
-// heritage synthesis (offSeasonHeritage.buildChampionshipLineup). Everything is
+// Championship days (45-49) are intentionally skipped on the FANTASY side — they
+// keep the pool-driven heritage synthesis (offSeasonHeritage.buildChampionshipLineup).
+// The Podium side is built for every upcoming show, championship rounds
+// included: its field is the real roster (self-picks plus the auto-attended
+// majors and championship rounds), never a synthesized pool. Everything is
 // best-effort: a show we can't build (no registrations, no date) is left as-is.
 
 const { onSchedule } = require("firebase-functions/v2/scheduler");
@@ -25,7 +28,12 @@ const { paths } = require("../helpers/paths");
 const { RANKED_CLASSES } = require("../helpers/classRegistry");
 const { MODEL_VERSION } = require("../helpers/scheduleModel");
 const { buildShowRunningOrder } = require("../helpers/showRunningOrder");
-const { showRegistrationEventKey, collectPodiumRegistrations } = require("../helpers/showRegistrations");
+const {
+  showRegistrationEventKey,
+  collectPodiumRegistrations,
+  loadPodiumAdvancing,
+  PODIUM_REGISTRATION_FIELDS,
+} = require("../helpers/showRegistrations");
 const { zonedWallTimeToUtc } = require("../helpers/eventDetails");
 const { isPodiumEnabled } = require("../helpers/features");
 const { homeGeoFor } = require("../helpers/corpsGeo");
@@ -124,7 +132,7 @@ async function loadPodiumEntries(db, seasonUid) {
   for (let i = 0; i < uids.length; i += GETALL_CHUNK) {
     const chunk = uids.slice(i, i + GETALL_CHUNK);
     const snaps = await db.getAll(...chunk.map((uid) => podiumStore.stateRef(db, uid)), {
-      fieldMask: ["seasonUid", "corpsName", "selectedShows", "lastTotal", "home"],
+      fieldMask: [...PODIUM_REGISTRATION_FIELDS],
     });
     snaps.forEach((snap, j) => {
       if (snap.exists) entries.push({ uid: chunk[j], state: snap.data() });
@@ -202,13 +210,26 @@ async function enrichScheduleRunningOrdersLogic(db, deps = {}) {
     deps.podiumEnabled !== undefined
       ? deps.podiumEnabled
       : await isPodiumEnabled(db).catch(() => false);
+  // The published Eastern night snake seats each corps on one night of the
+  // two-night major; null before Day 39 (uid-parity fallback, like scoring).
+  let easternAssignments = null;
   if (podiumOn) {
     try {
       podiumEntries = await (deps.loadPodiumEntries || loadPodiumEntries)(db, seasonId);
+      easternAssignments = await podiumStore.loadEasternAssignments(db, seasonId);
     } catch (err) {
       logger.warn(`[running-order] podium roster read failed: ${err.message}`);
     }
   }
+  // Cut survivors per advancement round (46/48/49), read lazily once per day
+  // the walk actually reaches; null = no cut known yet, the whole field marches.
+  const advancingByDay = new Map();
+  const advancingFor = async (day) => {
+    if (!advancingByDay.has(day)) {
+      advancingByDay.set(day, await loadPodiumAdvancing(db, seasonId, day));
+    }
+    return advancingByDay.get(day);
+  };
 
   let updated = 0;
   let built = 0;
@@ -240,49 +261,69 @@ async function enrichScheduleRunningOrdersLogic(db, deps = {}) {
       }
     }
 
-    if (date && isUpcoming && !isChampionship(comp)) {
+    if (date && isUpcoming) {
       const week = comp.week || Math.ceil((comp.day || 1) / 7);
       const eventKey = showRegistrationEventKey(week, comp.name, comp.date ?? null);
       try {
-        // --- Fantasy running order (from the registration index) ---
-        const regSnap = await db.doc(paths.showRegistrationEvent(seasonId, eventKey)).get();
-        const registrations = regSnap.exists
-          ? Object.values(regSnap.data().registrations || {}).map((r) => ({
-              uid: r.uid || null,
-              corpsClass: r.corpsClass,
-              corpsName: r.corpsName || "Unnamed Corps",
-              homeGeo: r.homeGeo || null,
-              encoreDeclined: r.encoreDeclined === true,
-            }))
-          : [];
-        built += 1;
         // One venue geocode, shared by both sides' proximity encore.
         const venueGeo = homeGeoFor(comp.location);
-        const fantasy = toScheduleDoc(
-          build({
-            registrations,
-            metricFor,
-            scoresDropAt: resolveScoresDropAt(comp, date, isLive),
-            timezone: comp.timezone || null,
-            location: comp.location || "",
-          })
-        );
-        // Write when there's a field, or to CLEAR a schedule whose field emptied.
-        // An always-empty far-out show writes nothing (no churn).
-        if (
-          (fantasy.fieldSize > 0 || comp.fantasySchedule) &&
-          scheduleSignature(comp.fantasySchedule) !== scheduleSignature(fantasy)
-        ) {
-          updated += 1;
-          entry.fantasySchedule = { ...fantasy, updatedAt: new Date().toISOString() };
+        // --- Fantasy running order (from the registration index) ---
+        // Championship rounds keep their heritage synthesis on this side.
+        if (!isChampionship(comp)) {
+          const regSnap = await db.doc(paths.showRegistrationEvent(seasonId, eventKey)).get();
+          const registrations = regSnap.exists
+            ? Object.values(regSnap.data().registrations || {}).map((r) => ({
+                uid: r.uid || null,
+                corpsClass: r.corpsClass,
+                corpsName: r.corpsName || "Unnamed Corps",
+                homeGeo: r.homeGeo || null,
+                encoreDeclined: r.encoreDeclined === true,
+              }))
+            : [];
+          built += 1;
+          const fantasy = toScheduleDoc(
+            build({
+              registrations,
+              metricFor,
+              scoresDropAt: resolveScoresDropAt(comp, date, isLive),
+              timezone: comp.timezone || null,
+              location: comp.location || "",
+            })
+          );
+          // Write when there's a field, or to CLEAR a schedule whose field emptied.
+          // An always-empty far-out show writes nothing (no churn).
+          if (
+            (fantasy.fieldSize > 0 || comp.fantasySchedule) &&
+            scheduleSignature(comp.fantasySchedule) !== scheduleSignature(fantasy)
+          ) {
+            updated += 1;
+            entry.fantasySchedule = { ...fantasy, updatedAt: new Date().toISOString() };
+          }
+
+          // Stash for the chronological encore pass (fantasy field only). Only
+          // shows with a field can have an encore; skip empty ones.
+          if (registrations.length > 0) {
+            encoreCandidates.push({
+              entry,
+              date,
+              registrations,
+              venueGeo,
+              hostUid: comp.hostUid || null,
+            });
+          }
         }
 
         // --- Podium running order (from the podium roster; 9 PM ET year-round) ---
+        // Self-picks by name, plus the auto-attended majors / championship
+        // rounds — the same field the nightly processor scores that night.
         if (podiumOn && Number.isFinite(comp.day)) {
           const pField = collectPodiumRegistrations(podiumEntries, {
             day: comp.day,
             eventName: comp.name,
             activeSeasonId: seasonId,
+            show: comp,
+            easternAssignments,
+            advancing: await advancingFor(comp.day),
           });
           const pLast = new Map(pField.map((p) => [p.uid, p.lastTotal]));
           const podium = toScheduleDoc(
@@ -312,18 +353,6 @@ async function enrichScheduleRunningOrdersLogic(db, deps = {}) {
               hostUid: comp.hostUid || null,
             });
           }
-        }
-
-        // Stash for the chronological encore pass (fantasy field only). Only
-        // shows with a field can have an encore; skip empty ones.
-        if (registrations.length > 0) {
-          encoreCandidates.push({
-            entry,
-            date,
-            registrations,
-            venueGeo,
-            hostUid: comp.hostUid || null,
-          });
         }
       } catch (err) {
         logger.warn(`[running-order] build failed for ${comp.name}: ${err.message}`);
