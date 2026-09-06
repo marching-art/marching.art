@@ -13,6 +13,7 @@ import { Flame, Loader2, DollarSign, ArrowUpRight, ArrowDownRight, Zap } from 'l
 import { fetchNewsFeedHttp, getRecentNews } from '../../api/functions';
 import { useSeasonStore } from '../../store/seasonStore';
 import { useMaxVisibleArticleDay } from '../../hooks/useRevealedDay';
+import { isArticleDayGated } from '../../utils/seasonProgress';
 
 // =============================================================================
 // NEWS FEED CACHE WITH STALE-WHILE-REVALIDATE
@@ -386,11 +387,7 @@ export default function NewsFeed({ maxItems = 4 }) {
     // seasons' recaps (finals winners, etc.) stay readable the moment a new season
     // resets the day counter to 1.
     if (effectiveDay) {
-      filtered = filtered.filter((story) => {
-        const isPriorSeason = seasonUid && story.seasonId && story.seasonId !== seasonUid;
-        if (isPriorSeason) return true;
-        return !story.reportDay || story.reportDay <= effectiveDay;
-      });
+      filtered = filtered.filter((story) => !isArticleDayGated(story, effectiveDay, seasonUid));
     }
 
     if (activeCategory !== 'all') {

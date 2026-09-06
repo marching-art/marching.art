@@ -1,5 +1,16 @@
 [
   {
+    "id": "2026-09-06-director-articles-open-the-moment-they-publish",
+    "date": "2026-09-06",
+    "title": "Director-written articles open the moment they publish",
+    "category": "fix",
+    "summary": "A community article or press release that published during the day — a trusted author's 2 PM release, an approved submission, an instant press release — showed up in Discord and in your notification, but tapping through gave “Article Not Found” until that night's scores dropped. The news hub hides the nightly generated coverage for a day whose scores have not been revealed yet so nothing gets spoiled, and it was treating your articles the same way. Articles written by directors carry no score spoilers, so they now open, and appear in the news feed, the moment they go live.",
+    "highlights": [
+      "The Discord announcement's link and the “your article is live” notification now open the article immediately.",
+      "Admins are told when a trusted author's article is scheduled rather than waiting for review, and the email opens the Scheduled tab with that article highlighted."
+    ]
+  },
+  {
     "id": "2026-09-06-podium-assistant-director-fades-when-you-stay-away",
     "date": "2026-09-06",
     "title": "Podium: the assistant director gets worse the longer you stay away",

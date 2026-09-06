@@ -2,15 +2,7 @@
 // Shared Admin panel UI primitives. Extracted from pages/Admin.jsx.
 
 import { CheckCircle, RefreshCw, Terminal } from 'lucide-react';
-
-const ADMIN_TABS = [
-  { id: 'overview', label: 'Overview' },
-  { id: 'season', label: 'Season Ops' },
-  { id: 'livescores', label: 'Live Scores' },
-  { id: 'users', label: 'Users' },
-  { id: 'content', label: 'Content' },
-  { id: 'jobs', label: 'Jobs' },
-];
+import { ADMIN_TABS } from './adminTabs';
 
 const TelemetryStrip = ({ stats }) => (
   <div className="bg-surface-card border-b border-line">

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   getMaxVisibleArticleDay,
+  isArticleDayGated,
   getSeasonPercentComplete,
   getSeasonProgress,
   SEASON_FINAL_DAY,
@@ -169,5 +170,40 @@ describe('getSeasonPercentComplete', () => {
       expect(percent).toBeGreaterThan(((week - 1) / TOTAL_SEASON_WEEKS) * 100);
       expect(percent).toBeLessThanOrEqual(100);
     }
+  });
+});
+
+describe('isArticleDayGated', () => {
+  const season = 'scherzo_2026';
+
+  it('hides a generated article for a day whose scores have not dropped', () => {
+    expect(isArticleDayGated({ reportDay: 12, seasonId: season }, 11, season)).toBe(true);
+  });
+
+  it('shows a generated article once its day is visible', () => {
+    expect(isArticleDayGated({ reportDay: 11, seasonId: season }, 11, season)).toBe(false);
+    expect(isArticleDayGated({ reportDay: 3, seasonId: season }, 11, season)).toBe(false);
+  });
+
+  it('never gates a director-authored article (community submission / press release)', () => {
+    // Published mid-day and stamped with the day in progress — the exact
+    // shape the 2 PM trusted-author auto-publisher produces.
+    expect(
+      isArticleDayGated({ reportDay: 12, seasonId: season, authorUid: 'uid_1' }, 11, season)
+    ).toBe(false);
+  });
+
+  it('never gates a prior season article', () => {
+    expect(isArticleDayGated({ reportDay: 49, seasonId: 'old_season' }, 2, season)).toBe(false);
+  });
+
+  it('is off when the gate is off or the article has no reportDay', () => {
+    expect(isArticleDayGated({ reportDay: 12, seasonId: season }, null, season)).toBe(false);
+    expect(isArticleDayGated({ seasonId: season }, 11, season)).toBe(false);
+    expect(isArticleDayGated(null, 11, season)).toBe(false);
+  });
+
+  it('gates by day alone when the active season uid is not known yet', () => {
+    expect(isArticleDayGated({ reportDay: 12, seasonId: season }, 11, null)).toBe(true);
   });
 });

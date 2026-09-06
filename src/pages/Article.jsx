@@ -33,6 +33,7 @@ import {
 import { getArticleEngagement } from '../api/functions';
 import { useSeasonStore } from '../store/seasonStore';
 import { useMaxVisibleArticleDay } from '../hooks/useRevealedDay';
+import { isArticleDayGated } from '../utils/seasonProgress';
 import { useBodyScroll } from '../hooks/useBodyScroll';
 import {
   getCategoryConfig,
@@ -232,9 +233,9 @@ const Article = () => {
   // direct link to last season's finals recap stays readable after a reset.
   const seasonUid = useSeasonStore((state) => state.seasonUid);
   const effectiveDay = useMaxVisibleArticleDay(currentDay);
-  const isPriorSeasonArticle = seasonUid && article?.seasonId && article.seasonId !== seasonUid;
-  const isDayGated =
-    article && effectiveDay && !isPriorSeasonArticle && article.reportDay > effectiveDay;
+  // Director-authored articles (community submissions, press releases) and
+  // prior seasons' articles are never gated — see isArticleDayGated.
+  const isDayGated = isArticleDayGated(article, effectiveDay, seasonUid);
 
   // Per-article document metadata: title/description/OG/Twitter card, an
   // article-type canonical, and NewsArticle structured data. Must run every

@@ -186,3 +186,42 @@ export function getMaxVisibleArticleDay(currentDay: number): number | null {
   const day = currentDay - 1;
   return day >= 1 ? day : null;
 }
+
+/** The fields of a feed entry or article doc the day gate looks at. */
+export interface DayGateArticle {
+  reportDay?: number | null;
+  seasonId?: string | null;
+  authorUid?: string | null;
+}
+
+/**
+ * Whether the score-reveal gate should hide an article.
+ *
+ * The gate exists to keep the nightly generated coverage (recaps, fantasy
+ * impact, Podium reports) from spoiling scores that have not dropped yet.
+ * Two kinds of article carry a reportDay but no such spoiler risk and must
+ * never be hidden by it:
+ *
+ *   - A prior season's article (its scores are long revealed).
+ *   - A director-authored article — community submissions and press
+ *     releases. Those publish mid-day (the admin approve flow, the 2 PM ET
+ *     trusted-author auto-publisher, instant press releases) and are stamped
+ *     with the day in progress, so gating them made every such article a
+ *     dead "Article Not Found" link from publish until that night's drop,
+ *     including the link the Discord announcement had just posted.
+ *
+ * @param article - Feed entry or resolved article doc.
+ * @param maxVisibleDay - useMaxVisibleArticleDay result (null = gate off).
+ * @param seasonUid - The active season uid from the season store.
+ */
+export function isArticleDayGated(
+  article: DayGateArticle | null | undefined,
+  maxVisibleDay: number | null | undefined,
+  seasonUid: string | null | undefined
+): boolean {
+  if (!article || !maxVisibleDay) return false;
+  if (!article.reportDay) return false;
+  if (article.authorUid) return false;
+  if (seasonUid && article.seasonId && article.seasonId !== seasonUid) return false;
+  return article.reportDay > maxVisibleDay;
+}

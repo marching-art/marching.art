@@ -285,9 +285,12 @@ async function sendRivalContextEmail(email, data, { uid = null } = {}) {
  */
 async function sendAdminArticleSubmissionEmail(email, data) {
   const html = adminArticleSubmissionEmailTemplate(data);
+  const subject = data.autoPublish
+    ? `[Admin] Trusted-author article scheduled: ${data.headline || "(untitled)"}`
+    : `[Admin] New article submission: ${data.headline || "(untitled)"}`;
   return sendEmail({
     to: email,
-    subject: `[Admin] New article submission: ${data.headline || "(untitled)"}`,
+    subject,
     html,
     emailType: EMAIL_TYPES.ADMIN_ARTICLE_SUBMISSION,
   });

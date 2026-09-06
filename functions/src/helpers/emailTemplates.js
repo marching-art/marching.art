@@ -298,33 +298,77 @@ function rivalContextEmailTemplate({ username, headline, events }) {
   return emailWrapper(content, safeHeadline);
 }
 
+/** "Sep 7, 2:00 PM ET" for an ISO/Date scheduled-publish instant; null when unparseable. */
+function formatEasternInstant(value) {
+  if (!value) return null;
+  const date = value instanceof Date ? value : new Date(value);
+  if (isNaN(date.getTime())) return null;
+  return (
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/New_York",
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    }).format(date) + " ET"
+  );
+}
+
 /**
- * Admin notification template — new article submitted for approval
+ * Admin notification template — a director submitted an article.
+ *
+ * Two shapes, decided by `autoPublish`:
+ *   - pending:   a new author's article is waiting in the review queue.
+ *   - scheduled: a trusted author's article skipped the queue and publishes
+ *                itself at `scheduledPublishAt` (2 PM ET) unless an admin
+ *                rejects it first. It lives under the Scheduled tab, so the
+ *                deep link lands there — a "needs review" email pointing at an
+ *                empty Pending queue is how this went unnoticed before.
  */
-function adminArticleSubmissionEmailTemplate({ headline, summary, authorName, category, submissionId }) {
-  const reviewUrl = `${EMAIL_CONFIG.appUrl}/admin?tab=submissions&id=${encodeURIComponent(submissionId || "")}`;
+function adminArticleSubmissionEmailTemplate({
+  headline,
+  summary,
+  authorName,
+  category,
+  submissionId,
+  autoPublish = false,
+  scheduledPublishAt = null,
+}) {
+  const status = autoPublish ? "scheduled" : "pending";
+  const reviewUrl =
+    `${EMAIL_CONFIG.appUrl}/admin?tab=content&status=${status}` +
+    `&submission=${encodeURIComponent(submissionId || "")}`;
   const safeHeadline = escapeHtml(headline || "(no headline)");
+  const safeAuthor = escapeHtml(authorName || "A user");
+  const publishAt = formatEasternInstant(scheduledPublishAt);
+
+  const heading = autoPublish ? "Trusted-author article scheduled" : "New article needs review";
+  const lede = autoPublish
+    ? `<strong>${safeAuthor}</strong> is a trusted author, so this article skipped the review queue. ` +
+      `It publishes automatically${publishAt ? ` at <strong>${escapeHtml(publishAt)}</strong>` : " at 2 PM ET"} ` +
+      `unless you reject it before then. Find it under the <strong>Scheduled</strong> tab, not Pending.`
+    : `<strong>${safeAuthor}</strong> submitted an article for approval.`;
+  const buttonLabel = autoPublish ? "Review scheduled article →" : "Review submission →";
+
   const content = `
     <div class="content">
-      <h2 style="color: #ffffff; margin-bottom: 8px;">New article needs review</h2>
-      <p style="color: #cbd5e1;">
-        <strong>${escapeHtml(authorName || "A user")}</strong> submitted an article for approval.
-      </p>
+      <h2 style="color: #ffffff; margin-bottom: 8px;">${heading}</h2>
+      <p style="color: #cbd5e1;">${lede}</p>
 
       <div style="margin: 16px 0; padding: 14px; background-color: #0f172a; border-radius: 4px;">
         <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin-bottom: 6px;">
-          ${escapeHtml(category || "uncategorized")}
+          ${escapeHtml(category || "uncategorized")}${autoPublish ? " · scheduled" : ""}
         </div>
         <div style="font-weight: 600; color: #f1f5f9; margin-bottom: 8px;">${safeHeadline}</div>
         <div style="font-size: 13px; color: #94a3b8;">${escapeHtml(summary || "")}</div>
       </div>
 
       <p style="text-align: center;">
-        <a href="${reviewUrl}" class="button">Review submission →</a>
+        <a href="${reviewUrl}" class="button">${buttonLabel}</a>
       </p>
     </div>
   `;
-  return emailWrapper(content, `New submission: ${safeHeadline}`);
+  return emailWrapper(content, `${autoPublish ? "Scheduled" : "New submission"}: ${safeHeadline}`);
 }
 
 /**
