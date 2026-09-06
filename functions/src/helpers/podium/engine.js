@@ -598,7 +598,41 @@ function percentileOfTotal(total, day, curves) {
   return 100;
 }
 
+/**
+ * The assistant director's yield on the `streak`-th CONSECUTIVE day it runs
+ * the plan (1 = the first missed day). Full `assistantYield` through the grace
+ * window, then `perDay` less for every further day away, never below `floor`.
+ * A director who plays (or declares rest) resets the streak, so a weekend off
+ * costs nothing extra — only a corps left on autopilot for weeks sinks. Pure.
+ * @param {number} streak consecutive assistant-run days including this one (>= 1)
+ * @param {object} cfg balance config
+ * @returns {number} yield multiplier in (0, 1]
+ */
+function assistantYieldFor(streak, cfg) {
+  const base = cfg.rehearsal.assistantYield;
+  const decay = cfg.rehearsal.assistantDecay;
+  if (!decay) return base;
+  const extra = Math.max(0, (Number.isFinite(streak) ? streak : 1) - (decay.graceDays || 0));
+  return Math.max(decay.floor ?? 0, base - extra * (decay.perDay || 0));
+}
+
+/**
+ * Tomorrow's assistant streak after today's day type (pure): a day the
+ * director played or declared rest resets it to 0; an assistant-run day
+ * extends it by one; a day nothing ran (no plan) leaves it as is.
+ * @param {number|undefined} previous the streak carried into today
+ * @param {{playedSelf: boolean, restDay: boolean, assistant: boolean}} day
+ * @returns {number}
+ */
+function assistantStreakAfter(previous, { playedSelf, restDay, assistant }) {
+  if (playedSelf || restDay) return 0;
+  if (assistant) return (previous || 0) + 1;
+  return previous || 0;
+}
+
 module.exports = {
+  assistantYieldFor,
+  assistantStreakAfter,
   CAPTIONS,
   BLOCK_TYPES,
   seededUnit,

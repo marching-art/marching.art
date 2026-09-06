@@ -304,3 +304,37 @@ describe("veteran head-start (last-season engagement lifts only the early game)"
     assert.ok(i > n, `returner (${i}) should lead newcomer (${n}) early`);
   });
 });
+
+describe("assistant director fades with consecutive days away", () => {
+  const { assistantYieldFor, assistantStreakAfter } = engine;
+  const base = cfg.rehearsal.assistantYield;
+  const decay = cfg.rehearsal.assistantDecay;
+
+  test("full assistant yield through the grace window", () => {
+    for (let streak = 1; streak <= decay.graceDays; streak++) {
+      assert.equal(assistantYieldFor(streak, cfg), base);
+    }
+  });
+
+  test("loses perDay for every day past the grace window, never below the floor", () => {
+    assert.ok(Math.abs(assistantYieldFor(decay.graceDays + 1, cfg) - (base - decay.perDay)) < 1e-9);
+    assert.ok(Math.abs(assistantYieldFor(decay.graceDays + 2, cfg) - (base - 2 * decay.perDay)) < 1e-9);
+    assert.equal(assistantYieldFor(200, cfg), decay.floor);
+    assert.ok(assistantYieldFor(200, cfg) > 0, "the assistant never stops entirely");
+  });
+
+  test("a config without decay keeps the flat assistant yield", () => {
+    const flat = { rehearsal: { assistantYield: 0.85 } };
+    assert.equal(assistantYieldFor(30, flat), 0.85);
+  });
+
+  test("the streak grows on assistant days and resets when the director shows up", () => {
+    const auto = { playedSelf: false, restDay: false, assistant: true };
+    assert.equal(assistantStreakAfter(undefined, auto), 1);
+    assert.equal(assistantStreakAfter(4, auto), 5);
+    assert.equal(assistantStreakAfter(4, { playedSelf: true, restDay: false, assistant: false }), 0);
+    assert.equal(assistantStreakAfter(4, { playedSelf: false, restDay: true, assistant: false }), 0);
+    // No plan → nothing ran: the streak neither grows nor resets.
+    assert.equal(assistantStreakAfter(4, { playedSelf: false, restDay: false, assistant: false }), 4);
+  });
+});

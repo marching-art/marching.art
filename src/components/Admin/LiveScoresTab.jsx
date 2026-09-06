@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Admin > Live Scores tab. Extracted from pages/Admin.jsx.
 
 import { useState } from 'react';
@@ -13,6 +12,11 @@ import {
 } from '../../api/functions';
 import { SectionHeader } from './AdminUI';
 import LiveScoresVerification from './LiveScoresVerification';
+
+/** @typedef {NonNullable<Awaited<ReturnType<typeof getScheduleCoverage>>['data']>} CoverageReport */
+
+/** @param {unknown} error */
+const messageOf = (error) => (error instanceof Error ? error.message : '');
 
 const DeepScrapeCard = () => {
   const [loading, setLoading] = useState(false);
@@ -37,7 +41,7 @@ const DeepScrapeCard = () => {
       const data = result.data || {};
       toast.success(data.message || 'Learned schedules built.');
     } catch (error) {
-      toast.error(error.message || 'Failed to build learned schedules');
+      toast.error(messageOf(error) || 'Failed to build learned schedules');
     } finally {
       setLearnedLoading(false);
     }
@@ -65,7 +69,7 @@ const DeepScrapeCard = () => {
         toast.success(data.message || 'Schedule deep scrape started.');
       }
     } catch (error) {
-      toast.error(error.message || 'Failed to start schedule deep scrape');
+      toast.error(messageOf(error) || 'Failed to start schedule deep scrape');
     } finally {
       setScheduleLoading(false);
     }
@@ -93,7 +97,7 @@ const DeepScrapeCard = () => {
         toast.success(data.message || 'Deep scrape started.');
       }
     } catch (error) {
-      toast.error(error.message || 'Failed to start deep scrape');
+      toast.error(messageOf(error) || 'Failed to start deep scrape');
     } finally {
       setLoading(false);
     }
@@ -196,7 +200,7 @@ const DeepScrapeCard = () => {
 const ScheduleCoverageCard = () => {
   const [loading, setLoading] = useState(false);
   const [flagBusy, setFlagBusy] = useState(false);
-  const [report, setReport] = useState(null);
+  const [report, setReport] = useState(/** @type {CoverageReport|null} */ (null));
 
   const runReport = async () => {
     setLoading(true);
@@ -204,12 +208,13 @@ const ScheduleCoverageCard = () => {
       const result = await getScheduleCoverage();
       setReport(result.data || null);
     } catch (error) {
-      toast.error(error.message || 'Failed to load coverage');
+      toast.error(messageOf(error) || 'Failed to load coverage');
     } finally {
       setLoading(false);
     }
   };
 
+  /** @param {boolean} enabled */
   const setFlag = async (enabled) => {
     if (
       !window.confirm(
@@ -221,9 +226,9 @@ const ScheduleCoverageCard = () => {
     try {
       const fn = httpsCallable(getFunctions(), 'manualTrigger');
       const res = await fn({ jobName: 'setHeritageSchedules', enabled });
-      toast.success(res.data?.message || 'Updated');
+      toast.success(/** @type {{message?: string}} */ (res.data)?.message || 'Updated');
     } catch (error) {
-      toast.error(error.message || 'Failed to set flag');
+      toast.error(messageOf(error) || 'Failed to set flag');
     } finally {
       setFlagBusy(false);
     }
@@ -289,7 +294,7 @@ const ScheduleCoverageCard = () => {
               </div>
             )}
 
-            {report.pool?.unmapped?.length > 0 && (
+            {report.pool && report.pool.unmapped.length > 0 && (
               <div className="bg-surface-sunken border border-red-500/30 p-3">
                 <div className="text-[10px] uppercase tracking-wider text-red-400 mb-1">
                   Pool corps with no matching results ({report.pool.unmapped.length}) — likely
@@ -313,7 +318,7 @@ const ScheduleCoverageCard = () => {
                   </tr>
                 </thead>
                 <tbody className="text-secondary font-data tabular-nums">
-                  {(report.years || []).map((r) => (
+                  {(report.years || []).map((/** @type {Record<string, any>} */ r) => (
                     <tr key={r.year} className="border-t border-line-subtle">
                       <td className="py-1 pr-2">{r.year}</td>
                       <td className="py-1 pr-2">{r.expected}</td>

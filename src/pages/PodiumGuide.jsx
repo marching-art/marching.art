@@ -30,7 +30,7 @@ const SECTIONS = [
   {
     n: 4,
     title: 'The assistant director',
-    body: `Save a plan template and any day you don't log in, your assistant runs it at reduced yield. Missing a day is growth lost, never a wrecked season. Playing yourself always beats the assistant — but the assistant never sleeps.`,
+    body: `Save a plan template and any day you don't log in, your assistant runs it at reduced yield. Missing a day is growth lost, never a wrecked season. Playing yourself always beats the assistant — and the longer you stay away, the worse the assistant gets: a few days off cost nothing extra, but a corps left on autopilot for weeks fades toward a floor until its director comes back. Rehearsing or declaring a rest day yourself resets it.`,
   },
   {
     n: 5,

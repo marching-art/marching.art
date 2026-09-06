@@ -202,6 +202,10 @@ export default function CorpsConditionPanel({ podium }) {
   // copy, and the server's maxBlocksForPlanType can't drift; the fallbacks keep
   // it usable against an older backend.
   const caps = podium.data?.blockCaps || { rehearsal: 12, showDay: 8, springTraining: 20 };
+  // The assistant's yield fades with every consecutive day away (server-computed
+  // from balance; §5.2). Shown so "the assistant never sleeps" reads honestly:
+  // it never sleeps, but it does get worse without you.
+  const assistant = podium.data?.assistant || null;
   const PLAN_TYPES = [
     {
       id: 'rehearsal',
@@ -383,6 +387,21 @@ export default function CorpsConditionPanel({ podium }) {
             {editingTemplate ? 'Cancel' : template.length > 0 ? 'Edit plan' : 'Set a plan'}
           </button>
         </div>
+
+        {assistant && (
+          <p className="text-[10px] text-muted mb-2">
+            {assistant.streak > 0
+              ? `On autopilot ${assistant.streak} day${assistant.streak === 1 ? '' : 's'} running — `
+              : ''}
+            {assistant.streak > assistant.graceDays
+              ? `the assistant is down to ${assistant.nextYieldPct}% yield`
+              : `the assistant runs your plan at ${assistant.yieldPct}% yield`}
+            {assistant.graceDays > 0
+              ? `, fading after ${assistant.graceDays} days away to a ${assistant.floorPct}% floor.`
+              : '.'}{' '}
+            Rehearsing or declaring rest yourself resets it.
+          </p>
+        )}
 
         {/* Day-type tabs — each keeps its own plan; switching cancels an
             in-progress edit so a draft never lands on the wrong day type. */}

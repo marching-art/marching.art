@@ -85,6 +85,7 @@ function playSeason(repTier, challengeLevel, seed, { skipRate = 0, optimal = fal
   const challenge = Object.fromEntries(engine.CAPTIONS.map((c) => [c, challengeLevel]));
   const state = engine.createSeasonState({ challenge, repTier }, curves, balance);
   const rot = { index: 0 };
+  let assistantStreak = 0;
   for (let day = 1; day <= 49; day++) {
     const isShowDay = SHOW_DAYS.includes(day);
     const maxBlocks = engine.blocksAvailable(state, { isShowDay, isSpringTraining: false }, balance);
@@ -97,7 +98,9 @@ function playSeason(repTier, challengeLevel, seed, { skipRate = 0, optimal = fal
       // On a skipped day the assistant director runs the plan at reduced yield
       // — exactly what the nightly processor does for a director who never
       // opened the app (§5.2). Absence costs the yield gap, never a wreck.
-      const yieldMultiplier = skippedDay ? balance.rehearsal.assistantYield : 1;
+      // The assistant's yield fades with consecutive skipped days (§5.2).
+      assistantStreak = skippedDay ? assistantStreak + 1 : 0;
+      const yieldMultiplier = skippedDay ? engine.assistantYieldFor(assistantStreak, balance) : 1;
       const plan = planDay(state, maxBlocks, optimal, rot);
       for (let i = 0; i < plan.length; i++) {
         engine.allocateBlock(state, plan[i], day, i, blocksSoFar, curves, balance, {

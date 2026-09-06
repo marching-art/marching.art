@@ -89,6 +89,11 @@
       0.35
     ],
     "assistantYield": 0.85,
+    "assistantDecay": {
+      "graceDays": 3,
+      "perDay": 0.08,
+      "floor": 0.35
+    },
     "contentSplitRamp": {
       "startContentShare": 0.8,
       "endContentShare": 0.2
