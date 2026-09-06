@@ -6,6 +6,7 @@ const assert = require("node:assert/strict");
 
 const {
   classifyRoster,
+  engagementOf,
   stripRecapStrays,
   stripSheetStrays,
   parseArgs,
@@ -40,6 +41,33 @@ describe("classifyRoster", () => {
         ["ghost", "no state doc"],
       ]
     );
+  });
+});
+
+describe("engagementOf", () => {
+  test("reads the director's last login and the corps' self-vs-assistant days", () => {
+    const e = engagementOf(
+      { activity: { activeDays: 3, autoRunDays: 20, blocksAllocated: 31 } },
+      { engagement: { lastLogin: "2026-08-21T10:00:00.000Z" } }
+    );
+    assert.deepEqual(e, {
+      lastLogin: "2026-08-21T10:00:00.000Z",
+      activeDays: 3,
+      autoRunDays: 20,
+      blocksAllocated: 31,
+      neverPlayed: false,
+    });
+  });
+
+  test("a corps its director never touched is tagged never-played", () => {
+    const e = engagementOf({ activity: { activeDays: 0, autoRunDays: 27 } }, null);
+    assert.equal(e.neverPlayed, true);
+    assert.equal(e.lastLogin, null);
+  });
+
+  test("a Firestore Timestamp last login is rendered as ISO", () => {
+    const ts = { toDate: () => new Date("2026-09-01T00:00:00.000Z") };
+    assert.equal(engagementOf(null, { engagement: { lastLogin: ts } }).lastLogin, "2026-09-01T00:00:00.000Z");
   });
 });
 

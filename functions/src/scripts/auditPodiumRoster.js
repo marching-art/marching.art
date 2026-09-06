@@ -20,6 +20,14 @@
  *
  *   1. ROSTER: list every roster entry with its registration time and the
  *      season its state doc holds; classify ACTIVE (state agrees) vs ORPHAN.
+ *      Each ACTIVE row also shows the director's last login (profile
+ *      `engagement.lastLogin`) and the corps' season activity — days the
+ *      director personally rehearsed or declared rest vs. days the assistant
+ *      director ran the plan — and is tagged NEVER-PLAYED when the director
+ *      has not touched the corps since registering. Those corps are scored
+ *      by design (the assistant director carries a registered corps all
+ *      season); the tag is there so "haven't logged in since last season"
+ *      can be checked against the record rather than remembered.
  *   2. RECAPS: for every `podium-recaps/{season}/days/{day}`, find result rows
  *      whose corps is not an active roster member (stray rows), drop them, and
  *      re-rank the show within division (helpers/podium/showRanking.js — the
@@ -131,6 +139,31 @@ function stripSheetStrays(sheet, allowed) {
   return { changed: true, removed };
 }
 
+/**
+ * One corps' engagement this season, for the audit log (pure).
+ * @param {Object|null} state podium/state data
+ * @param {Object|null} profile profile data
+ * @returns {{lastLogin: string|null, activeDays: number, autoRunDays: number,
+ *   blocksAllocated: number, neverPlayed: boolean}}
+ */
+function engagementOf(state, profile) {
+  const activity = (state && state.activity) || {};
+  const raw = profile && profile.engagement && profile.engagement.lastLogin;
+  const lastLoginDate =
+    raw && typeof raw.toDate === "function" ? raw.toDate() : raw ? new Date(raw) : null;
+  const lastLogin =
+    lastLoginDate && !Number.isNaN(lastLoginDate.getTime()) ? lastLoginDate.toISOString() : null;
+  const activeDays = activity.activeDays || 0;
+  const autoRunDays = activity.autoRunDays || 0;
+  return {
+    lastLogin,
+    activeDays,
+    autoRunDays,
+    blocksAllocated: activity.blocksAllocated || 0,
+    neverPlayed: activeDays === 0,
+  };
+}
+
 function parseArgs(argv) {
   const args = { commit: false, season: null };
   for (let i = 0; i < argv.length; i++) {
@@ -163,9 +196,29 @@ async function run({ commit, season }) {
     });
   }
   const { active, orphans } = classifyRoster(entries, seasonUid);
+  const stateByUid = new Map(entries.map((entry) => [entry.uid, entry.state]));
+  const profileByUid = new Map();
+  for (let i = 0; i < active.length; i += CHUNK) {
+    const chunk = active.slice(i, i + CHUNK);
+    const profiles = await db.getAll(...chunk.map((corps) => store.profileRef(db, corps.uid)));
+    chunk.forEach((corps, j) => profileByUid.set(corps.uid, profiles[j].exists ? profiles[j].data() : null));
+  }
+  let neverPlayed = 0;
   console.log(`\nRoster: ${entries.length} entries — ${active.length} active, ${orphans.length} orphan(s).`);
   for (const corps of active) {
-    console.log(`  ACTIVE  ${corps.uid}  ${corps.corpsName}  registered ${corps.createdAt || "?"}`);
+    const e = engagementOf(stateByUid.get(corps.uid), profileByUid.get(corps.uid));
+    if (e.neverPlayed) neverPlayed += 1;
+    console.log(
+      `  ACTIVE  ${corps.uid}  ${corps.corpsName}  registered ${corps.createdAt || "?"}  ` +
+        `last login ${e.lastLogin || "?"}  played ${e.activeDays}d / auto ${e.autoRunDays}d ` +
+        `(${e.blocksAllocated} blocks)${e.neverPlayed ? "  NEVER-PLAYED" : ""}`
+    );
+  }
+  if (neverPlayed > 0) {
+    console.log(
+      `  ${neverPlayed} registered corps have never been played by their director this season ` +
+        "(assistant director every day) — scored by design; not removed."
+    );
   }
   for (const corps of orphans) {
     console.log(
@@ -246,4 +299,4 @@ if (require.main === module) {
   );
 }
 
-module.exports = { classifyRoster, stripRecapStrays, stripSheetStrays, parseArgs };
+module.exports = { classifyRoster, engagementOf, stripRecapStrays, stripSheetStrays, parseArgs };

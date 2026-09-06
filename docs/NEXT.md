@@ -279,22 +279,21 @@ ops step below)_
 
 ## Operational — owner only, standing until done
 
-- **Run the Podium roster audit** (Actions → "Audit Podium roster" → Run
-  workflow, dry run first, then with `commit` checked) once the roster
-  partition deploys. The first off-season Southwestern Championship (Day 28,
-  2026-09-05) scored Podium corps whose directors had not registered for the
-  season. The dry-run log is the diagnostic: every roster entry prints as
-  ACTIVE or ORPHAN with its registration time and the season its state doc
-  holds (`functions/src/scripts/auditPodiumRoster.js`). If every suspect
-  corps is ACTIVE with a registration time inside this season, the directors
-  did register (assistant autoplay then carried them, Path 4 in the
-  investigation) and nothing needs removing. The commit run drops orphan rows
-  from every recap day, standings sheet and power column and deletes the
-  orphan roster docs; if a removed row held a medal, run "Correct Podium
-  medals" afterwards. Also check `podium-config/podiumSeasons` — if `current`
-  is this season but `history` has no entry for `live_2026-26`, the boundary
-  never ran and `settlePodiumSeasonBoundary` needs a nudge (register-time
-  lazy settlement will do it).
+- **Decide what a registered-but-abandoned Podium corps should do.** The
+  roster audit (Actions → "Audit Podium roster", dry run) for
+  `overture_2026-27` found 59 roster entries, all 59 registered THIS season
+  (Aug 9 – Sep 6; ~20 of them in one two-hour window on Aug 20 — a group
+  session of new directors), zero orphans, nothing to remove. So the Day-28
+  field the Southwestern Championship scored was the registered field: the
+  directors who "haven't logged in since last season" registered on rollover
+  day and then never came back, and the assistant director carried their
+  corps to Day 28 by design (§5.2). The audit log now shows each corps'
+  last login and played-vs-assistant day counts with a NEVER-PLAYED tag.
+  Product call, not a bug: keep autopilot as is, or retire a corps after N
+  consecutive assistant days (drop it from the field + roster, refund its
+  budget, leave the career intact so it can re-register), or cap the
+  assistant at a lower yield after N days. Whichever wins is one PR in
+  `processor.js` + `store.partitionRoster`.
 - **Re-run the Podium medal correction** (Actions → "Correct Podium medals"
   → Run workflow, dry run first, then with `commit` checked) once the
   show-field gate deploys. The first run (2026-09-04 15:29Z) gated medals on

@@ -17,7 +17,10 @@ name: Audit Podium roster
 # HOW TO RUN (no console needed — all from the Actions tab):
 #   1. Actions → "Audit Podium roster" → Run workflow.
 #   2. Leave "commit" UNCHECKED for a dry run: the log lists the roster
-#      classification and every recap row / sheet entry it would remove.
+#      classification (each ACTIVE corps with its director's last login and
+#      its played-vs-assistant day counts, NEVER-PLAYED when the director has
+#      not touched it since registering) and every recap row / sheet entry it
+#      would remove. Never-played corps are scored by design and NOT removed.
 #   3. Review the dry-run log, then Run workflow again with "commit" CHECKED to
 #      apply the writes. Idempotent — a later run that finds nothing is a no-op.
 #   4. If a removed row held a medal, run "Correct Podium medals" afterwards so
