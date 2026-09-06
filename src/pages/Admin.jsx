@@ -232,6 +232,20 @@ const SeasonOpsTab = ({ callAdminFunction }) => {
     setLoading(functionName);
     try {
       await callAdminFunction(functionName);
+    } catch (error) {
+      // The server refuses to re-mint the season that is already active (it
+      // would keep every Podium roster and state doc keyed to the same season
+      // while resetting the fantasy side). Regenerating it in place is a
+      // deliberate, separately confirmed act.
+      if (
+        error?.message?.includes('already the active season') &&
+        window.confirm(
+          `${type}: this season is already the active one. Regenerate it IN PLACE anyway ` +
+            '(schedule and pool rebuilt, no Podium re-registration)? This cannot be undone.'
+        )
+      ) {
+        await callAdminFunction(functionName, { force: true });
+      }
     } finally {
       setLoading(null);
     }

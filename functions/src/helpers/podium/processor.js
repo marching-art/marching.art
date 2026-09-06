@@ -204,26 +204,44 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
     }
 
     // What each corps' state doc contains after tonight's main pass — exactly
-    // the payload written below (or the raw doc for corps the pass skipped).
-    // The rankings pass reuses this instead of re-reading the whole roster.
+    // the payload written below. The rankings pass reuses this instead of
+    // re-reading the whole roster. Only corps fielding THIS season are ever
+    // in here: the season field is exactly the roster entries whose state doc
+    // holds this seasonUid (partitionRoster), and nothing else is scored,
+    // ranked, or written back to tonight.
     const stateDataByUid = new Map();
     // Per-corps end-of-day writes land in chunked batches (previously one
     // sequential write per corps). Committed before the scrimmage pass, which
     // merge-writes onto these same docs.
     const stateWriter = new ChunkedWriter(db);
 
-    for (let rosterIndex = 0; rosterIndex < rosterDocs.length; rosterIndex++) {
+    // Roster hygiene: a roster doc whose state is gone or still holds another
+    // season is an orphan — it names a corps that is NOT registered for this
+    // season. It used to ride into the standings sheet (the rankings pass
+    // filtered on lastTotal alone) and have this season's rank and medals
+    // written back onto its archived state and profile. Orphans are dropped
+    // from tonight's field and pruned from the roster so every roster reader
+    // (registrations, running orders, hosted-show rosters) agrees.
+    const { active, orphans } = store.partitionRoster(rosterDocs, stateSnapshots, seasonUid);
+    if (orphans.length > 0) {
+      const pruneWriter = new ChunkedWriter(db);
+      for (const orphan of orphans) pruneWriter.delete(store.rosterRef(db, seasonUid, orphan.uid));
+      await pruneWriter.commit();
+      logger.warn(
+        `[podium] pruned ${orphans.length} roster orphan(s) for ${seasonUid} — ` +
+          orphans
+            .slice(0, 20)
+            .map((o) => `${o.uid} (${o.reason})`)
+            .join(", ") +
+          (orphans.length > 20 ? ", …" : "")
+      );
+    }
+
+    for (const rosterIndex of active) {
       const rosterDoc = rosterDocs[rosterIndex];
       const uid = rosterDoc.id;
       const sRef = store.stateRef(db, uid);
       const snapshot = stateSnapshots[rosterIndex];
-      if (!snapshot.exists) continue;
-      if (snapshot.data().seasonUid !== seasonUid) {
-        // Not processed tonight, but the rankings pass has always read these
-        // docs too (it filters on lastTotal only) — keep that behavior.
-        stateDataByUid.set(uid, snapshot.data());
-        continue;
-      }
 
       const state = store.hydrateState(snapshot.data());
 
@@ -741,11 +759,12 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
     // what each corps' doc now contains) instead of re-fetching the roster and
     // re-reading every state doc. Safe because the only writes since — the
     // scrimmage pass's merges — touch scrimmage/headToHead/jointRehearsals,
-    // none of the fields ranked here.
+    // none of the fields ranked here. Only this season's field is in the map,
+    // so a corps that never registered this season cannot be ranked.
     const standings = [];
     for (const rosterDoc of rosterDocs) {
       const data = stateDataByUid.get(rosterDoc.id);
-      if (!data) continue;
+      if (!data || data.seasonUid !== seasonUid) continue;
       if (data.lastTotal != null) {
         standings.push({
           uid: rosterDoc.id,

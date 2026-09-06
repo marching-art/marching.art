@@ -641,7 +641,34 @@ async function settlePodiumSeasonBoundary(db) {
   }
 }
 
-async function startNewLiveSeason() {
+/**
+ * Refuse to re-mint a season that is already the active one. The scheduler
+ * only starts a season once the current one has ended, but the admin override
+ * can be pressed at any moment — and both generators name the season from the
+ * window that contains NOW, so pressing it mid-season produces the SAME
+ * seasonUid. Rewriting game-settings/season under that uid looks like a fresh
+ * start (the fantasy rollover re-runs, the announcement re-posts) while
+ * everything keyed by seasonUid — the Podium roster and state docs, the
+ * recaps, the standings — silently carries on: nobody re-registers, and the
+ * whole previous field keeps marching. Pass `force: true` to deliberately
+ * regenerate the current season in place (the schedule, the pool).
+ * @param {{seasonUid: string, seasonName?: string}|null} oldSeason the season doc's current identity
+ * @param {string} dataDocId the seasonUid about to be written
+ * @param {boolean} force
+ */
+function assertNotReminting(oldSeason, dataDocId, force) {
+  if (force || !oldSeason || oldSeason.seasonUid !== dataDocId) return;
+  throw new Error(
+    `Season ${dataDocId} is already the active season. Starting it again would keep every ` +
+      "Podium roster and state doc keyed to the same seasonUid (no re-registration) while " +
+      "resetting the fantasy side. Pass force: true to regenerate the current season in place."
+  );
+}
+
+/**
+ * @param {{force?: boolean}} [options] force: allow regenerating the active season in place
+ */
+async function startNewLiveSeason({ force = false } = {}) {
   logger.info("Generating new live season...");
   const db = getDb();
   // Anchor everything on the next DCI finals. Spring training is variable so the
@@ -680,6 +707,7 @@ async function startNewLiveSeason() {
   const seasonName = `live_${seasonYearSuffix}`;
 
   const dataDocId = seasonName;
+  assertNotReminting(oldSeason, dataDocId, force);
   await db.doc(`dci-data/${dataDocId}`).set({ corpsValues: corpsValues });
 
   // Generate schedule with offSeasonDay structure (1-49 competition days).
@@ -712,7 +740,10 @@ async function startNewLiveSeason() {
   }
 }
 
-async function startNewOffSeason() {
+/**
+ * @param {{force?: boolean}} [options] force: allow regenerating the active season in place
+ */
+async function startNewOffSeason({ force = false } = {}) {
   logger.info("Generating new themed off-season...");
   const db = getDb();
   const seasonSettingsRef = db.doc("game-settings/season");
@@ -791,6 +822,7 @@ async function startNewOffSeason() {
   const schedule = await generateOffSeasonSchedule(seasonLength, 1);
   const seasonName = getThematicOffSeasonName(seasonType, finalsYear);
   const dataDocId = seasonName;
+  assertNotReminting(oldSeason, dataDocId, force);
 
   await db.doc(`dci-data/${dataDocId}`).set({ corpsValues: offSeasonCorpsData });
 
@@ -855,6 +887,7 @@ module.exports = {
   resetLeaguesForNewSeason,
   rolloverFromOldSeason,
   settlePodiumSeasonBoundary,
+  assertNotReminting,
   corpsParticipatedThisSeason,
   refreshLiveSeasonSchedule,
   mergeScheduleRefresh,

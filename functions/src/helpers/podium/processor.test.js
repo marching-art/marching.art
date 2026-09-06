@@ -7,6 +7,7 @@ const assert = require("node:assert/strict");
 
 const { resolveCorpsShow, planForDay, clinicianEngagementFinished } = require("./processor");
 const store = require("./store");
+const { partitionRoster } = store;
 
 describe("resolveCorpsShow", () => {
   const dayShows = [
@@ -67,6 +68,37 @@ describe("resolveCorpsShow", () => {
 
   test("an unscheduled day degrades to a Day-N label", () => {
     assert.deepEqual(resolveCorpsShow({}, 3, "aClass", []), { eventName: "Day 3", location: null });
+  });
+});
+
+describe("partitionRoster (only corps registered THIS season take the field)", () => {
+  const SEASON = "overture_2026-27";
+  const snap = (data) => ({ exists: data !== null, data: () => data });
+
+  test("keeps a corps whose roster doc and state doc agree on the season", () => {
+    const roster = [{ id: "live" }];
+    const { active, orphans } = partitionRoster(roster, [snap({ seasonUid: SEASON })], SEASON);
+    assert.deepEqual(active, [0]);
+    assert.deepEqual(orphans, []);
+  });
+
+  test("drops a corps whose state still holds last season (never re-registered)", () => {
+    const roster = [{ id: "live" }, { id: "walkedAway" }];
+    const snaps = [snap({ seasonUid: SEASON }), snap({ seasonUid: "live_2026-26", lastTotal: 88.1 })];
+    const { active, orphans } = partitionRoster(roster, snaps, SEASON);
+    assert.deepEqual(active, [0]);
+    assert.deepEqual(orphans, [{ uid: "walkedAway", reason: "state holds live_2026-26" }]);
+  });
+
+  test("drops a roster doc with no state doc behind it", () => {
+    const { active, orphans } = partitionRoster([{ id: "ghost" }], [snap(null)], SEASON);
+    assert.deepEqual(active, []);
+    assert.deepEqual(orphans, [{ uid: "ghost", reason: "no state doc" }]);
+  });
+
+  test("a state with no season stamp at all is an orphan too", () => {
+    const { orphans } = partitionRoster([{ id: "x" }], [snap({ corpsName: "Unstamped" })], SEASON);
+    assert.deepEqual(orphans, [{ uid: "x", reason: "state holds no season" }]);
   });
 });
 

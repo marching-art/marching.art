@@ -203,6 +203,91 @@ describe("enrichScheduleRunningOrdersLogic", () => {
     assert.equal(a.fantasySchedule.fieldSize, 3);
   });
 
+  test("seats the whole podium roster at a regional major (auto-attended, no picks)", async () => {
+    // The Southwestern Championship on day 28 — 13 days out, eventTier stamped.
+    const major = {
+      id: "sw",
+      name: "marching.art Southwestern Championship",
+      day: 28,
+      week: 4,
+      location: "San Antonio, TX",
+      eventTier: "regional",
+      date: "2026-06-28",
+    };
+    const db = fakeDb(seedWith([major]));
+    const podiumEntries = [
+      { uid: "p1", state: { seasonUid: "s1", corpsName: "Vanguard Podium", division: "worldClass", lastTotal: 70, selectedShows: {} } },
+      { uid: "p2", state: { seasonUid: "s1", corpsName: "Bluecoats Podium", division: "aClass", lastTotal: 95, selectedShows: {} } },
+      // Last season's corps — on the roster read, but never this season's field.
+      { uid: "old", state: { seasonUid: "s0", corpsName: "Stale Podium", division: "worldClass", lastTotal: 99 } },
+    ];
+    await enrichScheduleRunningOrdersLogic(db, {
+      now: NOW,
+      podiumEnabled: true,
+      loadPodiumEntries: async () => podiumEntries,
+    });
+    const sw = db.store.get("schedules/s1").competitions.find((c) => c.id === "sw");
+    assert.ok(sw.podiumSchedule, "the major has a podium running order");
+    assert.deepEqual(sw.podiumSchedule.lineup.map((e) => e.corps), [
+      "Vanguard Podium",
+      "Bluecoats Podium",
+    ]);
+  });
+
+  test("builds the podium field for a championship round while fantasy keeps heritage", async () => {
+    const db = fakeDb(seedWith());
+    const podiumEntries = [
+      { uid: "w", state: { seasonUid: "s1", corpsName: "World Podium", division: "worldClass", lastTotal: 90, selectedShows: {} } },
+      { uid: "a", state: { seasonUid: "s1", corpsName: "A Podium", division: "aClass", lastTotal: 60, selectedShows: {} } },
+    ];
+    await enrichScheduleRunningOrdersLogic(db, {
+      now: NOW,
+      podiumEnabled: true,
+      loadPodiumEntries: async () => podiumEntries,
+    });
+    const champ = db.store.get("schedules/s1").competitions.find((c) => c.id === "champ");
+    assert.equal(champ.fantasySchedule, undefined, "fantasy championship stays synthesized");
+    assert.ok(champ.podiumSchedule, "podium championship field is real");
+    // Day 49 is World Finals: every division reaches the World rounds.
+    assert.deepEqual(champ.podiumSchedule.lineup.map((e) => e.corps), ["A Podium", "World Podium"]);
+  });
+
+  test("an advancement round seats only the prior round's cut", async () => {
+    const seed = seedWith();
+    // Day-48 Semifinals recap: only "w" made the top-12 cut into Finals (day 49).
+    seed["podium-recaps/s1/days/48"] = {
+      shows: [
+        {
+          eventName: "marching.art World Championship Semifinals",
+          results: [
+            { uid: "w", division: "worldClass", totalScore: 90 },
+            { uid: "a", division: "aClass", totalScore: 60 },
+          ],
+        },
+      ],
+    };
+    const db = fakeDb(seed);
+    const podiumEntries = [
+      { uid: "w", state: { seasonUid: "s1", corpsName: "World Podium", division: "worldClass", lastTotal: 90, selectedShows: {} } },
+      { uid: "a", state: { seasonUid: "s1", corpsName: "A Podium", division: "aClass", lastTotal: 60, selectedShows: {} } },
+    ];
+    // Shrink the finals cut to 1 so the fixture proves the gate.
+    const podiumStore = require("../helpers/podium/store");
+    const saved = podiumStore.balance.championship.advancement.worldFinals;
+    podiumStore.balance.championship.advancement.worldFinals = 1;
+    try {
+      await enrichScheduleRunningOrdersLogic(db, {
+        now: NOW,
+        podiumEnabled: true,
+        loadPodiumEntries: async () => podiumEntries,
+      });
+    } finally {
+      podiumStore.balance.championship.advancement.worldFinals = saved;
+    }
+    const champ = db.store.get("schedules/s1").competitions.find((c) => c.id === "champ");
+    assert.deepEqual(champ.podiumSchedule.lineup.map((e) => e.corps), ["World Podium"]);
+  });
+
   test("assigns the podium encore to the closest-home podium corps", async () => {
     const db = fakeDb(seedWith());
     // Show A is in Allentown, PA. Give two podium corps homes: one next door

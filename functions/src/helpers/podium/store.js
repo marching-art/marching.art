@@ -16,6 +16,7 @@
 const { paths } = require("../paths");
 const engine = require("./engine");
 const divisions = require("./divisions");
+const { regionalTierForEventName } = require("../seasonSchedule");
 const curves = require("./curveData.json");
 const balance = require("./balanceConfig.json");
 
@@ -522,12 +523,104 @@ function isShowDayFor(state, uid, competitionDay, easternAssignments) {
   return selectedDaysOf(state).includes(competitionDay);
 }
 
+/**
+ * True when a rostered corps AUTO-attends the show `{day, eventName}` — no
+ * self-pick involved (showPickFor covers those). Two families of show qualify:
+ *
+ *  - a branded regional major on its fixed day: the Southwestern (28) and
+ *    Southeastern (35) Championships for every corps, and the Eastern Classic
+ *    on the corps' ASSIGNED night only (41 or 42 — the published snake, else
+ *    the uid-parity fallback), exactly as the nightly processor scores it;
+ *  - a championship-week round the corps' division marches (Open/A on 45-49,
+ *    World on 47-49). On an advancement round (46/48/49) the optional
+ *    `advancing` set (store.advancingUids from the prior round's recap) narrows
+ *    the field to the cut survivors; null means no cut is known yet and the
+ *    whole eligible division attends (the "auto-enroll everyone" safeguard).
+ *
+ * The show is recognized by its schedule metadata when the caller has it
+ * (`eventTier: "regional"`, `type: "championship"`, `mandatory`,
+ * `isChampionship`) and by name otherwise (the branded-major regex and the
+ * championship event names), so the roster, running-order and hosted-show
+ * readers agree with each other and with the client's anchor badge. A
+ * SoundSport-only festival sharing a championship date is never a Podium show.
+ *
+ * @param {{seasonUid?: string, division?: string}} state season state (roster
+ *   member for this season — the caller has already checked seasonUid)
+ * @param {string} uid
+ * @param {{day: number, eventName: string, show?: Object|null,
+ *   easternAssignments?: Record<string, number>|null, advancing?: Set<string>|null}} target
+ * @returns {boolean}
+ */
+function autoAttendsShow(state, uid, { day, eventName, show = null, easternAssignments = null, advancing = null }) {
+  if (!Number.isInteger(day) || !state) return false;
+  const eligible = (show && (show.eligibleClasses || show.allowedClasses)) || null;
+  const soundSportOnly =
+    Array.isArray(eligible) &&
+    eligible.length === 1 &&
+    /^sound\s*sport$/i.test(String(eligible[0]).replace(/class$/i, ""));
+  if (soundSportOnly) return false;
+
+  const isRegional =
+    (show && show.eventTier === "regional") || Boolean(regionalTierForEventName(eventName));
+  if (isRegional) {
+    if (EASTERN_DAYS.includes(day)) {
+      return easternNightFor(uid, state.seasonUid, easternAssignments) === day;
+    }
+    return MAJOR_DAYS.includes(day);
+  }
+
+  const isChampionshipShow =
+    (show && (show.type === "championship" || show.mandatory === true || show.isChampionship === true)) ||
+    championshipEventFor(day) === eventName;
+  if (!isChampionshipShow || !CHAMPIONSHIP_WEEK_DAYS.includes(day)) return false;
+  if (!championshipDaysFor(state.division).includes(day)) return false;
+  if (advancing && !advancing.has(uid)) return false;
+  return true;
+}
+
 function profileRef(db, uid) {
   return db.doc(paths.userProfile(uid));
 }
 
 function stateRef(db, uid) {
   return db.doc(paths.userPodiumState(uid));
+}
+
+/**
+ * Split a season roster into the corps actually fielding THIS season and the
+ * orphans (pure). A corps is on the field only when its roster doc AND its
+ * state doc agree on the season: registration writes both in one transaction
+ * (callable/podium.js registerPodiumCorps), so a roster doc whose state is
+ * missing or still holds another seasonUid names a corps that did not
+ * register for this season — a director who walked away after last season, a
+ * roster left behind by a re-minted seasonUid, or a cross-namespace stray.
+ *
+ * @param {Array<{id: string}>} rosterDocs roster snapshot docs (uid = id)
+ * @param {Array<{exists: boolean, data: () => any}>} stateSnapshots the
+ *   matching state snapshots, index-aligned with rosterDocs
+ * @param {string} seasonUid the active season
+ * @returns {{active: number[], orphans: Array<{uid: string, reason: string}>}}
+ *   `active` is the roster indices to process; `orphans` the roster entries to
+ *   drop (with a reason for the log).
+ */
+function partitionRoster(rosterDocs, stateSnapshots, seasonUid) {
+  const active = [];
+  const orphans = [];
+  for (let i = 0; i < rosterDocs.length; i++) {
+    const uid = rosterDocs[i].id;
+    const snapshot = stateSnapshots[i];
+    if (!snapshot || !snapshot.exists) {
+      orphans.push({ uid, reason: "no state doc" });
+      continue;
+    }
+    const stateSeason = snapshot.data().seasonUid;
+    if (stateSeason !== seasonUid) {
+      orphans.push({ uid, reason: `state holds ${stateSeason || "no season"}` });
+      continue;
+    }
+    active.push(i);
+  }
+  return { active, orphans };
 }
 
 /** Season roster of Podium corps — lets the nightly processor iterate without a collection-group index. */
@@ -748,6 +841,7 @@ module.exports = {
   loadScheduleLocations,
   autoDaysFor,
   isShowDayFor,
+  autoAttendsShow,
   selectedDaysOf,
   showPickFor,
   computeTodayBlockBudget,
@@ -756,6 +850,7 @@ module.exports = {
   profileRef,
   stateRef,
   rosterRef,
+  partitionRoster,
   rosterCollection,
   recapDayRef,
   hydrateState,

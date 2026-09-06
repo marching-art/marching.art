@@ -51,11 +51,16 @@ exports.startNewOffSeason = onCall({ cors: true }, async (request) => {
   assertAdmin(request);
   try {
     logger.info(`Manual override triggered by admin: ${request.auth.uid}. Starting new off-season.`);
-    await startNewOffSeason();
+    // `force` regenerates the ACTIVE season in place; without it, pressing the
+    // override mid-season is refused (helpers/season.js assertNotReminting).
+    await startNewOffSeason({ force: request.data?.force === true });
     return { success: true, message: "A new off-season has been started successfully." };
   } catch (error) {
     logger.error("Error manually starting new off-season:", error);
     if (error instanceof HttpsError) throw error;
+    if (/already the active season/.test(error?.message || "")) {
+      throw new HttpsError("failed-precondition", error.message);
+    }
     throw new HttpsError("internal", "An error occurred while starting the season.");
   }
 });
@@ -70,9 +75,12 @@ exports.startNewLiveSeason = onCall({
   assertAdmin(request);
   try {
     logger.info(`Manual override triggered by admin: ${request.auth.uid}. Starting new live-season.`);
-    await startNewLiveSeason();
+    await startNewLiveSeason({ force: request.data?.force === true });
     return { success: true, message: "A new live-season has been started successfully." };
   } catch (error) {
+    if (/already the active season/.test(error?.message || "")) {
+      throw new HttpsError("failed-precondition", error.message);
+    }
     logger.error("Error manually starting new live-season:", error);
     if (error instanceof HttpsError) throw error;
     throw new HttpsError("internal", "An error occurred while starting the live season.");

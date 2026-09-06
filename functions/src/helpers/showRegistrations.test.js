@@ -169,9 +169,104 @@ describe("collectPodiumRegistrations", () => {
         corpsClass: "podiumClass",
         username: null,
         lastTotal: 87.5,
+        auto: false,
         homeGeo: null, // no structured home on this corps → unresolved
       },
     ]);
+  });
+
+  describe("auto-attended shows (majors + championship week)", () => {
+    const corps = (uid, division, extra = {}) => ({
+      uid,
+      state: { seasonUid: SEASON, corpsName: `${uid} Podium`, division, selectedShows: {}, ...extra },
+    });
+
+    test("every rostered corps attends the Southwestern Championship on day 28", () => {
+      const entries = [corps("w", "worldClass"), corps("o", "openClass"), corps("a", "aClass")];
+      const out = collectPodiumRegistrations(entries, {
+        day: 28,
+        eventName: "marching.art Southwestern Championship",
+        activeSeasonId: SEASON,
+        show: { eventTier: "regional" },
+      });
+      assert.deepEqual(out.map((r) => r.uid), ["w", "o", "a"]);
+      assert.ok(out.every((r) => r.auto === true && r.corpsClass === "podiumClass"));
+    });
+
+    test("a major is recognized by name when the schedule entry carries no eventTier", () => {
+      const out = collectPodiumRegistrations([corps("w", "worldClass")], {
+        day: 35,
+        eventName: "marching.art Southeastern Championship",
+        activeSeasonId: SEASON,
+      });
+      assert.equal(out.length, 1);
+    });
+
+    test("a stale prior-season corps never auto-attends", () => {
+      const out = collectPodiumRegistrations([corps("old", "worldClass", { seasonUid: "live_2025-25" })], {
+        day: 28,
+        eventName: "marching.art Southwestern Championship",
+        activeSeasonId: SEASON,
+      });
+      assert.deepEqual(out, []);
+    });
+
+    test("a pool show sharing a major's day is not auto-attended", () => {
+      const out = collectPodiumRegistrations([corps("w", "worldClass")], {
+        day: 28,
+        eventName: "DCI Somewhere",
+        activeSeasonId: SEASON,
+      });
+      assert.deepEqual(out, []);
+    });
+
+    test("the Eastern Classic seats each corps on its published night only", () => {
+      const entries = [corps("n1", "worldClass"), corps("n2", "openClass")];
+      const easternAssignments = { n1: 41, n2: 42 };
+      const night = (day) =>
+        collectPodiumRegistrations(entries, {
+          day,
+          eventName: "marching.art Eastern Classic",
+          activeSeasonId: SEASON,
+          easternAssignments,
+        }).map((r) => r.uid);
+      assert.deepEqual(night(41), ["n1"]);
+      assert.deepEqual(night(42), ["n2"]);
+    });
+
+    test("championship rounds seat the divisions that march them", () => {
+      const entries = [corps("w", "worldClass"), corps("o", "openClass"), corps("a", "aClass")];
+      const field = (day, eventName) =>
+        collectPodiumRegistrations(entries, {
+          day,
+          eventName,
+          activeSeasonId: SEASON,
+          show: { type: "championship", mandatory: true },
+        }).map((r) => r.uid);
+      assert.deepEqual(field(45, "Open and A Class Prelims"), ["o", "a"]);
+      assert.deepEqual(field(47, "marching.art World Championship Prelims"), ["w", "o", "a"]);
+    });
+
+    test("an advancement round seats only the cut survivors when the cut is known", () => {
+      const entries = [corps("w", "worldClass"), corps("o", "openClass"), corps("a", "aClass")];
+      const out = collectPodiumRegistrations(entries, {
+        day: 49,
+        eventName: "marching.art World Championship Finals",
+        activeSeasonId: SEASON,
+        advancing: new Set(["w", "a"]),
+      });
+      assert.deepEqual(out.map((r) => r.uid), ["w", "a"]);
+    });
+
+    test("the day-49 SoundSport festival is never a Podium show", () => {
+      const out = collectPodiumRegistrations([corps("w", "worldClass")], {
+        day: 49,
+        eventName: "SoundSport International Music & Food Festival",
+        activeSeasonId: SEASON,
+        show: { type: "championship", eligibleClasses: ["soundSport"] },
+      });
+      assert.deepEqual(out, []);
+    });
   });
 
   test("carries homeGeo from the corps' structured home for the encore", () => {
