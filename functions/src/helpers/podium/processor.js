@@ -308,8 +308,13 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
       // the saved plan for THIS day's type runs at reduced yield — the
       // install-heavy spring-training plan, the lighter show-day routine, or
       // the full rehearsal grind. Active play strictly dominates; a missed day
-      // is growth lost, never a wrecked season.
+      // is growth lost, never a wrecked season. The yield fades with every
+      // CONSECUTIVE day the assistant runs (engine.assistantYieldFor): a
+      // weekend away costs nothing extra, a corps abandoned since
+      // registration sinks toward the floor instead of marching the majors
+      // at near-full strength all season.
       const activePlan = planForDay(state, { isShowDay, isSpringTraining });
+      const assistantStreakToday = (state.assistantStreak || 0) + 1;
       if (
         (dayInfo.blocksUsed || 0) === 0 &&
         !dayInfo.restDay &&
@@ -338,7 +343,7 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
             store.balance,
             {
               yieldMultiplier:
-                store.balance.rehearsal.assistantYield *
+                engine.assistantYieldFor(assistantStreakToday, store.balance) *
                 staffMarket.staffYieldMultiplier(state, blockType, store.balance) *
                 jointMult,
               isShowDay,
@@ -611,6 +616,14 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
         }
         if (isShowDay && score) state.activity.showsAttended += 1;
         state.activity.lastCountedDay = calendarDay;
+        // Consecutive assistant-run days — what tomorrow's assistant yield
+        // fades on (engine.assistantYieldFor). Inside the once-per-day guard
+        // so a re-processed day never double-extends it.
+        state.assistantStreak = engine.assistantStreakAfter(state.assistantStreak, {
+          playedSelf,
+          restDay: Boolean(dayInfo.restDay),
+          assistant: Boolean(dayInfo.assistant),
+        });
       }
 
       // Roll `today` so tomorrow starts clean even if the player never opens

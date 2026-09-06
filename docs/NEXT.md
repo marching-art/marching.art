@@ -8,9 +8,9 @@ burns an hour to conclude "everything's about covered." Don't. If you ship,
 cut, or discover something, edit THIS file in the same PR — that's the whole
 maintenance contract.
 
-_Last updated: 2026-09-06 (Podium field = the registered field; majors and
-championship rounds carry the Podium roster; roster audit workflow; season
-re-mint guard). Previous: 2026-09-04 (site-review row 20 — one onboarding checklist (the Journey; Quick Start modal deleted, `?reveal=` deep link) and one How-to-Play route by auth state; device-aware install guide at /install — in-app-browser detection with an Open-in-Safari/Chrome escape hatch, per-browser steps, one-tap native install, linked from footer / ? menu / home / Settings / the nudge; site-review row 19 — honest functions coverage gate, first admin / league-automation tests; row 18 — one-click unsubscribe + List-Unsubscribe headers, noindex auth wall; row 17 — vendor-firebase trimmed, GameShell + overlays lazy for guests; row 16 — focus traps + Escape in every raw dialog, icon buttons named; row 15 — one dashboard interrupt per visit, celebrations to the inbox; row 14 — weekly XP / win bonus / finish bonus paid per director; row 13 — league weeks decided per show, percentile edge cases; row 12 — server-enforced age gate + consent-gated analytics; AI imagery now built from the full Uniform Studio design + rendered reference image; main ruleset + gazetteer PR flow; site-review Fix-first 1–11 + quick wins shipped)._
+_Last updated: 2026-09-06 (assistant director fades with consecutive days
+away; Podium field = the registered field; majors and championship rounds
+carry the Podium roster; roster audit workflow; season re-mint guard). Previous: 2026-09-04 (site-review row 20 — one onboarding checklist (the Journey; Quick Start modal deleted, `?reveal=` deep link) and one How-to-Play route by auth state; device-aware install guide at /install — in-app-browser detection with an Open-in-Safari/Chrome escape hatch, per-browser steps, one-tap native install, linked from footer / ? menu / home / Settings / the nudge; site-review row 19 — honest functions coverage gate, first admin / league-automation tests; row 18 — one-click unsubscribe + List-Unsubscribe headers, noindex auth wall; row 17 — vendor-firebase trimmed, GameShell + overlays lazy for guests; row 16 — focus traps + Escape in every raw dialog, icon buttons named; row 15 — one dashboard interrupt per visit, celebrations to the inbox; row 14 — weekly XP / win bonus / finish bonus paid per director; row 13 — league weeks decided per show, percentile edge cases; row 12 — server-enforced age gate + consent-gated analytics; AI imagery now built from the full Uniform Studio design + rendered reference image; main ruleset + gazetteer PR flow; site-review Fix-first 1–11 + quick wins shipped)._
 
 ## In progress
 
@@ -279,21 +279,6 @@ ops step below)_
 
 ## Operational — owner only, standing until done
 
-- **Decide what a registered-but-abandoned Podium corps should do.** The
-  roster audit (Actions → "Audit Podium roster", dry run) for
-  `overture_2026-27` found 59 roster entries, all 59 registered THIS season
-  (Aug 9 – Sep 6; ~20 of them in one two-hour window on Aug 20 — a group
-  session of new directors), zero orphans, nothing to remove. So the Day-28
-  field the Southwestern Championship scored was the registered field: the
-  directors who "haven't logged in since last season" registered on rollover
-  day and then never came back, and the assistant director carried their
-  corps to Day 28 by design (§5.2). The audit log now shows each corps'
-  last login and played-vs-assistant day counts with a NEVER-PLAYED tag.
-  Product call, not a bug: keep autopilot as is, or retire a corps after N
-  consecutive assistant days (drop it from the field + roster, refund its
-  budget, leave the career intact so it can re-register), or cap the
-  assistant at a lower yield after N days. Whichever wins is one PR in
-  `processor.js` + `store.partitionRoster`.
 - **Re-run the Podium medal correction** (Actions → "Correct Podium medals"
   → Run workflow, dry run first, then with `commit` checked) once the
   show-field gate deploys. The first run (2026-09-04 15:29Z) gated medals on
@@ -391,6 +376,20 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
 
 ## Recently shipped (context, newest first — prune when stale)
 
+- 2026-09-06 (assistant decay): the roster audit for `overture_2026-27`
+  found all 59 Day-28 corps registered THIS season (15 on rollover day, ~20
+  in one two-hour group session on Aug 20) and zero orphans — the
+  Southwestern field was the registered field, carried by the assistant
+  director. Decision taken: the assistant now **fades with consecutive days
+  away** (`rehearsal.assistantDecay` — 3 grace days, −8 pts/day, 35% floor;
+  `engine.assistantYieldFor` keyed on `state.assistantStreak`, reset by any
+  played or rest day, extended in the processor's once-per-day activity
+  block). `getPodiumState.assistant` carries streak / yield / next yield /
+  grace / floor; the Corps Condition panel's Assistant director section shows
+  it; guide + PODIUM.md §5.2 updated; pacing harness models the fade. The
+  audit log shows each corps' last login and played-vs-assistant days with a
+  NEVER-PLAYED tag. Changelog (balance) entry added. `@ts-nocheck` ratchet:
+  62 → 61 (`Admin/LiveScoresTab.jsx`).
 - 2026-09-06 (Podium field): the nightly processor now partitions the season
   roster (`store.partitionRoster`) — a roster doc whose state is missing or
   holds another season is an orphan: dropped from the night's field, the

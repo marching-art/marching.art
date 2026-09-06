@@ -96,6 +96,19 @@ export interface PodiumBlockCaps {
   springTraining: number;
 }
 
+export interface PodiumAssistantOutlook {
+  /** Consecutive days the assistant has run the corps (0 = the director played today/yesterday). */
+  streak: number;
+  /** The assistant's yield on the first missed day, in percent. */
+  yieldPct: number;
+  /** The yield it will run at tomorrow if the director stays away, in percent. */
+  nextYieldPct: number;
+  /** Missed days before the yield starts fading. */
+  graceDays: number;
+  /** The yield never fades below this, in percent. */
+  floorPct: number;
+}
+
 export interface PodiumStateResponse {
   exists: boolean;
   calendarDay: number;
@@ -107,6 +120,8 @@ export interface PodiumStateResponse {
   blocksRemainingToday?: number;
   /** Base caps for the assistant-director plan editor (per day type). */
   blockCaps?: PodiumBlockCaps;
+  /** Assistant-director outlook: consecutive autopilot days and the fading yield. */
+  assistant?: PodiumAssistantOutlook;
   autoDays?: number[];
   routePreview?: PodiumRouteLeg[];
   currentLocation?: PodiumCurrentLocation;

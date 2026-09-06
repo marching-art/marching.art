@@ -1,5 +1,16 @@
 [
   {
+    "id": "2026-09-06-podium-assistant-director-fades-when-you-stay-away",
+    "date": "2026-09-06",
+    "title": "Podium: the assistant director gets worse the longer you stay away",
+    "category": "balance",
+    "summary": "The assistant director runs your saved plan on any day you don't log in, and until now it ran it just as well on day thirty of an absence as on day one. That meant a corps registered and never touched again marched the Southwestern Championship at nearly full strength beside directors who had rehearsed every night. The assistant now fades with every consecutive day it runs without you: a few days off cost nothing extra, but a corps left on autopilot for weeks sinks toward a floor until its director returns. Rehearsing or declaring a rest day yourself resets it immediately.",
+    "highlights": [
+      "The Assistant director section of the Corps Condition panel now shows how many days you've been on autopilot and the yield the assistant will run at tomorrow.",
+      "A director who plays even one block, or declares rest, is back to full assistant strength for the next missed day."
+    ]
+  },
+  {
     "id": "2026-09-06-podium-field-is-the-registered-field",
     "date": "2026-09-06",
     "title": "Podium: only corps registered this season take the field, and majors show their Podium lineup",

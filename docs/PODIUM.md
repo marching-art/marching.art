@@ -385,7 +385,12 @@ Notes:
   in, the assistant executes that day type's plan at **~85% yield** and cannot declare rest days or
   accept joint rehearsals. A day type with no plan of its own falls back to the rehearsal plan, so a
   single-plan corps is unaffected. Active play strictly dominates, but a vacation doesn't wreck a
-  season. This one mechanic fixes both of FMA's opposite complaints at once: inactive groups coasting
+  season. The yield **fades with consecutive days away** (`rehearsal.assistantDecay`: full yield
+  through a 3-day grace window, then −8 points per further day down to a 35% floor;
+  `engine.assistantYieldFor`, keyed on `state.assistantStreak`, which any played or declared-rest
+  day resets). A weekend off costs nothing extra; a corps abandoned at registration sinks instead of
+  marching the majors at near-full strength all season — the field a director sees at a major is
+  the field that is actually being directed. This one mechanic fixes both of FMA's opposite complaints at once: inactive groups coasting
   on stale scores, and an energy system that punished anyone who couldn't log in 3–4 times a day.
 
 ### 5.3 Condition — travel, food, rest, performance load
