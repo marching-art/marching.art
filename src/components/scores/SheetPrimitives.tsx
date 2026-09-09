@@ -274,6 +274,44 @@ export const TrendIndicator = ({ delta }: { delta?: number | null }) => {
   );
 };
 
+// Score age — how many competition days old the score a standings row is ranked
+// on is. A season standings sheet ranks every corps on its LATEST total, but
+// corps don't all compete on the same nights, so the #4 line can be a fresh
+// result while #5 is riding a week-old number. This column says so: "0d" was
+// earned on the sheet's newest scored day, and the tone warms as a score goes
+// stale so a cold number is legible at a glance. A muted dash means the day the
+// score came from isn't known (archived sheets written before this shipped).
+export const ScoreAge = ({ days }: { days?: number | null }) => {
+  if (typeof days !== 'number' || !Number.isFinite(days) || days < 0) {
+    return (
+      <span className="text-muted text-[11px]" aria-hidden="true">
+        —
+      </span>
+    );
+  }
+  const tone =
+    days === 0
+      ? 'text-white'
+      : days <= 2
+        ? 'text-secondary'
+        : days <= 4
+          ? 'text-muted'
+          : 'text-orange-400';
+  return (
+    <span
+      className={`text-[10px] font-bold tabular-nums ${tone}`}
+      title={
+        days === 0
+          ? 'Scored on the latest day of this sheet'
+          : `Scored ${days} ${days === 1 ? 'day' : 'days'} before the latest day of this sheet`
+      }
+      aria-label={days === 0 ? 'Scored today' : `${days} ${days === 1 ? 'day' : 'days'} old`}
+    >
+      {days}d
+    </span>
+  );
+};
+
 // Podium-style gold sort pills (shared by the standings grids).
 export const SortPills = ({
   options,

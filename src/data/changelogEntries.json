@@ -1,5 +1,16 @@
 [
   {
+    "id": "2026-09-09-standings-show-how-old-each-score-is",
+    "date": "2026-09-09",
+    "title": "Season standings show how old each score is",
+    "category": "improvement",
+    "summary": "Season standings rank every corps on its most recent score, but corps don't all compete on the same nights — so the line above you could be a result from last night while the one below is riding a week-old number. A new Age column, right after the movement arrow, says how many days old the score each corps is ranked on actually is: 0d means it was earned on the standings sheet's newest day, and the number warms in color as a score goes stale. It's on both the Fantasy class standings and the Podium Division standings under the Scores tab.",
+    "highlights": [
+      "Archived seasons show ages too, measured against the last day that season was scored.",
+      "A dash means the day behind that score isn't recorded — older sheets written before this shipped."
+    ]
+  },
+  {
     "id": "2026-09-06-director-articles-open-the-moment-they-publish",
     "date": "2026-09-06",
     "title": "Director-written articles open the moment they publish",

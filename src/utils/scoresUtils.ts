@@ -114,7 +114,7 @@ interface RankableEntry {
   rank?: number;
   score?: number;
   // Score history, most-recent first (scores[0] is the latest show).
-  scores?: Array<{ score?: number }>;
+  scores?: Array<{ score?: number; offSeasonDay?: number }>;
 }
 
 const rankKey = (e: RankableEntry): string => e.uid || e.corpsName || '';
@@ -129,6 +129,48 @@ const previousScore = (e: RankableEntry): number => {
     return s[0].score as number;
   return typeof e.score === 'number' ? e.score : -Infinity;
 };
+
+/**
+ * The competition day a standings entry's ranked score was earned on — the day
+ * of its most recent show (scores[0]). Null when the entry carries no dated
+ * history (archived rows written before the standings kept one).
+ */
+export function scoredDayOf(entry: RankableEntry | null | undefined): number | null {
+  const day = entry?.scores?.[0]?.offSeasonDay;
+  return typeof day === 'number' && Number.isFinite(day) ? day : null;
+}
+
+/**
+ * How many competition days old a ranked score is: the gap between the sheet's
+ * reference day (its newest scored day) and the day that corps last competed.
+ * 0 means the score landed on the sheet's newest day. Null when either day is
+ * unknown; never negative (a score can't be newer than the reference).
+ */
+export function scoreAgeDays(
+  scoredDay: number | null | undefined,
+  referenceDay: number | null | undefined
+): number | null {
+  if (typeof scoredDay !== 'number' || !Number.isFinite(scoredDay)) return null;
+  if (typeof referenceDay !== 'number' || !Number.isFinite(referenceDay)) return null;
+  return Math.max(0, referenceDay - scoredDay);
+}
+
+/**
+ * The newest competition day represented in a set of standings entries — the
+ * reference a sheet measures score age against when the caller doesn't supply
+ * one (e.g. an archived season with no "today"). Null when no entry is dated.
+ */
+export function latestScoredDayOf(
+  standings: readonly RankableEntry[] | null | undefined
+): number | null {
+  if (!Array.isArray(standings)) return null;
+  let latest: number | null = null;
+  for (const entry of standings) {
+    const day = scoredDayOf(entry);
+    if (day != null && (latest == null || day > latest)) latest = day;
+  }
+  return latest;
+}
 
 /**
  * How many placements each corps moved since its previous show, keyed by

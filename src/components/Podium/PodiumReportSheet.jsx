@@ -7,8 +7,8 @@
 // selected day with a day selector (D#), matching the recap sheet's cadence.
 // It uses the SAME box-score layout as the Fantasy class standings
 // (pages/ScoresParts → ClassStandingsGrid): sheet card, sort pills, GE/VIS/MUS
-// caption columns, box-toppers in gold, a movement arrow per row, share, and a
-// wordmark footer — so every scoring surface reads as one system. The field is
+// caption columns, box-toppers in gold, a movement arrow and a score-age column
+// per row, share, and a wordmark footer — so every scoring surface reads as one system. The field is
 // SPLIT BY DIVISION (World / Open / A), each ranked on its own, because that is
 // the standing a corps actually competes for (§5.7: every division crowns its
 // own). Archived seasons scored before divisions rode on the standings doc have
@@ -33,16 +33,18 @@ import {
   SortPills,
   ShareButton,
   TrendIndicator,
+  ScoreAge,
 } from '../scores/SheetPrimitives';
 import {
   SHEET_CARD,
   TOTAL_W,
   TREND_W,
+  AGE_W,
   STANDINGS_SORTS,
   captionTops,
   groupByClass,
 } from '../scores/sheetTokens';
-import { CLASS_LABELS, formatStandingsAsText } from '../../utils/scoresUtils';
+import { CLASS_LABELS, formatStandingsAsText, scoreAgeDays } from '../../utils/scoresUtils';
 import { useHorizontalTabSlide } from '../scores/useHorizontalTabSlide';
 
 // GE/VIS/MUS for one standings entry. Columns populate for days scored after the
@@ -52,6 +54,18 @@ const captionsOf = (entry) => ({
   vis: entry?.vis ?? null,
   mus: entry?.mus ?? null,
 });
+
+/**
+ * The competition day a standings column represents — what every row's score
+ * age is measured against. Daily sheets carry both `day` and `competitionDay`;
+ * the weekly power fallback carries `week` plus the `competitionDay` it was
+ * published on. Null on archived columns that predate `competitionDay`, which
+ * renders the age column as dashes rather than a wrong number.
+ */
+const referenceDayOf = (column) => {
+  const day = column?.competitionDay ?? column?.day;
+  return typeof day === 'number' && Number.isFinite(day) ? day : null;
+};
 
 /**
  * uid → the corps' rank WITHIN ITS DIVISION in a standings column. The column's
@@ -86,6 +100,7 @@ function PodiumStandings({ column, previousColumn, periodLabel, seasonName, user
   // read before the split.
   const sections = useMemo(() => {
     const previousRanks = divisionRanksOf(previousColumn);
+    const refDay = referenceDayOf(column);
     const key = { GE: 'ge', VIS: 'vis', MUS: 'mus' }[sortBy];
     return groupByClass(column?.entries || [], (entry) => entry.division).map(({ cls, rows }) => {
       const ranked = rows.map((entry, index) => {
@@ -95,6 +110,9 @@ function PodiumStandings({ column, previousColumn, periodLabel, seasonName, user
           captions: captionsOf(entry),
           place: index + 1,
           delta: previousRank == null ? null : previousRank - (index + 1),
+          // Days between this sheet's day and the night the corps last
+          // competed — a corps resting a week is ranked on a week-old score.
+          age: scoreAgeDays(entry.lastDay, refDay),
         };
       });
       return {
@@ -166,11 +184,18 @@ function PodiumStandings({ column, previousColumn, periodLabel, seasonName, user
           <BoxScoreHead
             active={activeCap}
             totalLabel="Score"
-            trailing={<span className={TREND_W} aria-hidden="true" />}
+            trailing={
+              <>
+                <span className={TREND_W} aria-hidden="true" />
+                <span className={`${AGE_W} text-right text-muted`} title="Days since this score">
+                  Age
+                </span>
+              </>
+            }
           />
 
           <div>
-            {section.rows.map(({ entry, captions, place, delta }, idx) => {
+            {section.rows.map(({ entry, captions, place, delta, age }, idx) => {
               const isUserCorps =
                 userCorpsName && entry.corpsName?.toLowerCase() === userCorpsName.toLowerCase();
 
@@ -213,6 +238,12 @@ function PodiumStandings({ column, previousColumn, periodLabel, seasonName, user
                     <span className={`${TREND_W} flex items-center justify-center flex-shrink-0`}>
                       <TrendIndicator delta={delta} />
                     </span>
+                    <span
+                      className={`${AGE_W} flex items-center justify-end flex-shrink-0`}
+                      data-testid="score-age"
+                    >
+                      <ScoreAge days={age} />
+                    </span>
                   </div>
                 </div>
               );
@@ -222,7 +253,7 @@ function PodiumStandings({ column, previousColumn, periodLabel, seasonName, user
       ))}
 
       <SheetFooter
-        note="Split by class · box-toppers in gold · daily column in the news"
+        note="Split by class · Age = days since the score · daily column in the news"
         action={<ShareButton getText={shareText} />}
       />
     </div>

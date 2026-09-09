@@ -5,6 +5,9 @@ import {
   getCaptionBreakdown,
   mergeTwoNightShows,
   computeRankDeltas,
+  scoredDayOf,
+  scoreAgeDays,
+  latestScoredDayOf,
   computeAdvancement,
   advancementKey,
   RATING_CONFIG,
@@ -167,6 +170,46 @@ describe('mergeTwoNightShows', () => {
     ]);
     expect(combined!.sections).toHaveLength(1);
     expect(combined!.sections[0].rows.every((r) => r.corpsClass === 'worldClass')).toBe(true);
+  });
+});
+
+describe('score age', () => {
+  const dated = (uid: string, days: number[]) => ({
+    uid,
+    corpsName: uid,
+    scores: days.map((day) => ({ score: 80, offSeasonDay: day })),
+  });
+
+  it("reads the ranked score's day off the most recent history item", () => {
+    expect(scoredDayOf(dated('a', [12, 9, 5]))).toBe(12);
+  });
+
+  it('returns null when the entry carries no dated history', () => {
+    expect(scoredDayOf({ uid: 'a', corpsName: 'a' })).toBeNull();
+    expect(scoredDayOf({ uid: 'a', corpsName: 'a', scores: [{ score: 80 }] })).toBeNull();
+    expect(scoredDayOf(null)).toBeNull();
+  });
+
+  it('measures age as the gap to the reference day', () => {
+    expect(scoreAgeDays(12, 12)).toBe(0);
+    expect(scoreAgeDays(9, 12)).toBe(3);
+    expect(scoreAgeDays(1, 44)).toBe(43);
+  });
+
+  it('never reports a negative age, and reports null on unknown days', () => {
+    // A score can't be newer than the sheet it sits on; clamp rather than
+    // render "-1d" if a reference day ever lags an entry.
+    expect(scoreAgeDays(14, 12)).toBe(0);
+    expect(scoreAgeDays(null, 12)).toBeNull();
+    expect(scoreAgeDays(12, null)).toBeNull();
+    expect(scoreAgeDays(undefined, undefined)).toBeNull();
+  });
+
+  it('falls back to the newest day present in the standings themselves', () => {
+    expect(latestScoredDayOf([dated('a', [9]), dated('b', [12]), dated('c', [4])])).toBe(12);
+    expect(latestScoredDayOf([{ uid: 'a' }])).toBeNull();
+    expect(latestScoredDayOf([])).toBeNull();
+    expect(latestScoredDayOf(null)).toBeNull();
   });
 });
 

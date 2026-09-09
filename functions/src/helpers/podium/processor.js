@@ -788,6 +788,11 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
           lastGe: data.lastGe ?? null,
           lastVis: data.lastVis ?? null,
           lastMus: data.lastMus ?? null,
+          // The day that latest total was earned on — the standings sheet
+          // ranks every corps on its most recent score, and corps don't all
+          // compete on the same nights, so each row carries the age of the
+          // number it is ranked on.
+          lastScoredDay: data.lastScoredDay ?? null,
           medals: data.medals,
         });
       }
