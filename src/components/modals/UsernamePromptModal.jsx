@@ -1,6 +1,10 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // src/components/modals/UsernamePromptModal.jsx
-// Modal to prompt existing users who don't have a username set
+// Modal to prompt existing users who don't have a username set.
+//
+// The format rules and the failed-check messages come from the shared
+// `onboardingUsername` module (the same pure helpers the onboarding wizard
+// uses), so this modal only owns the debounce and the status state — the two
+// surfaces can't drift on what a legal username is or what a rejection says.
 
 import React, { useState, useRef, useEffect } from 'react';
 import { AtSign, Loader2, CheckCircle2, XCircle } from 'lucide-react';
@@ -9,30 +13,41 @@ import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { useProfileStore } from '../../store/profileStore';
 import { useAuth } from '../../context/AuthContext';
 import { checkUsername, updateUsername } from '../../api/functions';
+import {
+  USERNAME_MAX_LENGTH,
+  USERNAME_MIN_LENGTH,
+  usernameCheckFailure,
+  usernameFormatError,
+} from '../../pages/onboardingUsername';
 import toast from 'react-hot-toast';
 
 const UsernamePromptModal = () => {
-  const { user } = useAuth();
+  // Null only outside AuthProvider; this modal mounts inside the app shell.
+  const user = useAuth()?.user;
   const profile = useProfileStore((state) => state.profile);
   const loading = useProfileStore((state) => state.loading);
 
   const [username, setUsername] = useState('');
-  const [usernameStatus, setUsernameStatus] = useState({
-    checking: false,
-    valid: null,
-    message: '',
-  });
+  const [usernameStatus, setUsernameStatus] = useState(
+    /** @type {import('../../pages/onboardingUsername').UsernameStatus} */ ({
+      checking: false,
+      valid: null,
+      message: '',
+    })
+  );
   const [submitting, setSubmitting] = useState(false);
-  const usernameCheckTimeout = useRef(null);
+  const usernameCheckTimeout = useRef(/** @type {ReturnType<typeof setTimeout> | null} */ (null));
 
   // Determine if modal should show - username is mandatory, cannot be dismissed
   const shouldShow = !loading && profile && !profile.username && user;
 
-  const dialogRef = useRef(null);
+  const dialogRef = useRef(/** @type {HTMLDivElement | null} */ (null));
   // Trap keyboard focus inside the dialog (WCAG 2.4.3); restores on close
   useFocusTrap(dialogRef, !!shouldShow);
 
-  // Username validation function
+  // Username validation: format rules locally, availability on the server
+  // (debounced so a fast typist costs one callable, not one per keystroke).
+  /** @param {string} usernameValue */
   const validateUsername = async (usernameValue) => {
     if (usernameCheckTimeout.current) {
       clearTimeout(usernameCheckTimeout.current);
@@ -43,28 +58,9 @@ const UsernamePromptModal = () => {
       return;
     }
 
-    if (usernameValue.length < 3) {
-      setUsernameStatus({
-        checking: false,
-        valid: false,
-        message: 'Username must be at least 3 characters',
-      });
-      return;
-    }
-    if (usernameValue.length > 15) {
-      setUsernameStatus({
-        checking: false,
-        valid: false,
-        message: 'Username must be 15 characters or less',
-      });
-      return;
-    }
-    if (!/^[a-zA-Z0-9_]+$/.test(usernameValue)) {
-      setUsernameStatus({
-        checking: false,
-        valid: false,
-        message: 'Only letters, numbers, and underscores allowed',
-      });
+    const formatError = usernameFormatError(usernameValue);
+    if (formatError) {
+      setUsernameStatus({ checking: false, valid: false, message: formatError });
       return;
     }
 
@@ -75,25 +71,12 @@ const UsernamePromptModal = () => {
         await checkUsername({ username: usernameValue });
         setUsernameStatus({ checking: false, valid: true, message: 'Username is available!' });
       } catch (error) {
-        if (error.code === 'functions/already-exists') {
-          setUsernameStatus({
-            checking: false,
-            valid: false,
-            message: 'This username is already taken',
-          });
-        } else if (error.code === 'functions/invalid-argument') {
-          setUsernameStatus({ checking: false, valid: false, message: error.message });
-        } else {
-          setUsernameStatus({
-            checking: false,
-            valid: false,
-            message: 'Could not verify username',
-          });
-        }
+        setUsernameStatus(usernameCheckFailure(error));
       }
     }, 500);
   };
 
+  /** @param {import('react').ChangeEvent<HTMLInputElement>} e */
   const handleUsernameChange = (e) => {
     const value = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '');
     setUsername(value);
@@ -113,12 +96,9 @@ const UsernamePromptModal = () => {
       toast.success('Username set successfully!');
     } catch (error) {
       console.error('Error setting username:', error);
-      if (error?.code === 'functions/already-exists') {
-        setUsernameStatus({
-          checking: false,
-          valid: false,
-          message: 'This username is already taken',
-        });
+      const { code } = /** @type {{ code?: string }} */ (error ?? {});
+      if (code === 'functions/already-exists') {
+        setUsernameStatus(usernameCheckFailure(error));
         toast.error('That username was just taken. Please choose another.');
       } else {
         toast.error('Failed to set username. Please try again.');
@@ -191,7 +171,7 @@ const UsernamePromptModal = () => {
                   placeholder="e.g., drumcorps_fan"
                   value={username}
                   onChange={handleUsernameChange}
-                  maxLength={15}
+                  maxLength={USERNAME_MAX_LENGTH}
                   autoFocus
                 />
                 <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -220,7 +200,8 @@ const UsernamePromptModal = () => {
                 </p>
               )}
               <p className="text-xs text-muted mt-2">
-                3-15 characters, letters, numbers, and underscores only
+                {USERNAME_MIN_LENGTH}-{USERNAME_MAX_LENGTH} characters, letters, numbers, and
+                underscores only
               </p>
             </div>
           </div>

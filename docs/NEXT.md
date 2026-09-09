@@ -391,7 +391,10 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
   field: the processor's standings rows now carry `lastScoredDay` and
   `powerRankings.toEntry` writes it as `lastDay` on every daily-standings /
   power-column entry — sheets written before this render a dash. Changelog
-  (improvement) entry added.
+  (improvement) entry added. `@ts-nocheck` ratchet: 60 → 59
+  (`modals/UsernamePromptModal.jsx`, which also stopped duplicating the
+  onboarding wizard's username format rules and rejection messages —
+  both now come from the shared `onboardingUsername` helpers).
 - 2026-09-06 (article queue / dead Discord link): a trusted author's 2 PM
   auto-published article announced to Discord but opened as "Article Not
   Found" until that night's drop. Root cause: `publishSubmission` /
