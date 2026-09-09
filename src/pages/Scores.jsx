@@ -470,6 +470,7 @@ const Scores = () => {
                         standings={worldStandings}
                         className="World Class"
                         userCorpsName={userCorpsName}
+                        referenceDay={latestScoredDay}
                       />
                     </div>
                   )}
@@ -481,6 +482,7 @@ const Scores = () => {
                         standings={openStandings}
                         className="Open Class"
                         userCorpsName={userCorpsName}
+                        referenceDay={latestScoredDay}
                       />
                     </div>
                   )}
@@ -492,6 +494,7 @@ const Scores = () => {
                         standings={aClassStandings}
                         className="A Class"
                         userCorpsName={userCorpsName}
+                        referenceDay={latestScoredDay}
                       />
                     </div>
                   )}
@@ -659,6 +662,7 @@ const Scores = () => {
                             standings={worldStandings}
                             className="World Class"
                             userCorpsName={userCorpsName}
+                            referenceDay={latestScoredDay}
                           />
                         </div>
                       )}
@@ -670,6 +674,7 @@ const Scores = () => {
                             standings={openStandings}
                             className="Open Class"
                             userCorpsName={userCorpsName}
+                            referenceDay={latestScoredDay}
                           />
                         </div>
                       )}
@@ -681,6 +686,7 @@ const Scores = () => {
                             standings={aClassStandings}
                             className="A Class"
                             userCorpsName={userCorpsName}
+                            referenceDay={latestScoredDay}
                           />
                         </div>
                       )}

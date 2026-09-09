@@ -63,6 +63,10 @@ function toEntry(entry, index, previousByUid, biggestRiserUid, periodLabel) {
     // field into World/Open/A the way every other score sheet does (§5.7).
     division: entry.division || "aClass",
     total: entry.lastTotal ?? null,
+    // Competition day that total was earned on, so the sheet can show how many
+    // days old each ranked score is (a corps that hasn't performed in a week is
+    // riding a week-old number against a rival that competed last night).
+    lastDay: entry.lastScoredDay ?? null,
     // GE/Visual/Music breakdown so the standings sheet shows caption columns.
     ge: entry.lastGe ?? null,
     vis: entry.lastVis ?? null,

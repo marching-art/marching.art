@@ -16,6 +16,10 @@ export const TOTAL_W = 'w-[52px]';
 // Trailing movement column — wide enough for a triangle + a two-digit
 // placement count (e.g. "▲12") without wrapping.
 export const TREND_W = 'w-8';
+// Score-age column, right of movement: how many competition days old the score
+// a row is ranked on is (e.g. "3d"). Narrow on purpose — it has to earn its
+// place on a 360px phone without squeezing the corps name.
+export const AGE_W = 'w-6';
 
 export interface SortOption {
   id: string;

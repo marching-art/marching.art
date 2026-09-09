@@ -39,7 +39,8 @@ const entry = (
   corpsName: string,
   rank: number,
   total: number,
-  division: string | null = 'worldClass'
+  division: string | null = 'worldClass',
+  lastDay: number | null = null
 ) => ({
   rank,
   uid: corpsName,
@@ -50,6 +51,7 @@ const entry = (
   vis: 30,
   mus: 30,
   delta: null,
+  lastDay,
 });
 
 type Entry = ReturnType<typeof entry>;
@@ -127,8 +129,9 @@ describe('PodiumReportSheet — division split', () => {
     expect(rowOf('Open Two')).toContainElement(screen.getByLabelText('Up 1 place'));
     expect(rowOf('Open One')).toContainElement(screen.getByLabelText('Down 1 place'));
     // World One slipped a place overall but is still World Class's leader, so
-    // its sheet says nothing moved.
-    expect(rowOf('World One')?.querySelector('[aria-label]')).toBeNull();
+    // its sheet says nothing moved. (Scoped to the movement label — every row
+    // also carries a score-age label.)
+    expect(rowOf('World One')?.querySelector('[aria-label*="place"]')).toBeNull();
   });
 
   it('renders an archived column that carries no divisions as one sheet', async () => {
@@ -143,5 +146,27 @@ describe('PodiumReportSheet — division split', () => {
     expect(screen.queryByText('World Class')).not.toBeInTheDocument();
     expect(rowOf('Beta')?.textContent).toMatch(/^1\./);
     expect(rowOf('Beta')).toContainElement(screen.getByLabelText('Up 1 place'));
+  });
+
+  it('ages every row against the day the sheet represents', async () => {
+    withStandings([
+      {
+        day: 12,
+        entries: [
+          // Competed tonight; the rival below is riding a five-day-old score.
+          entry('World One', 1, 95, 'worldClass', 12),
+          entry('World Two', 2, 94, 'worldClass', 7),
+          // Archived rows written before the day rode along show a dash.
+          entry('World Three', 3, 93, 'worldClass', null),
+        ],
+      },
+    ]);
+
+    wrap(<ReportSheet seasonUid="season-1" />);
+    await screen.findByText('World One');
+
+    expect(rowOf('World One')?.querySelector('[data-testid="score-age"]')?.textContent).toBe('0d');
+    expect(rowOf('World Two')?.querySelector('[data-testid="score-age"]')?.textContent).toBe('5d');
+    expect(rowOf('World Three')?.querySelector('[data-testid="score-age"]')?.textContent).toBe('—');
   });
 });

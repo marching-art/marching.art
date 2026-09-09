@@ -8,7 +8,7 @@ burns an hour to conclude "everything's about covered." Don't. If you ship,
 cut, or discover something, edit THIS file in the same PR — that's the whole
 maintenance contract.
 
-_Last updated: 2026-09-06 (director-authored articles exempt from the score-reveal gate — dead Discord/notification links fixed; scheduled-vs-pending admin email + working admin deep link; assistant director fades with consecutive days
+_Last updated: 2026-09-09 (score-age column on the Fantasy + Podium season standings). Previous: 2026-09-06 (director-authored articles exempt from the score-reveal gate — dead Discord/notification links fixed; scheduled-vs-pending admin email + working admin deep link; assistant director fades with consecutive days
 away; Podium field = the registered field; majors and championship rounds
 carry the Podium roster; roster audit workflow; season re-mint guard). Previous: 2026-09-04 (site-review row 20 — one onboarding checklist (the Journey; Quick Start modal deleted, `?reveal=` deep link) and one How-to-Play route by auth state; device-aware install guide at /install — in-app-browser detection with an Open-in-Safari/Chrome escape hatch, per-browser steps, one-tap native install, linked from footer / ? menu / home / Settings / the nudge; site-review row 19 — honest functions coverage gate, first admin / league-automation tests; row 18 — one-click unsubscribe + List-Unsubscribe headers, noindex auth wall; row 17 — vendor-firebase trimmed, GameShell + overlays lazy for guests; row 16 — focus traps + Escape in every raw dialog, icon buttons named; row 15 — one dashboard interrupt per visit, celebrations to the inbox; row 14 — weekly XP / win bonus / finish bonus paid per director; row 13 — league weeks decided per show, percentile edge cases; row 12 — server-enforced age gate + consent-gated analytics; AI imagery now built from the full Uniform Studio design + rendered reference image; main ruleset + gazetteer PR flow; site-review Fix-first 1–11 + quick wins shipped)._
 
@@ -376,6 +376,22 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
 
 ## Recently shipped (context, newest first — prune when stale)
 
+- 2026-09-09 (score age on the season standings, from a director suggestion):
+  a season standings sheet ranks every corps on its LATEST total, but corps
+  don't all compete on the same nights — the #4 line could be last night's
+  result while #5 rides a week-old number, and the sheet never said so. New
+  **Age** column, immediately right of the movement arrow, on both the Fantasy
+  class standings (`ScoresParts → ClassStandingsGrid`) and the Podium Division
+  standings (`PodiumReportSheet`). Shared `ScoreAge` primitive +
+  `AGE_W` token; pure helpers `scoredDayOf` / `scoreAgeDays` /
+  `latestScoredDayOf` in `scoresUtils`. Fantasy reads the day off
+  `scores[0].offSeasonDay` (present on both the materialized-standings and
+  client-aggregated paths) against the page's `latestScoredDay`, falling back
+  to the sheet's own newest day for archived seasons. Podium needed a backend
+  field: the processor's standings rows now carry `lastScoredDay` and
+  `powerRankings.toEntry` writes it as `lastDay` on every daily-standings /
+  power-column entry — sheets written before this render a dash. Changelog
+  (improvement) entry added.
 - 2026-09-06 (article queue / dead Discord link): a trusted author's 2 PM
   auto-published article announced to Discord but opened as "Article Not
   Found" until that night's drop. Root cause: `publishSubmission` /

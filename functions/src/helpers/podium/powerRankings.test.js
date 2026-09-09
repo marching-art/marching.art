@@ -121,4 +121,23 @@ describe("buildDailyStandings", () => {
     assert.equal(sheet.entries[0].mus, 24.7);
     assert.equal(sheet.entries[1].ge, null);
   });
+
+  test("carries the day each ranked score was earned on, for the age column", () => {
+    // The sheet ranks every corps on its latest total, but corps don't all
+    // compete on the same nights — the reader has to see which numbers are old.
+    const sheet = buildDailyStandings(
+      [
+        { uid: "a", corpsName: "Corps a", lastTotal: 90, lastScoredDay: 12 },
+        { uid: "b", corpsName: "Corps b", lastTotal: 80, lastScoredDay: 7 },
+        // A corps whose state predates the field yields null, not undefined.
+        corps("c", 70),
+      ],
+      null,
+      12
+    );
+    assert.deepEqual(
+      sheet.entries.map((e) => e.lastDay),
+      [12, 7, null]
+    );
+  });
 });

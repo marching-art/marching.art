@@ -114,6 +114,37 @@ describe('ClassStandingsGrid', () => {
     wrap(<StandingsGrid standings={[]} className="Open Class" />);
     expect(screen.getByText(/no open class standings yet/i)).toBeInTheDocument();
   });
+
+  it("ages each row against the season's newest scored day", () => {
+    // Crimson last competed on day 12 (the reference day), Golden on day 9.
+    const crimson = standingsEntry(1, 'Crimson Cadence', 91.35);
+    crimson.scores = [historyEntry(91.35, 12), historyEntry(90, 8)];
+    const golden = standingsEntry(2, 'Golden Empire', 89.9);
+    golden.scores = [historyEntry(89.9, 9), historyEntry(88, 6)];
+
+    wrap(<StandingsGrid standings={[crimson, golden]} className="World Class" referenceDay={12} />);
+    const ages = screen.getAllByTestId('score-age').map((el) => el.textContent);
+    expect(ages).toEqual(['0d', '3d']);
+  });
+
+  it('falls back to the newest day in the sheet when no reference day is given', () => {
+    // Archived seasons have no "today" — the sheet's own newest day is the
+    // reference, so the leader still reads 0d.
+    const crimson = standingsEntry(1, 'Crimson Cadence', 91.35);
+    crimson.scores = [historyEntry(91.35, 44), historyEntry(90, 40)];
+    const golden = standingsEntry(2, 'Golden Empire', 89.9);
+    golden.scores = [historyEntry(89.9, 38), historyEntry(88, 30)];
+
+    wrap(<StandingsGrid standings={[crimson, golden]} className="World Class" />);
+    expect(screen.getAllByTestId('score-age').map((el) => el.textContent)).toEqual(['0d', '6d']);
+  });
+
+  it('renders a dash when an entry carries no dated history', () => {
+    const crimson = standingsEntry(1, 'Crimson Cadence', 91.35);
+    crimson.scores = [];
+    wrap(<StandingsGrid standings={[crimson]} className="World Class" referenceDay={12} />);
+    expect(screen.getByTestId('score-age').textContent).toBe('—');
+  });
 });
 
 describe('FantasyRecapsView — eager mode', () => {

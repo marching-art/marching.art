@@ -6,8 +6,8 @@
 // surface reads as one system.
 //
 // Rows use fit-to-width flex columns (not a horizontally-scrolling table): the
-// fantasy classes only surface GE/VIS/MUS + Total, which fits a phone without
-// horizontal scroll. Per the anti-lineup-harvesting rule (§5.4) the fantasy
+// fantasy classes only surface GE/VIS/MUS + Total (plus movement and score age
+// on the standings sheets), which fits a phone without horizontal scroll. Per the anti-lineup-harvesting rule (§5.4) the fantasy
 // sheets stay condensed to GE/VIS/MUS; full per-caption columns are Podium-only.
 
 import React, { useMemo, memo, useState } from 'react';
@@ -19,6 +19,9 @@ import {
   mergeTwoNightShows,
   formatStandingsAsText,
   computeRankDeltas,
+  scoredDayOf,
+  scoreAgeDays,
+  latestScoredDayOf,
   computeAdvancement,
   advancementKey,
   TWO_NIGHT_DAYS,
@@ -42,11 +45,13 @@ import {
   SortPills,
   ShareButton,
   TrendIndicator,
+  ScoreAge,
 } from '../components/scores/SheetPrimitives';
 import {
   SHEET_CARD,
   TOTAL_W,
   TREND_W,
+  AGE_W,
   STANDINGS_SORTS,
   CLASS_SECTION_ORDER,
   captionTops,
@@ -577,8 +582,16 @@ const FantasyRecapsView = ({
 // STANDINGS SHEET FOR CLASS TABS
 // =============================================================================
 
-const ClassStandingsGrid = ({ standings, className, userCorpsName }) => {
+const ClassStandingsGrid = ({ standings, className, userCorpsName, referenceDay = null }) => {
   const [sortBy, setSortBy] = useState('total');
+
+  // Day every row's score age is measured against: the season's newest scored
+  // day when the page knows it, otherwise the newest day present in this
+  // class's own standings (archived seasons, where there is no "today").
+  const refDay = useMemo(
+    () => (typeof referenceDay === 'number' ? referenceDay : latestScoredDayOf(standings)),
+    [referenceDay, standings]
+  );
 
   // Pre-compute breakdowns per entry (real data only, no synthetic values),
   // then order by the selected caption — corps without caption data sort last.
@@ -641,7 +654,14 @@ const ClassStandingsGrid = ({ standings, className, userCorpsName }) => {
       <BoxScoreHead
         active={activeCap}
         totalLabel="Score"
-        trailing={<span className={TREND_W} aria-hidden="true" />}
+        trailing={
+          <>
+            <span className={TREND_W} aria-hidden="true" />
+            <span className={`${AGE_W} text-right text-muted`} title="Days since this score">
+              Age
+            </span>
+          </>
+        }
       />
 
       <div>
@@ -689,6 +709,12 @@ const ClassStandingsGrid = ({ standings, className, userCorpsName }) => {
                 <span className={`${TREND_W} flex items-center justify-center flex-shrink-0`}>
                   <TrendIndicator delta={rankDelta} />
                 </span>
+                <span
+                  className={`${AGE_W} flex items-center justify-end flex-shrink-0`}
+                  data-testid="score-age"
+                >
+                  <ScoreAge days={scoreAgeDays(scoredDayOf(entry), refDay)} />
+                </span>
               </div>
             </div>
           );
@@ -696,7 +722,7 @@ const ClassStandingsGrid = ({ standings, className, userCorpsName }) => {
       </div>
 
       <SheetFooter
-        note="GE/VIS/MUS shown · full captions are Podium Division only"
+        note="GE/VIS/MUS shown · Age = days since the score · full captions are Podium Division only"
         action={<ShareButton getText={shareText} />}
       />
     </div>
