@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // =============================================================================
 // LANDING PAGE - NEWS & DATA HUB
 // =============================================================================
@@ -57,7 +56,9 @@ const Landing = () => {
   // Homepage keeps the site-default title/description; the hook pins the
   // canonical URL so client-side navigation back home never leaks stale meta.
   useSEO({ path: '/' });
-  const { user, signIn, signOut } = useAuth();
+  // useAuth() is null outside AuthProvider; the landing page is reachable
+  // from public routes, so destructure defensively like the other consumers.
+  const { user, signIn, signOut } = useAuth() || {};
   const profile = useProfileStore((state) => state.profile);
   const navigate = useNavigate();
   const location = useLocation();
@@ -116,6 +117,9 @@ const Landing = () => {
     if (!tickerData?.byClass) return [];
 
     // Collect movers from all classes
+    /**
+     * @type {Array<{ name: string, change: string, direction: string, absChange: number }>}
+     */
     const allMovers = [];
     for (const classKey of ['worldClass', 'openClass', 'aClass']) {
       const classData = tickerData.byClass[classKey];
@@ -141,6 +145,7 @@ const Landing = () => {
   }, [tickerData]);
 
   const handleSignOut = async () => {
+    if (!signOut) return;
     try {
       await signOut();
       toast.success('Signed out successfully');
@@ -149,8 +154,10 @@ const Landing = () => {
     }
   };
 
+  /** @param {import('react').FormEvent<HTMLFormElement>} e */
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!signIn) return;
     setError('');
     setLoading(true);
 
@@ -276,12 +283,12 @@ const Landing = () => {
                                 {profile.xp?.toLocaleString() || 0}
                               </span>
                             </div>
-                            {profile.engagement?.loginStreak > 0 && (
+                            {(profile.engagement?.loginStreak ?? 0) > 0 && (
                               <div className="flex items-center gap-1.5">
                                 <Flame className="w-3.5 h-3.5 text-orange-500" />
                                 <span className="text-xs text-muted">Streak</span>
                                 <span className="text-sm font-bold text-orange-500 font-data tabular-nums">
-                                  {profile.engagement.loginStreak}
+                                  {profile.engagement?.loginStreak}
                                 </span>
                               </div>
                             )}

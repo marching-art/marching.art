@@ -15,7 +15,7 @@ function stampServiceWorker() {
     name: 'stamp-service-worker',
     apply: 'build',
     closeBundle() {
-      const swPath = path.resolve(__dirname, 'build/service-worker.js');
+      const swPath = path.resolve(import.meta.dirname, 'build/service-worker.js');
       try {
         const src = readFileSync(swPath, 'utf8');
         if (!src.includes('__BUILD_ID__')) return;
@@ -51,7 +51,7 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
+      '@': path.resolve(import.meta.dirname, './src'),
     },
   },
   server: {
@@ -166,15 +166,17 @@ export default defineConfig({
       exclude: ['src/**/*.{test,spec}.{js,jsx,ts,tsx}', 'src/setupTests.jsx', 'src/types/**'],
       reporter: ['text-summary', 'lcov'],
       // Ratchet, not target: floors sit just below the current whole-tree
-      // numbers (statements 16.03 / branches 12.65 / functions 13.41 / lines
-      // 15.94 as of the funnel-instrumentation and Legacy-Endowment test
-      // additions) so coverage can only move up. When a PR raises coverage
-      // meaningfully, raise the floors to just below the new numbers.
+      // numbers (statements 30.90 / branches 24.89 / functions 26.83 / lines
+      // 30.78 under vitest 5) so coverage can only move up. The floors had
+      // drifted ~15 points below reality; vitest 4 measured the same tree at
+      // 31.21/24.93/26.86/31.11, so the v8 provider bump did not move the
+      // numbers. When a PR raises coverage meaningfully, raise the floors to
+      // just below the new numbers.
       thresholds: {
-        statements: 15.9,
-        branches: 12.5,
-        functions: 13.3,
-        lines: 15.8,
+        statements: 30.5,
+        branches: 24.5,
+        functions: 26.4,
+        lines: 30.4,
       },
     },
   },

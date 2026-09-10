@@ -31,7 +31,8 @@ const HARDCODED_VIDEOS = {
 
 /**
  * Check if corps/year has hardcoded videos
- * @param {string} year
+ * @param {string} year Already normalized to a string by the caller — the score
+ *   rows this runs off carry `sourceYear` as either a string or a number.
  * @param {string} corpsName
  */
 const getHardcodedVideos = (year, corpsName) => {
@@ -59,14 +60,17 @@ export const useYoutubeSearch = () => {
 
   /**
    * Search YouTube and show video in modal
-   * @param {string} year
+   * @param {string|number} year Score rows carry `sourceYear` as a string on
+   *   some surfaces and a number on others; normalized below so the
+   *   year-specific special cases match either way.
    * @param {string} corpsName
    * @param {boolean} [skipCache]
    * @param {number} [fallbackIndex]
    */
   const handleYoutubeSearch = async (year, corpsName, skipCache = false, fallbackIndex = 0) => {
+    const yearKey = String(year);
     // Build search query with special cases
-    let searchQuery = `${year} ${corpsName}`;
+    let searchQuery = `${yearKey} ${corpsName}`;
 
     // Add "corps" for generic names that need disambiguation
     if (['cavaliers', 'genesis'].includes(corpsName.toLowerCase())) {
@@ -74,7 +78,7 @@ export const useYoutubeSearch = () => {
     }
 
     // Check for hardcoded videos first
-    const hardcodedVideos = getHardcodedVideos(year, corpsName);
+    const hardcodedVideos = getHardcodedVideos(yearKey, corpsName);
 
     // If we have hardcoded videos and haven't exhausted them, try them first
     if (hardcodedVideos && fallbackIndex < hardcodedVideos.length) {
@@ -82,10 +86,10 @@ export const useYoutubeSearch = () => {
         show: true,
         loading: false,
         videoId: hardcodedVideos[fallbackIndex],
-        title: `${year} ${corpsName}`,
+        title: `${yearKey} ${corpsName}`,
         searchQuery,
         error: null,
-        year,
+        year: yearKey,
         corpsName,
         fallbackIndex,
       });
@@ -93,7 +97,7 @@ export const useYoutubeSearch = () => {
     }
 
     // Use abbreviated search for specific corps/year combinations
-    if (year === '2018' && corpsName.toLowerCase().includes('santa clara')) {
+    if (yearKey === '2018' && corpsName.toLowerCase().includes('santa clara')) {
       searchQuery = '2018 scv';
     }
 
@@ -104,7 +108,7 @@ export const useYoutubeSearch = () => {
       title: searchQuery,
       searchQuery,
       error: null,
-      year,
+      year: yearKey,
       corpsName,
       fallbackIndex: hardcodedVideos ? hardcodedVideos.length : 0,
     });

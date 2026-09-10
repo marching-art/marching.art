@@ -219,10 +219,10 @@ ops step below)_
 - **P2** Every e2e spec is unauthenticated (`e2e/*.spec.ts`); the auth
   emulator is wired (`e2e/firebase.json:4`) but no signed-in journey exists.
   One authed core-loop spec (register → lineup → shows → league). (M)
-- **P2** Frontend coverage floor lags reality by 13 points: actual 28.9 /
-  22.9 / 25.0 / 28.8 (stmts/branches/fns/lines) vs floor 15.9 / 12.5 /
-  13.3 / 15.8 in `vite.config.js:145-150`, and it is global-only — add
-  per-glob floors for `src/utils/**` and `src/api/**`. (S)
+- **P2** Frontend coverage floors are global-only — add per-glob floors for
+  `src/utils/**` and `src/api/**`. (The 13-point lag against reality is gone:
+  the global floors were raised to 30.5 / 24.5 / 26.4 / 30.4 in the 2026-09-10
+  Dependabot sweep below.) (S)
 - **P2** Money and abuse-control helpers with no direct tests:
   `helpers/leagueEconomy.js`, `helpers/rateLimit.js`,
   `helpers/leagueArchival.js`, `helpers/engagementRewards.js`,
@@ -355,15 +355,15 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
 
 ## Evergreen ratchets (any session, any size)
 
-- `@ts-nocheck` paydown — **63 files** at
+- `@ts-nocheck` paydown — **58 files** at
   last update; `npm run ts-nocheck:next` ranks the cheapest (no free wins
-  left — the cheapest `src/` files are ~12 errors; `Schedule.jsx` and
-  `Layout/GameShell.jsx` are ~30 each). It needs `npm ci` first and refuses
-  to report on any other compiler. One per substantive task is the CLAUDE.md
-  habit; batches welcome.
-- Frontend coverage floor upward — actual is ~29% statements against a
-  15.9% floor; raise the floor to within a point of actual whenever it's
-  touched (functions are held to 70/80/85).
+  left — the cheapest `src/` files are ~14 errors). It needs `npm ci` first
+  and refuses to report on any other compiler. One per substantive task is
+  the CLAUDE.md habit; batches welcome.
+- Frontend coverage floor upward — floors now sit just under actual
+  (30.5 / 24.5 / 26.4 / 30.4 against 30.90 / 24.90 / 26.83 / 30.78); keep
+  raising them to within a point of actual whenever coverage is touched
+  (functions are held to 70/80/85).
 - ESLint warnings: held at zero by `lint --max-warnings 0` — fix, never
   suppress, anything that shows up.
 - React Query migration of the remaining manual-fetch components.
@@ -375,6 +375,30 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
   touched.
 
 ## Recently shipped (context, newest first — prune when stale)
+
+- 2026-09-10 (dependencies): the six open Dependabot PRs (#1531-#1536) folded
+  into one branch and closed. Root: `vitest` + `@vitest/coverage-v8` 4 → 5,
+  `framer-motion` 13.2.0, `lucide-react` 1.40, `@types/node`, `globals`,
+  `postcss`, `tsx`, `typescript-eslint`, `eslint-plugin-react-refresh`;
+  `functions/` `@google/genai` 2.21.0; `firestore-tests/` `firebase-tools`
+  15.29.0. Vitest 5 broke `tsc` on every `.tsx` test: jest-dom still ships its
+  matcher augmentation against vitest 4's `Assertion<T>` while vitest 5 uses
+  `Assertion<R, T>`, so declaration merging silently stopped applying and
+  ~200 `toBeInTheDocument` calls became TS2339 — fixed by re-declaring the
+  augmentation at the right arity in `src/types/vitest.d.ts` (delete it when
+  jest-dom ships vitest 5 types). Coverage was measured on both majors to
+  confirm the v8 provider bump moved nothing (4: 31.21/24.93/26.86/31.11,
+  5: 30.90/24.89/26.83/30.78) and the stale floors were raised to
+  30.5/24.5/26.4/30.4. Also: `vite.config.js` off `__dirname` onto
+  `import.meta.dirname` (the config-loader deprecation vitest 5 started
+  warning on), and `useYoutubeSearch` now normalizes `year` to a string —
+  callers pass `sourceYear`, which is `string|number`, so the 2018-SCV /
+  2023-Mandarins hardcoded-video and abbreviated-search cases could miss on a
+  numeric year. `@ts-nocheck` ratchet: 59 → 58 (`pages/Landing.jsx`, which
+  also pulled the duplicated live-score row typedef out of `LiveScoresBox`
+  and `StandingsModal` into a single `LandingScoreRow` owned by
+  `useLandingScores`, and gave `ProfileDoc` explicit `xp` / `xpLevel` /
+  `corpsCoin` fields).
 
 - 2026-09-09 (score age on the season standings, from a director suggestion):
   a season standings sheet ranks every corps on its LATEST total, but corps
