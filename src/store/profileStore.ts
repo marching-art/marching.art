@@ -64,6 +64,14 @@ export interface ProfileDoc {
   uid?: string;
   /** Same reasoning as `uid`: every reader renders it as text. */
   displayName?: string;
+  /**
+   * Progression and currency totals. Declared for the same reason as `uid`:
+   * every surface renders them as numbers, and under the bare index signature
+   * they read as `unknown`, which is not a valid ReactNode.
+   */
+  xp?: number;
+  xpLevel?: number;
+  corpsCoin?: number;
   corps?: Record<string, unknown> | null;
   /** Corps Identity Shop state (server-written): owned ids + equipped slots. */
   cosmetics?: { owned?: string[]; equipped?: Record<string, string | null> } | null;

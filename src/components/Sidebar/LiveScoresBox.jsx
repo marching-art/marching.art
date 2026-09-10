@@ -2,20 +2,14 @@ import React from 'react';
 import { Activity, TrendingUp, TrendingDown, ChevronRight, Play } from 'lucide-react';
 
 /**
- * @typedef {{
- *   rank: number,
- *   sourceYear: number | string,
- *   corpsName: string,
- *   score: number,
- *   change: number | null,
- *   direction: 'up' | 'down' | string,
- * }} LiveScoreRow
+ * Rows come straight from `useLandingScores`, which owns the shape.
+ * @typedef {import('../../hooks/useLandingScores').LandingScoreRow} LiveScoreRow
  */
 
 /**
  * @param {{
  *   liveScores: LiveScoreRow[],
- *   displayDay: number | string,
+ *   displayDay: number | string | null,
  *   loading: boolean,
  *   hasData: boolean,
  *   onYoutubeClick: (sourceYear: number | string, corpsName: string) => void,

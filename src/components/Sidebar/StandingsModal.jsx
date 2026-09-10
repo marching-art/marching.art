@@ -4,14 +4,9 @@ import { Activity, TrendingUp, TrendingDown, X, Play } from 'lucide-react';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 /**
- * One ranked row from useLandingScores' standings computation.
- * @typedef {Object} StandingsRow
- * @property {number} rank
- * @property {string|number} sourceYear
- * @property {string} corpsName
- * @property {number} score
- * @property {number|null} change
- * @property {'up'|'down'|'stable'} direction
+ * One ranked row from useLandingScores' standings computation — that hook owns
+ * the shape, so this is a reference rather than a second copy of it.
+ * @typedef {import('../../hooks/useLandingScores').LandingScoreRow} StandingsRow
  */
 
 /**

@@ -28,6 +28,29 @@ const SCORES_STALE_TIME = 5 * 60 * 1000;
  */
 
 /**
+ * One ranked corps row as rendered by the landing/news score surfaces
+ * (`LiveScoresBox`, `StandingsModal`). Both the materialized and the raw-year
+ * fallback path below produce this exact shape, and both consumers reference
+ * this typedef rather than re-declaring their own copy.
+ * @typedef {Object} LandingScoreRow
+ * @property {number} rank
+ * @property {string} corpsName
+ * @property {string|number} sourceYear
+ * @property {number} score
+ * @property {number|null} change
+ * @property {'up'|'down'|'stable'} direction
+ * @property {number|null} points
+ * @property {number} showCount
+ * @property {number} latestDay
+ */
+
+/**
+ * A row before ranks are stamped on — rank is only known once the whole set is
+ * sorted, so the two builders below collect this and map to `LandingScoreRow`.
+ * @typedef {Omit<LandingScoreRow, 'rank'>} UnrankedScoreRow
+ */
+
+/**
  * Calculate total score from individual captions
  * GE contributes directly, Visual and Music are divided by 2
  * @param {Record<string, number>|null|undefined} captions
@@ -165,7 +188,7 @@ export const useLandingScores = ({ enabled = true } = {}) => {
     // Materialized path: rank each corps by its latest revealed score; the
     // change is against the previous DAY it scored (same rule as below).
     if (materialized) {
-      /** @type {Array<Record<string, any>>} */
+      /** @type {UnrankedScoreRow[]} */
       const ranked = [];
       for (const corps of materialized.corps || []) {
         const revealed = (corps.history || []).filter((h) => h.day <= maxScoreDay);
@@ -173,6 +196,7 @@ export const useLandingScores = ({ enabled = true } = {}) => {
         const latest = revealed[revealed.length - 1];
         const previous = [...revealed].reverse().find((h) => h.day !== latest.day) || null;
         let change = null;
+        /** @type {'up'|'down'|'stable'} */
         let direction = 'stable';
         if (previous) {
           change = latest.totalScore - previous.totalScore;
@@ -191,10 +215,7 @@ export const useLandingScores = ({ enabled = true } = {}) => {
         });
       }
       ranked.sort((a, b) => b.score - a.score);
-      ranked.forEach((entry, index) => {
-        entry.rank = index + 1;
-      });
-      return ranked;
+      return ranked.map((entry, index) => ({ ...entry, rank: index + 1 }));
     }
 
     // Fallback path (no materialized doc yet): rank from the raw year data.
@@ -255,7 +276,7 @@ export const useLandingScores = ({ enabled = true } = {}) => {
     });
 
     // Process each corps to get their latest score and change
-    /** @type {Array<Record<string, any>>} */
+    /** @type {UnrankedScoreRow[]} */
     const rankedScores = [];
 
     corpsScoreHistory.forEach((data) => {
@@ -273,6 +294,7 @@ export const useLandingScores = ({ enabled = true } = {}) => {
 
       // Calculate score change
       let change = null;
+      /** @type {'up'|'down'|'stable'} */
       let direction = 'stable';
       if (previousScore !== null) {
         change = latestScore - previousScore;
@@ -294,11 +316,7 @@ export const useLandingScores = ({ enabled = true } = {}) => {
 
     // Sort by score descending and add ranks
     rankedScores.sort((a, b) => b.score - a.score);
-    rankedScores.forEach((entry, index) => {
-      entry.rank = index + 1;
-    });
-
-    return rankedScores;
+    return rankedScores.map((entry, index) => ({ ...entry, rank: index + 1 }));
   }, [materialized, corpsValues, historicalData, maxScoreDay]);
 
   // Get the display day (most recent day with scores)
