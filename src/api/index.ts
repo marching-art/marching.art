@@ -90,10 +90,13 @@ export {
   leaveLeague,
   subscribeToChat,
   postChatMessage,
+  toggleChatReaction,
+  reportChatMessage,
+  deleteChatMessage,
   PLACEMENT_POINTS,
   getPlacementPoints,
 } from './leagues';
-export type { ChatMessage } from './leagues';
+export type { ChatMessage, ChatReplySnapshot } from './leagues';
 
 // Re-export leaderboard API
 export {

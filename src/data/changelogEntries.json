@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-09-11-league-chat-rebuilt-reactions-replies-mentions",
+    "date": "2026-09-11",
+    "title": "League chat rebuilt: reactions, replies, @mentions and a thread that stays where you left it",
+    "category": "feature",
+    "summary": "The Chat tab in every league is a new room. Messages now read as one conversation — a name and time on the first message of a run, then clean lines under it — instead of a stack of tiny bubbles, and the box you type in sits right under the thread with room for more than a single line. Hover or long-press any message to react with one of six emoji, reply with the original quoted above your answer, copy it, or report it to the site admins. Type @ to pick a league member; they see the mention highlighted and get a nudge. Scrolling up to catch up no longer gets yanked back down when someone posts — a pill counts the new messages until you jump to them — and earlier history loads on its own as you reach the top.",
+    "highlights": [
+      "A New line marks where you left off, and the Chat tab and the league card show an unread dot until you've seen the latest message.",
+      "Your message appears the instant you hit send; if it didn't go through you can retry it in place instead of retyping.",
+      "Enter sends and Shift+Enter starts a new line on a keyboard; on a phone the send button sends. A half-written message survives switching tabs.",
+      "Tapping a reply's quote jumps to the original message. Messages can now run to 1,000 characters.",
+      "Deleting asks first in a proper dialog, and anyone can report a message they couldn't delete themselves."
+    ]
+  },
+  {
     "id": "2026-09-09-standings-show-how-old-each-score-is",
     "date": "2026-09-09",
     "title": "Season standings show how old each score is",

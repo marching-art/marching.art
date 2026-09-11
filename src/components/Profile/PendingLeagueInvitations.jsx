@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // =============================================================================
 // PENDING LEAGUE INVITATIONS
 // =============================================================================
@@ -11,16 +10,31 @@ import { getPendingInvitations } from '../../api/leagues';
 import { respondToLeagueInvitation } from '../../api/functions';
 import toast from 'react-hot-toast';
 
+/**
+ * An inbound invitation as the profile card reads it.
+ * @typedef {object} Invitation
+ * @property {string} id
+ * @property {string} leagueId
+ * @property {string} [leagueName]
+ * @property {string} [inviterName]
+ * @property {string} [message]
+ * @property {{ toDate?: () => Date }} [invitedAt]
+ */
+
+/**
+ * @param {{ userId?: string, onChange?: () => void }} props
+ */
 const PendingLeagueInvitations = ({ userId, onChange }) => {
-  const [invitations, setInvitations] = useState([]);
+  const [invitations, setInvitations] = useState(/** @type {Invitation[]} */ ([]));
   const [loading, setLoading] = useState(true);
-  const [respondingId, setRespondingId] = useState(null);
+  const [respondingId, setRespondingId] = useState(/** @type {string | null} */ (null));
 
   const fetchInvitations = async () => {
+    if (!userId) return;
     setLoading(true);
     try {
       const rows = await getPendingInvitations(userId);
-      setInvitations(rows);
+      setInvitations(/** @type {Invitation[]} */ (rows));
     } catch (err) {
       console.error('Failed to load invitations:', err);
     } finally {
@@ -34,6 +48,10 @@ const PendingLeagueInvitations = ({ userId, onChange }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
+  /**
+   * @param {Invitation} invitation
+   * @param {boolean} accept
+   */
   const handleRespond = async (invitation, accept) => {
     setRespondingId(invitation.id);
     try {
@@ -46,7 +64,7 @@ const PendingLeagueInvitations = ({ userId, onChange }) => {
       setInvitations((prev) => prev.filter((i) => i.id !== invitation.id));
       onChange?.();
     } catch (err) {
-      toast.error(err?.message || 'Failed to respond');
+      toast.error(err instanceof Error ? err.message : 'Failed to respond');
     } finally {
       setRespondingId(null);
     }

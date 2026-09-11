@@ -241,6 +241,8 @@ type CloudFunctionName =
   | 'removeLeagueMember'
   | 'postLeagueMessage'
   | 'deleteLeagueMessage'
+  | 'toggleLeagueMessageReaction'
+  | 'reportLeagueMessage'
   | 'updateLeagueSettings'
   | 'transferCommissioner'
   | 'setCoCommissioner'

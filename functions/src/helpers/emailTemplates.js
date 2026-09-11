@@ -381,6 +381,7 @@ function adminCommentReportEmailTemplate({
   reporterName,
   articleId,
   reportId,
+  leagueName,
 }) {
   const queueUrl = `${EMAIL_CONFIG.appUrl}/admin?tab=moderation`;
   const articleUrl = articleId ? `${EMAIL_CONFIG.appUrl}/article/${encodeURIComponent(articleId)}` : null;
@@ -389,7 +390,9 @@ function adminCommentReportEmailTemplate({
       <h2 style="color: #ffffff; margin-bottom: 8px;">Comment flagged for review</h2>
       <p style="color: #cbd5e1;">
         <strong>${escapeHtml(reporterName || "A user")}</strong> reported a comment by
-        <strong>${escapeHtml(commentAuthor || "an unknown user")}</strong>.
+        <strong>${escapeHtml(commentAuthor || "an unknown user")}</strong>${
+          leagueName ? ` in the league chat of <strong>${escapeHtml(leagueName)}</strong>` : ""
+        }.
       </p>
 
       ${reason ? `
