@@ -27,6 +27,13 @@ export interface League {
   isRookieCircuit?: boolean;
   /** Commissioner's pinned note, shown above every tab. */
   announcement?: { text: string; setBy?: string; setAt?: Timestamp } | null;
+  /**
+   * When the newest chat message was posted (stamped by postLeagueMessage).
+   * The league card compares it with the viewer's per-device read marker
+   * (utils/leagueChatReads) to show an unread dot. Only a timestamp — league
+   * docs are listable by any signed-in user, so no message text lives here.
+   */
+  lastChatAt?: Timestamp;
   /** Legacy only — new leagues keep the code in meta/private (see useLeagueInviteCode). */
   inviteCode?: string;
 

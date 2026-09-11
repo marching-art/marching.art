@@ -51,6 +51,12 @@ function makeFakeDb(docs = new Map()) {
       docs.set(path, data);
       writes.push({ type: "set", path, data });
     },
+    // postLeagueMessage stamps `lastChatAt` on the league doc; a merge keeps
+    // the membership fields the next iteration of a loop still reads.
+    async update(data) {
+      docs.set(path, { ...(docs.get(path) || {}), ...data });
+      writes.push({ type: "update", path, data });
+    },
     collection(sub) {
       return {
         doc: (id) => makeRef(`${path}/${sub}/${id !== undefined ? id : `auto-${++autoId}`}`),

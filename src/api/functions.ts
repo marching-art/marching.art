@@ -533,10 +533,6 @@ export const transferCommissioner = createCallable<
 export const updateMatchupResults = createCallable<{ matchupId: string; results: unknown }, void>(
   'updateMatchupResults'
 );
-export const postLeagueMessageCF = createCallable<
-  { leagueId: string; message: string },
-  { messageId: string }
->('postLeagueMessage');
 export const inviteDirectorToLeague = createCallable<
   { leagueId: string; inviteeUid: string; message?: string },
   { success: boolean }

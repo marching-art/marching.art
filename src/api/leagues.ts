@@ -328,12 +328,23 @@ export async function removeLeagueMember(leagueId: string, memberId: string): Pr
 // LEAGUE CHAT
 // =============================================================================
 
+/** The quoted original a reply carries — a server-taken snapshot, not a ref. */
+export interface ChatReplySnapshot {
+  id: string;
+  userId: string | null;
+  message: string;
+}
+
 export interface ChatMessage {
   id: string;
   userId: string;
   username?: string;
   message: string;
-  createdAt: Date;
+  /** A Firestore Timestamp on the wire; `null` while a local write is pending. */
+  createdAt: Date | { toDate?: () => Date; toMillis?: () => number; seconds?: number } | null;
+  /** `{ emoji: [uid, ...] }`, only the emoji that have at least one holder. */
+  reactions?: Record<string, string[]>;
+  replyTo?: ChatReplySnapshot | null;
 }
 
 /**
@@ -401,16 +412,57 @@ export async function deleteChatMessage(leagueId: string, messageId: string): Pr
 }
 
 /**
- * Post a message to league chat
+ * Post a message to league chat, optionally as a reply to another message.
+ * The server snapshots the quoted message itself; the client sends only its id.
  */
-export async function postChatMessage(leagueId: string, message: string): Promise<ApiResponse> {
+export async function postChatMessage(
+  leagueId: string,
+  message: string,
+  replyTo?: string | null
+): Promise<ApiResponse & { messageId?: string }> {
   return withErrorHandling(async () => {
-    const result = await callFunctionTracked<{ leagueId: string; message: string }, ApiResponse>(
-      'postLeagueMessage',
-      { leagueId, message }
-    );
+    const result = await callFunctionTracked<
+      { leagueId: string; message: string; replyTo?: string },
+      ApiResponse & { messageId?: string }
+    >('postLeagueMessage', replyTo ? { leagueId, message, replyTo } : { leagueId, message });
     return result.data;
   }, 'Failed to post message');
+}
+
+/**
+ * Toggle one of the fixed reaction emoji on a message. Resolves with whether
+ * the caller now holds that reaction.
+ */
+export async function toggleChatReaction(
+  leagueId: string,
+  messageId: string,
+  emoji: string
+): Promise<ApiResponse & { reacted?: boolean }> {
+  return withErrorHandling(async () => {
+    const result = await callFunctionTracked<
+      { leagueId: string; messageId: string; emoji: string },
+      ApiResponse & { reacted?: boolean }
+    >('toggleLeagueMessageReaction', { leagueId, messageId, emoji });
+    return result.data;
+  }, 'Failed to react');
+}
+
+/**
+ * Flag a message for the site admins. Members can't delete each other's
+ * messages, and a commissioner may be the problem — this is the recourse.
+ */
+export async function reportChatMessage(
+  leagueId: string,
+  messageId: string,
+  reason: string
+): Promise<ApiResponse> {
+  return withErrorHandling(async () => {
+    const result = await callFunctionTracked<
+      { leagueId: string; messageId: string; reason: string },
+      ApiResponse
+    >('reportLeagueMessage', { leagueId, messageId, reason });
+    return result.data;
+  }, 'Failed to report message');
 }
 
 // =============================================================================

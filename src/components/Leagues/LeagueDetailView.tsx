@@ -25,7 +25,7 @@ import { useLeagueStats } from '../../hooks/useLeagueStats';
 import { useLeagueDetail } from '../../hooks/useLeagueDetail';
 import { useLeagueLiveStandings } from '../../hooks/useLeagueLiveStandings';
 import { useLeagueChat } from '../../hooks/useLeagueChat';
-import { SmackTalkInput, LeaveLeagueModal } from './LeagueDetailViewParts';
+import { LeaveLeagueModal } from './LeagueDetailViewParts';
 import LeagueDetailHeader from './LeagueDetailHeader';
 import LeaguePoolCard from './LeaguePoolCard';
 import { isLeagueCommissioner, isLeagueOwner } from '../../utils/leaguePermissions';
@@ -133,16 +133,23 @@ const LeagueDetailView = ({
     isProvisional: standingsProvisional,
   } = useLeagueLiveStandings(league?.id, computedStandings);
 
-  // Real-time chat, with older history on demand and a read marker that
-  // finally makes the league card's unread dot mean something.
+  // Real-time chat, with older history on demand, a read marker that makes
+  // the league card's unread dot mean something, and the social actions.
   const {
     messages,
     unreadCount,
+    readAt: chatReadAt,
     hasMore: hasMoreMessages,
     isLoadingMore: loadingMoreMessages,
     loadOlder: loadOlderMessages,
     markRead: markChatRead,
-  } = useLeagueChat(league?.id);
+    sendMessage,
+    retryMessage,
+    discardMessage,
+    toggleReaction,
+    deleteMessage,
+    reportMessage,
+  } = useLeagueChat(league?.id, userId);
 
   const handleLeaveConfirm = async () => {
     setIsLeaving(true);
@@ -256,9 +263,13 @@ const LeagueDetailView = ({
         onTabChange={selectTab}
       />
 
-      {/* SCROLLABLE CONTENT */}
+      {/* SCROLLABLE CONTENT. The chat tab owns its own scroll region (the
+          thread scrolls, the composer stays put), so the panel becomes a
+          flex column there instead of a scroller. */}
       <div
-        className="flex-1 overflow-y-auto min-h-0 scroll-smooth"
+        className={`flex-1 min-h-0 ${
+          activeTab === 'chat' ? 'flex flex-col overflow-hidden' : 'overflow-y-auto scroll-smooth'
+        }`}
         id="league-tabpanel"
         role="tabpanel"
         aria-labelledby={`league-tab-${activeTab}`}
@@ -280,7 +291,7 @@ const LeagueDetailView = ({
             "draft night moved to Thursday" is the sort of thing that has to be
             impossible to miss, and chat scrolls. */}
         {league.announcement?.text && (
-          <div className="mx-4 mt-4 px-3 py-2.5 bg-brand/5 border-l-2 border-brand flex items-start gap-2">
+          <div className="flex-shrink-0 mx-4 mt-4 px-3 py-2.5 bg-brand/5 border-l-2 border-brand flex items-start gap-2">
             <Pin className="w-3.5 h-3.5 text-brand flex-shrink-0 mt-0.5" />
             <p className="text-xs text-white leading-relaxed">{league.announcement.text}</p>
           </div>
@@ -370,7 +381,7 @@ const LeagueDetailView = ({
           )}
           {activeTab === 'chat' && (
             <ChatTab
-              key="chat"
+              key={`chat-${league.id ?? ''}`}
               league={league}
               messages={messages}
               userProfile={userProfile}
@@ -378,8 +389,15 @@ const LeagueDetailView = ({
               isCommissioner={isCommissioner}
               hasMore={hasMoreMessages}
               isLoadingMore={loadingMoreMessages}
+              readAt={chatReadAt}
               onLoadOlder={loadOlderMessages}
               onMarkRead={markChatRead}
+              onSend={sendMessage}
+              onRetry={retryMessage}
+              onDiscard={discardMessage}
+              onReact={toggleReaction}
+              onDelete={deleteMessage}
+              onReport={reportMessage}
             />
           )}
           {activeTab === 'settings' && isCommissioner && (
@@ -395,17 +413,6 @@ const LeagueDetailView = ({
           )}
         </AnimatePresence>
       </div>
-
-      {/* FIXED BOTTOM: Smack Talk Input — Chat tab only. It used to render
-          across every tab, so a member on Standings could type, send, get a
-          success toast, and never see the message (it lands in the Chat tab).
-          Sending now always happens where the conversation is visible.
-          pb-14 clears mobile nav. */}
-      {activeTab === 'chat' && (
-        <div className="flex-shrink-0 bg-surface-card border-t border-line px-4 py-3 pb-14 md:pb-3 z-40">
-          <SmackTalkInput leagueId={league.id} userProfile={userProfile} />
-        </div>
-      )}
 
       {/* Leave League Modal */}
       <AnimatePresence>

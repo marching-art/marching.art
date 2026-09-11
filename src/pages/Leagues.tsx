@@ -35,6 +35,8 @@ import { PullToRefresh } from '../components/ui/PullToRefresh';
 import type { League } from '../types';
 import { EmptyDiscover, EmptyMyLeagues, QuickJoinModal } from './LeaguesParts';
 import type { ProfileDoc } from '../store/profileStore';
+import { getLeagueChatReadAt } from '../utils/leagueChatReads';
+import { toMillis } from '../utils/chatFormat';
 import {
   getRosterSize,
   getActiveMemberCount,
@@ -54,8 +56,7 @@ import {
 type LeagueCardDoc = Partial<League> & {
   /** Layered on by the discovery list, not stored on the document. */
   creatorName?: string;
-  /** Legacy display flags. Nothing writes these; both read as false. */
-  hasUnreadMessages?: boolean;
+  /** Legacy display flag. Nothing writes it; reads as false. */
   isMatchupActive?: boolean;
   matchupsGeneratedWeek?: number;
 };
@@ -154,8 +155,10 @@ const MyLeagueCard = ({
   // standings loaded, so an honest rank would need a fetch this list
   // deliberately avoids.
 
-  // Check for activity
-  const hasNewMessages = Boolean(league.hasUnreadMessages);
+  // Unread chat: the newest message (stamped on the league doc by the post
+  // callable) is newer than what this device has read in the Chat tab.
+  const hasNewMessages =
+    Boolean(league.id) && toMillis(league.lastChatAt) > getLeagueChatReadAt(league.id as string);
   const isLive = Boolean(league.isMatchupActive);
 
   // Check if matchups are actually generated for current week

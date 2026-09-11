@@ -123,7 +123,12 @@ const {
   generateMatchups,
   updateMatchupResults,
 } = require("./src/callable/leagues");
-const { postLeagueMessage, deleteLeagueMessage } = require("./src/callable/leagueChat");
+const {
+  postLeagueMessage,
+  deleteLeagueMessage,
+  toggleLeagueMessageReaction,
+  reportLeagueMessage,
+} = require("./src/callable/leagueChat");
 const {
   updateLeagueSettings,
   transferCommissioner,
@@ -375,6 +380,8 @@ module.exports = {
   updateMatchupResults,
   postLeagueMessage,
   deleteLeagueMessage,
+  toggleLeagueMessageReaction,
+  reportLeagueMessage,
   inviteDirectorToLeague,
   respondToLeagueInvitation,
   sendCommentNotification,

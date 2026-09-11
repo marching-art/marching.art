@@ -1,68 +1,12 @@
-// Small helper components for LeagueDetailView: the inline smack-talk input
-// and the leave-league confirmation modal. Extracted verbatim from
-// LeagueDetailView.jsx.
+// Small helper components for LeagueDetailView: the leave-league confirmation
+// modal. (The chat composer used to live here too; it now lives in the Chat
+// tab — tabs/ChatComposer.tsx — next to the thread it posts into.)
 
-import React, { useState, useRef } from 'react';
+import React, { useRef } from 'react';
 import { m } from 'framer-motion';
-import { Send, LogOut, AlertTriangle, X } from 'lucide-react';
-import toast from 'react-hot-toast';
-import { postLeagueMessageCF as postLeagueMessage } from '../../api/functions';
+import { LogOut, AlertTriangle, X } from 'lucide-react';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
-
-// Quick Smack Talk Input - Compact inline form
-interface SmackTalkInputProps {
-  leagueId?: string;
-  userProfile?: { uid?: string } | null;
-  disabled?: boolean;
-}
-
-export const SmackTalkInput = ({
-  leagueId,
-  userProfile: _userProfile,
-  disabled = false,
-}: SmackTalkInputProps) => {
-  const [message, setMessage] = useState('');
-  const [sending, setSending] = useState(false);
-
-  const handleSend = async (e?: React.FormEvent) => {
-    e?.preventDefault();
-    if (!message.trim() || sending || !leagueId) return;
-
-    setSending(true);
-    try {
-      await postLeagueMessage({ leagueId, message: message.trim() });
-      setMessage('');
-      toast.success('Sent!');
-    } catch (error) {
-      console.error('Error sending message:', error);
-      toast.error('Failed to send');
-    } finally {
-      setSending(false);
-    }
-  };
-
-  return (
-    <form onSubmit={handleSend} className="flex gap-2">
-      <input
-        type="text"
-        value={message}
-        onChange={(e) => setMessage(e.target.value)}
-        placeholder="Talk trash..."
-        className="flex-1 h-9 px-3 bg-surface-sunken border border-line text-white placeholder:text-muted focus:outline-none focus:border-line-strong text-sm"
-        disabled={sending || disabled}
-        maxLength={200}
-      />
-      <button
-        type="submit"
-        disabled={sending || !message.trim() || disabled}
-        className="h-9 px-3 bg-interactive hover:bg-interactive-hover disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold flex items-center gap-1.5 transition-colors text-sm"
-      >
-        <Send className="w-3.5 h-3.5" />
-      </button>
-    </form>
-  );
-};
 
 // Leave League Confirmation Modal
 interface LeaveLeagueModalProps {

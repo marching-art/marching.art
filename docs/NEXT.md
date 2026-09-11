@@ -8,7 +8,7 @@ burns an hour to conclude "everything's about covered." Don't. If you ship,
 cut, or discover something, edit THIS file in the same PR — that's the whole
 maintenance contract.
 
-_Last updated: 2026-09-09 (score-age column on the Fantasy + Podium season standings). Previous: 2026-09-06 (director-authored articles exempt from the score-reveal gate — dead Discord/notification links fixed; scheduled-vs-pending admin email + working admin deep link; assistant director fades with consecutive days
+_Last updated: 2026-09-11 (league chat rebuilt — threaded rows, reactions, replies, @mention picker, report control, scroll that stays put, optimistic sends, `lastChatAt` unread dot on the league card). Previous: 2026-09-09 (score-age column on the Fantasy + Podium season standings); 2026-09-06 (director-authored articles exempt from the score-reveal gate — dead Discord/notification links fixed; scheduled-vs-pending admin email + working admin deep link; assistant director fades with consecutive days
 away; Podium field = the registered field; majors and championship rounds
 carry the Podium roster; roster audit workflow; season re-mint guard). Previous: 2026-09-04 (site-review row 20 — one onboarding checklist (the Journey; Quick Start modal deleted, `?reveal=` deep link) and one How-to-Play route by auth state; device-aware install guide at /install — in-app-browser detection with an Open-in-Safari/Chrome escape hatch, per-browser steps, one-tap native install, linked from footer / ? menu / home / Settings / the nudge; site-review row 19 — honest functions coverage gate, first admin / league-automation tests; row 18 — one-click unsubscribe + List-Unsubscribe headers, noindex auth wall; row 17 — vendor-firebase trimmed, GameShell + overlays lazy for guests; row 16 — focus traps + Escape in every raw dialog, icon buttons named; row 15 — one dashboard interrupt per visit, celebrations to the inbox; row 14 — weekly XP / win bonus / finish bonus paid per director; row 13 — league weeks decided per show, percentile edge cases; row 12 — server-enforced age gate + consent-gated analytics; AI imagery now built from the full Uniform Studio design + rendered reference image; main ruleset + gazetteer PR flow; site-review Fix-first 1–11 + quick wins shipped)._
 
@@ -149,9 +149,12 @@ ops step below)_
   conditionally unavailable (`helpers/dailyChallenges.js:87-133`) — a new
   leagueless director sees one repeating task. Grow to 6-8 verifiable
   verbs. (M)
-- **P2** No report control on league chat (`Leagues/tabs/ChatTab.tsx:73-80`
-  admits it), profile comments, or instant-publish press releases; only
-  article comments have one. Reuse `reportComment`. (M)
+- **P2** No report control on profile comments or instant-publish press
+  releases; article comments and league chat (`reportLeagueMessage`, writes
+  a typed `reports` row) have one. Reuse the same shape. (M)
+- **P3** League chat reports land in `reports` with `type: "league_message"`
+  but the admin moderation tab renders only `type: "comment"` rows — add the
+  league-message case (show `leagueName`, link to `/leagues/{id}/chat`). (S)
 - **P2** Social proof is auth-gated: `SocialProofBar.jsx:104-116` counts hit
   auth-only collections, `CommunityPulse.jsx:60` returns null for guests.
   Nightly public `community_stats` doc. (S)
@@ -376,6 +379,24 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
 
 ## Recently shipped (context, newest first — prune when stale)
 
+- 2026-09-11 (league chat redesign): the Chat tab is a threaded column
+  (`tabs/ChatTab.tsx` + `ChatMessageRow.tsx` + `ChatComposer.tsx`, pure
+  helpers in `utils/chatFormat.ts`): run-grouped rows with avatar/name/time
+  on the first of a run, sticky day separators, a "New" line at the frozen
+  read marker, reactions (`toggleLeagueMessageReaction`, palette fixed
+  server-side, `reactions: {emoji: uid[]}` on the message doc), replies
+  (`postLeagueMessage` takes `replyTo` and snapshots the quote itself),
+  @mention picker over the roster (inserts `@username`, which
+  `onLeagueChatMessage` already pushes on), report to admins
+  (`reportLeagueMessage`, deduped by doc id), delete via ConfirmModal,
+  long-press/keyboard action sheet, hover action bar. Scroll: pinned only
+  while at the bottom, otherwise a "N new messages" pill; prepends preserve
+  position; IntersectionObserver auto-loads history. Sends are optimistic
+  with in-place Retry/Discard (`useLeagueChat` pending list). The composer
+  moved out of `LeagueDetailView` into the tab (`SmackTalkInput` deleted);
+  1,000-char cap matches the server. `postLeagueMessage` stamps
+  `lastChatAt` on the league doc so the league card's unread dot finally
+  reads something real (`Leagues.tsx` vs `getLeagueChatReadAt`).
 - 2026-09-10 (dependencies): the six open Dependabot PRs (#1531-#1536) folded
   into one branch and closed. Root: `vitest` + `@vitest/coverage-v8` 4 → 5,
   `framer-motion` 13.2.0, `lucide-react` 1.40, `@types/node`, `globals`,
