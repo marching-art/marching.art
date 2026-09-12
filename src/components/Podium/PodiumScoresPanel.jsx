@@ -22,10 +22,10 @@ const SUB_TABS = [
  * @param {{
  *   seasonUid?: string|null,
  *   seasonName?: string|null,
- *   userCorpsName?: string|null,
+ *   viewer?: import('../../utils/corps').ViewerCorpsMatcher|null,
  * }} props
  */
-export default function PodiumScoresPanel({ seasonUid, seasonName, userCorpsName }) {
+export default function PodiumScoresPanel({ seasonUid, seasonName, viewer = null }) {
   const [subTab, setSubTab] = useState('recaps');
 
   return (
@@ -50,17 +50,9 @@ export default function PodiumScoresPanel({ seasonUid, seasonName, userCorpsName
       </div>
 
       {subTab === 'recaps' ? (
-        <PodiumRecapSheet
-          seasonUid={seasonUid}
-          seasonName={seasonName}
-          userCorpsName={userCorpsName}
-        />
+        <PodiumRecapSheet seasonUid={seasonUid} seasonName={seasonName} viewer={viewer} />
       ) : (
-        <PodiumReportSheet
-          seasonUid={seasonUid}
-          seasonName={seasonName}
-          userCorpsName={userCorpsName}
-        />
+        <PodiumReportSheet seasonUid={seasonUid} seasonName={seasonName} viewer={viewer} />
       )}
     </div>
   );

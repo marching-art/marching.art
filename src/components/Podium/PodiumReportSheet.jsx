@@ -25,6 +25,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { collection, getDocs } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 import { db } from '../../api';
+import { isViewerCorps } from '../../utils/corps';
 import {
   BoxScoreHead,
   CorpsIdentity,
@@ -92,7 +93,7 @@ function divisionRanksOf(column) {
 // archived seasons on the weekly fallback). `periodLabel` is e.g. "Day 12";
 // `previousColumn` is the snapshot before it (null for the first one), which is
 // where the movement arrows come from.
-function PodiumStandings({ column, previousColumn, periodLabel, seasonName, userCorpsName }) {
+function PodiumStandings({ column, previousColumn, periodLabel, seasonName, viewer }) {
   const [sortBy, setSortBy] = useState('total');
 
   // World → Open → A, each ranked on its own scores. Entries with no division
@@ -196,8 +197,7 @@ function PodiumStandings({ column, previousColumn, periodLabel, seasonName, user
 
           <div>
             {section.rows.map(({ entry, captions, place, delta, age }, idx) => {
-              const isUserCorps =
-                userCorpsName && entry.corpsName?.toLowerCase() === userCorpsName.toLowerCase();
+              const isUserCorps = isViewerCorps(entry, viewer);
 
               return (
                 <div
@@ -288,7 +288,14 @@ async function loadStandingsSnapshots(seasonUid) {
   return normalize(power.docs, 'week', 'W', 'Week');
 }
 
-export default function PodiumReportSheet({ seasonUid, seasonName, userCorpsName }) {
+/**
+ * @param {{
+ *   seasonUid?: string|null,
+ *   seasonName?: string|null,
+ *   viewer?: import('../../utils/corps').ViewerCorpsMatcher|null,
+ * }} props
+ */
+export default function PodiumReportSheet({ seasonUid, seasonName, viewer = null }) {
   const [loading, setLoading] = useState(true);
   const [snapshots, setSnapshots] = useState([]); // ascending by day/week
   const [selectedKey, setSelectedKey] = useState(null);
@@ -379,7 +386,7 @@ export default function PodiumReportSheet({ seasonUid, seasonName, userCorpsName
         previousColumn={previous?.column || null}
         periodLabel={selected.periodLabel}
         seasonName={seasonName}
-        userCorpsName={userCorpsName}
+        viewer={viewer}
       />
     </div>
   );

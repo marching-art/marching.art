@@ -1,5 +1,15 @@
 [
   {
+    "id": "2026-09-12-scores-highlight-every-one-of-your-corps",
+    "date": "2026-09-12",
+    "title": "Score sheets now highlight every one of your corps",
+    "category": "fix",
+    "summary": "If you field more than one ensemble, only one of them (plus your Podium corps) used to light up on the Scores page — the rest you had to scan for. Every recap box score, the Eastern Classic combined sheet, the World / Open / A Class standings and the Podium recaps and standings now highlight all of your corps, in the live season and in the archive.",
+    "highlights": [
+      "Your rows are picked out by your account, not just by name, so a corps that shares its name with someone else's no longer lights up in the wrong place."
+    ]
+  },
+  {
     "id": "2026-09-11-league-chat-rebuilt-reactions-replies-mentions",
     "date": "2026-09-11",
     "title": "League chat rebuilt: reactions, replies, @mentions and a thread that stays where you left it",

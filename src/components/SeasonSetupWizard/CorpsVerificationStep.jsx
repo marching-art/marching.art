@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Step 0 of the season setup wizard: returning-user corps verification
 // (continue / retire / unretire / move / new / skip per class). Extracted
 // verbatim from SeasonSetupWizard.jsx.
@@ -17,6 +16,26 @@ import {
 import { sortCorpsEntriesByClass } from '../../utils/corps';
 import { POINT_LIMITS, getCorpsClassName } from './constants';
 
+/**
+ * @typedef {{ corpsName?: string, location?: string }} ExistingCorps
+ * @typedef {{ corpsName?: string, totalSeasons?: number, corpsClass?: string, index: number }} RetiredCorps
+ * @typedef {{ targetClass?: string, retiredIndex?: number, corpsName?: string, location?: string }} NewCorpsEntry
+ */
+
+/**
+ * @param {{
+ *   existingCorps: Record<string, ExistingCorps | null | undefined>,
+ *   corpsDecisions: Record<string, string | undefined>,
+ *   setCorpsDecisions: (next: Record<string, string | undefined>) => void,
+ *   newCorpsData: Record<string, NewCorpsEntry | undefined>,
+ *   setNewCorpsData: (next: Record<string, NewCorpsEntry | undefined>) => void,
+ *   retiredByClass: Record<string, RetiredCorps[] | undefined>,
+ *   eligibleNewClasses: string[],
+ *   getAvailableMoveTargets: (classId: string) => string[],
+ *   processing: boolean,
+ *   handleCorpsVerificationContinue: () => void,
+ * }} props
+ */
 const CorpsVerificationStep = ({
   existingCorps,
   corpsDecisions,
@@ -44,7 +63,10 @@ const CorpsVerificationStep = ({
 
           {/* Existing Corps - sorted by class order (World → Open → A → SoundSport) */}
           {sortCorpsEntriesByClass(
-            Object.entries(existingCorps).filter(([_, corps]) => corps?.corpsName)
+            Object.entries(existingCorps).filter(
+              /** @returns {entry is [string, ExistingCorps]} */
+              (entry) => Boolean(entry[1]?.corpsName)
+            )
           ).map(([classId, corps]) => {
             const decision = corpsDecisions[classId] || 'continue';
             const classRetired = retiredByClass[classId] || [];

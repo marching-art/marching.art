@@ -9,6 +9,8 @@ import React, { useState, useMemo, useEffect, Suspense } from 'react';
 import { useSearchParams, Navigate } from 'react-router-dom';
 import { Activity, Archive, Share2 } from 'lucide-react';
 import { useProfileStore } from '../store/profileStore';
+import { useAuth } from '../context/AuthContext';
+import { buildViewerCorpsMatcher } from '../utils/corps';
 import { useSeasonStore } from '../store/seasonStore';
 import { useScoresData } from '../hooks/useScoresData';
 import { useScoreDropReturn } from '../hooks/useScoreDropReturn';
@@ -87,6 +89,7 @@ const FANTASY_SUB_IDS = FANTASY_SUB_TABS.map((t) => t.id);
 
 const Scores = () => {
   const profile = useProfileStore((state) => state.profile);
+  const { user } = useAuth();
   const formatSeasonName = useSeasonStore((state) => state.formatSeasonName);
   const [searchParams] = useSearchParams();
   const { trigger: haptic } = useHaptic();
@@ -198,11 +201,12 @@ const Scores = () => {
     return formatSeasonName?.() || 'Current Season';
   }, [formatSeasonName, isArchived, displayedSeasonId, archivedSeasons]);
 
-  const userCorpsName = useMemo(() => {
-    if (!profile?.corps) return null;
-    const activeCorps = Object.values(profile.corps).find((c) => c?.lineup);
-    return activeCorps?.corpsName || null;
-  }, [profile?.corps]);
+  // Every ensemble the director fields — all fantasy classes plus Podium — so
+  // each sheet highlights all of their corps, not just the first one found.
+  const viewerCorps = useMemo(
+    () => buildViewerCorpsMatcher(profile?.corps, user?.uid),
+    [profile?.corps, user?.uid]
+  );
 
   useEffect(() => {
     if (targetShowName) {
@@ -457,10 +461,10 @@ const Scores = () => {
                       <FantasyRecapsView
                         seasonId={displayedSeasonId}
                         availableDays={availableDays}
-                        userCorpsName={userCorpsName}
+                        viewer={viewerCorps}
                       />
                     ) : (
-                      <FantasyRecapsView shows={recapShows} userCorpsName={userCorpsName} />
+                      <FantasyRecapsView shows={recapShows} viewer={viewerCorps} />
                     ))}
 
                   {/* World Class View */}
@@ -469,7 +473,7 @@ const Scores = () => {
                       <ClassStandingsGrid
                         standings={worldStandings}
                         className="World Class"
-                        userCorpsName={userCorpsName}
+                        viewer={viewerCorps}
                         referenceDay={latestScoredDay}
                       />
                     </div>
@@ -481,7 +485,7 @@ const Scores = () => {
                       <ClassStandingsGrid
                         standings={openStandings}
                         className="Open Class"
-                        userCorpsName={userCorpsName}
+                        viewer={viewerCorps}
                         referenceDay={latestScoredDay}
                       />
                     </div>
@@ -493,7 +497,7 @@ const Scores = () => {
                       <ClassStandingsGrid
                         standings={aClassStandings}
                         className="A Class"
-                        userCorpsName={userCorpsName}
+                        viewer={viewerCorps}
                         referenceDay={latestScoredDay}
                       />
                     </div>
@@ -519,7 +523,7 @@ const Scores = () => {
                   <PodiumScoresPanel
                     seasonUid={currentSeasonUid}
                     seasonName={formatSeasonName?.(displayedSeasonId) || undefined}
-                    userCorpsName={profile?.corps?.podiumClass?.corpsName}
+                    viewer={viewerCorps}
                   />
                 </Suspense>
               )}
@@ -652,7 +656,7 @@ const Scores = () => {
                     <>
                       {/* Recaps View — same day-tabbed, sortable view as live */}
                       {archiveViewTab === 'latest' && (
-                        <FantasyRecapsView shows={recapShows} userCorpsName={userCorpsName} />
+                        <FantasyRecapsView shows={recapShows} viewer={viewerCorps} />
                       )}
 
                       {/* World Class View */}
@@ -661,7 +665,7 @@ const Scores = () => {
                           <ClassStandingsGrid
                             standings={worldStandings}
                             className="World Class"
-                            userCorpsName={userCorpsName}
+                            viewer={viewerCorps}
                             referenceDay={latestScoredDay}
                           />
                         </div>
@@ -673,7 +677,7 @@ const Scores = () => {
                           <ClassStandingsGrid
                             standings={openStandings}
                             className="Open Class"
-                            userCorpsName={userCorpsName}
+                            viewer={viewerCorps}
                             referenceDay={latestScoredDay}
                           />
                         </div>
@@ -685,7 +689,7 @@ const Scores = () => {
                           <ClassStandingsGrid
                             standings={aClassStandings}
                             className="A Class"
-                            userCorpsName={userCorpsName}
+                            viewer={viewerCorps}
                             referenceDay={latestScoredDay}
                           />
                         </div>
@@ -710,7 +714,7 @@ const Scores = () => {
                           <PodiumScoresPanel
                             seasonUid={selectedArchiveSeason}
                             seasonName={displayedSeasonName}
-                            userCorpsName={profile?.corps?.podiumClass?.corpsName}
+                            viewer={viewerCorps}
                           />
                         </Suspense>
                       )}

@@ -336,3 +336,62 @@ export function corpsHasPendingWork(corps: CorpsRecord | null | undefined): bool
   const hasShows = !!shows && typeof shows === 'object' && Object.keys(shows).length > 0;
   return hasLineup || hasShows;
 }
+
+// =============================================================================
+// "MY CORPS" ROW MATCHING
+// =============================================================================
+
+// A director fields up to five ensembles at once (World, Open, A, SoundSport,
+// Podium). Any score sheet that highlights "your corps" must recognise every
+// one of them, not just whichever entry happens to come first in the profile.
+
+/** The viewer's identity as seen by score-sheet rows. */
+export interface ViewerCorpsMatcher {
+  /** Auth uid — the authoritative match when the row carries one. */
+  uid: string | null;
+  /** Lower-cased names of every corps in the portfolio (name fallback). */
+  names: ReadonlySet<string>;
+}
+
+/**
+ * Build a matcher from the profile's `corps` map (all fantasy classes plus
+ * Podium) and the auth uid. Returns null when there is nothing to match, so
+ * callers can pass it straight through as "no viewer".
+ */
+export function buildViewerCorpsMatcher(
+  corps: Record<string, unknown> | null | undefined,
+  uid?: string | null
+): ViewerCorpsMatcher | null {
+  const names = new Set<string>();
+  if (corps) {
+    for (const entry of Object.values(corps)) {
+      if (!entry || typeof entry !== 'object') continue;
+      const { corpsName, name } = entry as { corpsName?: unknown; name?: unknown };
+      const label = corpsName || name;
+      if (typeof label === 'string' && label.trim()) names.add(label.trim().toLowerCase());
+    }
+  }
+  if (!uid && names.size === 0) return null;
+  return { uid: uid || null, names };
+}
+
+interface MatchableRow {
+  uid?: string | null;
+  corpsName?: string | null;
+  corps?: string | null;
+}
+
+/**
+ * True when a score-sheet row belongs to the viewer. Prefers the uid when both
+ * sides carry one (two directors may share a corps name); otherwise falls back
+ * to a case-insensitive name match against the whole portfolio.
+ */
+export function isViewerCorps(
+  row: MatchableRow | null | undefined,
+  viewer: ViewerCorpsMatcher | null | undefined
+): boolean {
+  if (!row || !viewer) return false;
+  if (viewer.uid && row.uid) return row.uid === viewer.uid;
+  const name = row.corpsName || row.corps;
+  return typeof name === 'string' && viewer.names.has(name.trim().toLowerCase());
+}
