@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Article management sub-components: list row, editor modal, and section
 // editor. Extracted verbatim from ArticleManagement.jsx.
 
@@ -30,6 +29,30 @@ const SOURCE_COLORS = {
   legacy: 'bg-purple-500/20 text-purple-400',
 };
 
+/**
+ * An article row as the admin list receives it — the generated-article
+ * fields vary by source, so the shape stays open beyond the keys read here.
+ * @typedef {{
+ *   id?: string, path?: string, headline?: string, summary?: string,
+ *   fullStory?: string, narrative?: string, fantasyImpact?: string,
+ *   imageUrl?: string, isPublished?: boolean, source?: string,
+ *   [extra: string]: any,
+ * }} AdminArticle
+ */
+
+/** @type {Record<string, string>} */
+const SOURCE_COLOR_BY_SOURCE = SOURCE_COLORS;
+
+/**
+ * @param {{
+ *   article: AdminArticle,
+ *   onEdit: () => void,
+ *   onArchive: () => void,
+ *   onDelete: () => void,
+ *   formatDate: (dateString: unknown) => string,
+ *   editLoading: boolean,
+ * }} props
+ */
 const ArticleRow = ({ article, onEdit, onArchive, onDelete, formatDate, editLoading }) => {
   const [expanded, setExpanded] = useState(false);
 
@@ -105,7 +128,7 @@ const ArticleRow = ({ article, onEdit, onArchive, onDelete, formatDate, editLoad
                 for horizontal space beside it. */}
             <div className="flex flex-wrap items-center gap-2 mt-2">
               <span
-                className={`px-2 py-0.5 rounded-none text-xs font-medium ${SOURCE_COLORS[article.source]}`}
+                className={`px-2 py-0.5 rounded-none text-xs font-medium ${SOURCE_COLOR_BY_SOURCE[article.source ?? '']}`}
               >
                 {article.source === 'current_season' ? 'Season' : 'Legacy'}
               </span>
@@ -181,6 +204,14 @@ const ArticleRow = ({ article, onEdit, onArchive, onDelete, formatDate, editLoad
 };
 
 // Article Editor Modal
+/**
+ * @param {{
+ *   article: AdminArticle,
+ *   onClose: () => void,
+ *   onSave: (updates: Record<string, unknown>) => void | Promise<void>,
+ *   onRegenerateImage: (path: string | undefined, headline: string, category: string | undefined) => Promise<string | null | undefined>,
+ * }} props
+ */
 const ArticleEditorModal = ({ article, onClose, onSave, onRegenerateImage }) => {
   // Use narrative field as fallback for fullStory (backend stores generated articles in 'narrative')
   const [formData, setFormData] = useState({
@@ -195,10 +226,12 @@ const ArticleEditorModal = ({ article, onClose, onSave, onRegenerateImage }) => 
   const [regeneratingImage, setRegeneratingImage] = useState(false);
   const [activeSection, setActiveSection] = useState('basic');
 
+  /** @param {keyof typeof formData} field @param {string|boolean} value */
   const handleChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  /** @param {React.FormEvent<HTMLFormElement>} e */
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -341,7 +374,9 @@ const ArticleEditorModal = ({ article, onClose, onSave, onRegenerateImage }) => 
                           src={formData.imageUrl}
                           alt="Preview"
                           className="w-full h-full object-cover"
-                          onError={(e) => (e.target.style.display = 'none')}
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
                         />
                       </div>
                     )}
@@ -500,6 +535,7 @@ const ArticleEditorModal = ({ article, onClose, onSave, onRegenerateImage }) => 
 };
 
 // Section Editor (read-only display for now, can be expanded later)
+/** @param {{ title: string, section: Record<string, any>, color: 'blue'|'purple'|'green' }} props */
 const SectionEditor = ({ title, section, color }) => {
   const [expanded, setExpanded] = useState(false);
 
