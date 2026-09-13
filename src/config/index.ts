@@ -94,7 +94,7 @@ export const FIREBASE_CONFIG = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 } as const;
 
-// App Check (reCAPTCHA v3/Enterprise) attestation. Entirely opt-in: App Check
+// App Check (reCAPTCHA Enterprise, score-based) attestation. Entirely opt-in: App Check
 // initializes ONLY when a site key is provided, so builds without the key
 // behave exactly as before. This enables a safe, monitor-only rollout — ship
 // the key, watch the App Check metrics in the Firebase console, and flip

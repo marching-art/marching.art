@@ -358,7 +358,7 @@ Currency, XP, and rank fields are server-only, pinned by
 Firebase custom claim only — there is no `profile.role` path.
 
 **App Check: the client attests, the backend does not yet enforce.** The web app
-initializes App Check with reCAPTCHA v3 when configured
+initializes App Check with a score-based reCAPTCHA Enterprise key when configured
 (`initializeAppCheckIfConfigured` in `src/api/client.ts`), but enforcement for
 callables is still `setGlobalOptions({ enforceAppCheck: false })` in
 `functions/index.js`. To finish the rollout: watch the Firebase console's App
@@ -374,14 +374,15 @@ deployed via `firebase.json`), with regression tests in
 `firestore-tests/rules.test.mjs`. Privileged mutations go through callables
 (Admin SDK bypasses rules).
 
-**App Check is not currently enabled.** Firestore, Functions, and Storage
-accept requests from any client that can authenticate; abuse resistance relies
-on security rules and callable-side validation. Enabling it would require
-registering the web app with an attestation provider (reCAPTCHA
-Enterprise/v3) in the Firebase console, shipping the site key and App Check
-initialization in the client, a monitor-only rollout before enforcement, and
-debug tokens for local/emulator development — do not flip enforcement on
-without those steps or all production clients break.
+**App Check is monitor-only.** The web app is registered with reCAPTCHA
+Enterprise in the Firebase console and the client attests when
+`VITE_APPCHECK_RECAPTCHA_SITE_KEY` is set (see above), but Firestore, Functions
+and Storage still accept requests from any client that can authenticate; abuse
+resistance relies on security rules and callable-side validation until the
+`enforceAppCheck` literal is flipped after metrics show real traffic verified.
+Local/emulator development uses a debug token (`VITE_APPCHECK_DEBUG_TOKEN`,
+registered in the console) — do not flip enforcement on without it or every
+dev client breaks alongside any stale production bundle.
 
 ## Development
 

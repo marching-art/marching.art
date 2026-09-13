@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Admin > Users tab. Extracted from pages/Admin.jsx.
 
 import { useState, useEffect } from 'react';
@@ -20,6 +19,11 @@ import {
 } from 'lucide-react';
 import { SectionHeader, ProcessRow } from './AdminUI';
 
+/** @typedef {import('../../api/admin').AdminUserProfile} AdminUserProfile */
+
+/** @param {unknown} error @param {string} fallback */
+const messageOf = (error, fallback) => (error instanceof Error && error.message) || fallback;
+
 const UsersTab = () => {
   const [stats, setStats] = useState({
     totalUsers: 0,
@@ -28,7 +32,7 @@ const UsersTab = () => {
     totalCorps: 0,
     totalLogins: 0,
   });
-  const [users, setUsers] = useState([]);
+  const [users, setUsers] = useState(/** @type {AdminUserProfile[]} */ ([]));
   const [showUserList, setShowUserList] = useState(false);
   const [showRoleManager, setShowRoleManager] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -36,7 +40,7 @@ const UsersTab = () => {
   const [roleLoading, setRoleLoading] = useState(false);
   const [usersLoading, setUsersLoading] = useState(false);
   const [fixingProfiles, setFixingProfiles] = useState(false);
-  const [moderatingUid, setModeratingUid] = useState(null);
+  const [moderatingUid, setModeratingUid] = useState(/** @type {string | null} */ (null));
 
   useEffect(() => {
     loadUserStats();
@@ -67,6 +71,7 @@ const UsersTab = () => {
     }
   };
 
+  /** @param {boolean} makeAdmin */
   const handleSetRole = async (makeAdmin) => {
     if (!roleEmail.trim()) return toast.error('Enter an email');
     setRoleLoading(true);
@@ -75,7 +80,7 @@ const UsersTab = () => {
       toast.success(result.data.message);
       setRoleEmail('');
     } catch (error) {
-      toast.error(error.message || 'Failed to set role');
+      toast.error(messageOf(error, 'Failed to set role'));
     } finally {
       setRoleLoading(false);
     }
@@ -94,13 +99,14 @@ const UsersTab = () => {
       toast.success(result.data.message);
       loadUserStats(); // Refresh stats after fix
     } catch (error) {
-      toast.error(error.message || 'Failed to fix profiles');
+      toast.error(messageOf(error, 'Failed to fix profiles'));
     } finally {
       setFixingProfiles(false);
     }
   };
 
   // Wipe every stored corps avatar (AI + custom) for one director.
+  /** @param {AdminUserProfile} u */
   const handleRemoveArt = async (u) => {
     if (!window.confirm(`Remove ALL corps avatars for ${u.username}?`)) return;
     setModeratingUid(u.uid);
@@ -109,13 +115,14 @@ const UsersTab = () => {
       toast.success(result.data.message);
       setUsers((prev) => prev.map((x) => (x.uid === u.uid ? { ...x, hasAvatar: false } : x)));
     } catch (error) {
-      toast.error(error.message || 'Failed to remove avatars');
+      toast.error(messageOf(error, 'Failed to remove avatars'));
     } finally {
       setModeratingUid(null);
     }
   };
 
   // Toggle the per-account block on applying a custom image-URL avatar.
+  /** @param {AdminUserProfile} u */
   const handleToggleBan = async (u) => {
     const next = !u.customAvatarBanned;
     if (
@@ -134,7 +141,7 @@ const UsersTab = () => {
         prev.map((x) => (x.uid === u.uid ? { ...x, customAvatarBanned: next } : x))
       );
     } catch (error) {
-      toast.error(error.message || 'Failed to update ban');
+      toast.error(messageOf(error, 'Failed to update ban'));
     } finally {
       setModeratingUid(null);
     }

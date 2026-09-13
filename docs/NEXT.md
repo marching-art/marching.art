@@ -8,7 +8,7 @@ burns an hour to conclude "everything's about covered." Don't. If you ship,
 cut, or discover something, edit THIS file in the same PR — that's the whole
 maintenance contract.
 
-_Last updated: 2026-09-13 (Podium corps badged on BOTH Eastern Classic nights on the Schedule page + registration modal, matching fantasy — shared `utils/podiumAttendance` helpers now feed ScheduleParts, the modal and tourStops; community report). Same day: (firebase-admin 14.4 everywhere + functions/scraper/scripts migrated to the modular `firebase-admin/*` API; `uuid` advisory closed via a scoped `gaxios` override; unused `firebase-functions-test` dropped). Previous: 2026-09-12 (Scores page highlights every one of the director's corps — all fantasy classes + Podium, matched by uid with a name fallback via `utils/corps.buildViewerCorpsMatcher` / `isViewerCorps`; community report). Previous: 2026-09-11 (league chat rebuilt — threaded rows, reactions, replies, @mention picker, report control, scroll that stays put, optimistic sends, `lastChatAt` unread dot on the league card). Previous: 2026-09-09 (score-age column on the Fantasy + Podium season standings); 2026-09-06 (director-authored articles exempt from the score-reveal gate — dead Discord/notification links fixed; scheduled-vs-pending admin email + working admin deep link; assistant director fades with consecutive days
+_Last updated: 2026-09-13 (storage bucket done — `VITE_FIREBASE_STORAGE_BUCKET` secret set ~2026-08-30, run #446 confirms `marching.art` linked and `storage.rules` released with no warning; ops item closed. `main` ruleset imported and Active — seven CI checks required, no bypass; ops item closed. BMAC webhook confirmed live — endpoint Active on the function URL, test event answered 200 "Ignored (test event)", signature verified; ops item closed. Podium medal correction re-run with commit on the show-field rule — 21 recap days / 83 rows re-ranked, 23 live medal counters rebuilt; ops item closed. Overture days 19–23 will NOT be re-scored — owner decision, the five hash-ordered nights stand as posted; ops item dropped). Same day: (Podium corps badged on BOTH Eastern Classic nights on the Schedule page + registration modal, matching fantasy — shared `utils/podiumAttendance` helpers now feed ScheduleParts, the modal and tourStops; community report). Same day: (firebase-admin 14.4 everywhere + functions/scraper/scripts migrated to the modular `firebase-admin/*` API; `uuid` advisory closed via a scoped `gaxios` override; unused `firebase-functions-test` dropped). Previous: 2026-09-12 (Scores page highlights every one of the director's corps — all fantasy classes + Podium, matched by uid with a name fallback via `utils/corps.buildViewerCorpsMatcher` / `isViewerCorps`; community report). Previous: 2026-09-11 (league chat rebuilt — threaded rows, reactions, replies, @mention picker, report control, scroll that stays put, optimistic sends, `lastChatAt` unread dot on the league card). Previous: 2026-09-09 (score-age column on the Fantasy + Podium season standings); 2026-09-06 (director-authored articles exempt from the score-reveal gate — dead Discord/notification links fixed; scheduled-vs-pending admin email + working admin deep link; assistant director fades with consecutive days
 away; Podium field = the registered field; majors and championship rounds
 carry the Podium roster; roster audit workflow; season re-mint guard). Previous: 2026-09-04 (site-review row 20 — one onboarding checklist (the Journey; Quick Start modal deleted, `?reveal=` deep link) and one How-to-Play route by auth state; device-aware install guide at /install — in-app-browser detection with an Open-in-Safari/Chrome escape hatch, per-browser steps, one-tap native install, linked from footer / ? menu / home / Settings / the nudge; site-review row 19 — honest functions coverage gate, first admin / league-automation tests; row 18 — one-click unsubscribe + List-Unsubscribe headers, noindex auth wall; row 17 — vendor-firebase trimmed, GameShell + overlays lazy for guests; row 16 — focus traps + Escape in every raw dialog, icon buttons named; row 15 — one dashboard interrupt per visit, celebrations to the inbox; row 14 — weekly XP / win bonus / finish bonus paid per director; row 13 — league weeks decided per show, percentile edge cases; row 12 — server-enforced age gate + consent-gated analytics; AI imagery now built from the full Uniform Studio design + rendered reference image; main ruleset + gazetteer PR flow; site-review Fix-first 1–11 + quick wins shipped)._
 
@@ -280,57 +280,25 @@ ops step below)_
 
 ## Operational — owner only, standing until done
 
-- **Re-run the Podium medal correction** (Actions → "Correct Podium medals"
-  → Run workflow, dry run first, then with `commit` checked) once the
-  show-field gate deploys. The first run (2026-09-04 15:29Z) gated medals on
-  the DIVISION's field, which zeroed every Open and World Class counter for
-  the season; the rule now gates on the show's field and the script re-stamps
-  rows and rebuilds the counters from them. Idempotent — a later run that
-  finds nothing is a no-op.
-- **Re-enable the Buy Me a Coffee webhook.** BMAC auto-disabled it (email
-  "Action Required | Webhook Disabled", 2026-09-03) because the endpoint URL
-  in BMAC → Integrations → Webhooks had been set to the compute
-  service-account email, not the function URL. Set it to
-  `https://us-central1-marching-art.cloudfunctions.net/bmacWebhook`
-  (`docs/BMAC_SUPPORTERS.md` §2), confirm the signing secret matches
-  `BMAC_WEBHOOK_SECRET`, flip the Delivery-status toggle back on, then "Send
-  test event" and check the Event deliveries tab shows 200. The first test
-  (before the `live_mode:false` guard shipped) was processed as a real event,
-  so a supporter doc keyed to the sample payload's email may sit in
-  `artifacts/{ns}/supporters/`: a membership one is revoked by the nightly
-  reconcile, a `donation.created` one expires on its own. If the test still
-  reports 503 after the merged `cpu: 1` hardening deploys, consider
-  `minInstances: 1` on `bmacWebhook` (~$6/mo) — that is a spend call.
-- **Import the `main` ruleset** (Settings → Rules → Rulesets → New ruleset ▾
-  → Import a ruleset → `.github/rulesets/main.json`, or the `gh api` line in
-  `.github/rulesets/README.md`). Until it is imported, a PR can still be
-  merged before its CI finishes (#1490 landed red on main that way) and the
-  gazetteer refresh's PR could be merged without checks. Then confirm the
-  next PR shows the seven jobs as required.
-- **Re-score the Overture nights scored on hash-ordered history (days 19–23,
-  2026-08-27 → 08-31).** The `historical_scores` sharding (a103c8f) returned a
-  year's events in document-id order; the projection model read its season
-  anchors off the list ends and swung projected captions by up to ±2 points
-  (a director with Cadets 2013 ×3 in music posted 21 vs. the 25.5 their
-  dashboard showed). Fixed at the read layer and in the model (this PR);
-  every projected caption from those five nights is still wrong in
-  `fantasy_recaps`, standings and the caption ledger. Decide whether to
-  reprocess them with the admin force-rescore (it rewrites recaps, coin and
-  XP awards are ledger-idempotent) or leave them and announce; either way
-  reply to the Discord report. Real-score nights (day 22 for Cadets 2013)
-  were never affected.
-- **Flip App Check enforcement**: the CSP fix that was blocking attestation
-  shipped 2026-09-01 (needs a hosting deploy). Once live, check Firebase
-  console → App Check metrics for Functions; once real traffic shows verified, flip the literal
-  in `functions/index.js` (`enforceAppCheck: false → true`) and run a full
-  deploy. Flipping blind locks out clients on stale cached bundles.
-- **Flip lineup privacy** (production credentials required; two steps, in
-  order). The public mirror (`profile/public`, `triggers/profileMirror.js`)
-  ships with the next functions deploy and the client already reads it, but
-  profiles that predate the trigger have no mirror until they are next
-  written. (1) `cd functions && node src/scripts/backfillPublicProfiles.js
---dry-run`, then `--commit`. (2) In `firestore.rules`, change
-  `match /profile/data { allow read: if isAuthenticated();` to
+- **Flip App Check enforcement** — monitor phase started 2026-09-13: a
+  score-based reCAPTCHA Enterprise key (`marching-art`, domain `marching.art`,
+  no challenges) was created, the web app registered under reCAPTCHA
+  Enterprise in Firebase console → App Check, the key ID set as the
+  `VITE_APPCHECK_RECAPTCHA_SITE_KEY` repository secret, and the client switched
+  to `ReCaptchaEnterpriseProvider`. Next: after the hosting deploy that carries
+  it, watch console → App Check → APIs → Cloud Functions for ~a week; when
+  Verified is nearly all traffic, flip the literal in `functions/index.js`
+  (`enforceAppCheck: false → true`) and let the functions deploy run. Flipping
+  blind locks out clients on stale cached bundles; roll back by flipping it
+  back.
+- **Flip lineup privacy** (two steps, in order). The public mirror
+  (`profile/public`, `triggers/profileMirror.js`) is deployed and the client
+  already reads it, but profiles that predate the trigger have no mirror until
+  they are next written. (1) **Owner, from the Actions tab:** run "Backfill
+  public profile mirrors" (`.github/workflows/backfill-public-profiles.yml`,
+  added 2026-09-13) with `commit` unchecked, read the "Would write N" total,
+  then again with `commit` checked. (2) **Then a PR:** in `firestore.rules`,
+  change `match /profile/data { allow read: if isAuthenticated();` to
   `allow read: if isOwner(userId) || isAdmin();`, update the two
   `profile/data` read assertions in `firestore-tests/rules.test.mjs`
   (third-party read must now FAIL), drop the raw-doc fallbacks in
@@ -341,22 +309,13 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
 - **Unfreeze stale league matchups** (production credentials required):
   `node functions/src/scripts/archiveStaleLeagueMatchups.js --dry-run`, read
   the output, then `--commit`.
-- **Set the `VITE_FIREBASE_STORAGE_BUCKET` repository secret to
-  `marching.art`** (the domain-verified GCS bucket; the project has no
-  Firebase default bucket). `firebase.json`, `mediaService.js` and the env
-  examples already name it. On the next Deploy Cloud Functions run,
-  `scripts/deployStorageRules.mjs` links the bucket to Firebase and ships
-  `storage.rules`; if it prints a `::warning::` instead, use "Import bucket"
-  on console.firebase.google.com/project/marching-art/storage or grant the
-  deploy SA the Firebase Admin role, then re-run with
-  `deploy_target=rules-only`.
 - **Prune dead Firestore indexes** in the console after the
   `firestore.indexes.json` cleanup (indexes are deliberately not deployed
   from CI).
 
 ## Evergreen ratchets (any session, any size)
 
-- `@ts-nocheck` paydown — **58 files** at
+- `@ts-nocheck` paydown — **54 files** at
   last update; `npm run ts-nocheck:next` ranks the cheapest (no free wins
   left — the cheapest `src/` files are ~14 errors). It needs `npm ci` first
   and refuses to report on any other compiler. One per substantive task is

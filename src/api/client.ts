@@ -86,22 +86,27 @@ function initializeFirebase(): void {
 }
 
 /**
- * Initialize App Check when (and only when) a reCAPTCHA site key is configured.
- * A no-op otherwise, so builds without the key are unaffected. Fire-and-forget:
- * a failure here must never block app startup (App Check is not enforced until
- * the backend rollout flips it on).
+ * Initialize App Check when (and only when) a reCAPTCHA Enterprise key ID is
+ * configured. A no-op otherwise, so builds without the key are unaffected.
+ * Fire-and-forget: a failure here must never block app startup (App Check is
+ * not enforced until the backend rollout flips it on).
+ *
+ * The key is a score-based reCAPTCHA Enterprise key (no challenges), created in
+ * the Google Cloud console and registered under "reCAPTCHA Enterprise" on the
+ * web app in Firebase console → App Check. The provider must match that
+ * registration — `ReCaptchaV3Provider` only pairs with classic v3 keys.
  */
 function initializeAppCheckIfConfigured(): void {
   if (!APP_CHECK_CONFIG.enabled) return;
   import('firebase/app-check')
-    .then(({ initializeAppCheck, ReCaptchaV3Provider }) => {
+    .then(({ initializeAppCheck, ReCaptchaEnterpriseProvider }) => {
       // Debug token for local/emulator dev — must be set before initialize.
       if (APP_CHECK_CONFIG.debugToken) {
         (globalThis as Record<string, unknown>).FIREBASE_APPCHECK_DEBUG_TOKEN =
           APP_CHECK_CONFIG.debugToken;
       }
       initializeAppCheck(app, {
-        provider: new ReCaptchaV3Provider(APP_CHECK_CONFIG.recaptchaSiteKey),
+        provider: new ReCaptchaEnterpriseProvider(APP_CHECK_CONFIG.recaptchaSiteKey),
         isTokenAutoRefreshEnabled: true,
       });
     })

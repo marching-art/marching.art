@@ -1,5 +1,15 @@
 [
   {
+    "id": "2026-09-13-podium-medal-tallies-restored",
+    "date": "2026-09-13",
+    "title": "Podium: your season medal tally is back to its true count",
+    "category": "fix",
+    "summary": "Since the medal fix on September 4, many Open and World Class directors saw their Podium medal count on the profile and season ledger sit well below what they had actually earned, or at zero. Every show this season has been re-checked and each director's gold, silver and bronze tally rebuilt from it. Nobody lost a medal; if your count was short, it is now right.",
+    "highlights": [
+      "Fantasy classes were never affected. The show-by-show medals on your season ledger were already correct; only the season totals were short."
+    ]
+  },
+  {
     "id": "2026-09-13-podium-eastern-classic-registered-both-nights",
     "date": "2026-09-13",
     "title": "Your Podium corps now shows as registered for both Eastern Classic nights",

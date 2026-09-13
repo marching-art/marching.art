@@ -1,0 +1,76 @@
+name: Backfill public profile mirrors
+
+# One-off (re-runnable) data migration that writes users/{uid}/profile/public
+# for every profile that predates the mirror trigger (triggers/profileMirror.js).
+#
+# WHY: profile/data carries each director's caption lineup and picks, which
+# the game treats as secret from opponents (docs/CAPTION_WARS_SPEC.md §7), yet
+# it is readable by any signed-in director. The public projection lives in a
+# sibling profile/public doc that the trigger keeps in sync on every write —
+# but a profile that has not been written since the trigger shipped has no
+# mirror yet. This job creates the missing mirrors so profile/data can then be
+# locked to owner/admin-only in firestore.rules (the "Flip lineup privacy" ops
+# item in docs/NEXT.md, step 2). See functions/src/scripts/backfillPublicProfiles.js.
+#
+# HOW TO RUN (no console needed — all from the Actions tab):
+#   1. Actions → "Backfill public profile mirrors" → Run workflow.
+#   2. Leave "commit" UNCHECKED for a dry run: the log ends with
+#      "Would write N public mirrors (M profiles scanned)".
+#   3. Run workflow again with "commit" CHECKED to write them. Idempotent —
+#      a re-run rewrites the same projection, so a second commit is harmless.
+#
+# Only users/{uid}/profile/public documents are written (profile/data is read,
+# never modified). This job writes to Firestore only — it makes no repo commits.
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: 'Write the mirrors (leave unchecked for a dry run)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  # Never let two backfills write the same mirrors at once.
+  group: backfill-public-profiles
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Install function dependencies
+        run: cd functions && npm ci
+
+      - name: Run backfill (${{ inputs.commit && 'COMMIT' || 'dry run' }})
+        env:
+          # Same Firestore credentials the deploy workflow uses.
+          GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          # Production data namespace (paths.users resolves here); matches
+          # functions/.env.marching-art.
+          DATA_NAMESPACE: marching-art
+        run: |
+          echo "$GOOGLE_APPLICATION_CREDENTIALS_JSON" > /tmp/sa-key.json
+          export GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa-key.json
+          trap 'rm -f /tmp/sa-key.json' EXIT
+
+          cd functions
+          if [ "${{ inputs.commit }}" = "true" ]; then
+            echo "Running WITH --commit: profile/public mirrors will be written."
+            node src/scripts/backfillPublicProfiles.js --commit
+          else
+            echo "Dry run: no writes. Check 'commit' to apply."
+            node src/scripts/backfillPublicProfiles.js --dry-run
+          fi
