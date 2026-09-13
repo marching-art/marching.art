@@ -17,7 +17,7 @@ const {
   validateShowSelection,
   resolveShowsAgainstSchedule,
 } = require("../helpers/showSelection");
-const admin = require("firebase-admin");
+const { FieldValue } = require("firebase-admin/firestore");
 
 /**
  * Task 2.7: Saves a user's 8-caption lineup for a specific corps class.
@@ -397,7 +397,7 @@ exports.selectUserShows = onCall({ cors: true }, async (request) => {
           if (!newKeys.has(key)) {
             batch.set(
               eventRef(key),
-              { registrations: { [entryKey]: admin.firestore.FieldValue.delete() } },
+              { registrations: { [entryKey]: FieldValue.delete() } },
               { merge: true }
             );
           }
@@ -911,7 +911,7 @@ exports.setEncoreDecline = onCall({ cors: true }, async (request) => {
   const eventKey = showRegistrationEventKey(week, eventName, date);
   const field = `corps.${corpsClass}.declinedEncores.${eventKey}`;
   await profileRef.update({
-    [field]: declined ? true : admin.firestore.FieldValue.delete(),
+    [field]: declined ? true : FieldValue.delete(),
   });
 
   // Best-effort index patch so the encore reassigns promptly; the nightly

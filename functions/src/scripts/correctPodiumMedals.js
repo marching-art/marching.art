@@ -39,9 +39,10 @@
  *   node src/scripts/correctPodiumMedals.js --commit
  */
 
-const admin = require("firebase-admin");
+const { getFirestore } = require("firebase-admin/firestore");
+const { initializeApp, getApps } = require("firebase-admin/app");
 
-if (!admin.apps.length) admin.initializeApp();
+if (!getApps().length) initializeApp();
 
 const { paths } = require("../helpers/paths");
 const store = require("../helpers/podium/store");
@@ -154,7 +155,7 @@ function reconcileCareerMedals(career, seasonUid, medals) {
 }
 
 async function run({ commit }) {
-  const db = admin.firestore();
+  const db = getFirestore();
   const medalsCfg = store.balance.medals;
 
   // ---- 1. Recaps ----------------------------------------------------------

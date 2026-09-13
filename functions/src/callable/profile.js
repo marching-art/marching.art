@@ -4,6 +4,7 @@ const { paths } = require("../helpers/paths");
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
 const { FieldValue } = require("firebase-admin/firestore");
+const { getAuth } = require("firebase-admin/auth");
 const { assertAuth, assertWriteBudget } = require("../helpers/callableGuards");
 const { detachMemberFromLeague } = require("../helpers/leagueLifecycle");
 const { collectRegistrationsFromProfile } = require("../helpers/showRegistrations");
@@ -254,12 +255,11 @@ exports.updateEmail = onCall({ cors: true }, async (request) => {
   }
 
   try {
-    const admin = require("firebase-admin");
     const db = getDb();
 
     // Check if email is already in use by another account
     try {
-      const existingUser = await admin.auth().getUserByEmail(trimmedEmail);
+      const existingUser = await getAuth().getUserByEmail(trimmedEmail);
       if (existingUser.uid !== userId) {
         throw new HttpsError("already-exists", "This email is already associated with another account.");
       }
@@ -277,7 +277,7 @@ exports.updateEmail = onCall({ cors: true }, async (request) => {
     }
 
     // Update email in Firebase Auth
-    await admin.auth().updateUser(userId, { email: trimmedEmail });
+    await getAuth().updateUser(userId, { email: trimmedEmail });
 
     // Persist the email ONLY to the owner-private document. The public
     // `profile/data` doc is world-readable (leaderboards / public profiles),
@@ -340,7 +340,6 @@ exports.deleteAccount = onCall({ cors: true, timeoutSeconds: 300, cpu: 1 }, asyn
   logger.info(`Deleting account for user ${userId}`);
 
   try {
-    const admin = require("firebase-admin");
     const db = getDb();
 
     // Get user profile to find username for cleanup
@@ -531,7 +530,7 @@ exports.deleteAccount = onCall({ cors: true, timeoutSeconds: 300, cpu: 1 }, asyn
     }
 
     // Delete the user from Firebase Auth
-    await admin.auth().deleteUser(userId);
+    await getAuth().deleteUser(userId);
 
     logger.info(`Successfully deleted account for user ${userId}`);
 

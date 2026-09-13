@@ -1,4 +1,4 @@
-const admin = require("firebase-admin");
+const { FieldPath } = require("firebase-admin/firestore");
 
 /**
  * Process every document in a collection in pages, so a collection that grows
@@ -33,7 +33,7 @@ async function processAllInPages(collectionRef, pageSize, processDoc, options = 
 
   // Order by document id so pagination is stable and startAfter is well-defined.
   for (;;) {
-    let query = collectionRef.orderBy(admin.firestore.FieldPath.documentId()).limit(pageSize);
+    let query = collectionRef.orderBy(FieldPath.documentId()).limit(pageSize);
     if (cursor) query = query.startAfter(cursor);
 
     const snap = await query.get();

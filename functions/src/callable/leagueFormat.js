@@ -28,7 +28,7 @@
  */
 
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
-const admin = require("firebase-admin");
+const { FieldValue } = require("firebase-admin/firestore");
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
 const { paths } = require("../helpers/paths");
@@ -176,7 +176,7 @@ exports.setLeagueScoringFormat = onCall({ cors: true }, async (request) => {
 
     if (cost > 0) {
       transaction.update(profileRef, {
-        corpsCoin: admin.firestore.FieldValue.increment(-cost),
+        corpsCoin: FieldValue.increment(-cost),
       });
       addCoinHistoryEntryToTransaction(transaction, db, uid, {
         type: TRANSACTION_TYPES.LEAGUE_FORMAT,

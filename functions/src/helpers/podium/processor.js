@@ -18,7 +18,7 @@
  * Podium idempotency never contends with the fantasy lease.
  */
 
-const admin = require("firebase-admin");
+const { FieldValue } = require("firebase-admin/firestore");
 const { logger } = require("firebase-functions/v2");
 const { claimScoringRun, markScoringRunCompleted, markScoringRunFailed } = require("../scoringRunGuard");
 const { resolvePodiumRegionalChampion } = require("./regionalAward");
@@ -755,7 +755,7 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
       if (regional) {
         const regionalWriter = new ChunkedWriter(db);
         regionalWriter.update(store.profileRef(db, regional.uid), {
-          "trophies.regionals": admin.firestore.FieldValue.arrayUnion(regional.trophy),
+          "trophies.regionals": FieldValue.arrayUnion(regional.trophy),
         });
         await regionalWriter.commit();
         logger.info(

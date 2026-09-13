@@ -1,7 +1,7 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { paths } = require("../helpers/paths");
 const { logger } = require("firebase-functions/v2");
-const admin = require("firebase-admin");
+const { FieldValue } = require("firebase-admin/firestore");
 const { getDb } = require("../config");
 const { addCoinHistoryEntryToTransaction, TRANSACTION_TYPES } = require("../helpers/economy");
 const { assertAuth, assertWriteBudget } = require("../helpers/callableGuards");
@@ -72,7 +72,7 @@ const purchaseShopItem = onCall({ cors: true }, async (request) => {
       const newBalance = balance - item.price;
       transaction.update(profileRef, {
         corpsCoin: newBalance,
-        'cosmetics.owned': admin.firestore.FieldValue.arrayUnion(item.id),
+        'cosmetics.owned': FieldValue.arrayUnion(item.id),
       });
 
       addCoinHistoryEntryToTransaction(transaction, db, uid, {

@@ -19,7 +19,7 @@
  */
 
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
-const admin = require("firebase-admin");
+const { FieldValue } = require("firebase-admin/firestore");
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
 const { paths } = require("../helpers/paths");
@@ -88,7 +88,7 @@ async function rebuildAndWriteStandings(db, leagueId, members) {
     {
       records,
       standings,
-      lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
+      lastUpdated: FieldValue.serverTimestamp(),
     },
     { merge: true }
   );

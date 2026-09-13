@@ -19,7 +19,7 @@
  */
 
 const { logger } = require("firebase-functions/v2");
-const admin = require("firebase-admin");
+const { FieldValue } = require("firebase-admin/firestore");
 const { paths } = require("./paths");
 const {
   fetchRecentRecaps,
@@ -164,14 +164,14 @@ async function settleLeaguePoolsForDay(db, seasonData, now = new Date()) {
     if (carry > 0) {
       batch.set(
         leagueDoc.ref,
-        { poolCarry: admin.firestore.FieldValue.increment(carry) },
+        { poolCarry: FieldValue.increment(carry) },
         { merge: true }
       );
     }
     for (const uid of winners) {
       batch.set(
         db.doc(paths.userProfile(uid)),
-        { corpsCoin: admin.firestore.FieldValue.increment(perWinner) },
+        { corpsCoin: FieldValue.increment(perWinner) },
         { merge: true }
       );
       const historyRef = db.collection(paths.userCorpsCoinHistory(uid)).doc();

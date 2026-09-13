@@ -16,7 +16,7 @@
 const crypto = require("crypto");
 const { logger } = require("firebase-functions/v2");
 const { defineSecret } = require("firebase-functions/params");
-const admin = require("firebase-admin");
+const { getStorage } = require("firebase-admin/storage");
 
 // Cloudinary credentials are Secret Manager secrets, so they only exist in
 // process.env of functions that declare them. Declaring them here — in the one
@@ -101,7 +101,7 @@ async function uploadToFirebaseStorage(base64Data, options = {}) {
   } = options;
 
   try {
-    const bucket = admin.storage().bucket(STORAGE_BUCKET);
+    const bucket = getStorage().bucket(STORAGE_BUCKET);
 
     // Parse base64 data URL
     let imageBuffer;

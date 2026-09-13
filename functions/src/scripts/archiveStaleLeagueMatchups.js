@@ -24,9 +24,10 @@
  *   node src/scripts/archiveStaleLeagueMatchups.js --commit
  */
 
-const admin = require("firebase-admin");
+const { getFirestore } = require("firebase-admin/firestore");
+const { initializeApp, getApps } = require("firebase-admin/app");
 
-if (!admin.apps.length) admin.initializeApp();
+if (!getApps().length) initializeApp();
 
 const { paths } = require("../helpers/paths");
 
@@ -77,7 +78,7 @@ function planLeagueRepair(weekDocs, archivedSeasonIds, liveSeasonUid) {
 }
 
 async function run({ commit }) {
-  const db = admin.firestore();
+  const db = getFirestore();
 
   const seasonDoc = await db.doc("game-settings/season").get();
   const liveSeasonUid = seasonDoc.exists ? seasonDoc.data().seasonUid || null : null;

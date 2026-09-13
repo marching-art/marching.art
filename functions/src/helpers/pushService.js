@@ -3,7 +3,8 @@
  * Handles sending Firebase Cloud Messaging (FCM) push notifications
  */
 
-const admin = require("firebase-admin");
+const { getFirestore } = require("firebase-admin/firestore");
+const { getMessaging } = require("firebase-admin/messaging");
 const { logger } = require("firebase-functions/v2");
 const { paths } = require("./paths");
 
@@ -40,7 +41,7 @@ const PUSH_PREFERENCE_MAP = {
  */
 async function getUserPushConfig(userId) {
   try {
-    const db = admin.firestore();
+    const db = getFirestore();
     // The FCM token lives on the owner-only private doc — profile/data is
     // world-readable and must not carry device identifiers. Tokens saved
     // before the move still sit at profile settings.fcmToken, so fall back
@@ -140,7 +141,7 @@ async function sendPushNotification(userId, { title, body, url }, pushType, data
     };
 
     // Send the message
-    const response = await admin.messaging().send(message);
+    const response = await getMessaging().send(message);
     logger.info(`Push notification sent to user ${userId}: ${response}`);
     return true;
   } catch (error) {
@@ -164,7 +165,7 @@ async function sendPushNotification(userId, { title, body, url }, pushType, data
  */
 async function removeInvalidToken(userId) {
   try {
-    const db = admin.firestore();
+    const db = getFirestore();
     // Clear both homes of the token: the private doc (current) and the
     // legacy profile settings field (pre-migration fallback read above).
     await db.doc(paths.userPrivate(userId)).set(

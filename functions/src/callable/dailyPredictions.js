@@ -1,7 +1,7 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { paths } = require("../helpers/paths");
 const { logger } = require("firebase-functions/v2");
-const admin = require("firebase-admin");
+const { FieldValue } = require("firebase-admin/firestore");
 const { getDb } = require("../config");
 const { calculateXPUpdates, seasonBaselineStamp } = require("../helpers/xpCalculations");
 const { addCoinHistoryEntryToTransaction } = require("../helpers/economy");
@@ -281,7 +281,7 @@ const resolvePredictions = onCall({ cors: true }, async (request) => {
         classUnlocked = xpResult.classUnlocked;
       }
       if (totalCoin > 0) {
-        updates.corpsCoin = admin.firestore.FieldValue.increment(totalCoin);
+        updates.corpsCoin = FieldValue.increment(totalCoin);
       }
 
       transaction.update(profileRef, updates);

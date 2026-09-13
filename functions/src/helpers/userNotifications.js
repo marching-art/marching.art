@@ -25,7 +25,7 @@
  *     gate it in the callers (where the recipient's settings are in hand).
  */
 
-const admin = require("firebase-admin");
+const { FieldValue } = require("firebase-admin/firestore");
 const { logger } = require("firebase-functions/v2");
 const { paths } = require("./paths");
 const { ChunkedWriter } = require("./chunkedWriter");
@@ -115,7 +115,7 @@ async function createUserNotification(db, uid, notification) {
       ...doc,
       id: ref.id,
       userId: uid,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
     });
     return ref.id;
   } catch (error) {
@@ -157,7 +157,7 @@ async function createUserNotifications(db, entries) {
         ...doc,
         id: ref.id,
         userId: uid,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
       });
       result.written++;
     }

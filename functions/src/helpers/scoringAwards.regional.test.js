@@ -12,7 +12,7 @@ process.env.DATA_NAMESPACE = process.env.DATA_NAMESPACE || 'test-ns';
 const { test, describe } = require('node:test');
 const assert = require('node:assert/strict');
 
-const admin = require('firebase-admin');
+const { FieldValue } = require("firebase-admin/firestore");
 const { awardRegionalTrophies } = require('./scoringAwards');
 
 const NS = process.env.DATA_NAMESPACE;
@@ -113,7 +113,7 @@ describe('awardRegionalTrophies', () => {
     const w1Write = trophyWrites.find((w) => w.path === profilePath('w1'));
     assert.ok(
       w1Write.data['trophies.regionals'].isEqual(
-        admin.firestore.FieldValue.arrayUnion({
+        FieldValue.arrayUnion({
           type: 'regional',
           corpsClass: 'worldClass',
           seasonName: seasonData.name,
@@ -131,7 +131,7 @@ describe('awardRegionalTrophies', () => {
     );
     assert.ok(
       soundSportWrites[0].data['trophies.soundSportAwards'].isEqual(
-        admin.firestore.FieldValue.arrayUnion({
+        FieldValue.arrayUnion({
           type: 'regional_best_in_show',
           seasonName: seasonData.name,
           eventName: 'marching.art Southwestern Championship',

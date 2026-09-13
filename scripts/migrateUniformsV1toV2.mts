@@ -22,8 +22,8 @@
  *   npx tsx scripts/migrateUniformsV1toV2.mts --commit   # apply writes
  */
 
-import admin from 'firebase-admin';
-import { FieldValue } from 'firebase-admin/firestore';
+import { getApps, initializeApp } from 'firebase-admin/app';
+import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 import { planUniformMigration } from '../src/utils/uniformMigration';
 
 const DATA_NAMESPACE = process.env.DATA_NAMESPACE || 'marching-art';
@@ -32,8 +32,8 @@ const DATA_NAMESPACE = process.env.DATA_NAMESPACE || 'marching-art';
 const BATCH_LIMIT = 400;
 
 async function migrateUniformsV1toV2({ dryRun = false } = {}) {
-  if (!admin.apps.length) admin.initializeApp();
-  const db = admin.firestore();
+  if (!getApps().length) initializeApp();
+  const db = getFirestore();
   // Defense in depth: the planner already drops undefined from migrated
   // snapshots, but never let a stray undefined abort the whole run.
   db.settings({ ignoreUndefinedProperties: true });

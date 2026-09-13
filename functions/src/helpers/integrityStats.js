@@ -430,11 +430,11 @@ function computeIntegritySignals(accounts, options = {}) {
 async function listAuthUsers() {
   // Lazy require: firebase-admin is only needed for the live scan, and keeping
   // it out of module scope keeps the pure logic importable in a bare test.
-  const admin = require("firebase-admin");
+const { getAuth } = require("firebase-admin/auth");
   const byUid = new Map();
   let pageToken;
   do {
-    const page = await admin.auth().listUsers(1000, pageToken);
+    const page = await getAuth().listUsers(1000, pageToken);
     for (const user of page.users) {
       byUid.set(user.uid, {
         email: user.email,

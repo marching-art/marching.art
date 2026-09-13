@@ -11,9 +11,10 @@
  *   node src/scripts/backfillPublicProfiles.js --dry-run
  *   node src/scripts/backfillPublicProfiles.js --commit
  */
-const admin = require("firebase-admin");
+const { FieldPath, getFirestore } = require("firebase-admin/firestore");
+const { initializeApp, getApps } = require("firebase-admin/app");
 
-if (!admin.apps.length) admin.initializeApp();
+if (!getApps().length) initializeApp();
 
 const { paths } = require("../helpers/paths");
 const { projectPublicProfile } = require("../helpers/publicProfileMirror");
@@ -26,7 +27,7 @@ async function main() {
     console.error("Pass --dry-run or --commit");
     process.exit(2);
   }
-  const db = admin.firestore();
+  const db = getFirestore();
   const prefix = `${paths.users()}/`;
   let scanned = 0;
   let written = 0;
@@ -35,7 +36,7 @@ async function main() {
   for (;;) {
     let query = db
       .collectionGroup("profile")
-      .orderBy(admin.firestore.FieldPath.documentId())
+      .orderBy(FieldPath.documentId())
       .limit(BATCH);
     if (cursor) query = query.startAfter(cursor);
     const snap = await query.get();

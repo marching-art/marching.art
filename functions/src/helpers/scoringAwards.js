@@ -5,7 +5,7 @@
 
 const { paths } = require("./paths");
 const { logger } = require("firebase-functions/v2");
-const admin = require("firebase-admin");
+const { FieldValue } = require("firebase-admin/firestore");
 
 /**
  * @typedef {FirebaseFirestore.Firestore} Firestore
@@ -356,7 +356,7 @@ async function processCoinAwardsBatch(coinAwards, batch, db, options = {}) {
       for (const [caption, value] of Object.entries(captionPoints.get(uid) || {})) {
         if (value > 0) {
           captionUpdates[`captionStats.${caption}`] =
-            admin.firestore.FieldValue.increment(Math.round(value * 10) / 10);
+            FieldValue.increment(Math.round(value * 10) / 10);
         }
       }
     }
@@ -364,9 +364,9 @@ async function processCoinAwardsBatch(coinAwards, batch, db, options = {}) {
 
     const userProfileRef = db.doc(paths.userProfile(uid));
     batch.update(userProfileRef, {
-      ...(data ? { corpsCoin: admin.firestore.FieldValue.increment(data.totalAmount) } : {}),
+      ...(data ? { corpsCoin: FieldValue.increment(data.totalAmount) } : {}),
       ...(data && data.xpAmount > 0
-        ? { xp: admin.firestore.FieldValue.increment(data.xpAmount) }
+        ? { xp: FieldValue.increment(data.xpAmount) }
         : {}),
       ...captionUpdates,
       // The token rides this same update op, so it commits atomically with the
@@ -457,7 +457,7 @@ async function awardRegionalTrophies(batch, dailyRecap, scoredDay, seasonData, d
         rank: 1
       };
       batch.update(userProfileRef, {
-        "trophies.regionals": admin.firestore.FieldValue.arrayUnion(trophy)
+        "trophies.regionals": FieldValue.arrayUnion(trophy)
       });
     });
 
@@ -475,7 +475,7 @@ async function awardRegionalTrophies(batch, dailyRecap, scoredDay, seasonData, d
         score: bestInShow.totalScore
       };
       batch.update(userProfileRef, {
-        "trophies.soundSportAwards": admin.firestore.FieldValue.arrayUnion(award)
+        "trophies.soundSportAwards": FieldValue.arrayUnion(award)
       });
     }
   });
@@ -513,7 +513,7 @@ function awardClassChampionshipTrophies(batch, dailyRecap, seasonData, db) {
         rank: index + 1
       };
       batch.update(userProfileRef, {
-        "trophies.classChampionships": admin.firestore.FieldValue.arrayUnion(trophy)
+        "trophies.classChampionships": FieldValue.arrayUnion(trophy)
       });
     });
 
@@ -530,7 +530,7 @@ function awardClassChampionshipTrophies(batch, dailyRecap, seasonData, db) {
         rank: index + 1
       };
       batch.update(userProfileRef, {
-        "trophies.classChampionships": admin.firestore.FieldValue.arrayUnion(trophy)
+        "trophies.classChampionships": FieldValue.arrayUnion(trophy)
       });
     });
 
@@ -544,7 +544,7 @@ function awardClassChampionshipTrophies(batch, dailyRecap, seasonData, db) {
         eventName: show.eventName
       };
       batch.update(userProfileRef, {
-        "trophies.classFinalistRibbons": admin.firestore.FieldValue.arrayUnion(ribbon)
+        "trophies.classFinalistRibbons": FieldValue.arrayUnion(ribbon)
       });
     });
 
@@ -594,7 +594,7 @@ async function awardFinalsAndSaveChampions(batch, dailyRecap, seasonData, db) {
           score: bestInShow.totalScore
         };
         batch.update(userProfileRef, {
-          "trophies.soundSportAwards": admin.firestore.FieldValue.arrayUnion(award)
+          "trophies.soundSportAwards": FieldValue.arrayUnion(award)
         });
       }
     } else {
@@ -612,7 +612,7 @@ async function awardFinalsAndSaveChampions(batch, dailyRecap, seasonData, db) {
           rank: index + 1
         };
         batch.update(userProfileRef, {
-          "trophies.championships": admin.firestore.FieldValue.arrayUnion(trophy)
+          "trophies.championships": FieldValue.arrayUnion(trophy)
         });
       });
 
@@ -626,7 +626,7 @@ async function awardFinalsAndSaveChampions(batch, dailyRecap, seasonData, db) {
           rank: index + 1
         };
         batch.update(userProfileRef, {
-          "trophies.finalistMedals": admin.firestore.FieldValue.arrayUnion(medal)
+          "trophies.finalistMedals": FieldValue.arrayUnion(medal)
         });
       });
     }

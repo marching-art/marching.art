@@ -18,7 +18,7 @@
  */
 
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
-const admin = require("firebase-admin");
+const { FieldValue } = require("firebase-admin/firestore");
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
 const { paths } = require("../helpers/paths");
@@ -220,7 +220,7 @@ exports.updateLeagueSettings = onCall({ cors: true }, async (request) => {
     updates.announcement = {
       ...updates.announcement,
       setBy: uid,
-      setAt: admin.firestore.FieldValue.serverTimestamp(),
+      setAt: FieldValue.serverTimestamp(),
     };
   }
 
@@ -383,8 +383,8 @@ exports.setCoCommissioner = onCall({ cors: true }, async (request) => {
 
     transaction.update(leagueRef, {
       commissioners: grant
-        ? admin.firestore.FieldValue.arrayUnion(memberId)
-        : admin.firestore.FieldValue.arrayRemove(memberId),
+        ? FieldValue.arrayUnion(memberId)
+        : FieldValue.arrayRemove(memberId),
     });
     return { changed: true, grant, leagueName: league.name || "your league" };
   });

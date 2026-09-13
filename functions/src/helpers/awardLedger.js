@@ -23,7 +23,7 @@
  * (`archiveAndResetProfiles`), so the array stays bounded to roughly one token
  * per award per user per season.
  */
-const admin = require("firebase-admin");
+const { FieldValue } = require("firebase-admin/firestore");
 
 /** Profile field holding the array of applied-award tokens. */
 const LEDGER_FIELD = "awardLedger";
@@ -75,7 +75,7 @@ function hasAwardToken(profileData, token) {
  * increment beside it.
  */
 function awardTokenWrite(...tokens) {
-  return { [LEDGER_FIELD]: admin.firestore.FieldValue.arrayUnion(...tokens) };
+  return { [LEDGER_FIELD]: FieldValue.arrayUnion(...tokens) };
 }
 
 module.exports = {

@@ -12,14 +12,15 @@
  *   > require('./src/scripts/seedDciReference').seedDciReference()
  */
 
-const admin = require("firebase-admin");
+const { FieldValue, getFirestore } = require("firebase-admin/firestore");
+const { initializeApp, getApps } = require("firebase-admin/app");
 
 // Initialize Firebase Admin if not already initialized
-if (!admin.apps.length) {
-  admin.initializeApp();
+if (!getApps().length) {
+  initializeApp();
 }
 
-const db = admin.firestore();
+const db = getFirestore();
 
 // =============================================================================
 // VERIFIED SHOW DATA FROM DCX MUSEUM (dcxmuseum.org)
@@ -63,7 +64,7 @@ async function seedDciReference() {
       batch.set(showsRef, {
         corpsName,
         shows,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
       });
       console.log(`  Prepared shows for ${corpsName} (${Object.keys(shows).length} shows)`);
     }
@@ -72,7 +73,7 @@ async function seedDciReference() {
   // Write corps index
   batch.set(corpsRef, {
     corps: corpsIndex,
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
     source: "DCX Museum (dcxmuseum.org)",
     lastVerified: "2025-01",
   });

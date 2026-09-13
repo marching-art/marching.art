@@ -12,7 +12,7 @@ process.env.DATA_NAMESPACE = process.env.DATA_NAMESPACE || "test-ns";
 const { test, describe } = require("node:test");
 const assert = require("node:assert/strict");
 
-const admin = require("firebase-admin");
+const { FieldValue } = require("firebase-admin/firestore");
 const { processWeeklyMatchups, payWeeklyParticipationXP } = require("./weeklyMatchups");
 const { WEEKLY_LEAGUE_WIN_REWARD } = require("./economy");
 const { XP_SOURCES } = require("./xpCalculations");
@@ -247,7 +247,7 @@ describe("processWeeklyMatchups", () => {
     assert.ok(rewardWrite, "winner should receive a corpsCoin write");
     assert.ok(rewardWrite.data.stats?.leagueWins, "winner should get a leagueWins increment");
     assert.ok(
-      rewardWrite.data.xp?.isEqual(admin.firestore.FieldValue.increment(XP_SOURCES.leagueWin)),
+      rewardWrite.data.xp?.isEqual(FieldValue.increment(XP_SOURCES.leagueWin)),
       "winner should get the league-win XP increment"
     );
 
@@ -808,7 +808,7 @@ describe("payWeeklyParticipationXP", () => {
     assert.ok(aliceWrite, "alice should receive an XP write");
     assert.ok(
       aliceWrite.data.xp.isEqual(
-        admin.firestore.FieldValue.increment(XP_SOURCES.weeklyParticipation)
+        FieldValue.increment(XP_SOURCES.weeklyParticipation)
       ),
       "alice competed in two classes → still one grant (per director, not per class)"
     );
@@ -817,7 +817,7 @@ describe("payWeeklyParticipationXP", () => {
     assert.ok(bobWrite, "bob should receive an XP write");
     assert.ok(
       bobWrite.data.xp.isEqual(
-        admin.firestore.FieldValue.increment(XP_SOURCES.weeklyParticipation)
+        FieldValue.increment(XP_SOURCES.weeklyParticipation)
       ),
       "bob competed in one class → one grant"
     );

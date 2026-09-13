@@ -1,7 +1,7 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { paths } = require("../helpers/paths");
 const { logger } = require("firebase-functions/v2");
-const admin = require("firebase-admin");
+const { FieldValue } = require("firebase-admin/firestore");
 const { getDb } = require("../config");
 const {
   calculateXPUpdates,
@@ -145,8 +145,8 @@ const claimDailyLogin = onCall({ cors: true }, async (request) => {
       // Build update object
       const updates = {
         'engagement.loginStreak': newStreak,
-        'engagement.lastLogin': admin.firestore.FieldValue.serverTimestamp(),
-        'engagement.totalLogins': admin.firestore.FieldValue.increment(1),
+        'engagement.lastLogin': FieldValue.serverTimestamp(),
+        'engagement.totalLogins': FieldValue.increment(1),
         ...xpResult.updates,
       };
       // Only a freeze that actually covered a miss is spent; an unused one
@@ -207,7 +207,7 @@ const claimDailyLogin = onCall({ cors: true }, async (request) => {
       const achievementCoin = newAchievements.reduce((sum, a) => sum + (a.ccReward || 0), 0);
       coinAwarded += achievementCoin;
       if (newAchievements.length > 0) {
-        updates.achievements = admin.firestore.FieldValue.arrayUnion(...newAchievements);
+        updates.achievements = FieldValue.arrayUnion(...newAchievements);
       }
 
       // Cosmetic grants driven by profile state (e.g. the 'Earned, Not
@@ -223,12 +223,12 @@ const claimDailyLogin = onCall({ cors: true }, async (request) => {
         classUnlockPaths: mergedUnlockPaths,
       });
       if (cosmeticGrants.length > 0) {
-        updates['cosmetics.owned'] = admin.firestore.FieldValue.arrayUnion(...cosmeticGrants);
+        updates['cosmetics.owned'] = FieldValue.arrayUnion(...cosmeticGrants);
       }
 
       // Add CorpsCoin if milestone reached / levels gained / achievements earned
       if (coinAwarded > 0) {
-        updates.corpsCoin = admin.firestore.FieldValue.increment(coinAwarded);
+        updates.corpsCoin = FieldValue.increment(coinAwarded);
       }
 
       transaction.update(profileRef, updates);
@@ -508,7 +508,7 @@ const completeDailyChallenge = onCall({ cors: true }, async (request) => {
         challenges: pruneOldChallenges({ ...allBuckets, [gameDay]: updatedBucket }),
         "engagement.weeklyLoop": weeklyLoop,
         ...(weeklyArcBonus
-          ? { corpsCoin: admin.firestore.FieldValue.increment(weeklyArcBonus.coin) }
+          ? { corpsCoin: FieldValue.increment(weeklyArcBonus.coin) }
           : {}),
         ...xpResult.updates,
         ...seasonBaselineStamp(profileData),
@@ -609,9 +609,9 @@ const purchaseStreakFreeze = onCall({ cors: true }, async (request) => {
 
       // Deduct CorpsCoin and activate freeze
       transaction.update(profileRef, {
-        corpsCoin: admin.firestore.FieldValue.increment(-STREAK_FREEZE_COST),
+        corpsCoin: FieldValue.increment(-STREAK_FREEZE_COST),
         'engagement.streakFreezeUntil': freezeUntil,
-        'engagement.lastFreezePurchase': admin.firestore.FieldValue.serverTimestamp(),
+        'engagement.lastFreezePurchase': FieldValue.serverTimestamp(),
       });
 
       addCoinHistoryEntryToTransaction(transaction, db, uid, {

@@ -27,14 +27,15 @@
  *   > require('./src/scripts/stripLeagueInviteCodes').stripLeagueInviteCodes()
  */
 
-const admin = require("firebase-admin");
+const { FieldValue, getFirestore } = require("firebase-admin/firestore");
+const { initializeApp, getApps } = require("firebase-admin/app");
 
 // Initialize Firebase Admin if not already initialized
-if (!admin.apps.length) {
-  admin.initializeApp();
+if (!getApps().length) {
+  initializeApp();
 }
 
-const db = admin.firestore();
+const db = getFirestore();
 
 const DATA_NAMESPACE = process.env.DATA_NAMESPACE || "marching-art";
 
@@ -70,7 +71,7 @@ async function stripLeagueInviteCodes() {
         // but ensure it for legacy data so joinLeagueByCode keeps working).
         batch.set(db.doc(`leagueInvites/${inviteCode}`), { leagueId: doc.id }, { merge: true });
       }
-      batch.update(doc.ref, { inviteCode: admin.firestore.FieldValue.delete() });
+      batch.update(doc.ref, { inviteCode: FieldValue.delete() });
     });
     await batch.commit();
     migrated += chunk.length;

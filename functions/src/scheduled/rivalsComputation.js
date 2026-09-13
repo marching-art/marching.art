@@ -19,7 +19,7 @@
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { paths } = require("../helpers/paths");
 const { logger } = require("firebase-functions/v2");
-const admin = require("firebase-admin");
+const { FieldValue } = require("firebase-admin/firestore");
 const { getDb } = require("../config");
 const { ENABLED_CLASSES } = require("../helpers/classRegistry");
 const { processAllInPages } = require("../helpers/firestorePaging");
@@ -253,7 +253,7 @@ async function updateRivalsLogic() {
   let batch = db.batch();
   let writes = 0;
   let totalWritten = 0;
-  const updatedAt = admin.firestore.FieldValue.serverTimestamp();
+  const updatedAt = FieldValue.serverTimestamp();
 
   for (const [uid, rivals] of rivalsByUid.entries()) {
     const ref = db.doc(paths.userProfile(uid));

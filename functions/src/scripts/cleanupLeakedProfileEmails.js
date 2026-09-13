@@ -18,14 +18,15 @@
  *   > require('./src/scripts/cleanupLeakedProfileEmails').cleanupLeakedProfileEmails()
  */
 
-const admin = require("firebase-admin");
+const { FieldValue, getFirestore } = require("firebase-admin/firestore");
+const { initializeApp, getApps } = require("firebase-admin/app");
 
 // Initialize Firebase Admin if not already initialized
-if (!admin.apps.length) {
-  admin.initializeApp();
+if (!getApps().length) {
+  initializeApp();
 }
 
-const db = admin.firestore();
+const db = getFirestore();
 
 const DATA_NAMESPACE = process.env.DATA_NAMESPACE || "marching-art";
 
@@ -60,7 +61,7 @@ async function cleanupLeakedProfileEmails() {
     const batch = db.batch();
     const chunk = targets.slice(i, i + BATCH_SIZE);
     chunk.forEach((doc) => {
-      batch.update(doc.ref, { email: admin.firestore.FieldValue.delete() });
+      batch.update(doc.ref, { email: FieldValue.delete() });
     });
     await batch.commit();
     cleaned += chunk.length;

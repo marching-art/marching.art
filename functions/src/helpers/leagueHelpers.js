@@ -1,7 +1,7 @@
 // Shared league helpers extracted from callable/leagues.js so they can be
 // unit-tested and reused by the invitation callables.
 
-const admin = require("firebase-admin");
+const { FieldValue } = require("firebase-admin/firestore");
 const crypto = require("crypto");
 const { paths } = require("./paths");
 
@@ -402,7 +402,7 @@ async function createLeagueActivity(db, leagueId, activityData) {
   await activityRef.set({
     ...activityData,
     id: activityRef.id,
-    timestamp: admin.firestore.FieldValue.serverTimestamp()
+    timestamp: FieldValue.serverTimestamp()
   });
 
   return activityRef.id;

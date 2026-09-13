@@ -5,7 +5,7 @@
 
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { logger } = require("firebase-functions/v2");
-const admin = require("firebase-admin");
+const { getFirestore } = require("firebase-admin/firestore");
 const { paths } = require("../helpers/paths");
 const {
   sendShowReminderPush,
@@ -51,7 +51,7 @@ exports.showReminderPushJob = onSchedule(
     const reminderEnd = new Date(now.getTime() + 2 * 60 * 60 * 1000);
 
     try {
-      const db = admin.firestore();
+      const db = getFirestore();
 
       // Get current season
       const seasonDoc = await db.doc("game-settings/season").get();
@@ -175,7 +175,7 @@ exports.weeklyMatchupPushJob = onSchedule(
   async () => {
     logger.info("Running weekly matchup push notification job");
 
-    const db = admin.firestore();
+    const db = getFirestore();
     const CORPS_CLASSES = FANTASY_CLASSES;
 
     try {
@@ -370,7 +370,7 @@ exports.scoreDropPushJob = onSchedule(
     logger.info("Running score-drop push notification job");
 
     try {
-      const db = admin.firestore();
+      const db = getFirestore();
 
       const seasonDoc = await db.doc("game-settings/season").get();
       const season = seasonDoc.exists ? seasonDoc.data() : null;
@@ -477,7 +477,7 @@ exports.lineupLockReminderPushJob = onSchedule(
     logger.info("Running lineup lock reminder push job");
 
     try {
-      const db = admin.firestore();
+      const db = getFirestore();
 
       const seasonDoc = await db.doc("game-settings/season").get();
       const season = seasonDoc.exists ? seasonDoc.data() : null;
@@ -688,7 +688,7 @@ exports.takeTheFieldPushJob = onSchedule(
     memory: "256MiB",
   },
   async () => {
-    const db = admin.firestore();
+    const db = getFirestore();
     const seasonSnap = await db.doc("game-settings/season").get();
     const season = seasonSnap.exists ? seasonSnap.data() : null;
     const seasonId = season && season.seasonUid;
@@ -747,7 +747,7 @@ exports.streakAtRiskPushJob = onSchedule(
   },
   async () => {
     logger.info("Running streak-at-risk push job");
-    const db = admin.firestore();
+    const db = getFirestore();
     const now = new Date();
     // Candidates: claimed within the last two days (the alive-streak window)
     // with a streak worth keeping. Same shape and index as

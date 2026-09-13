@@ -5,7 +5,7 @@
 
 const { onDocumentCreated, onDocumentUpdated } = require("firebase-functions/v2/firestore");
 const { logger } = require("firebase-functions/v2");
-const admin = require("firebase-admin");
+const { getFirestore } = require("firebase-admin/firestore");
 const { paths } = require("../helpers/paths");
 const {
   sendLeagueActivityPush,
@@ -37,8 +37,7 @@ exports.onLeagueMemberJoined = onDocumentUpdated(
 
 
     // Get new member's username
-    const newMemberProfile = await admin
-      .firestore()
+    const newMemberProfile = await getFirestore()
       .doc(paths.userProfile(newMemberId))
       .get();
     const newMemberName = newMemberProfile.data()?.username || "A new director";
@@ -87,16 +86,14 @@ exports.onLeagueChatMessage = onDocumentCreated(
 
 
     // Get league info
-    const leagueDoc = await admin
-      .firestore()
+    const leagueDoc = await getFirestore()
       .doc(paths.league(event.params.leagueId))
       .get();
     const league = leagueDoc.data();
     if (!league) return;
 
     // Get sender username
-    const senderProfile = await admin
-      .firestore()
+    const senderProfile = await getFirestore()
       .doc(paths.userProfile(senderId))
       .get();
     const senderName = senderProfile.data()?.username || "Someone";
@@ -107,7 +104,7 @@ exports.onLeagueChatMessage = onDocumentCreated(
     // Get all league members' profiles to find matches
     const memberProfiles = await Promise.all(
       league.members.map((memberId) =>
-        admin.firestore().doc(paths.userProfile(memberId)).get()
+        getFirestore().doc(paths.userProfile(memberId)).get()
       )
     );
 
