@@ -330,8 +330,12 @@ match /artifacts/{appId}/users/{userId} {
     allow write: if false; // Backend only (mirror trigger + backfill)
   }
 
+  // Owner/admin-only since 2026-09-13: this doc carries the caption lineup,
+  // weekly show picks and prediction picks, which the game treats as secret
+  // from opponents. Everything another director may see is mirrored to
+  // profile/public (above) by triggers/profileMirror.js.
   match /profile/data {
-    allow read: if isAuthenticated();
+    allow read: if isOwner(userId) || isAdmin();
     allow create, delete: if isAdmin();
     allow update: if isAdmin() ||
       (isOwner(userId) && !touchesProtectedProfileFields() &&
@@ -341,7 +345,8 @@ match /artifacts/{appId}/users/{userId} {
   // Per-season detail (the full caption lineup + week-by-week show picks for one
   // archived season), split off the profile's seasonHistory summary rows so the
   // hot, listener-backed profile/data doc stays small and never approaches the
-  // 1 MiB cap. World-readable like profile/data (a director's history is public);
+  // 1 MiB cap. World-readable (a director's ARCHIVED history is public; only the
+  // live lineup on profile/data is private);
   // written only by season archival and the backfill script (Cloud Functions use
   // the Admin SDK, which bypasses these rules — the client is server-only here).
   match /seasonDetail/{detailId} {

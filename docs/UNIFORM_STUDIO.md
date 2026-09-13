@@ -315,8 +315,8 @@ shared figure.
   (`src/components/Profile/DirectorProfile.tsx:611-616`), using the existing
   `Section` card grammar: per-corps uniform figure + colorway swatches + emblem
   - equipped-look name + "Open Studio" CTA. Public profiles render it
-    read-only (the profile doc is already world-readable,
-    `firestore.rules:249-255`); the `/d/{username}` SSR allowlist gets the
+    read-only (the equipped design rides in the public `profile/public`
+    mirror — `functions/src/helpers/publicProfileMirror.js`); the `/d/{username}` SSR allowlist gets the
     equipped design added explicitly (`functions/src/helpers/publicProfilePages.js:78-97`).
 - Dashboard's avatar tile keeps working but now routes to the Studio.
 

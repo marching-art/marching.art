@@ -153,7 +153,8 @@ await check(
 );
 
 // =============================================================================
-// FREE-TEXT SIZE/TYPE CAPS — profile/data is world-readable, so owner-writable
+// FREE-TEXT SIZE/TYPE CAPS — profile/data is mirrored to the public
+// profile/public doc and the SSR /d/ pages, so owner-writable
 // free-text fields (bio, displayName, location, favoriteCorps, directorInfo)
 // are coarsely bounded in rules: oversized or non-string junk written by an
 // owner would otherwise be publicly served to every visitor. Caps are checked
@@ -540,7 +541,7 @@ await check(
 // The equipped Uniform Studio snapshot (corps.{class}.uniform) is written only
 // by the equipUniformDesign callable, which validates the design's shape and
 // size server-side — a direct client write could plant an oversized or
-// malformed payload on the world-readable profile doc.
+// malformed payload on the profile doc (mirrored publicly).
 await freshSeed();
 await check(
   'owner cannot plant a corps uniform snapshot directly (callable-only)',
@@ -1211,7 +1212,7 @@ await check(
 
 // =============================================================================
 // PRIVATE DOC — home of the FCM token (a stable device identifier that must
-// never sit on the world-readable profile doc). Owner-only read/write.
+// never sit on the profile doc, which is mirrored publicly). Owner-only read/write.
 // =============================================================================
 const privatePath = `artifacts/${APP}/users/${ALICE}/private/data`;
 async function freshPrivateSeed() {
@@ -1652,8 +1653,9 @@ await check(
 
 // --- PROFILE READ SURFACE + ENUMERATION (2026-09 audit) ---
 // profile/data carries lineups, show picks, and prediction picks: readable by
-// any signed-in director, never anonymously. The `profile` collection group
-// and the `usernames` collection are the two bulk-enumeration paths.
+// its owner and admins only (flipped 2026-09-13 once every profile had a
+// profile/public mirror). The `profile` collection group and the `usernames`
+// collection are the two bulk-enumeration paths.
 await freshSeed();
 await check(
   'unauthenticated visitor cannot read profile/data',
@@ -1661,8 +1663,20 @@ await check(
 );
 
 await check(
-  'signed-in third party can read another director profile/data',
-  assertSucceeds(getDoc(doc(mallory(), profilePath)))
+  'signed-in third party cannot read another director profile/data (lineup privacy)',
+  assertFails(getDoc(doc(mallory(), profilePath)))
+);
+
+await check(
+  'owner can read their own profile/data',
+  assertSucceeds(getDoc(doc(authed(), profilePath)))
+);
+
+await check(
+  'admin can read any profile/data',
+  assertSucceeds(
+    getDoc(doc(testEnv.authenticatedContext('admin-uid', { admin: true }).firestore(), profilePath))
+  )
 );
 
 await check(

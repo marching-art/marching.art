@@ -183,7 +183,7 @@ export async function requestPushPermission(): Promise<string | null> {
 
 /**
  * Save the FCM token to the user's PRIVATE doc (users/{uid}/private/data).
- * The token must never live on profile/data: that document is world-readable
+ * The token must never live on profile/data: that document is mirrored to the public profile/public doc
  * (leaderboards/public profiles), and an FCM registration token is a stable
  * device identifier. private/data is owner/admin-only in firestore.rules.
  * @param userId - The user's UID
