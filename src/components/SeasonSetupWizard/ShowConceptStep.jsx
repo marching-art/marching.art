@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Season setup — Show Design step. Every season is a new show: concepts
 // reset at rollover, so setup is the natural moment to name and style this
 // season's program. Optional (skippable) — the concept stays editable from
@@ -24,6 +23,26 @@ import { getCorpsClassName } from './constants';
 // Podium since it fields no lineup.
 import { PROFILE_CORPS_CLASS_ORDER } from '../../utils/corps';
 
+/** @typedef {(typeof PROFILE_CORPS_CLASS_ORDER)[number]} ConceptClassId */
+/** @typedef {{value: string, label: string}} PickerOption */
+/**
+ * @typedef {object} ConceptDraft
+ * @property {string} showName
+ * @property {string|null} theme
+ * @property {string|null} musicSource
+ * @property {string|null} drillStyle
+ * @property {boolean} saved
+ */
+/**
+ * @typedef {object} ConceptCorps
+ * @property {string} [corpsName]
+ * @property {unknown} [showConcept]
+ */
+
+/**
+ * @param {{label: string, options: readonly PickerOption[], value: string|null|undefined,
+ *   onChange: (value: string) => void}} props
+ */
 const PickerRow = ({ label, options, value, onChange }) => (
   <div>
     <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-2">
@@ -48,22 +67,31 @@ const PickerRow = ({ label, options, value, onChange }) => (
   </div>
 );
 
+/**
+ * @param {{localUserProfile: {corps?: Partial<Record<ConceptClassId, ConceptCorps|null>>|null}|null|undefined,
+ *   onContinue: () => void}} props
+ */
 const ShowConceptStep = ({ localUserProfile, onContinue }) => {
   // Every named corps can get a concept; default to the highest class
-  const namedCorps = useMemo(
-    () =>
-      PROFILE_CORPS_CLASS_ORDER.filter(
-        (classId) => localUserProfile?.corps?.[classId]?.corpsName
-      ).map((classId) => ({ classId, corps: localUserProfile.corps[classId] })),
-    [localUserProfile]
-  );
+  const namedCorps = useMemo(() => {
+    const corpsByClass = localUserProfile?.corps || {};
+    return PROFILE_CORPS_CLASS_ORDER.flatMap((classId) => {
+      const corps = corpsByClass[classId];
+      return corps?.corpsName ? [{ classId, corps }] : [];
+    });
+  }, [localUserProfile]);
 
-  const [selectedClass, setSelectedClass] = useState(namedCorps[0]?.classId || null);
+  const [selectedClass, setSelectedClass] = useState(
+    /** @type {ConceptClassId|null} */ (namedCorps[0]?.classId || null)
+  );
   // Per-class draft state so switching corps doesn't lose picks
   const [drafts, setDrafts] = useState(() => {
+    /** @type {Partial<Record<ConceptClassId, ConceptDraft>>} */
     const initial = {};
     namedCorps.forEach(({ classId, corps }) => {
-      const existing = isStructuredConcept(corps.showConcept) ? corps.showConcept : {};
+      const existing = /** @type {Partial<ConceptDraft>} */ (
+        isStructuredConcept(corps.showConcept) ? corps.showConcept : {}
+      );
       initial[classId] = {
         showName: existing.showName || '',
         theme: existing.theme || null,
@@ -76,38 +104,40 @@ const ShowConceptStep = ({ localUserProfile, onContinue }) => {
   });
   const [saving, setSaving] = useState(false);
 
-  const draft = drafts[selectedClass] || {};
-  const complete =
+  const draft =
+    (selectedClass && drafts[selectedClass]) || /** @type {Partial<ConceptDraft>} */ ({});
+  const complete = Boolean(
     (draft.showName || '').trim().length >= 2 &&
     draft.theme &&
     draft.musicSource &&
-    draft.drillStyle;
-  const updateDraft = (patch) =>
+    draft.drillStyle
+  );
+  /** @param {Partial<ConceptDraft>} patch */
+  const updateDraft = (patch) => {
+    if (!selectedClass) return;
     setDrafts((prev) => ({
       ...prev,
       [selectedClass]: { ...prev[selectedClass], ...patch, saved: false },
     }));
+  };
 
   const handleSave = async () => {
-    if (!complete || !selectedClass) return;
+    const { theme, musicSource, drillStyle } = draft;
+    if (!complete || !selectedClass || !theme || !musicSource || !drillStyle) return;
     setSaving(true);
+    const showName = (draft.showName || '').trim();
     try {
       await saveShowConcept({
         corpsClass: selectedClass,
-        showConcept: {
-          showName: draft.showName.trim(),
-          theme: draft.theme,
-          musicSource: draft.musicSource,
-          drillStyle: draft.drillStyle,
-        },
+        showConcept: { showName, theme, musicSource, drillStyle },
       });
       setDrafts((prev) => ({
         ...prev,
         [selectedClass]: { ...prev[selectedClass], saved: true },
       }));
-      toast.success(`"${draft.showName.trim()}" is ready to take the field!`);
+      toast.success(`"${showName}" is ready to take the field!`);
     } catch (error) {
-      toast.error(error.message || 'Could not save show concept');
+      toast.error((error instanceof Error && error.message) || 'Could not save show concept');
     } finally {
       setSaving(false);
     }
