@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // =============================================================================
 // NEWS SUBMISSION MODAL - DATA-TERMINAL STYLE
 // =============================================================================
@@ -29,6 +28,23 @@ const IMAGE_OPTIONS = [
   { id: 'none', name: 'No image', description: 'Publish without a header image' },
 ];
 
+/**
+ * @typedef {Object} NewsSubmissionPayload
+ * @property {string} headline
+ * @property {string} summary
+ * @property {string} fullStory
+ * @property {string} category
+ * @property {string} imageOption
+ * @property {string|null} imageUrl only when the author supplies their own image
+ */
+
+/**
+ * @param {{
+ *   onClose: () => void,
+ *   onSubmit: (payload: NewsSubmissionPayload) => void | Promise<void>,
+ *   isSubmitting?: boolean,
+ * }} props
+ */
 const NewsSubmissionModal = ({ onClose, onSubmit, isSubmitting = false }) => {
   const [formData, setFormData] = useState({
     headline: '',
@@ -38,7 +54,7 @@ const NewsSubmissionModal = ({ onClose, onSubmit, isSubmitting = false }) => {
     imageOption: 'generate',
     imageUrl: '',
   });
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState(/** @type {Record<string, string|null>} */ ({}));
 
   useEscapeKey(onClose);
 
@@ -47,6 +63,7 @@ const NewsSubmissionModal = ({ onClose, onSubmit, isSubmitting = false }) => {
   useFocusTrap(dialogRef);
 
   const validate = () => {
+    /** @type {Record<string, string|null>} */
     const newErrors = {};
     if (!formData.headline.trim()) {
       newErrors.headline = 'Headline is required';
@@ -74,6 +91,7 @@ const NewsSubmissionModal = ({ onClose, onSubmit, isSubmitting = false }) => {
     return Object.keys(newErrors).length === 0;
   };
 
+  /** @param {string} string */
   const isValidUrl = (string) => {
     try {
       new URL(string);
@@ -83,6 +101,7 @@ const NewsSubmissionModal = ({ onClose, onSubmit, isSubmitting = false }) => {
     }
   };
 
+  /** @param {React.FormEvent<HTMLFormElement>} e */
   const handleSubmit = (e) => {
     e.preventDefault();
     if (validate()) {
@@ -98,6 +117,7 @@ const NewsSubmissionModal = ({ onClose, onSubmit, isSubmitting = false }) => {
     }
   };
 
+  /** @param {keyof typeof formData} field @param {string} value */
   const handleChange = (field, value) => {
     setFormData({ ...formData, [field]: value });
     // Clear error when user starts typing

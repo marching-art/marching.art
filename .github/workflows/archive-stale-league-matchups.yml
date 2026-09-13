@@ -1,0 +1,79 @@
+name: Archive stale league matchups
+
+# One-off (re-runnable) repair that moves pre-rollover league matchup week
+# documents out of the live `matchups` collection into matchup history.
+#
+# WHY: matchup docs are keyed by week number alone (`matchups/week-N`) and
+# early season rollovers reset standings without touching them. A league that
+# finished a season kept last season's week docs in place, the generator
+# treated every week as already done, weekly resolution found nothing to
+# resolve, and the standings table never moved again. Rollover now archives
+# them, but leagues already in that state are stuck until this runs. A week
+# is treated as stale when it carries no `seasonUid` stamp AND the league has
+# archived at least one prior season, or when its stamp names a season other
+# than the live one. See functions/src/scripts/archiveStaleLeagueMatchups.js.
+#
+# HOW TO RUN (no console needed — all from the Actions tab):
+#   1. Actions → "Archive stale league matchups" → Run workflow.
+#   2. Leave "commit" UNCHECKED for a dry run: the log lists every league,
+#      names the stale weeks it would move, and ends with
+#      "Would move N document(s) across M league(s)".
+#   3. Run workflow again with "commit" CHECKED to move them. Idempotent —
+#      moved weeks are gone from the live collection, so a re-run finds none.
+#
+# Each stale week is copied to matchupHistory/{seasonUid}/weeks/{week} with
+# `seasonUid` and `archivedAt` set, then deleted from `matchups`. Nothing else
+# is touched. This job writes to Firestore only — it makes no repo commits.
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: 'Move the stale weeks (leave unchecked for a dry run)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  # Never let two repairs move the same matchup documents at once.
+  group: archive-stale-league-matchups
+  cancel-in-progress: false
+
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Install function dependencies
+        run: cd functions && npm ci
+
+      - name: Run repair (${{ inputs.commit && 'COMMIT' || 'dry run' }})
+        env:
+          # Same Firestore credentials the deploy workflow uses.
+          GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          # Production data namespace (paths.leagues resolves here); matches
+          # functions/.env.marching-art.
+          DATA_NAMESPACE: marching-art
+        run: |
+          echo "$GOOGLE_APPLICATION_CREDENTIALS_JSON" > /tmp/sa-key.json
+          export GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa-key.json
+          trap 'rm -f /tmp/sa-key.json' EXIT
+
+          cd functions
+          if [ "${{ inputs.commit }}" = "true" ]; then
+            echo "Running WITH --commit: stale matchup weeks will be moved to history."
+            node src/scripts/archiveStaleLeagueMatchups.js --commit
+          else
+            echo "Dry run: no writes. Check 'commit' to apply."
+            node src/scripts/archiveStaleLeagueMatchups.js --dry-run
+          fi
