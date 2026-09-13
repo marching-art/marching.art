@@ -39,6 +39,7 @@ import {
   podiumAutoSlotSentenceForWeek,
   sameDayShowFor,
 } from './showRegistrationConfig';
+import { multiNightNights, podiumAutoNightFor } from '../../utils/podiumAttendance';
 
 // =============================================================================
 // MAIN MODAL COMPONENT
@@ -201,7 +202,14 @@ const ShowRegistrationModal = ({
   // the server's CHAMPIONSHIP_WEEK_DAYS guard. autoDays only lists the corps'
   // OWN bracket days, so this also covers e.g. an A/Open corps on a World day.
   const podiumIsChampWeek = PODIUM_CHAMPIONSHIP_WEEK_DAYS.includes(podiumDay);
-  const podiumIsMyAutoDay = Boolean(podiumInfo?.autoDays?.includes(podiumDay)) || podiumIsChampWeek;
+  // A two-night event (the Eastern Classic) is ONE registration for the Podium
+  // corps just as for a fantasy corps: it is on the bill both nights and
+  // performs on its assigned one. autoDays carries only the performing night,
+  // so resolve it through the show's multiNight nights and surface it.
+  const podiumAutoNight = podiumInfo ? podiumAutoNightFor(podiumInfo.autoDays, show) : null;
+  const podiumIsMyAutoDay = podiumAutoNight !== null || podiumIsChampWeek;
+  const podiumPerformNight =
+    podiumAutoNight !== null && multiNightNights(show).length > 1 ? podiumAutoNight : null;
   const podiumIsEasternOffNight =
     PODIUM_EASTERN_DAYS.includes(podiumDay) && podiumInfo && !podiumIsMyAutoDay;
   // A day is "passed" only once it is strictly before the current competition
@@ -601,6 +609,7 @@ const ShowRegistrationModal = ({
                 attend={podiumAttend}
                 atMax={podiumAtMax}
                 isMyAutoDay={podiumIsMyAutoDay}
+                performNight={podiumPerformNight}
                 isEasternOffNight={podiumIsEasternOffNight}
                 isPast={podiumIsPast}
                 picksThisWeek={podiumPicksThisWeek}

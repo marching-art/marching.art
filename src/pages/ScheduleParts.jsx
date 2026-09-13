@@ -9,6 +9,11 @@ import { Calendar, MapPin, Check, ChevronRight, Trophy, Landmark, Users } from '
 import { isEventPast } from '../utils/scheduleUtils';
 import { formatEventName } from '../utils/season';
 import { CLASS_CONFIG, CHAMPIONSHIP_EVENTS } from './scheduleConstants';
+import {
+  isPodiumAutoAnchor,
+  podiumAttendsShow,
+  podiumAutoAttendsDay,
+} from '../utils/podiumAttendance';
 
 // An emoji for a WMO weather code (the backend stores show-time conditions on
 // each competition as { summary, tempF, code }). Falls back to a thermometer so
@@ -99,37 +104,10 @@ const WeekPills = ({ weeks, currentWeek, selectedWeek, onSelect, getShowCount })
 // REGISTRATION BADGES COMPONENT
 // =============================================================================
 
-// The branded majors keep their real scraped names in live seasons, where
-// eventTier isn't stamped until the schedule is regenerated/refreshed — so
-// recognize them by name as a fallback and identify the anchor either way.
-const MAJOR_NAME_RE = /(southwestern|southeastern) championship|eastern classic/i;
-
-// On a Podium auto-attended day the corps attends exactly ONE event — the
-// regional major or its division's championship — never a pool show that merely
-// shares the date, and never the day-49 SoundSport festival. This identifies
-// that anchor so the auto-day PODIUM badge lands only on it.
-const isPodiumAutoAnchor = (show) => {
-  const eligible = show.eligibleClasses;
-  const soundSportOnly =
-    Array.isArray(eligible) && eligible.length === 1 && eligible[0] === 'soundSport';
-  if (soundSportOnly) return false;
-  return (
-    show.eventTier === 'regional' ||
-    show.isChampionship === true ||
-    show.type === 'championship' ||
-    MAJOR_NAME_RE.test(show.eventName || '')
-  );
-};
-
-// Podium attends a SPECIFIC show: self-picks match by eventName (one show per
-// night — never every show that day); majors/championship are auto-attended, so
-// on those days badge only the anchor event, not every co-located pool show.
-const podiumAttendsShow = (podiumAttendance, show) =>
-  Boolean(
-    podiumAttendance &&
-    (podiumAttendance.events?.has(show.eventName) ||
-      (podiumAttendance.autoDays?.has(show.day) && isPodiumAutoAnchor(show)))
-  );
+// Podium attendance (self-picks by event name, auto-days by anchor event, and
+// the two-night Eastern Classic counting on BOTH nights) is resolved by the
+// shared utils/podiumAttendance helpers, so this page, the registration modal
+// and the tour map agree on which entries the Podium corps is on the bill for.
 
 const RegistrationBadges = ({ show, userProfile, podiumAttendance }) => {
   const registeredCorps = userProfile?.corps
@@ -552,7 +530,7 @@ const ChampionshipEventCard = ({
   // podium/state autoDays), which the fantasy eligibleClasses don't cover — but
   // not the day-49 SoundSport festival, which merely shares Finals day.
   const podiumAttending =
-    Boolean(podiumAttendance?.autoDays?.has(event.day)) && isPodiumAutoAnchor(event);
+    podiumAutoAttendsDay(podiumAttendance, event) && isPodiumAutoAnchor(event);
   const hasEligibleCorps = eligibleCorps.length > 0 || podiumAttending;
 
   return (

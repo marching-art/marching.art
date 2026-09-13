@@ -269,6 +269,7 @@ export const PodiumSelectionRow = ({
   attend,
   atMax,
   isMyAutoDay,
+  performNight = null,
   isEasternOffNight,
   isPast,
   picksThisWeek,
@@ -303,7 +304,9 @@ export const PodiumSelectionRow = ({
         <div className="mt-0.5 flex items-center gap-2">
           <span className={`text-[11px] ${atMax ? 'text-red-400' : 'text-muted'}`}>
             {isMyAutoDay
-              ? 'Auto-attended — major / championship'
+              ? performNight !== null
+                ? `Auto-attended — two-night event · you perform Day ${performNight}`
+                : 'Auto-attended — major / championship'
               : isEasternOffNight
                 ? 'Eastern Classic — not your assigned night'
                 : isPast
