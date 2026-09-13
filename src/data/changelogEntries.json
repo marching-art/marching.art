@@ -1,5 +1,16 @@
 [
   {
+    "id": "2026-09-13-your-lineup-is-now-private-to-you",
+    "date": "2026-09-13",
+    "title": "Your lineup is now private to you",
+    "category": "improvement",
+    "summary": "Your caption lineup, weekly show picks and prediction picks can no longer be read by other directors. Until now a signed-in rival could, with a little digging, see exactly who you had slotted in each caption before the show ran. Everything the game is meant to show about you — your profile, corps, trophies, uniforms, season history and standings — is unchanged and still visible to everyone.",
+    "highlights": [
+      "League rosters, other directors' profile pages and the public director pages keep working exactly as before.",
+      "Your own view of your lineup and picks is unaffected."
+    ]
+  },
+  {
     "id": "2026-09-13-podium-medal-tallies-restored",
     "date": "2026-09-13",
     "title": "Podium: your season medal tally is back to its true count",

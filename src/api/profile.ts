@@ -44,22 +44,14 @@ export async function getProfile(uid: string): Promise<UserProfile | null> {
 /**
  * Another director's profile as the game lets you see it: the server-mirrored
  * public projection (`profile/public`, never lineups or picks — see
- * functions/src/helpers/publicProfileMirror.js). Falls back to the raw doc
- * only while pre-mirror profiles are being backfilled; once `profile/data`
- * is owner-only that fallback is denied and resolves to null.
+ * functions/src/helpers/publicProfileMirror.js). The raw `profile/data` doc
+ * is owner/admin-only in rules, so there is no fallback: a director with no
+ * mirror (never happens after the 2026-09-13 backfill) resolves to null.
  */
 export async function getPublicProfile(uid: string): Promise<UserProfile | null> {
   return withErrorHandling(async () => {
     const publicDoc = await getDoc(doc(db, paths.userProfilePublic(uid)));
-    if (publicDoc.exists()) {
-      return publicDoc.data() as UserProfile;
-    }
-    try {
-      const rawDoc = await getDoc(doc(db, paths.userProfile(uid)));
-      return rawDoc.exists() ? (rawDoc.data() as UserProfile) : null;
-    } catch {
-      return null;
-    }
+    return publicDoc.exists() ? (publicDoc.data() as UserProfile) : null;
   }, 'Failed to fetch profile');
 }
 

@@ -314,7 +314,7 @@ export const SHOP_SECTIONS = [
 
 /**
  * @typedef {Object} CosmeticProfile
- * @property {{ equipped?: Record<string, string|null>, owned?: string[] }} [cosmetics]
+ * @property {{ equipped?: Record<string, string|null>, owned?: string[] }|null} [cosmetics]
  */
 
 /** @param {string} itemId */

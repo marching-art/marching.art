@@ -8,7 +8,7 @@ burns an hour to conclude "everything's about covered." Don't. If you ship,
 cut, or discover something, edit THIS file in the same PR — that's the whole
 maintenance contract.
 
-_Last updated: 2026-09-13 (storage bucket done — `VITE_FIREBASE_STORAGE_BUCKET` secret set ~2026-08-30, run #446 confirms `marching.art` linked and `storage.rules` released with no warning; ops item closed. `main` ruleset imported and Active — seven CI checks required, no bypass; ops item closed. BMAC webhook confirmed live — endpoint Active on the function URL, test event answered 200 "Ignored (test event)", signature verified; ops item closed. Podium medal correction re-run with commit on the show-field rule — 21 recap days / 83 rows re-ranked, 23 live medal counters rebuilt; ops item closed. Overture days 19–23 will NOT be re-scored — owner decision, the five hash-ordered nights stand as posted; ops item dropped). Same day: (Podium corps badged on BOTH Eastern Classic nights on the Schedule page + registration modal, matching fantasy — shared `utils/podiumAttendance` helpers now feed ScheduleParts, the modal and tourStops; community report). Same day: (firebase-admin 14.4 everywhere + functions/scraper/scripts migrated to the modular `firebase-admin/*` API; `uuid` advisory closed via a scoped `gaxios` override; unused `firebase-functions-test` dropped). Previous: 2026-09-12 (Scores page highlights every one of the director's corps — all fantasy classes + Podium, matched by uid with a name fallback via `utils/corps.buildViewerCorpsMatcher` / `isViewerCorps`; community report). Previous: 2026-09-11 (league chat rebuilt — threaded rows, reactions, replies, @mention picker, report control, scroll that stays put, optimistic sends, `lastChatAt` unread dot on the league card). Previous: 2026-09-09 (score-age column on the Fantasy + Podium season standings); 2026-09-06 (director-authored articles exempt from the score-reveal gate — dead Discord/notification links fixed; scheduled-vs-pending admin email + working admin deep link; assistant director fades with consecutive days
+_Last updated: 2026-09-13 (**Lineup privacy flipped** — `profile/data` is owner/admin-only in rules after the backfill workflow wrote 125/125 `profile/public` mirrors; raw-doc fallbacks dropped from `api/profile.getPublicProfile` and `api/leagues.getMemberProfiles`; rules tests flipped + owner/admin reads added; ops item closed). Same day: (storage bucket done — `VITE_FIREBASE_STORAGE_BUCKET` secret set ~2026-08-30, run #446 confirms `marching.art` linked and `storage.rules` released with no warning; ops item closed. `main` ruleset imported and Active — seven CI checks required, no bypass; ops item closed. BMAC webhook confirmed live — endpoint Active on the function URL, test event answered 200 "Ignored (test event)", signature verified; ops item closed. Podium medal correction re-run with commit on the show-field rule — 21 recap days / 83 rows re-ranked, 23 live medal counters rebuilt; ops item closed. Overture days 19–23 will NOT be re-scored — owner decision, the five hash-ordered nights stand as posted; ops item dropped). Same day: (Podium corps badged on BOTH Eastern Classic nights on the Schedule page + registration modal, matching fantasy — shared `utils/podiumAttendance` helpers now feed ScheduleParts, the modal and tourStops; community report). Same day: (firebase-admin 14.4 everywhere + functions/scraper/scripts migrated to the modular `firebase-admin/*` API; `uuid` advisory closed via a scoped `gaxios` override; unused `firebase-functions-test` dropped). Previous: 2026-09-12 (Scores page highlights every one of the director's corps — all fantasy classes + Podium, matched by uid with a name fallback via `utils/corps.buildViewerCorpsMatcher` / `isViewerCorps`; community report). Previous: 2026-09-11 (league chat rebuilt — threaded rows, reactions, replies, @mention picker, report control, scroll that stays put, optimistic sends, `lastChatAt` unread dot on the league card). Previous: 2026-09-09 (score-age column on the Fantasy + Podium season standings); 2026-09-06 (director-authored articles exempt from the score-reveal gate — dead Discord/notification links fixed; scheduled-vs-pending admin email + working admin deep link; assistant director fades with consecutive days
 away; Podium field = the registered field; majors and championship rounds
 carry the Podium roster; roster audit workflow; season re-mint guard). Previous: 2026-09-04 (site-review row 20 — one onboarding checklist (the Journey; Quick Start modal deleted, `?reveal=` deep link) and one How-to-Play route by auth state; device-aware install guide at /install — in-app-browser detection with an Open-in-Safari/Chrome escape hatch, per-browser steps, one-tap native install, linked from footer / ? menu / home / Settings / the nudge; site-review row 19 — honest functions coverage gate, first admin / league-automation tests; row 18 — one-click unsubscribe + List-Unsubscribe headers, noindex auth wall; row 17 — vendor-firebase trimmed, GameShell + overlays lazy for guests; row 16 — focus traps + Escape in every raw dialog, icon buttons named; row 15 — one dashboard interrupt per visit, celebrations to the inbox; row 14 — weekly XP / win bonus / finish bonus paid per director; row 13 — league weeks decided per show, percentile edge cases; row 12 — server-enforced age gate + consent-gated analytics; AI imagery now built from the full Uniform Studio design + rendered reference image; main ruleset + gazetteer PR flow; site-review Fix-first 1–11 + quick wins shipped)._
 
@@ -291,21 +291,6 @@ ops step below)_
   (`enforceAppCheck: false → true`) and let the functions deploy run. Flipping
   blind locks out clients on stale cached bundles; roll back by flipping it
   back.
-- **Flip lineup privacy** (two steps, in order). The public mirror
-  (`profile/public`, `triggers/profileMirror.js`) is deployed and the client
-  already reads it, but profiles that predate the trigger have no mirror until
-  they are next written. (1) **Owner, from the Actions tab:** run "Backfill
-  public profile mirrors" (`.github/workflows/backfill-public-profiles.yml`,
-  added 2026-09-13) with `commit` unchecked, read the "Would write N" total,
-  then again with `commit` checked. (2) **Then a PR:** in `firestore.rules`,
-  change `match /profile/data { allow read: if isAuthenticated();` to
-  `allow read: if isOwner(userId) || isAdmin();`, update the two
-  `profile/data` read assertions in `firestore-tests/rules.test.mjs`
-  (third-party read must now FAIL), drop the raw-doc fallbacks in
-  `src/api/profile.ts getPublicProfile` and `src/api/leagues.ts
-getMemberProfiles`, and add a changelog entry ("your lineup is now private
-  to you"). Until (2) lands, lineups remain readable by any signed-in
-  director, as before.
 - **Unfreeze stale league matchups** (production credentials required):
   `node functions/src/scripts/archiveStaleLeagueMatchups.js --dry-run`, read
   the output, then `--commit`.
@@ -315,7 +300,7 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
 
 ## Evergreen ratchets (any session, any size)
 
-- `@ts-nocheck` paydown — **54 files** at
+- `@ts-nocheck` paydown — **53 files** at
   last update; `npm run ts-nocheck:next` ranks the cheapest (no free wins
   left — the cheapest `src/` files are ~14 errors). It needs `npm ci` first
   and refuses to report on any other compiler. One per substantive task is

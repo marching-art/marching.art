@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // =============================================================================
 // SHOP - Corps Identity Shop (v1)
 // =============================================================================
@@ -44,9 +43,21 @@ import {
 } from '../utils/cosmetics';
 import { LegacySection } from '../components/LegacySection';
 
+/**
+ * One catalog row from `SHOP_ITEMS` — the per-type extras (textClass,
+ * frameClass, preview swatches…) vary by `type`, so they stay open here.
+ * @typedef {{ id: string, type: string, name: string, price: number|null, [extra: string]: any }} ShopItem
+ */
+/** @typedef {import('../api/functions').StreakStatusResult} StreakStatusResult */
+
+/** @param {unknown} error @param {string} fallback */
+const messageOf = (error, fallback) => (error instanceof Error && error.message) || fallback;
+
+/** @type {Record<string, import('lucide-react').LucideIcon>} */
 const SECTION_ICONS = { title: Shield, frame: User, cardTheme: CreditCard, uniformPack: Shirt };
 
 // Per-type preview rendering for an item card
+/** @param {{ item: ShopItem }} props */
 const ItemPreview = ({ item }) => {
   if (item.type === 'title') {
     return (
@@ -86,8 +97,9 @@ const ItemPreview = ({ item }) => {
 const Shop = () => {
   const profile = useProfileStore((state) => state.profile);
   const seasonStatus = useSeasonStore((state) => state.seasonData?.status || null);
-  const [busy, setBusy] = useState(null); // itemId currently purchasing/equipping
-  const [freezeStatus, setFreezeStatus] = useState(null);
+  // itemId currently purchasing/equipping
+  const [busy, setBusy] = useState(/** @type {string|null} */ (null));
+  const [freezeStatus, setFreezeStatus] = useState(/** @type {StreakStatusResult|null} */ (null));
 
   const balance = profile?.corpsCoin || 0;
   const equipped = profile?.cosmetics?.equipped || {};
@@ -102,18 +114,20 @@ const Shop = () => {
     loadFreezeStatus();
   }, [loadFreezeStatus]);
 
+  /** @param {ShopItem} item */
   const handleBuy = async (item) => {
     setBusy(item.id);
     try {
       const result = await purchaseShopItem({ itemId: item.id });
       toast.success(result.data.message || `${item.name} purchased!`);
     } catch (error) {
-      toast.error(error.message || 'Purchase failed');
+      toast.error(messageOf(error, 'Purchase failed'));
     } finally {
       setBusy(null);
     }
   };
 
+  /** @param {ShopItem} item @param {boolean} isEquipped */
   const handleEquipToggle = async (item, isEquipped) => {
     setBusy(item.id);
     try {
@@ -122,7 +136,7 @@ const Shop = () => {
       );
       toast.success(result.data.message);
     } catch (error) {
-      toast.error(error.message || 'Could not equip item');
+      toast.error(messageOf(error, 'Could not equip item'));
     } finally {
       setBusy(null);
     }
@@ -135,7 +149,7 @@ const Shop = () => {
       toast.success(result.data.message || 'Streak freeze activated!');
       loadFreezeStatus();
     } catch (error) {
-      toast.error(error.message || 'Could not purchase streak freeze');
+      toast.error(messageOf(error, 'Could not purchase streak freeze'));
     } finally {
       setBusy(null);
     }
@@ -314,7 +328,7 @@ const Shop = () => {
                             }`}
                           >
                             <Coins className="w-3 h-3" />
-                            {item.price.toLocaleString()}
+                            {(item.price ?? 0).toLocaleString()}
                           </button>
                         )}
                       </div>

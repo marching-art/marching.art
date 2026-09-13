@@ -531,12 +531,9 @@ export async function getMemberProfiles(
     await Promise.all(
       batch.map(async (uid) => {
         try {
-          // The public mirror (never lineups/picks); the raw doc only as a
-          // fallback for profiles not yet backfilled.
-          let profileDoc = await getDoc(doc(db, paths.userProfilePublic(uid)));
-          if (!profileDoc.exists()) {
-            profileDoc = await getDoc(doc(db, paths.userProfile(uid)));
-          }
+          // The public mirror (never lineups/picks). The raw profile/data doc
+          // is owner/admin-only in rules, so there is no fallback.
+          const profileDoc = await getDoc(doc(db, paths.userProfilePublic(uid)));
           if (profileDoc.exists()) {
             profiles[uid] = projectMemberProfile(profileDoc.data());
           }
