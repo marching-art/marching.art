@@ -291,16 +291,19 @@ ops step below)_
   (`enforceAppCheck: false → true`) and let the functions deploy run. Flipping
   blind locks out clients on stale cached bundles; roll back by flipping it
   back.
-- **Unfreeze stale league matchups** (production credentials required):
-  `node functions/src/scripts/archiveStaleLeagueMatchups.js --dry-run`, read
-  the output, then `--commit`.
+- **Unfreeze stale league matchups** — owner, from the Actions tab: run
+  "Archive stale league matchups" (`.github/workflows/archive-stale-league-matchups.yml`,
+  added 2026-09-13) with `commit` unchecked, read the "Would move N
+  document(s) across M league(s)" line and the per-league week lists, then run
+  again with `commit` checked. Leagues it names get their matchups generated
+  again on the next weekly pass.
 - **Prune dead Firestore indexes** in the console after the
   `firestore.indexes.json` cleanup (indexes are deliberately not deployed
   from CI).
 
 ## Evergreen ratchets (any session, any size)
 
-- `@ts-nocheck` paydown — **53 files** at
+- `@ts-nocheck` paydown — **52 files** at
   last update; `npm run ts-nocheck:next` ranks the cheapest (no free wins
   left — the cheapest `src/` files are ~14 errors). It needs `npm ci` first
   and refuses to report on any other compiler. One per substantive task is
