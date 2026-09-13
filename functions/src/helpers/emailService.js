@@ -3,7 +3,7 @@
  * Handles all outbound email communications via Brevo (formerly Sendinblue)
  */
 
-const admin = require("firebase-admin");
+const { getAuth } = require("firebase-admin/auth");
 // @getbrevo/brevo is required lazily inside the client/send paths: every
 // function in the deploy unit loads this module at cold start, and only the
 // email senders touch Brevo.
@@ -408,7 +408,7 @@ async function getAdminEmails() {
   try {
     let pageToken = undefined;
     do {
-      const page = await admin.auth().listUsers(1000, pageToken);
+      const page = await getAuth().listUsers(1000, pageToken);
       for (const userRecord of page.users) {
         if (userRecord.customClaims?.admin === true && userRecord.email) {
           recipients.push({ uid: userRecord.uid, email: userRecord.email });

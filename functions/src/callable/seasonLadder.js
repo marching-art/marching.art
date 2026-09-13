@@ -1,7 +1,7 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { paths } = require("../helpers/paths");
 const { logger } = require("firebase-functions/v2");
-const admin = require("firebase-admin");
+const { FieldValue } = require("firebase-admin/firestore");
 const { getDb } = require("../config");
 const { addCoinHistoryEntryToTransaction } = require("../helpers/economy");
 const { assertAuth, assertWriteBudget } = require("../helpers/callableGuards");
@@ -62,10 +62,10 @@ const claimLadderTier = onCall({ cors: true }, async (request) => {
         seasonLadder: { seasonUid, claimed: [...claimed, ladderTier.tier] },
       };
       if (ladderTier.coin > 0) {
-        updates.corpsCoin = admin.firestore.FieldValue.increment(ladderTier.coin);
+        updates.corpsCoin = FieldValue.increment(ladderTier.coin);
       }
       if (ladderTier.grantItem) {
-        updates['cosmetics.owned'] = admin.firestore.FieldValue.arrayUnion(ladderTier.grantItem);
+        updates['cosmetics.owned'] = FieldValue.arrayUnion(ladderTier.grantItem);
       }
 
       transaction.update(profileRef, updates);

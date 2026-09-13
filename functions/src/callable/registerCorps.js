@@ -2,7 +2,7 @@ const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { paths } = require("../helpers/paths");
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
-const admin = require("firebase-admin");
+const { FieldValue } = require("firebase-admin/firestore");
 const { assertAuth, assertWriteBudget } = require("../helpers/callableGuards");
 const { getRegistrationLock, registrationLockMessage } = require("../helpers/registrationLock");
 const { homeGeoFor } = require("../helpers/corpsGeo");
@@ -102,7 +102,7 @@ exports.registerCorps = onCall({ cors: true }, async (request) => {
       homeGeo: homeGeoFor(location),
       description: description || '',
       class: corpsClass,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
       lineup: {},
       selectedShows: {},
       totalSeasonScore: 0,
@@ -166,7 +166,7 @@ exports.registerCorps = onCall({ cors: true }, async (request) => {
       corpsName,
       corpsClass,
       seasonId,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
     });
     try {
       await batch.commit();

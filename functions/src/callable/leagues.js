@@ -1,7 +1,7 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { paths } = require("../helpers/paths");
 const { getDb } = require("../config");
-const admin = require("firebase-admin");
+const { FieldValue } = require("firebase-admin/firestore");
 const { logger } = require("firebase-functions/v2");
 const {
   generateUniqueInviteCode,
@@ -138,7 +138,7 @@ exports.createLeague = onCall({ cors: true }, async (request) => {
       members: [uid],
       isPublic,
       maxMembers,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
       // Public discovery filters on seasonActivity.activeMemberCount, so this
       // must be written at creation — Firestore inequality filters skip
       // documents missing the field entirely.
@@ -169,7 +169,7 @@ exports.createLeague = onCall({ cors: true }, async (request) => {
 
     if (entryFee > 0) {
       transaction.update(userProfileRef, {
-        corpsCoin: admin.firestore.FieldValue.increment(-entryFee),
+        corpsCoin: FieldValue.increment(-entryFee),
       });
       addCoinHistoryEntryToTransaction(transaction, db, uid, {
         type: TRANSACTION_TYPES.LEAGUE_ENTRY,
@@ -204,7 +204,7 @@ exports.createLeague = onCall({ cors: true }, async (request) => {
         streak: 0,
         streakType: null
       }],
-      lastUpdated: admin.firestore.FieldValue.serverTimestamp()
+      lastUpdated: FieldValue.serverTimestamp()
     });
 
     // Create invite code mapping (code -> league) and the member-only copy
@@ -216,7 +216,7 @@ exports.createLeague = onCall({ cors: true }, async (request) => {
 
     // Add to user profile
     transaction.update(userProfileRef, {
-      leagueIds: admin.firestore.FieldValue.arrayUnion(leagueRef.id),
+      leagueIds: FieldValue.arrayUnion(leagueRef.id),
     });
   });
 
@@ -285,20 +285,20 @@ exports.joinLeague = onCall({ cors: true }, async (request) => {
     // Perform ALL writes after reads
     // Add to league
     transaction.update(leagueRef, {
-      members: admin.firestore.FieldValue.arrayUnion(uid),
+      members: FieldValue.arrayUnion(uid),
     });
 
     // Add to user profile
     transaction.update(userProfileRef, {
-      leagueIds: admin.firestore.FieldValue.arrayUnion(leagueId),
-      ...(entryFee > 0 ? { corpsCoin: admin.firestore.FieldValue.increment(-entryFee) } : {}),
+      leagueIds: FieldValue.arrayUnion(leagueId),
+      ...(entryFee > 0 ? { corpsCoin: FieldValue.increment(-entryFee) } : {}),
     });
 
     // Consume the invitation that admitted us so it can't linger as pending.
     if (invitationDoc && invitationDoc.exists) {
       transaction.update(invitationRef, {
         status: 'accepted',
-        respondedAt: admin.firestore.FieldValue.serverTimestamp(),
+        respondedAt: FieldValue.serverTimestamp(),
       });
     }
 
@@ -408,12 +408,12 @@ exports.joinLeagueByCode = onCall({ cors: true }, async (request) => {
     const entryFee = chargeEntryFeeInTransaction(transaction, db, uid, profileDoc, leagueRef, leagueData);
 
     transaction.update(leagueRef, {
-      members: admin.firestore.FieldValue.arrayUnion(uid),
+      members: FieldValue.arrayUnion(uid),
     });
 
     transaction.update(userProfileRef, {
-      leagueIds: admin.firestore.FieldValue.arrayUnion(leagueId),
-      ...(entryFee > 0 ? { corpsCoin: admin.firestore.FieldValue.increment(-entryFee) } : {}),
+      leagueIds: FieldValue.arrayUnion(leagueId),
+      ...(entryFee > 0 ? { corpsCoin: FieldValue.increment(-entryFee) } : {}),
     });
 
     if (standingsDoc.exists) {
@@ -532,7 +532,7 @@ exports.leaveLeague = onCall({ cors: true }, async (request) => {
         }
       } else {
         const update = {
-          members: admin.firestore.FieldValue.arrayRemove(uid),
+          members: FieldValue.arrayRemove(uid),
         };
 
         // A co-commissioner who leaves gives up the job with the seat. Every
@@ -540,7 +540,7 @@ exports.leaveLeague = onCall({ cors: true }, async (request) => {
         // leaving the uid behind left someone who is no longer a member able to
         // change settings, generate matchups, invite, and remove members.
         if (Array.isArray(leagueData.commissioners) && leagueData.commissioners.includes(uid)) {
-          update.commissioners = admin.firestore.FieldValue.arrayRemove(uid);
+          update.commissioners = FieldValue.arrayRemove(uid);
         }
 
         // Commissioner succession. Every commissioner gate keys off the
@@ -567,16 +567,16 @@ exports.leaveLeague = onCall({ cors: true }, async (request) => {
         if (standingsDoc.exists) {
           const existing = standingsDoc.data().standings || [];
           transaction.update(standingsRef, {
-            [`records.${uid}`]: admin.firestore.FieldValue.delete(),
+            [`records.${uid}`]: FieldValue.delete(),
             standings: existing.filter((s) => s.uid !== uid),
           });
         }
       }
 
       transaction.update(userProfileRef, {
-        leagueIds: admin.firestore.FieldValue.arrayRemove(leagueId),
+        leagueIds: FieldValue.arrayRemove(leagueId),
         ...(refunded > 0
-          ? { corpsCoin: admin.firestore.FieldValue.increment(refunded) }
+          ? { corpsCoin: FieldValue.increment(refunded) }
           : {}),
       });
     });
@@ -724,7 +724,7 @@ exports.generateMatchups = onCall({ cors: true }, async (request) => {
     // Stamped so rollover and the generator can tell this season's matchups
     // from a previous season's (see resetLeaguesForNewSeason).
     seasonUid,
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
     generatedBy: uid
   };
 
@@ -935,7 +935,7 @@ exports.updateMatchupResults = onCall({ cors: true }, async (request) => {
 
     t.update(matchupRef, {
       ...updated,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      updatedAt: FieldValue.serverTimestamp()
     });
     const standingsDiff = applyStandingsInTransaction(t, standingsDoc, resolvedPairs);
 

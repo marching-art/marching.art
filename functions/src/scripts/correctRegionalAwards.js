@@ -36,9 +36,10 @@
  *   node src/scripts/correctRegionalAwards.js --commit
  */
 
-const admin = require("firebase-admin");
+const { getFirestore } = require("firebase-admin/firestore");
+const { initializeApp, getApps } = require("firebase-admin/app");
 
-if (!admin.apps.length) admin.initializeApp();
+if (!getApps().length) initializeApp();
 
 const { paths } = require("../helpers/paths");
 const { regionalTierForEventName } = require("../helpers/seasonSchedule");
@@ -315,7 +316,7 @@ async function buildCorrectByUid(db) {
 }
 
 async function run({ commit }) {
-  const db = admin.firestore();
+  const db = getFirestore();
 
   console.log("Computing correct regional champions from stored recaps…");
   const correctByUid = await buildCorrectByUid(db);

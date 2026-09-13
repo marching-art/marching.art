@@ -3,7 +3,7 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { paths } = require("../helpers/paths");
 const { getDb } = require("../config");
-const admin = require("firebase-admin");
+const { FieldValue } = require("firebase-admin/firestore");
 const { logger } = require("firebase-functions/v2");
 const { normalizeCorpsName, pickDuplicateWinner, CORPS_NAME_CLASSES } = require("../helpers/corpsHelpers");
 const { assertAuth, assertAdmin } = require("../helpers/callableGuards");
@@ -158,7 +158,7 @@ exports.sweepDuplicateCorps = onCall({ cors: true, timeoutSeconds: 540, memory: 
           winnerUid: winner.uid,
           winnerCorpsClass: winner.corpsClass,
           winnerCorpsName: winner.corpsName,
-          flaggedAt: admin.firestore.FieldValue.serverTimestamp(),
+          flaggedAt: FieldValue.serverTimestamp(),
         },
       });
       batchCount++;
@@ -174,8 +174,8 @@ exports.sweepDuplicateCorps = onCall({ cors: true, timeoutSeconds: 540, memory: 
       const id = `${corps.uid}:${corps.corpsClass}`;
       if (corps.hadMustRename && !losersById.has(id)) {
         batch.update(corps.profileRef, {
-          [`corps.${corps.corpsClass}.mustRename`]: admin.firestore.FieldValue.delete(),
-          [`corps.${corps.corpsClass}.duplicateConflict`]: admin.firestore.FieldValue.delete(),
+          [`corps.${corps.corpsClass}.mustRename`]: FieldValue.delete(),
+          [`corps.${corps.corpsClass}.duplicateConflict`]: FieldValue.delete(),
         });
         batchCount++;
         cleared++;

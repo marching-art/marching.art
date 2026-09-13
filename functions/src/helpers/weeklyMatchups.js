@@ -4,7 +4,7 @@
 
 const { paths } = require("./paths");
 const { logger } = require("firebase-functions/v2");
-const admin = require("firebase-admin");
+const { FieldValue } = require("firebase-admin/firestore");
 const {
   TRANSACTION_TYPES,
   addCoinHistoryEntryToBatch,
@@ -202,7 +202,7 @@ async function processWeeklyMatchups(week, seasonData, db, { force = false } = {
         // actually fielded, not the array the matchup happened to be stored in.
         const p1RecordPath = `seasons.${seasonData.seasonUid}.records.${p1Class}`;
         const p2RecordPath = `seasons.${seasonData.seasonUid}.records.${p2Class}`;
-        const increment = admin.firestore.FieldValue.increment(1);
+        const increment = FieldValue.increment(1);
 
         if (p1_profile?.ref && p2_profile?.ref) {
           // Idempotency: the record increment and its token ride ONE set op per
@@ -277,8 +277,8 @@ async function processWeeklyMatchups(week, seasonData, db, { force = false } = {
                   stats: { leagueWins: increment },
                   ...(payBonus
                     ? {
-                        corpsCoin: admin.firestore.FieldValue.increment(WEEKLY_LEAGUE_WIN_REWARD),
-                        xp: admin.firestore.FieldValue.increment(XP_SOURCES.leagueWin),
+                        corpsCoin: FieldValue.increment(WEEKLY_LEAGUE_WIN_REWARD),
+                        xp: FieldValue.increment(XP_SOURCES.leagueWin),
                         ...awardTokenWrite(winToken, bonusToken),
                       }
                     : awardTokenWrite(winToken)),
@@ -496,7 +496,7 @@ async function payWeeklyParticipationXP(week, seasonData, db, { force = false } 
     );
     xpBatch.set(
       profileRef,
-      { xp: admin.firestore.FieldValue.increment(amount), ...awardTokenWrite(token) },
+      { xp: FieldValue.increment(amount), ...awardTokenWrite(token) },
       { merge: true }
     );
     paid += 1;

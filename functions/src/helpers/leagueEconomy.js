@@ -6,7 +6,7 @@
  * createLeague, joinLeague, and joinLeagueByCode (callable/leagues.js).
  */
 const { HttpsError } = require("firebase-functions/v2/https");
-const admin = require("firebase-admin");
+const { FieldValue } = require("firebase-admin/firestore");
 const { addCoinHistoryEntryToTransaction, TRANSACTION_TYPES } = require("./economy");
 
 // Commissioner-set entry fee bounds (CorpsCoin)
@@ -35,7 +35,7 @@ function chargeEntryFeeInTransaction(transaction, db, uid, profileDoc, leagueRef
   }
 
   transaction.update(leagueRef, {
-    'settings.prizePool': admin.firestore.FieldValue.increment(entryFee),
+    'settings.prizePool': FieldValue.increment(entryFee),
   });
   addCoinHistoryEntryToTransaction(transaction, db, uid, {
     type: TRANSACTION_TYPES.LEAGUE_ENTRY,

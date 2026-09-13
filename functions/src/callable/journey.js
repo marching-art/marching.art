@@ -1,7 +1,7 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { paths } = require("../helpers/paths");
 const { logger } = require("firebase-functions/v2");
-const admin = require("firebase-admin");
+const { FieldValue } = require("firebase-admin/firestore");
 const { getDb } = require("../config");
 const { calculateXPUpdates } = require("../helpers/xpCalculations");
 const { addCoinHistoryEntryToTransaction } = require("../helpers/economy");
@@ -67,7 +67,7 @@ const completeJourneyStep = onCall({ cors: true }, async (request) => {
         ...xpResult.updates,
       };
       if (step.coin > 0) {
-        updates.corpsCoin = admin.firestore.FieldValue.increment(step.coin);
+        updates.corpsCoin = FieldValue.increment(step.coin);
       }
 
       transaction.update(profileRef, updates);

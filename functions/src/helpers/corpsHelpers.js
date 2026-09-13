@@ -2,7 +2,7 @@
 // profanity check, duplicate-winner resolution, and persistent-identity /
 // retired-record builders. Unit-tested in corpsHelpers.test.js.
 
-const admin = require("firebase-admin");
+const { Timestamp } = require("firebase-admin/firestore");
 const { FANTASY_CLASSES, ENABLED_CLASSES } = require("./classRegistry");
 
 // Class tier ordering for duplicate-name conflict resolution: lower index =
@@ -96,7 +96,7 @@ function buildRetiredRecord(corpsClass, corps) {
     // A concrete Timestamp, not FieldValue.serverTimestamp(): this record is
     // stored as an element of the `retiredCorps` array, and Firestore rejects
     // the serverTimestamp() sentinel anywhere inside an array.
-    retiredAt: admin.firestore.Timestamp.now(),
+    retiredAt: Timestamp.now(),
   };
 }
 

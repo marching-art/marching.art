@@ -49,9 +49,10 @@
  *   node src/scripts/auditPodiumRoster.js --season overture_2026-27 --dry-run
  */
 
-const admin = require("firebase-admin");
+const { getFirestore } = require("firebase-admin/firestore");
+const { initializeApp, getApps } = require("firebase-admin/app");
 
-if (!admin.apps.length) admin.initializeApp();
+if (!getApps().length) initializeApp();
 
 const store = require("../helpers/podium/store");
 const { rankShowResults } = require("../helpers/podium/showRanking");
@@ -175,7 +176,7 @@ function parseArgs(argv) {
 }
 
 async function run({ commit, season }) {
-  const db = admin.firestore();
+  const db = getFirestore();
   let seasonUid = season;
   if (!seasonUid) {
     const seasonSnap = await db.doc("game-settings/season").get();

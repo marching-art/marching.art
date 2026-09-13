@@ -111,11 +111,12 @@ function summaryDiffers(row, summary) {
 }
 
 async function migrateSeasonHistoryDetail({ dryRun = false } = {}) {
-  const admin = require("firebase-admin");
-  if (!admin.apps.length) {
-    admin.initializeApp();
+const { getFirestore } = require("firebase-admin/firestore");
+const { initializeApp, getApps } = require("firebase-admin/app");
+  if (!getApps().length) {
+    initializeApp();
   }
-  const db = admin.firestore();
+  const db = getFirestore();
 
   const label = dryRun ? "[migrate:dry-run]" : "[migrate]";
   console.log(

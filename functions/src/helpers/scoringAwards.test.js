@@ -17,7 +17,7 @@ process.env.DATA_NAMESPACE = process.env.DATA_NAMESPACE || 'test-ns';
 const { test, describe } = require('node:test');
 const assert = require('node:assert/strict');
 
-const admin = require('firebase-admin');
+const { FieldValue } = require("firebase-admin/firestore");
 const {
   getTopCorpsFromSeasonStandings,
   buildChampionshipConfig,
@@ -311,18 +311,18 @@ describe('processCoinAwardsBatch', () => {
     );
     assert.equal(aliceUpdates.length, 1);
     assert.ok(
-      aliceUpdates[0].data.corpsCoin.isEqual(admin.firestore.FieldValue.increment(300)),
+      aliceUpdates[0].data.corpsCoin.isEqual(FieldValue.increment(300)),
       "alice's balance increments by the SUM of her awards"
     );
     // Each attended show also pays participation XP alongside the CC.
     assert.ok(
       aliceUpdates[0].data.xp.isEqual(
-        admin.firestore.FieldValue.increment(XP_SOURCES.showParticipation * 2)
+        FieldValue.increment(XP_SOURCES.showParticipation * 2)
       )
     );
 
     const bobUpdate = writes.find((w) => w.type === 'update' && w.path === profilePath('bob'));
-    assert.ok(bobUpdate.data.corpsCoin.isEqual(admin.firestore.FieldValue.increment(150)));
+    assert.ok(bobUpdate.data.corpsCoin.isEqual(FieldValue.increment(150)));
 
     // One audit-trail entry PER award in the corpsCoinHistory subcollection.
     const aliceHistory = writes.filter(
@@ -354,7 +354,7 @@ describe('processCoinAwardsBatch', () => {
     );
 
     const update = writes.find((w) => w.type === 'update');
-    assert.ok(update.data.corpsCoin.isEqual(admin.firestore.FieldValue.increment(50)));
+    assert.ok(update.data.corpsCoin.isEqual(FieldValue.increment(50)));
     assert.ok(!('xp' in update.data), 'CC-only award must not increment xp');
 
     const history = writes.find((w) => w.type === 'set');
@@ -385,10 +385,10 @@ describe('processCoinAwardsBatch — idempotency', () => {
 
     const update = writes.find((w) => w.type === 'update' && w.path === profilePath('alice'));
     assert.ok(update, 'alice is paid on the first run');
-    assert.ok(update.data.corpsCoin.isEqual(admin.firestore.FieldValue.increment(200)));
+    assert.ok(update.data.corpsCoin.isEqual(FieldValue.increment(200)));
     // The token rides the SAME write as the increment — atomic witness.
     assert.ok(
-      update.data[LEDGER_FIELD].isEqual(admin.firestore.FieldValue.arrayUnion(token)),
+      update.data[LEDGER_FIELD].isEqual(FieldValue.arrayUnion(token)),
       "the day token is written alongside the increment"
     );
   });
@@ -414,7 +414,7 @@ describe('processCoinAwardsBatch — idempotency', () => {
 
     const update = writes.find((w) => w.type === 'update' && w.path === profilePath('alice'));
     assert.ok(update, 'force bypasses the idempotency skip');
-    assert.ok(update.data.corpsCoin.isEqual(admin.firestore.FieldValue.increment(200)));
+    assert.ok(update.data.corpsCoin.isEqual(FieldValue.increment(200)));
   });
 
   test('without season context it stays non-idempotent (unmarked, back-compat)', async () => {
@@ -433,13 +433,13 @@ describe('processCoinAwardsBatch — idempotency', () => {
     const updates = writes.filter((w) => w.type === 'update' && w.path === profilePath('alice'));
     assert.equal(updates.length, 1, 'coins, captionStats, and the token land in ONE write op');
     const { data } = updates[0];
-    assert.ok(data.corpsCoin.isEqual(admin.firestore.FieldValue.increment(200)));
+    assert.ok(data.corpsCoin.isEqual(FieldValue.increment(200)));
     assert.ok(
-      data['captionStats.GE1'].isEqual(admin.firestore.FieldValue.increment(2.4)),
+      data['captionStats.GE1'].isEqual(FieldValue.increment(2.4)),
       'caption points banked (rounded to one decimal) in the same op'
     );
     assert.ok(!('captionStats.MB' in data), 'zero-point captions are not written');
-    assert.ok(data[LEDGER_FIELD].isEqual(admin.firestore.FieldValue.arrayUnion(token)));
+    assert.ok(data[LEDGER_FIELD].isEqual(FieldValue.arrayUnion(token)));
   });
 
   test('torn-commit retry cannot double-bank captionStats (the token skips them too)', async () => {
@@ -466,8 +466,8 @@ describe('processCoinAwardsBatch — idempotency', () => {
     const update = writes.find((w) => w.type === 'update' && w.path === profilePath('bob'));
     assert.ok(update, 'caption-only user still gets the guarded write');
     assert.ok(!('corpsCoin' in update.data), 'no zero coin increment is fabricated');
-    assert.ok(update.data['captionStats.B'].isEqual(admin.firestore.FieldValue.increment(1.2)));
-    assert.ok(update.data[LEDGER_FIELD].isEqual(admin.firestore.FieldValue.arrayUnion(token)));
+    assert.ok(update.data['captionStats.B'].isEqual(FieldValue.increment(1.2)));
+    assert.ok(update.data[LEDGER_FIELD].isEqual(FieldValue.arrayUnion(token)));
   });
 });
 
@@ -501,7 +501,7 @@ describe('awardClassChampionshipTrophies', () => {
     const medalFor = (uid) => medalWrites.find((w) => w.path === profilePath(uid));
     assert.ok(
       medalFor('o1').data['trophies.classChampionships'].isEqual(
-        admin.firestore.FieldValue.arrayUnion({
+        FieldValue.arrayUnion({
           type: 'class_championship',
           classType: 'openClass',
           metal: 'gold',
@@ -515,7 +515,7 @@ describe('awardClassChampionshipTrophies', () => {
     );
     assert.ok(
       medalFor('o3').data['trophies.classChampionships'].isEqual(
-        admin.firestore.FieldValue.arrayUnion({
+        FieldValue.arrayUnion({
           type: 'class_championship',
           classType: 'openClass',
           metal: 'bronze',
@@ -529,7 +529,7 @@ describe('awardClassChampionshipTrophies', () => {
     assert.equal(medalFor('o4'), undefined, '4th place gets no medal');
     assert.ok(
       medalFor('a1').data['trophies.classChampionships'].isEqual(
-        admin.firestore.FieldValue.arrayUnion({
+        FieldValue.arrayUnion({
           type: 'class_championship',
           classType: 'aClass',
           metal: 'gold',
@@ -601,7 +601,7 @@ describe('awardFinalsAndSaveChampions', () => {
     );
     assert.ok(
       medalWrites[0].data['trophies.championships'].isEqual(
-        admin.firestore.FieldValue.arrayUnion({
+        FieldValue.arrayUnion({
           type: 'championship',
           metal: 'gold',
           corpsClass: 'worldClass',
@@ -619,7 +619,7 @@ describe('awardFinalsAndSaveChampions', () => {
     const o1Finalist = finalistWrites.find((w) => w.path === profilePath('o1'));
     assert.ok(
       o1Finalist.data['trophies.finalistMedals'].isEqual(
-        admin.firestore.FieldValue.arrayUnion({
+        FieldValue.arrayUnion({
           type: 'finalist',
           seasonName: seasonData.name,
           eventName: 'marching.art World Championship Finals',
@@ -782,7 +782,7 @@ describe('awardFinalsAndSaveChampions', () => {
     );
     assert.ok(
       bestInShow[0].data['trophies.soundSportAwards'].isEqual(
-        admin.firestore.FieldValue.arrayUnion({
+        FieldValue.arrayUnion({
           type: 'international_festival',
           seasonName: seasonData.name,
           eventName: 'SoundSport International Music & Food Festival',

@@ -8,12 +8,12 @@
  */
 
 const crypto = require("crypto");
-const admin = require("firebase-admin");
+const { initializeApp } = require("firebase-admin/app");
 const { onCall, onRequest, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
 const { defineSecret } = require("firebase-functions/params");
 
-admin.initializeApp();
+initializeApp();
 
 // Shared secret used to authenticate server-to-server calls from the main
 // functions codebase (e.g. startNewLiveSeason / refreshLiveSeasonSchedule)

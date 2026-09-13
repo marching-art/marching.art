@@ -3,7 +3,7 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { getDb } = require("../config");
 const { paths } = require("../helpers/paths");
-const admin = require("firebase-admin");
+const { FieldValue, Timestamp } = require("firebase-admin/firestore");
 const { logger } = require("firebase-functions/v2");
 const { createLeagueActivity, invitationId } = require("../helpers/leagueHelpers");
 const { assertAuth, assertWriteBudget } = require("../helpers/callableGuards");
@@ -195,10 +195,10 @@ exports.inviteDirectorToLeague = onCall({ cors: true }, async (request) => {
     inviteeUid,
     message: trimmedMessage,
     status: 'pending',
-    invitedAt: admin.firestore.FieldValue.serverTimestamp(),
+    invitedAt: FieldValue.serverTimestamp(),
     // Invitations used to sit pending forever, so a director's list slowly
     // filled with offers to leagues that had long since moved on.
-    expiresAt: admin.firestore.Timestamp.fromMillis(Date.now() + INVITATION_TTL_MS),
+    expiresAt: Timestamp.fromMillis(Date.now() + INVITATION_TTL_MS),
   });
 
   // Notify the invitee in their notification feed. Text is built from
@@ -239,7 +239,7 @@ exports.respondToLeagueInvitation = onCall({ cors: true }, async (request) => {
   if (isInvitationExpired(invitation)) {
     await invitationRef.update({
       status: 'expired',
-      respondedAt: admin.firestore.FieldValue.serverTimestamp(),
+      respondedAt: FieldValue.serverTimestamp(),
     });
     throw new HttpsError("failed-precondition", "This invitation has expired.");
   }
@@ -247,7 +247,7 @@ exports.respondToLeagueInvitation = onCall({ cors: true }, async (request) => {
   if (!accept) {
     await invitationRef.update({
       status: 'declined',
-      respondedAt: admin.firestore.FieldValue.serverTimestamp(),
+      respondedAt: FieldValue.serverTimestamp(),
     });
     return { success: true, accepted: false };
   }
@@ -270,7 +270,7 @@ exports.respondToLeagueInvitation = onCall({ cors: true }, async (request) => {
       // Already a member — just mark invitation accepted
       transaction.update(invitationRef, {
         status: 'accepted',
-        respondedAt: admin.firestore.FieldValue.serverTimestamp(),
+        respondedAt: FieldValue.serverTimestamp(),
       });
       return;
     }
@@ -288,11 +288,11 @@ exports.respondToLeagueInvitation = onCall({ cors: true }, async (request) => {
     );
 
     transaction.update(leagueRef, {
-      members: admin.firestore.FieldValue.arrayUnion(uid),
+      members: FieldValue.arrayUnion(uid),
     });
     transaction.update(userProfileRef, {
-      leagueIds: admin.firestore.FieldValue.arrayUnion(leagueId),
-      ...(entryFee > 0 ? { corpsCoin: admin.firestore.FieldValue.increment(-entryFee) } : {}),
+      leagueIds: FieldValue.arrayUnion(leagueId),
+      ...(entryFee > 0 ? { corpsCoin: FieldValue.increment(-entryFee) } : {}),
     });
     if (standingsDoc.exists) {
       const existingData = standingsDoc.data();
@@ -312,7 +312,7 @@ exports.respondToLeagueInvitation = onCall({ cors: true }, async (request) => {
     }
     transaction.update(invitationRef, {
       status: 'accepted',
-      respondedAt: admin.firestore.FieldValue.serverTimestamp(),
+      respondedAt: FieldValue.serverTimestamp(),
     });
   });
 

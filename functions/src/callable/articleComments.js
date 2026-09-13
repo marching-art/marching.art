@@ -13,6 +13,7 @@ const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
 const { FieldValue } = require("firebase-admin/firestore");
+const { getAuth } = require("firebase-admin/auth");
 const { brevoApiKey } = require("../helpers/emailService");
 const { hasAdminClaim, assertAuthWithBudget, assertDocId } = require("../helpers/callableGuards");
 
@@ -636,8 +637,7 @@ exports.reportArticleComment = onCall(
       try {
         const { fanOutToAdmins, sendAdminCommentReportEmail } =
           require("../helpers/emailService");
-        const reporterRecord = await require("firebase-admin")
-          .auth()
+        const reporterRecord = await getAuth()
           .getUser(request.auth.uid)
           .catch(() => null);
         const commentExcerpt = (commentData.content || commentData.text || "")

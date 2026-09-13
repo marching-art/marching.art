@@ -15,7 +15,7 @@ const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
 const { paths } = require("../helpers/paths");
 const { getDb } = require("../config");
-const admin = require("firebase-admin");
+const { FieldValue } = require("firebase-admin/firestore");
 const { createLeagueActivity, resolveDisplayName } = require("../helpers/leagueHelpers");
 const { consumeRateBudget } = require("../helpers/rateLimit");
 const {
@@ -127,7 +127,7 @@ exports.postLeagueMessage = onCall({ cors: true }, async (request) => {
   const messageDoc = {
     userId: uid,
     message: trimmedMessage,
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
   };
   if (replySnapshot) messageDoc.replyTo = replySnapshot;
   await messageRef.set(messageDoc);
@@ -136,7 +136,7 @@ exports.postLeagueMessage = onCall({ cors: true }, async (request) => {
   // per-device read marker (utils/leagueChatReads). Only a timestamp: league
   // docs are listable by any signed-in user, so no message text goes here.
   try {
-    await leagueRef.update({ lastChatAt: admin.firestore.FieldValue.serverTimestamp() });
+    await leagueRef.update({ lastChatAt: FieldValue.serverTimestamp() });
   } catch (error) {
     logger.warn(`lastChatAt stamp failed for ${leagueId}:`, error);
   }
@@ -350,7 +350,7 @@ exports.reportLeagueMessage = onCall({ cors: true }, async (request) => {
     reporterUid,
     reason: reason.trim(),
     status: "new",
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
   });
 
   // Best-effort admin heads-up; the reporter never sees an email failure.

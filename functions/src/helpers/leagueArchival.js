@@ -1,7 +1,7 @@
 const { logger } = require("firebase-functions/v2");
 const { paths } = require("./paths");
 const { getDb } = require("../config");
-const admin = require("firebase-admin");
+const { FieldValue } = require("firebase-admin/firestore");
 const {
   TRANSACTION_TYPES,
   addCoinHistoryEntryToBatch,
@@ -30,7 +30,7 @@ function addNotificationToBatch(batch, db, uid, notification) {
     ...doc,
     id: ref.id,
     userId: uid,
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
   });
 }
 
@@ -225,7 +225,7 @@ async function archiveSeasonResultsLogic(dbArg = null, season = null) {
         archivedAt: new Date(),
       };
       batch.update(leagueRef, {
-        champions: admin.firestore.FieldValue.arrayUnion(championEntry),
+        champions: FieldValue.arrayUnion(championEntry),
       });
       logger.info(`Archived winner for league '${league.name}': ${leagueWinner.username}`);
       if (championEntry.consolation) {
@@ -255,8 +255,8 @@ async function archiveSeasonResultsLogic(dbArg = null, season = null) {
         earnedAt: new Date(),
       };
       batch.update(winnerProfileRef, {
-        achievements: admin.firestore.FieldValue.arrayUnion(championAchievement),
-        corpsCoin: admin.firestore.FieldValue.increment(championAchievement.ccReward),
+        achievements: FieldValue.arrayUnion(championAchievement),
+        corpsCoin: FieldValue.increment(championAchievement.ccReward),
       });
       addCoinHistoryEntryToBatch(batch, db, leagueWinner.userId, {
         type: "achievement",
@@ -284,15 +284,15 @@ async function archiveSeasonResultsLogic(dbArg = null, season = null) {
       const payout = prizePool + poolCarry;
       if (payout > 0) {
         batch.update(winnerProfileRef, {
-          corpsCoin: admin.firestore.FieldValue.increment(payout),
+          corpsCoin: FieldValue.increment(payout),
         });
         const leaguePayoutUpdate = {};
         if (prizePool > 0) {
           leaguePayoutUpdate["settings.prizePool"] =
-            admin.firestore.FieldValue.increment(-prizePool);
+            FieldValue.increment(-prizePool);
         }
         if (poolCarry > 0) {
-          leaguePayoutUpdate.poolCarry = admin.firestore.FieldValue.increment(-poolCarry);
+          leaguePayoutUpdate.poolCarry = FieldValue.increment(-poolCarry);
         }
         batch.update(leagueRef, leaguePayoutUpdate);
         addCoinHistoryEntryToBatch(batch, db, leagueWinner.userId, {
@@ -360,7 +360,7 @@ async function archiveSeasonResultsLogic(dbArg = null, season = null) {
           winnerUsername: leagueWinner.username,
           score: leagueWinner.finalScore,
         },
-        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        timestamp: FieldValue.serverTimestamp(),
       });
     }
   }

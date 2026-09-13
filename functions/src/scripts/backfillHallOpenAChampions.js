@@ -31,9 +31,10 @@
  *   node src/scripts/backfillHallOpenAChampions.js --commit
  */
 
-const admin = require("firebase-admin");
+const { getFirestore } = require("firebase-admin/firestore");
+const { initializeApp, getApps } = require("firebase-admin/app");
 
-if (!admin.apps.length) admin.initializeApp();
+if (!getApps().length) initializeApp();
 
 const { paths } = require("../helpers/paths");
 
@@ -129,7 +130,7 @@ function rebuildOpenAClasses(classes, day46Shows, resolveProfile) {
 }
 
 async function run({ commit }) {
-  const db = admin.firestore();
+  const db = getFirestore();
 
   const snapshot = await db.collection("season_champions").get();
   console.log(`Scanning ${snapshot.size} archived season(s)…`);

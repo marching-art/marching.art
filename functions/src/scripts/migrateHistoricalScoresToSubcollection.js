@@ -65,11 +65,12 @@ function planYear(parentData, existingEventIds) {
 }
 
 async function migrateHistoricalScoresToSubcollection({ dryRun = false } = {}) {
-  const admin = require("firebase-admin");
-  if (!admin.apps.length) {
-    admin.initializeApp();
+const { FieldValue, getFirestore } = require("firebase-admin/firestore");
+const { initializeApp, getApps } = require("firebase-admin/app");
+  if (!getApps().length) {
+    initializeApp();
   }
-  const db = admin.firestore();
+  const db = getFirestore();
 
   const label = dryRun ? "[migrate-historical:dry-run]" : "[migrate-historical]";
   console.log(`${label} Scanning historical_scores year documents...`);
@@ -119,7 +120,7 @@ async function migrateHistoricalScoresToSubcollection({ dryRun = false } = {}) {
     if (!dryRun) {
       batch.set(
         yearRef,
-        { data: admin.firestore.FieldValue.delete(), sharded: true, migratedAt: new Date() },
+        { data: FieldValue.delete(), sharded: true, migratedAt: new Date() },
         { merge: true }
       );
     }

@@ -9,7 +9,7 @@
 
 const { logger } = require("firebase-functions/v2");
 const { paths } = require("./paths");
-const admin = require("firebase-admin");
+const { FieldValue } = require("firebase-admin/firestore");
 const { emptySeasonActivity } = require("./leagueActivity");
 const { SCORING_FORMATS } = require("./captionWars");
 
@@ -136,12 +136,12 @@ async function resetLeaguesForNewSeason(db, oldSeasonUid, newSeasonUid) {
 
     batch.update(leagueRef, {
       seasonId: newSeasonUid,
-      matchupsGeneratedWeek: admin.firestore.FieldValue.delete(),
+      matchupsGeneratedWeek: FieldValue.delete(),
       seasonActivity: emptySeasonActivity(newSeasonUid, memberCount),
       // A pinned announcement is topical — "draft night moved to Thursday"
       // sits above every tab, and one about a season that has ended is worse
       // than none at all.
-      announcement: admin.firestore.FieldValue.delete(),
+      announcement: FieldValue.delete(),
       // An alternate scoring format is bought for ONE season (see
       // callable/leagueFormat.js). Clearing it here is what makes it a
       // recurring CorpsCoin sink rather than a one-time one, and it means a
@@ -150,7 +150,7 @@ async function resetLeaguesForNewSeason(db, oldSeasonUid, newSeasonUid) {
       // format and its season uid, so this pair being cleared can only ever
       // fail back to the default.
       "settings.scoringFormat": SCORING_FORMATS.TOTAL,
-      "settings.scoringFormatSeasonUid": admin.firestore.FieldValue.delete(),
+      "settings.scoringFormatSeasonUid": FieldValue.delete(),
     });
 
     // Deliberately kept: champions[] (the Hall of Fame), commissioners[], the

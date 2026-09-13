@@ -13,7 +13,7 @@
  * remains is a backstop, and it now runs after the night it summarizes.
  */
 
-const admin = require("firebase-admin");
+const { FieldValue } = require("firebase-admin/firestore");
 const { logger } = require("firebase-functions/v2");
 const { paths } = require("./paths");
 const { processAllInPages } = require("./firestorePaging");
@@ -314,7 +314,7 @@ async function generateLeagueRecapsForWeek(db, week) {
 
       const recap = generateWeeklyRecap(matchupData, standings, memberProfiles);
       recap.week = week;
-      recap.generatedAt = admin.firestore.FieldValue.serverTimestamp();
+      recap.generatedAt = FieldValue.serverTimestamp();
 
       const matchupHistory = {};
       matchupHistorySnapshot.forEach((doc) => {

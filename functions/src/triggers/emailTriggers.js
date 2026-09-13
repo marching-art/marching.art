@@ -5,7 +5,8 @@
 
 const { onDocumentCreated } = require("firebase-functions/v2/firestore");
 const { logger } = require("firebase-functions/v2");
-const admin = require("firebase-admin");
+const { getAuth } = require("firebase-admin/auth");
+const { getFirestore } = require("firebase-admin/firestore");
 const { paths } = require("../helpers/paths");
 const {
   sendWelcomeEmail,
@@ -22,7 +23,7 @@ const {
  */
 async function getUserEmail(uid) {
   try {
-    const userRecord = await admin.auth().getUser(uid);
+    const userRecord = await getAuth().getUser(uid);
     return userRecord.email;
   } catch (error) {
     logger.warn(`Could not get email for user ${uid}:`, error.message);
@@ -98,8 +99,7 @@ exports.onStreakMilestoneReached = onDocumentCreated(
     }
 
     // Get profile for username
-    const profileDoc = await admin
-      .firestore()
+    const profileDoc = await getFirestore()
       .doc(paths.userProfile(userId))
       .get();
 

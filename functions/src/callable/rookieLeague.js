@@ -1,7 +1,7 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { paths } = require("../helpers/paths");
 const { getDb } = require("../config");
-const admin = require("firebase-admin");
+const { FieldValue } = require("firebase-admin/firestore");
 const { logger } = require("firebase-functions/v2");
 const { generateUniqueInviteCode, createLeagueActivity } = require("../helpers/leagueHelpers");
 const { assertAuth, assertWriteBudget } = require("../helpers/callableGuards");
@@ -97,10 +97,10 @@ exports.joinRookieLeague = onCall({ cors: true }, async (request) => {
       const standingsDoc = await transaction.get(standingsRef);
 
       transaction.update(leagueRef, {
-        members: admin.firestore.FieldValue.arrayUnion(uid),
+        members: FieldValue.arrayUnion(uid),
       });
       transaction.update(userProfileRef, {
-        leagueIds: admin.firestore.FieldValue.arrayUnion(leagueRef.id),
+        leagueIds: FieldValue.arrayUnion(leagueRef.id),
       });
       if (standingsDoc.exists) {
         const existingStandings = standingsDoc.data().standings || [];
@@ -148,7 +148,7 @@ exports.joinRookieLeague = onCall({ cors: true }, async (request) => {
       maxMembers: ROOKIE_LEAGUE_MAX_MEMBERS,
       isRookieCircuit: true,
       tag: 'casual',
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
       // Discovery filters on this; written at creation because a Firestore
       // inequality filter skips documents missing the field entirely.
       seasonActivity: {
@@ -179,14 +179,14 @@ exports.joinRookieLeague = onCall({ cors: true }, async (request) => {
         uid, wins: 0, losses: 0, ties: 0,
         totalPoints: 0, pointsAgainst: 0, streak: 0, streakType: null,
       }],
-      lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
+      lastUpdated: FieldValue.serverTimestamp(),
     });
     // `create`: a colliding code fails the transaction instead of hijacking
     // another league's invite (see helpers/leagueHelpers.js).
     transaction.create(inviteRef, { leagueId: newLeagueRef.id });
     transaction.set(metaPrivateRef, { inviteCode });
     transaction.update(userProfileRef, {
-      leagueIds: admin.firestore.FieldValue.arrayUnion(newLeagueRef.id),
+      leagueIds: FieldValue.arrayUnion(newLeagueRef.id),
     });
     transaction.set(pointerRef, { leagueId: newLeagueRef.id, counter: nextNumber });
 

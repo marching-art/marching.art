@@ -8,7 +8,7 @@ burns an hour to conclude "everything's about covered." Don't. If you ship,
 cut, or discover something, edit THIS file in the same PR — that's the whole
 maintenance contract.
 
-_Last updated: 2026-09-12 (Scores page highlights every one of the director's corps — all fantasy classes + Podium, matched by uid with a name fallback via `utils/corps.buildViewerCorpsMatcher` / `isViewerCorps`; community report). Previous: 2026-09-11 (league chat rebuilt — threaded rows, reactions, replies, @mention picker, report control, scroll that stays put, optimistic sends, `lastChatAt` unread dot on the league card). Previous: 2026-09-09 (score-age column on the Fantasy + Podium season standings); 2026-09-06 (director-authored articles exempt from the score-reveal gate — dead Discord/notification links fixed; scheduled-vs-pending admin email + working admin deep link; assistant director fades with consecutive days
+_Last updated: 2026-09-13 (firebase-admin 14.4 everywhere + functions/scraper/scripts migrated to the modular `firebase-admin/*` API; `uuid` advisory closed via a scoped `gaxios` override; unused `firebase-functions-test` dropped). Previous: 2026-09-12 (Scores page highlights every one of the director's corps — all fantasy classes + Podium, matched by uid with a name fallback via `utils/corps.buildViewerCorpsMatcher` / `isViewerCorps`; community report). Previous: 2026-09-11 (league chat rebuilt — threaded rows, reactions, replies, @mention picker, report control, scroll that stays put, optimistic sends, `lastChatAt` unread dot on the league card). Previous: 2026-09-09 (score-age column on the Fantasy + Podium season standings); 2026-09-06 (director-authored articles exempt from the score-reveal gate — dead Discord/notification links fixed; scheduled-vs-pending admin email + working admin deep link; assistant director fades with consecutive days
 away; Podium field = the registered field; majors and championship rounds
 carry the Podium roster; roster audit workflow; season re-mint guard). Previous: 2026-09-04 (site-review row 20 — one onboarding checklist (the Journey; Quick Start modal deleted, `?reveal=` deep link) and one How-to-Play route by auth state; device-aware install guide at /install — in-app-browser detection with an Open-in-Safari/Chrome escape hatch, per-browser steps, one-tap native install, linked from footer / ? menu / home / Settings / the nudge; site-review row 19 — honest functions coverage gate, first admin / league-automation tests; row 18 — one-click unsubscribe + List-Unsubscribe headers, noindex auth wall; row 17 — vendor-firebase trimmed, GameShell + overlays lazy for guests; row 16 — focus traps + Escape in every raw dialog, icon buttons named; row 15 — one dashboard interrupt per visit, celebrations to the inbox; row 14 — weekly XP / win bonus / finish bonus paid per director; row 13 — league weeks decided per show, percentile edge cases; row 12 — server-enforced age gate + consent-gated analytics; AI imagery now built from the full Uniform Studio design + rendered reference image; main ruleset + gazetteer PR flow; site-review Fix-first 1–11 + quick wins shipped)._
 
@@ -201,14 +201,12 @@ ops step below)_
   that don't exist (`staff_auctions`, top-level `lineups`/`users`/`chat`/
   `trades`/`comments`). Prune; drop from the path filter; add an indexes
   diff step. (S)
-- **P2** `firebase-admin` major drift: `functions/` on `^13`, scraper /
-  `scripts/` / root on `^14`. (The high/critical prod advisories this used to
-  carry are gone as of 2026-09-04's Dependabot sweep; the audit baseline is
-  now 0 everywhere except the scraper's 3, which sit behind the deliberate
-  `puppeteer-core` major hold.) `.npmrc` `legacy-peer-deps=true` hides the
-  React 19 peer conflicts — and it also breaks Dependabot's lockfile
-  regeneration for `functions/`, whose lockfile was generated _without_ it
-  (see the 2026-09-04 dependencies entry below). (M)
+- ~~**P2** `firebase-admin` major drift~~ — closed 2026-09-13: every
+  package (`functions/`, scraper, `scripts/`, root) is on `^14.4`, and the
+  functions tree was migrated off the namespaced `admin.*` API that v14
+  removed (see Recently shipped). `npm audit` is 0 in all four. Still open
+  from this item: `.npmrc` `legacy-peer-deps=true` hides the React 19 peer
+  conflicts. (S)
 - **P3** `hosting.ignore` doesn't exclude `**/*.map`, so hidden source maps
   are publicly fetchable (`firebase.json:36`, `vite.config.js:55`). (S)
 - **P3** No root `engines` / `.nvmrc` (functions pin Node 22, `@types/node`
@@ -379,6 +377,24 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
 
 ## Recently shipped (context, newest first — prune when stale)
 
+- 2026-09-13 (dependency sweep, replaces Dependabot #1540/#1541/#1542):
+  `firebase-admin` is `^14.4.0` in root, `functions/`, `functions-scraper/`
+  and `scripts/`. v14 deleted the namespaced API, so Dependabot's
+  `functions/` bump alone would have crashed every function on
+  `admin.firestore.FieldValue` / `admin.auth()` / `admin.initializeApp()`
+  (and the scraper, already on ^14.3, was broken the same way). All 66
+  functions files, the scraper and the `scripts/` inspectors now import
+  `initializeApp`/`getApps`/`cert` from `firebase-admin/app`,
+  `getFirestore`/`FieldValue`/`FieldPath`/`Timestamp` from
+  `firebase-admin/firestore`, and `getAuth`/`getStorage`/`getMessaging`
+  from their modules; `profile.test.js` stubs `getAuth` on the auth module
+  instead of swapping the whole package in `require.cache`. The
+  `uuid <11.1.1` advisory that Dependabot's PRs did _not_ actually close
+  (it rides in via `@google-cloud/storage` → `gaxios@6`) is closed with a
+  scoped `overrides.gaxios.uuid` in each package; root's `brace-expansion`
+  advisory closed via `npm audit fix`; the unused `firebase-functions-test`
+  devDependency (peer-pinned to admin ≤13) is gone. `npm audit` is 0 in all
+  four packages.
 - 2026-09-11 (league chat redesign): the Chat tab is a threaded column
   (`tabs/ChatTab.tsx` + `ChatMessageRow.tsx` + `ChatComposer.tsx`, pure
   helpers in `utils/chatFormat.ts`): run-grouped rows with avatar/name/time

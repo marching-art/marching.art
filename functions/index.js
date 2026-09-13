@@ -1,10 +1,10 @@
-// @ts-nocheck -- grandfathered when functions checkJs landed (functions/tsconfig.json); remove when this file is typed or cleaned up
-const admin = require("firebase-admin");
+const { getFirestore } = require("firebase-admin/firestore");
+const { initializeApp } = require("firebase-admin/app");
 const { setGlobalOptions } = require("firebase-functions/v2");
-admin.initializeApp();
+initializeApp();
 
 // Configure Firestore to ignore undefined properties
-const db = admin.firestore();
+const db = getFirestore();
 db.settings({ ignoreUndefinedProperties: true });
 
 // App Check enforcement for every callable. `false` = current behavior:

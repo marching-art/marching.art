@@ -2,7 +2,7 @@ const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { paths } = require("../helpers/paths");
 const { checkBirthDate, MIN_AGE_YEARS } = require("../helpers/ageGate");
 const { logger } = require("firebase-functions/v2");
-const admin = require("firebase-admin");
+const { getAuth } = require("firebase-admin/auth");
 const { getDb } = require("../config");
 const { calculateLevel, getLevelTitle } = require("../helpers/xpCalculations");
 const { NEW_DIRECTOR_CORPSCOIN } = require("../helpers/economy");
@@ -29,10 +29,10 @@ exports.setUserRole = onCall({ cors: true }, async (request) => {
   logger.info(`Admin ${request.auth.uid} attempting to set role for ${email} to admin: ${makeAdmin}`);
 
   try {
-    const user = await admin.auth().getUserByEmail(email);
+    const user = await getAuth().getUserByEmail(email);
     // Merge onto the existing claims — a bare { admin } here would clobber
     // any other custom claims the user carries.
-    await admin.auth().setCustomUserClaims(user.uid, {
+    await getAuth().setCustomUserClaims(user.uid, {
       ...user.customClaims,
       admin: makeAdmin === true,
     });

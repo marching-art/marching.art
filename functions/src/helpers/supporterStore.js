@@ -15,7 +15,7 @@
 // When the doc is linked to a marching.art account (uid set) we mirror a
 // server-only `supporter` object onto that profile so flair renders.
 
-const admin = require("firebase-admin");
+const { FieldValue, Timestamp } = require("firebase-admin/firestore");
 const { logger } = require("firebase-functions/v2");
 const { paths } = require("./paths");
 
@@ -111,7 +111,7 @@ async function writeSupporterState(db, emailHash, { meta, patch = {}, createIfAb
     if (!snap.exists && !createIfAbsent) return;
     /** @type {Record<string, any>} */
     const ex = snap.exists ? snap.data() : {};
-    const nowTs = admin.firestore.FieldValue.serverTimestamp();
+    const nowTs = FieldValue.serverTimestamp();
 
     const recurringActive = patch.recurringActive ?? ex.recurringActive ?? false;
     const recurringTier =
@@ -140,7 +140,7 @@ async function writeSupporterState(db, emailHash, { meta, patch = {}, createIfAb
     const anonymous = ex.anonymous ?? false;
     const message = ex.message ?? null;
     const oneTimeExpiresAt =
-      oneTimeExpiresMs != null ? admin.firestore.Timestamp.fromMillis(oneTimeExpiresMs) : null;
+      oneTimeExpiresMs != null ? Timestamp.fromMillis(oneTimeExpiresMs) : null;
     result = {
       written: true,
       prevTier: ex.tier ?? null,

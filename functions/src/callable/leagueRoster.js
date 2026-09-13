@@ -10,7 +10,7 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { paths } = require("../helpers/paths");
 const { getDb } = require("../config");
-const admin = require("firebase-admin");
+const { FieldValue } = require("firebase-admin/firestore");
 const { logger } = require("firebase-functions/v2");
 const { createLeagueActivity } = require("../helpers/leagueHelpers");
 const { assertAuth, hasAdminClaim, assertWriteBudget } = require("../helpers/callableGuards");
@@ -157,7 +157,7 @@ exports.removeLeagueMember = onCall({ cors: true }, async (request) => {
     const refundAmount = computeRemovalRefund(leagueData, memberProfileExists);
 
     transaction.update(leagueRef, {
-      members: admin.firestore.FieldValue.arrayRemove(memberId),
+      members: FieldValue.arrayRemove(memberId),
       // Losing the seat means losing the job. `commissioners` is what every
       // league gate reads (helpers/leaguePermissions.js), so leaving the uid
       // behind left a removed co-commissioner able to change settings,
@@ -165,19 +165,19 @@ exports.removeLeagueMember = onCall({ cors: true }, async (request) => {
       // no longer in.
       ...(Array.isArray(leagueData.commissioners) &&
       leagueData.commissioners.includes(memberId)
-        ? { commissioners: admin.firestore.FieldValue.arrayRemove(memberId) }
+        ? { commissioners: FieldValue.arrayRemove(memberId) }
         : {}),
       ...(refundAmount > 0
-        ? { 'settings.prizePool': admin.firestore.FieldValue.increment(-refundAmount) }
+        ? { 'settings.prizePool': FieldValue.increment(-refundAmount) }
         : {}),
     });
 
     if (memberProfileExists) {
       const memberUpdate = {
-        leagueIds: admin.firestore.FieldValue.arrayRemove(leagueId),
+        leagueIds: FieldValue.arrayRemove(leagueId),
       };
       if (refundAmount > 0) {
-        memberUpdate.corpsCoin = admin.firestore.FieldValue.increment(refundAmount);
+        memberUpdate.corpsCoin = FieldValue.increment(refundAmount);
         addCoinHistoryEntryToTransaction(transaction, db, memberId, {
           type: TRANSACTION_TYPES.LEAGUE_ENTRY_REFUND,
           amount: refundAmount,
@@ -194,7 +194,7 @@ exports.removeLeagueMember = onCall({ cors: true }, async (request) => {
     if (standingsDoc.exists) {
       const existing = standingsDoc.data().standings || [];
       transaction.update(standingsRef, {
-        [`records.${memberId}`]: admin.firestore.FieldValue.delete(),
+        [`records.${memberId}`]: FieldValue.delete(),
         standings: existing.filter((s) => s.uid !== memberId),
       });
     }

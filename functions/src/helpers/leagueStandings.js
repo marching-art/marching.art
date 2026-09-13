@@ -18,7 +18,7 @@
  */
 
 const { logger } = require("firebase-functions/v2");
-const admin = require("firebase-admin");
+const { FieldValue } = require("firebase-admin/firestore");
 const { captionsWonBy } = require("./captionWars");
 
 /**
@@ -298,7 +298,7 @@ function applyStandingsInTransaction(t, standingsDoc, pairs) {
     {
       records,
       standings, // Array format for frontend API
-      lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
+      lastUpdated: FieldValue.serverTimestamp(),
     },
     { merge: true }
   );

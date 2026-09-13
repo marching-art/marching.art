@@ -4,7 +4,7 @@
 // rebuild would otherwise self-heal it (see helpers/showRegistrations.js).
 //
 // Exercised via the v2 `.run()` hook with a fake Firestore injected through
-// config.setDbForTesting and admin.auth() stubbed so no real app is needed.
+// config.setDbForTesting and getAuth() stubbed so no real app is needed.
 // Uses Node's built-in test runner (node:test). Run with `npm test`.
 process.env.DATA_NAMESPACE = process.env.DATA_NAMESPACE || "test-ns";
 
@@ -17,26 +17,19 @@ const {
   registrationEntryKey,
 } = require("../helpers/showRegistrations");
 
-// Stub the `firebase-admin` module before deleteAccount lazily requires it, so
-// the callable's `admin.auth().deleteUser` runs without an initialized app.
-// (`admin.auth` is a non-writable accessor, so it can't be patched in place —
-// we replace the whole module in require.cache.) The separate
+// Stub `getAuth` on the `firebase-admin/auth` module before deleteAccount
+// requires it, so the callable's `getAuth().deleteUser` runs without an
+// initialized app. profile.js destructures `getAuth` at load time, so the
+// stub has to land before the require below. The separate
 // `firebase-admin/firestore` module stays real: FieldValue.delete() is a
 // sentinel that needs no app.
 let authDeletions = [];
-const adminPath = require.resolve("firebase-admin");
-require.cache[adminPath] = {
-  id: adminPath,
-  filename: adminPath,
-  loaded: true,
-  exports: {
-    auth: () => ({
-      deleteUser: async (uid) => {
-        authDeletions.push(uid);
-      },
-    }),
+const adminAuth = require("firebase-admin/auth");
+adminAuth.getAuth = () => ({
+  deleteUser: async (uid) => {
+    authDeletions.push(uid);
   },
-};
+});
 
 const { deleteAccount } = require("./profile");
 

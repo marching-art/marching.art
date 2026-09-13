@@ -5,7 +5,8 @@
 
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { logger } = require("firebase-functions/v2");
-const admin = require("firebase-admin");
+const { FieldValue } = require("firebase-admin/firestore");
+const { getAuth } = require("firebase-admin/auth");
 const { getDb } = require("../config");
 const { paths } = require("../helpers/paths");
 const {
@@ -57,7 +58,7 @@ async function getUserEmails(uids) {
   for (let i = 0; i < uids.length; i += 100) {
     const chunk = uids.slice(i, i + 100);
     try {
-      const result = await admin.auth().getUsers(chunk.map((uid) => ({ uid })));
+      const result = await getAuth().getUsers(chunk.map((uid) => ({ uid })));
       for (const user of result.users) {
         if (user.email) emailByUid.set(user.uid, user.email);
       }
@@ -76,7 +77,7 @@ async function trackEmailSent(db, uid, emailType, metadata = {}) {
 
   await emailLogRef.set({
     emailType,
-    sentAt: admin.firestore.FieldValue.serverTimestamp(),
+    sentAt: FieldValue.serverTimestamp(),
     ...metadata,
   });
 }
@@ -364,7 +365,7 @@ exports.weeklyDigestEmailJob = onSchedule(
           await doc.ref.set(
             {
               rivalsSnapshotForEmail: profile.rivals,
-              rivalsSnapshotEmailedAt: admin.firestore.FieldValue.serverTimestamp(),
+              rivalsSnapshotEmailedAt: FieldValue.serverTimestamp(),
             },
             { merge: true },
           );

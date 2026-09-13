@@ -1,7 +1,7 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { paths } = require("../helpers/paths");
 const { getDb } = require("../config");
-const admin = require("firebase-admin");
+const { FieldValue, Timestamp } = require("firebase-admin/firestore");
 const { logger } = require("firebase-functions/v2");
 const { hasCorpsCompeted } = require("../helpers/corpsEligibility");
 const { assertAuth, assertWriteBudget } = require("../helpers/callableGuards");
@@ -304,7 +304,7 @@ exports.processCorpsDecisions = onCall({ cors: true }, async (request) => {
               homeGeo: homeGeoFor(decision.location),
               showConcept: decision.showConcept || "",
               seasonUid: currentSeasonUid,
-              createdAt: admin.firestore.FieldValue.serverTimestamp(),
+              createdAt: FieldValue.serverTimestamp(),
               seasonHistory: [],
               lineup: null,
               lineupKey: null,
@@ -397,7 +397,7 @@ exports.processCorpsDecisions = onCall({ cors: true }, async (request) => {
           corpsName: decision.corpsName,
           corpsClass: decision.corpsClass,
           seasonId: corpsNamesSeasonId,
-          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          createdAt: FieldValue.serverTimestamp(),
         });
       });
 
@@ -655,7 +655,7 @@ exports.transferCorps = onCall({ cors: true }, async (request) => {
         // A concrete Timestamp, not FieldValue.serverTimestamp(): this record is
         // stored as an element of the per-season transfer array, and Firestore
         // rejects the serverTimestamp() sentinel anywhere inside an array.
-        transferredAt: admin.firestore.Timestamp.now(),
+        transferredAt: Timestamp.now(),
       };
       const updatedSeasonTransfers = [...seasonTransfers, newTransferRecord];
       const updatedTransferHistory = {
@@ -680,7 +680,7 @@ exports.transferCorps = onCall({ cors: true }, async (request) => {
           corpsName: sourceCorps.corpsName,
           corpsClass: toClass,
           seasonId: corpsNamesSeasonId,
-          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          createdAt: FieldValue.serverTimestamp(),
         });
       }
 
@@ -891,8 +891,8 @@ exports.renameCorps = onCall({ cors: true }, async (request) => {
       // Update the profile: new name, clear the rename-required flag.
       const updates = {
         [`corps.${corpsClass}.corpsName`]: trimmedNewName,
-        [`corps.${corpsClass}.mustRename`]: admin.firestore.FieldValue.delete(),
-        [`corps.${corpsClass}.duplicateConflict`]: admin.firestore.FieldValue.delete(),
+        [`corps.${corpsClass}.mustRename`]: FieldValue.delete(),
+        [`corps.${corpsClass}.duplicateConflict`]: FieldValue.delete(),
       };
       transaction.update(userProfileRef, updates);
 
@@ -906,7 +906,7 @@ exports.renameCorps = onCall({ cors: true }, async (request) => {
         corpsName: trimmedNewName,
         corpsClass,
         seasonId,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
       });
 
       return { oldName, newName: trimmedNewName };

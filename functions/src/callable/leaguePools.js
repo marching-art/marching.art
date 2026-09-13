@@ -11,7 +11,7 @@
 
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
-const admin = require("firebase-admin");
+const { FieldValue } = require("firebase-admin/firestore");
 const { getDb } = require("../config");
 const { paths } = require("../helpers/paths");
 const {
@@ -95,7 +95,7 @@ const joinLeaguePool = onCall({ cors: true }, async (request) => {
         transaction.update(leagueRef, { poolCarry: 0 });
       }
       transaction.update(profileRef, {
-        corpsCoin: admin.firestore.FieldValue.increment(-POOL_ANTE),
+        corpsCoin: FieldValue.increment(-POOL_ANTE),
       });
       addCoinHistoryEntryToTransaction(transaction, db, uid, {
         type: "league_pool_entry",

@@ -10,7 +10,7 @@
 // to get them — an inverted dependency. The callables now import from here.
 // =============================================================================
 
-const admin = require("firebase-admin");
+const { FieldValue } = require("firebase-admin/firestore");
 const { paths } = require("./paths");
 const { SHOW_PARTICIPATION_REWARDS, CLASS_UNLOCK_COSTS } = require("./classRegistry");
 
@@ -47,7 +47,7 @@ function addCoinHistoryEntryToBatch(batch, db, uid, entry) {
   const historyRef = getHistoryCollection(db, uid).doc();
   batch.set(historyRef, {
     ...entry,
-    timestamp: entry.timestamp || admin.firestore.FieldValue.serverTimestamp(),
+    timestamp: entry.timestamp || FieldValue.serverTimestamp(),
   });
 }
 

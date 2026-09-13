@@ -17,7 +17,7 @@
  */
 
 const { logger } = require("firebase-functions/v2");
-const admin = require("firebase-admin");
+const { FieldValue } = require("firebase-admin/firestore");
 const { paths } = require("./paths");
 const { pickSuccessor } = require("./leaguePermissions");
 const { refreshLeagueActivity } = require("./leagueActivity");
@@ -187,9 +187,9 @@ async function detachMemberFromLeague(db, leagueId, uid) {
         return "dissolved";
       }
 
-      const update = { members: admin.firestore.FieldValue.arrayRemove(uid) };
+      const update = { members: FieldValue.arrayRemove(uid) };
       if (plan.dropCommissioner) {
-        update.commissioners = admin.firestore.FieldValue.arrayRemove(uid);
+        update.commissioners = FieldValue.arrayRemove(uid);
       }
       if (plan.successorUid) {
         update.creatorId = plan.successorUid;
@@ -204,7 +204,7 @@ async function detachMemberFromLeague(db, leagueId, uid) {
       if (standingsDoc.exists) {
         const existing = standingsDoc.data().standings || [];
         transaction.update(standingsRef, {
-          [`records.${uid}`]: admin.firestore.FieldValue.delete(),
+          [`records.${uid}`]: FieldValue.delete(),
           standings: existing.filter((row) => row.uid !== uid),
         });
       }

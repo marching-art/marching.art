@@ -1,7 +1,6 @@
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
-const { Timestamp } = require("firebase-admin/firestore");
-const admin = require("firebase-admin");
+const { Timestamp, FieldValue } = require("firebase-admin/firestore");
 const {
   TRANSACTION_TYPES,
   addCoinHistoryEntryToBatch,
@@ -390,7 +389,7 @@ async function archiveAndResetProfiles(db, oldSeasonUid, newSeasonUid) {
       // Clear the nightly-scoring idempotency ledger (helpers/awardLedger.js):
       // its tokens are scoped to the closing season, so a fresh season starts
       // with an empty ledger and it never accumulates across seasons.
-      awardLedger: admin.firestore.FieldValue.delete(),
+      awardLedger: FieldValue.delete(),
     };
 
     // Season-finish payouts (coin + XP) and the recap the client shows once.
@@ -416,7 +415,7 @@ async function archiveAndResetProfiles(db, oldSeasonUid, newSeasonUid) {
       // window would be silently erased. Award the season XP as an
       // increment instead; xpLevel/userTitle stay plain-set and reconcile
       // on the next claim (the codebase's lazy-recompute convention).
-      updateData.xp = admin.firestore.FieldValue.increment(totalXP);
+      updateData.xp = FieldValue.increment(totalXP);
     }
 
     // Reset the seasonal reward ladder: new baseline is the post-award XP
@@ -424,7 +423,7 @@ async function archiveAndResetProfiles(db, oldSeasonUid, newSeasonUid) {
     updateData.xpAtSeasonStart = (profileData.xp || 0) + totalXP;
     updateData.seasonLadder = null;
     if (totalCoin > 0) {
-      updateData.corpsCoin = admin.firestore.FieldValue.increment(totalCoin);
+      updateData.corpsCoin = FieldValue.increment(totalCoin);
     }
     if (seasonAwards.length > 0) {
       updateData.pendingSeasonRecap = {
