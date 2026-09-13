@@ -28,7 +28,6 @@ on:
       - 'functions-scraper/**'
       - 'firestore.rules'
       - 'storage.rules'
-      - 'firestore.indexes.json'
   # Manual trigger from GitHub UI with options
   workflow_dispatch:
     inputs:

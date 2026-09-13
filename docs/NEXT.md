@@ -8,7 +8,7 @@ burns an hour to conclude "everything's about covered." Don't. If you ship,
 cut, or discover something, edit THIS file in the same PR — that's the whole
 maintenance contract.
 
-_Last updated: 2026-09-13 (**Lineup privacy flipped** — `profile/data` is owner/admin-only in rules after the backfill workflow wrote 125/125 `profile/public` mirrors; raw-doc fallbacks dropped from `api/profile.getPublicProfile` and `api/leagues.getMemberProfiles`; rules tests flipped + owner/admin reads added; ops item closed). Same day: (storage bucket done — `VITE_FIREBASE_STORAGE_BUCKET` secret set ~2026-08-30, run #446 confirms `marching.art` linked and `storage.rules` released with no warning; ops item closed. `main` ruleset imported and Active — seven CI checks required, no bypass; ops item closed. BMAC webhook confirmed live — endpoint Active on the function URL, test event answered 200 "Ignored (test event)", signature verified; ops item closed. Podium medal correction re-run with commit on the show-field rule — 21 recap days / 83 rows re-ranked, 23 live medal counters rebuilt; ops item closed. Overture days 19–23 will NOT be re-scored — owner decision, the five hash-ordered nights stand as posted; ops item dropped). Same day: (Podium corps badged on BOTH Eastern Classic nights on the Schedule page + registration modal, matching fantasy — shared `utils/podiumAttendance` helpers now feed ScheduleParts, the modal and tourStops; community report). Same day: (firebase-admin 14.4 everywhere + functions/scraper/scripts migrated to the modular `firebase-admin/*` API; `uuid` advisory closed via a scoped `gaxios` override; unused `firebase-functions-test` dropped). Previous: 2026-09-12 (Scores page highlights every one of the director's corps — all fantasy classes + Podium, matched by uid with a name fallback via `utils/corps.buildViewerCorpsMatcher` / `isViewerCorps`; community report). Previous: 2026-09-11 (league chat rebuilt — threaded rows, reactions, replies, @mention picker, report control, scroll that stays put, optimistic sends, `lastChatAt` unread dot on the league card). Previous: 2026-09-09 (score-age column on the Fantasy + Podium season standings); 2026-09-06 (director-authored articles exempt from the score-reveal gate — dead Discord/notification links fixed; scheduled-vs-pending admin email + working admin deep link; assistant director fades with consecutive days
+_Last updated: 2026-09-13 (Firestore indexes: `firestore.indexes.json` pruned 31 → 13 composites (+1 added that code needs) and the `users.seasonYear` override dropped, every survivor matched to a live query; the file no longer triggers a functions deploy; the console deletion is an owner step with the explicit list in the ops section. Stale league matchups: "Archive stale league matchups" run #1 (COMMIT, 22:09Z) scanned 21 leagues and found 0 stale weeks — no league is frozen; ops item closed. Four leagues report "no matchup weeks" (World Corps Association, North American Marching Arts Association, The Grandmasters Table, Cheese Appreciaters United) — expected for non-matchup formats, worth a glance if any of them is head-to-head. **Lineup privacy flipped** — `profile/data` is owner/admin-only in rules after the backfill workflow wrote 125/125 `profile/public` mirrors; raw-doc fallbacks dropped from `api/profile.getPublicProfile` and `api/leagues.getMemberProfiles`; rules tests flipped + owner/admin reads added; ops item closed). Same day: (storage bucket done — `VITE_FIREBASE_STORAGE_BUCKET` secret set ~2026-08-30, run #446 confirms `marching.art` linked and `storage.rules` released with no warning; ops item closed. `main` ruleset imported and Active — seven CI checks required, no bypass; ops item closed. BMAC webhook confirmed live — endpoint Active on the function URL, test event answered 200 "Ignored (test event)", signature verified; ops item closed. Podium medal correction re-run with commit on the show-field rule — 21 recap days / 83 rows re-ranked, 23 live medal counters rebuilt; ops item closed. Overture days 19–23 will NOT be re-scored — owner decision, the five hash-ordered nights stand as posted; ops item dropped). Same day: (Podium corps badged on BOTH Eastern Classic nights on the Schedule page + registration modal, matching fantasy — shared `utils/podiumAttendance` helpers now feed ScheduleParts, the modal and tourStops; community report). Same day: (firebase-admin 14.4 everywhere + functions/scraper/scripts migrated to the modular `firebase-admin/*` API; `uuid` advisory closed via a scoped `gaxios` override; unused `firebase-functions-test` dropped). Previous: 2026-09-12 (Scores page highlights every one of the director's corps — all fantasy classes + Podium, matched by uid with a name fallback via `utils/corps.buildViewerCorpsMatcher` / `isViewerCorps`; community report). Previous: 2026-09-11 (league chat rebuilt — threaded rows, reactions, replies, @mention picker, report control, scroll that stays put, optimistic sends, `lastChatAt` unread dot on the league card). Previous: 2026-09-09 (score-age column on the Fantasy + Podium season standings); 2026-09-06 (director-authored articles exempt from the score-reveal gate — dead Discord/notification links fixed; scheduled-vs-pending admin email + working admin deep link; assistant director fades with consecutive days
 away; Podium field = the registered field; majors and championship rounds
 carry the Podium roster; roster audit workflow; season re-mint guard). Previous: 2026-09-04 (site-review row 20 — one onboarding checklist (the Journey; Quick Start modal deleted, `?reveal=` deep link) and one How-to-Play route by auth state; device-aware install guide at /install — in-app-browser detection with an Open-in-Safari/Chrome escape hatch, per-browser steps, one-tap native install, linked from footer / ? menu / home / Settings / the nudge; site-review row 19 — honest functions coverage gate, first admin / league-automation tests; row 18 — one-click unsubscribe + List-Unsubscribe headers, noindex auth wall; row 17 — vendor-firebase trimmed, GameShell + overlays lazy for guests; row 16 — focus traps + Escape in every raw dialog, icon buttons named; row 15 — one dashboard interrupt per visit, celebrations to the inbox; row 14 — weekly XP / win bonus / finish bonus paid per director; row 13 — league weeks decided per show, percentile edge cases; row 12 — server-enforced age gate + consent-gated analytics; AI imagery now built from the full Uniform Studio design + rendered reference image; main ruleset + gazetteer PR flow; site-review Fix-first 1–11 + quick wins shipped)._
 
@@ -196,11 +196,10 @@ ops step below)_
   `dependency-review-action` on PRs. (M)
 - **P2** No www↔apex or trailing-slash redirects in either host config, and
   `checkHostingParity.mjs` doesn't compare redirects. (M)
-- **P2** `firestore.indexes.json` is never deployed yet is a deploy-trigger
-  path (`deploy-functions.yml:25`), and ~9 of 31 entries target collections
-  that don't exist (`staff_auctions`, top-level `lineups`/`users`/`chat`/
-  `trades`/`comments`). Prune; drop from the path filter; add an indexes
-  diff step. (S)
+- **P3** `firestore.indexes.json` — pruned 31 → 13 and dropped from the
+  deploy path filter 2026-09-13 (was P2); what remains is an indexes diff
+  step in CI (compare the file against `firebase firestore:indexes` output
+  with read-only credentials and warn on drift). (S)
 - ~~**P2** `firebase-admin` major drift~~ — closed 2026-09-13: every
   package (`functions/`, scraper, `scripts/`, root) is on `^14.4`, and the
   functions tree was migrated off the namespaced `admin.*` API that v14
@@ -291,19 +290,44 @@ ops step below)_
   (`enforceAppCheck: false → true`) and let the functions deploy run. Flipping
   blind locks out clients on stale cached bundles; roll back by flipping it
   back.
-- **Unfreeze stale league matchups** — owner, from the Actions tab: run
-  "Archive stale league matchups" (`.github/workflows/archive-stale-league-matchups.yml`,
-  added 2026-09-13) with `commit` unchecked, read the "Would move N
-  document(s) across M league(s)" line and the per-league week lists, then run
-  again with `commit` checked. Leagues it names get their matchups generated
-  again on the next weekly pass.
-- **Prune dead Firestore indexes** in the console after the
-  `firestore.indexes.json` cleanup (indexes are deliberately not deployed
-  from CI).
+- **Prune dead Firestore indexes in the console** (owner; the file side
+  shipped 2026-09-13 — `firestore.indexes.json` went 31 → 13 composites and
+  lost the `users.seasonYear` override, and the file no longer triggers a
+  functions deploy; indexes are still deliberately NOT deployed from CI, so
+  the console is the only place they get removed). Firebase console →
+  Firestore → Indexes → **Composite**: delete these 19, matching on collection
+  - fields (each backs a query no code runs; verified against every
+    `collection()`/`collectionGroup()` call in `functions/`, `src/`, `scripts/`):
+  * `staff_auctions (status ASCENDING, endsAt ASCENDING)`
+  * `staff_auctions (staffCaption ASCENDING, status ASCENDING, endsAt ASCENDING)`
+  * `users (seasonYear ASCENDING, totalPoints DESCENDING)`
+  * `users (isActive ASCENDING, totalPoints DESCENDING)`
+  * `lineups (userId ASCENDING, week ASCENDING)`
+  * `leagues (members CONTAINS, createdAt DESCENDING)`
+  * `leagues (isActive ASCENDING, memberCount DESCENDING)`
+  * `leagues (isPublic ASCENDING, seasonActivity.activeMemberCount DESCENDING, createdAt DESCENDING)`
+  * `chat (leagueId ASCENDING, createdAt DESCENDING)`
+  * `trades (status ASCENDING, createdAt DESCENDING)`
+  * `notifications (userId ASCENDING, read ASCENDING, createdAt DESCENDING)`
+  * `comments (corpsId ASCENDING, createdAt DESCENDING)`
+  * `reports (status ASCENDING, createdAt DESCENDING)`
+  * `historical_scores (showDate ASCENDING, corpsName ASCENDING)`
+  * `historical_scores (seasonYear ASCENDING, totalScore DESCENDING)`
+  * `news_hub (isPublished ASCENDING, createdAt DESCENDING)`
+  * `news_hub (isPublished ASCENDING, category ASCENDING, createdAt DESCENDING)`
+  * `profile (engagement.lastLogin ASCENDING, engagement.loginStreak ASCENDING)`
+  * `article_comments_reports (status ASCENDING, createdAt DESCENDING)`
+    Then **Single field** tab: delete the `users` / `seasonYear` exemption.
+    Leave everything else alone — do not delete an index only because it is
+    missing from the file. One entry was ADDED to the file because code needs
+    it: `notifications (read ASC, createdAt ASC)` for the read-notification
+    cleanup in `hooks/useLeagueNotifications.ts`; if the Composite tab lacks
+    it, create it (a failing cleanup logs a console error with the create
+    link). Still open from the P2 bullet: an indexes diff step in CI.
 
 ## Evergreen ratchets (any session, any size)
 
-- `@ts-nocheck` paydown — **52 files** at
+- `@ts-nocheck` paydown — **51 files** at
   last update; `npm run ts-nocheck:next` ranks the cheapest (no free wins
   left — the cheapest `src/` files are ~14 errors). It needs `npm ci` first
   and refuses to report on any other compiler. One per substantive task is
