@@ -8,7 +8,7 @@ burns an hour to conclude "everything's about covered." Don't. If you ship,
 cut, or discover something, edit THIS file in the same PR — that's the whole
 maintenance contract.
 
-_Last updated: 2026-09-13 (Podium corps badged on BOTH Eastern Classic nights on the Schedule page + registration modal, matching fantasy — shared `utils/podiumAttendance` helpers now feed ScheduleParts, the modal and tourStops; community report). Same day: (firebase-admin 14.4 everywhere + functions/scraper/scripts migrated to the modular `firebase-admin/*` API; `uuid` advisory closed via a scoped `gaxios` override; unused `firebase-functions-test` dropped). Previous: 2026-09-12 (Scores page highlights every one of the director's corps — all fantasy classes + Podium, matched by uid with a name fallback via `utils/corps.buildViewerCorpsMatcher` / `isViewerCorps`; community report). Previous: 2026-09-11 (league chat rebuilt — threaded rows, reactions, replies, @mention picker, report control, scroll that stays put, optimistic sends, `lastChatAt` unread dot on the league card). Previous: 2026-09-09 (score-age column on the Fantasy + Podium season standings); 2026-09-06 (director-authored articles exempt from the score-reveal gate — dead Discord/notification links fixed; scheduled-vs-pending admin email + working admin deep link; assistant director fades with consecutive days
+_Last updated: 2026-09-13 (Overture days 19–23 will NOT be re-scored — owner decision, the five hash-ordered nights stand as posted; ops item dropped). Same day: (Podium corps badged on BOTH Eastern Classic nights on the Schedule page + registration modal, matching fantasy — shared `utils/podiumAttendance` helpers now feed ScheduleParts, the modal and tourStops; community report). Same day: (firebase-admin 14.4 everywhere + functions/scraper/scripts migrated to the modular `firebase-admin/*` API; `uuid` advisory closed via a scoped `gaxios` override; unused `firebase-functions-test` dropped). Previous: 2026-09-12 (Scores page highlights every one of the director's corps — all fantasy classes + Podium, matched by uid with a name fallback via `utils/corps.buildViewerCorpsMatcher` / `isViewerCorps`; community report). Previous: 2026-09-11 (league chat rebuilt — threaded rows, reactions, replies, @mention picker, report control, scroll that stays put, optimistic sends, `lastChatAt` unread dot on the league card). Previous: 2026-09-09 (score-age column on the Fantasy + Podium season standings); 2026-09-06 (director-authored articles exempt from the score-reveal gate — dead Discord/notification links fixed; scheduled-vs-pending admin email + working admin deep link; assistant director fades with consecutive days
 away; Podium field = the registered field; majors and championship rounds
 carry the Podium roster; roster audit workflow; season re-mint guard). Previous: 2026-09-04 (site-review row 20 — one onboarding checklist (the Journey; Quick Start modal deleted, `?reveal=` deep link) and one How-to-Play route by auth state; device-aware install guide at /install — in-app-browser detection with an Open-in-Safari/Chrome escape hatch, per-browser steps, one-tap native install, linked from footer / ? menu / home / Settings / the nudge; site-review row 19 — honest functions coverage gate, first admin / league-automation tests; row 18 — one-click unsubscribe + List-Unsubscribe headers, noindex auth wall; row 17 — vendor-firebase trimmed, GameShell + overlays lazy for guests; row 16 — focus traps + Escape in every raw dialog, icon buttons named; row 15 — one dashboard interrupt per visit, celebrations to the inbox; row 14 — weekly XP / win bonus / finish bonus paid per director; row 13 — league weeks decided per show, percentile edge cases; row 12 — server-enforced age gate + consent-gated analytics; AI imagery now built from the full Uniform Studio design + rendered reference image; main ruleset + gazetteer PR flow; site-review Fix-first 1–11 + quick wins shipped)._
 
@@ -307,18 +307,6 @@ ops step below)_
   merged before its CI finishes (#1490 landed red on main that way) and the
   gazetteer refresh's PR could be merged without checks. Then confirm the
   next PR shows the seven jobs as required.
-- **Re-score the Overture nights scored on hash-ordered history (days 19–23,
-  2026-08-27 → 08-31).** The `historical_scores` sharding (a103c8f) returned a
-  year's events in document-id order; the projection model read its season
-  anchors off the list ends and swung projected captions by up to ±2 points
-  (a director with Cadets 2013 ×3 in music posted 21 vs. the 25.5 their
-  dashboard showed). Fixed at the read layer and in the model (this PR);
-  every projected caption from those five nights is still wrong in
-  `fantasy_recaps`, standings and the caption ledger. Decide whether to
-  reprocess them with the admin force-rescore (it rewrites recaps, coin and
-  XP awards are ledger-idempotent) or leave them and announce; either way
-  reply to the Discord report. Real-score nights (day 22 for Cadets 2013)
-  were never affected.
 - **Flip App Check enforcement**: the CSP fix that was blocking attestation
   shipped 2026-09-01 (needs a hosting deploy). Once live, check Firebase
   console → App Check metrics for Functions; once real traffic shows verified, flip the literal
