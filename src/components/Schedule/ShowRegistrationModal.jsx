@@ -180,6 +180,7 @@ const ShowRegistrationModal = ({
         setPodiumInfo({
           selectedShows,
           autoDays: state.autoDays || [],
+          easternNightFinal: Boolean(state.easternNightFinal),
           competitionDay: state.competitionDay ?? 0,
           corpsName: state.state?.corpsName || 'Podium Corps',
         });
@@ -205,11 +206,17 @@ const ShowRegistrationModal = ({
   // A two-night event (the Eastern Classic) is ONE registration for the Podium
   // corps just as for a fantasy corps: it is on the bill both nights and
   // performs on its assigned one. autoDays carries only the performing night,
-  // so resolve it through the show's multiNight nights and surface it.
+  // so resolve it through the show's multiNight nights. That night is only a
+  // placeholder until the division-seeded split publishes (Day 39, after the
+  // Southeastern) — name it only once the server marks it final.
   const podiumAutoNight = podiumInfo ? podiumAutoNightFor(podiumInfo.autoDays, show) : null;
   const podiumIsMyAutoDay = podiumAutoNight !== null || podiumIsChampWeek;
+  const podiumNights = multiNightNights(show);
+  const podiumIsTwoNight = podiumAutoNight !== null && podiumNights.length > 1;
   const podiumPerformNight =
-    podiumAutoNight !== null && multiNightNights(show).length > 1 ? podiumAutoNight : null;
+    podiumIsTwoNight && podiumInfo?.easternNightFinal ? podiumAutoNight : null;
+  const podiumNightsPublishDay =
+    podiumIsTwoNight && !podiumPerformNight ? podiumNights[0] - 2 : null;
   const podiumIsEasternOffNight =
     PODIUM_EASTERN_DAYS.includes(podiumDay) && podiumInfo && !podiumIsMyAutoDay;
   // A day is "passed" only once it is strictly before the current competition
@@ -610,6 +617,7 @@ const ShowRegistrationModal = ({
                 atMax={podiumAtMax}
                 isMyAutoDay={podiumIsMyAutoDay}
                 performNight={podiumPerformNight}
+                nightsPublishDay={podiumNightsPublishDay}
                 isEasternOffNight={podiumIsEasternOffNight}
                 isPast={podiumIsPast}
                 picksThisWeek={podiumPicksThisWeek}

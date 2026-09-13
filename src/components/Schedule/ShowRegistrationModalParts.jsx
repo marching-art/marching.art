@@ -270,6 +270,7 @@ export const PodiumSelectionRow = ({
   atMax,
   isMyAutoDay,
   performNight = null,
+  nightsPublishDay = null,
   isEasternOffNight,
   isPast,
   picksThisWeek,
@@ -306,7 +307,9 @@ export const PodiumSelectionRow = ({
             {isMyAutoDay
               ? performNight !== null
                 ? `Auto-attended — two-night event · you perform Day ${performNight}`
-                : 'Auto-attended — major / championship'
+                : nightsPublishDay !== null
+                  ? `Auto-attended — two-night event · night lineups publish Day ${nightsPublishDay}`
+                  : 'Auto-attended — major / championship'
               : isEasternOffNight
                 ? 'Eastern Classic — not your assigned night'
                 : isPast
