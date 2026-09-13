@@ -280,11 +280,17 @@ ops step below)_
 
 ## Operational — owner only, standing until done
 
-- **Flip App Check enforcement**: the CSP fix that was blocking attestation
-  shipped 2026-09-01 (needs a hosting deploy). Once live, check Firebase
-  console → App Check metrics for Functions; once real traffic shows verified, flip the literal
-  in `functions/index.js` (`enforceAppCheck: false → true`) and run a full
-  deploy. Flipping blind locks out clients on stale cached bundles.
+- **Flip App Check enforcement** — monitor phase started 2026-09-13: a
+  score-based reCAPTCHA Enterprise key (`marching-art`, domain `marching.art`,
+  no challenges) was created, the web app registered under reCAPTCHA
+  Enterprise in Firebase console → App Check, the key ID set as the
+  `VITE_APPCHECK_RECAPTCHA_SITE_KEY` repository secret, and the client switched
+  to `ReCaptchaEnterpriseProvider`. Next: after the hosting deploy that carries
+  it, watch console → App Check → APIs → Cloud Functions for ~a week; when
+  Verified is nearly all traffic, flip the literal in `functions/index.js`
+  (`enforceAppCheck: false → true`) and let the functions deploy run. Flipping
+  blind locks out clients on stale cached bundles; roll back by flipping it
+  back.
 - **Flip lineup privacy** (production credentials required; two steps, in
   order). The public mirror (`profile/public`, `triggers/profileMirror.js`)
   ships with the next functions deploy and the client already reads it, but
@@ -308,7 +314,7 @@ getMemberProfiles`, and add a changelog entry ("your lineup is now private
 
 ## Evergreen ratchets (any session, any size)
 
-- `@ts-nocheck` paydown — **58 files** at
+- `@ts-nocheck` paydown — **54 files** at
   last update; `npm run ts-nocheck:next` ranks the cheapest (no free wins
   left — the cheapest `src/` files are ~14 errors). It needs `npm ci` first
   and refuses to report on any other compiler. One per substantive task is
