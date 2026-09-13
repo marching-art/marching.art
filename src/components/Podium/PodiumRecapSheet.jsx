@@ -20,6 +20,7 @@ import { collection, getDocs } from 'firebase/firestore';
 import { Loader2, Medal } from 'lucide-react';
 import { db } from '../../api';
 import { formatEventName } from '../../utils/season';
+import { isViewerCorps } from '../../utils/corps';
 import { CLASS_LABELS } from '../../utils/scoresUtils';
 import { MEDAL_TEXT_CLASS, podiumMedalForPlace } from '../../utils/podiumMedals';
 import { TeamAvatar } from '../ui/TeamAvatar';
@@ -153,7 +154,7 @@ function SortBar({ sortBy, onChange }) {
 // One show = one card (matching the fantasy recap cards): its own frame,
 // masthead, box score, and footer/share. The day's sort control lives above
 // the cards, so a card is a pure box score.
-function ShowCard({ show, day, sortBy, seasonName, userCorpsName, cut = null }) {
+function ShowCard({ show, day, sortBy, seasonName, viewer, cut = null }) {
   const sections = useMemo(() => buildSections(show.results, sortBy), [show.results, sortBy]);
   // Who marches the next round, as the processor published it with this recap
   // (helpers/podium/store.championshipCutFor). Empty on all 46 other nights.
@@ -242,7 +243,7 @@ function ShowCard({ show, day, sortBy, seasonName, userCorpsName, cut = null }) 
                   </td>
                 </tr>
                 {section.rows.map(({ row, place }, rowIndex) => {
-                  const isMine = userCorpsName && row.corpsName === userCorpsName;
+                  const isMine = isViewerCorps(row, viewer);
                   const advances = advancing.has(row.uid);
                   // The medal this place earns on its division's podium, at a
                   // show with a real field — the same rule the season ledger
@@ -363,7 +364,14 @@ function ShowCard({ show, day, sortBy, seasonName, userCorpsName, cut = null }) 
 // Scores tab — see components/Podium/PodiumReportSheet. This sheet renders only
 // the per-show recap box scores.
 
-export default function PodiumRecapSheet({ seasonUid, seasonName, userCorpsName }) {
+/**
+ * @param {{
+ *   seasonUid?: string|null,
+ *   seasonName?: string|null,
+ *   viewer?: import('../../utils/corps').ViewerCorpsMatcher|null,
+ * }} props
+ */
+export default function PodiumRecapSheet({ seasonUid, seasonName, viewer = null }) {
   const [loading, setLoading] = useState(true);
   const [days, setDays] = useState([]); // [{day, recap}]
   const [selectedDay, setSelectedDay] = useState(null);
@@ -475,7 +483,7 @@ export default function PodiumRecapSheet({ seasonUid, seasonName, userCorpsName 
             day={selected.day}
             sortBy={sortBy}
             seasonName={seasonName}
-            userCorpsName={userCorpsName}
+            viewer={viewer}
             cut={cut}
           />
         ))

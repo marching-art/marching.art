@@ -13,6 +13,7 @@
 import React, { useMemo, memo, useState } from 'react';
 import { Trophy, MapPin, Calendar } from 'lucide-react';
 import { formatEventName } from '../utils/season';
+import { isViewerCorps } from '../utils/corps';
 import {
   CLASS_LABELS,
   getCaptionBreakdown,
@@ -101,7 +102,7 @@ const RecapDataGrid = memo(
     date,
     seasonId,
     offSeasonDay,
-    userCorpsName,
+    viewer,
     sortBy = 'total',
     advancement = null,
   }) => {
@@ -198,10 +199,7 @@ const RecapDataGrid = memo(
             <BoxScoreHead active={activeCap} />
             <div>
               {section.rows.map(({ score, captions, place }, rowIndex) => {
-                const isUserCorps =
-                  userCorpsName &&
-                  (score.corps?.toLowerCase() === userCorpsName.toLowerCase() ||
-                    score.corpsName?.toLowerCase() === userCorpsName.toLowerCase());
+                const isUserCorps = isViewerCorps(score, viewer);
                 const advances = advancement
                   ? advancement.advancing.has(advancementKey(score))
                   : false;
@@ -289,7 +287,7 @@ const NIGHT_BADGE = {
   2: 'bg-purple-500/15 text-purple-300',
 };
 
-const EasternCombinedSheet = memo(({ shows, userCorpsName }) => {
+const EasternCombinedSheet = memo(({ shows, viewer }) => {
   const combined = useMemo(() => mergeTwoNightShows(shows || []), [shows]);
   if (!combined) return null;
 
@@ -352,8 +350,7 @@ const EasternCombinedSheet = memo(({ shows, userCorpsName }) => {
             <BoxScoreHead trailing={<span className="w-7 text-right text-muted">Night</span>} />
             <div>
               {section.rows.map((row, idx) => {
-                const isUserCorps =
-                  userCorpsName && row.corpsName?.toLowerCase() === userCorpsName.toLowerCase();
+                const isUserCorps = isViewerCorps(row, viewer);
                 const captions = getCaptionBreakdown(row);
                 return (
                   <div
@@ -425,7 +422,7 @@ const FantasyRecapsView = ({
   shows = null,
   seasonId = null,
   availableDays = null,
-  userCorpsName,
+  viewer = null,
 }) => {
   const [sortBy, setSortBy] = useState('total');
   const [selectedDay, setSelectedDay] = useState(null);
@@ -546,7 +543,7 @@ const FantasyRecapsView = ({
       </div>
 
       {/* Eastern Classic combined standings — only on the two-night days */}
-      {isEasternDay && <EasternCombinedSheet shows={easternShows} userCorpsName={userCorpsName} />}
+      {isEasternDay && <EasternCombinedSheet shows={easternShows} viewer={viewer} />}
 
       {lazy && lazyLoading ? (
         <div className="p-8 text-center">
@@ -563,7 +560,7 @@ const FantasyRecapsView = ({
             date={show.date}
             seasonId={show.seasonId}
             offSeasonDay={show.offSeasonDay}
-            userCorpsName={userCorpsName}
+            viewer={viewer}
             sortBy={sortBy}
             advancement={advancement}
           />
@@ -582,7 +579,7 @@ const FantasyRecapsView = ({
 // STANDINGS SHEET FOR CLASS TABS
 // =============================================================================
 
-const ClassStandingsGrid = ({ standings, className, userCorpsName, referenceDay = null }) => {
+const ClassStandingsGrid = ({ standings, className, viewer = null, referenceDay = null }) => {
   const [sortBy, setSortBy] = useState('total');
 
   // Day every row's score age is measured against: the season's newest scored
@@ -666,8 +663,7 @@ const ClassStandingsGrid = ({ standings, className, userCorpsName, referenceDay 
 
       <div>
         {sorted.map(({ entry, captions }, idx) => {
-          const isUserCorps =
-            userCorpsName && entry.corpsName?.toLowerCase() === userCorpsName.toLowerCase();
+          const isUserCorps = isViewerCorps(entry, viewer);
           const rankDelta = rankDeltas.get(entry.uid || entry.corpsName || '');
 
           return (

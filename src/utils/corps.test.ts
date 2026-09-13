@@ -69,3 +69,57 @@ describe('hasCompletedSeason', () => {
     ).toBe(true);
   });
 });
+
+// Score-sheet "your corps" highlighting: a director fields up to five ensembles
+// (four fantasy classes + Podium) and every one of them must light up.
+import { buildViewerCorpsMatcher, isViewerCorps } from './corps';
+
+describe('buildViewerCorpsMatcher / isViewerCorps', () => {
+  const corps = {
+    worldClass: { corpsName: 'Blue Stars Fantasy', lineup: {} },
+    openClass: { corpsName: 'Open Ensemble' },
+    aClass: { corpsName: 'A Team' },
+    soundSport: { name: 'Legacy Named Corps' }, // legacy `name` field
+    podiumClass: { corpsName: 'Podium Corps' },
+    stale: null,
+  };
+
+  it('collects every corps name across all classes, including Podium and legacy `name`', () => {
+    const m = buildViewerCorpsMatcher(corps, 'me');
+    expect(m).not.toBeNull();
+    expect([...m!.names].sort()).toEqual(
+      ['a team', 'blue stars fantasy', 'legacy named corps', 'open ensemble', 'podium corps'].sort()
+    );
+    expect(m!.uid).toBe('me');
+  });
+
+  it('returns null when there is nothing to match on', () => {
+    expect(buildViewerCorpsMatcher(null, null)).toBeNull();
+    expect(buildViewerCorpsMatcher({}, undefined)).toBeNull();
+    expect(buildViewerCorpsMatcher(null, 'me')).not.toBeNull();
+  });
+
+  it('highlights rows from every class the viewer fields (case-insensitive by name)', () => {
+    const m = buildViewerCorpsMatcher(corps, null);
+    expect(isViewerCorps({ corpsName: 'blue stars fantasy' }, m)).toBe(true);
+    expect(isViewerCorps({ corpsName: 'OPEN ENSEMBLE' }, m)).toBe(true);
+    expect(isViewerCorps({ corps: 'A Team' }, m)).toBe(true);
+    expect(isViewerCorps({ corpsName: 'Legacy Named Corps' }, m)).toBe(true);
+    expect(isViewerCorps({ corpsName: 'Podium Corps' }, m)).toBe(true);
+    expect(isViewerCorps({ corpsName: 'Someone Else' }, m)).toBe(false);
+  });
+
+  it('prefers the uid when both sides carry one, so a shared name is not a false positive', () => {
+    const m = buildViewerCorpsMatcher(corps, 'me');
+    expect(isViewerCorps({ uid: 'me', corpsName: 'Renamed Since' }, m)).toBe(true);
+    expect(isViewerCorps({ uid: 'other', corpsName: 'Blue Stars Fantasy' }, m)).toBe(false);
+    // Rows without a uid (older archives) still match by name.
+    expect(isViewerCorps({ corpsName: 'Blue Stars Fantasy' }, m)).toBe(true);
+  });
+
+  it('is safe with missing inputs', () => {
+    expect(isViewerCorps(null, buildViewerCorpsMatcher(corps, 'me'))).toBe(false);
+    expect(isViewerCorps({ corpsName: 'A Team' }, null)).toBe(false);
+    expect(isViewerCorps({}, buildViewerCorpsMatcher(corps, 'me'))).toBe(false);
+  });
+});
