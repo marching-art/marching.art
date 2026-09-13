@@ -225,17 +225,19 @@ export function useLeagueNotifications(
         cutoffDate.setDate(cutoffDate.getDate() - olderThanDays);
         const cutoffTimestamp = Timestamp.fromDate(cutoffDate);
 
+        // Range on createdAt only: an equality on `read` alongside it would
+        // need a composite index that has never existed in the project, so the
+        // query failed silently. The single-field index is automatic; the
+        // read filter is applied here (old notifications are few per user).
         const notificationsRef = collection(db, paths.userNotifications(uid));
-        const q = query(
-          notificationsRef,
-          where('createdAt', '<', cutoffTimestamp),
-          where('read', '==', true)
-        );
+        const q = query(notificationsRef, where('createdAt', '<', cutoffTimestamp));
 
         const snapshot = await getDocs(q);
-        const batch = writeBatch(db);
+        const stale = snapshot.docs.filter((d) => d.data().read === true);
+        if (stale.length === 0) return;
 
-        snapshot.docs.forEach((doc) => {
+        const batch = writeBatch(db);
+        stale.forEach((doc) => {
           batch.delete(doc.ref);
         });
 

@@ -319,11 +319,18 @@ ops step below)_
   * `article_comments_reports (status ASCENDING, createdAt DESCENDING)`
     Then **Single field** tab: delete the `users` / `seasonYear` exemption.
     Leave everything else alone — do not delete an index only because it is
-    missing from the file. One entry was ADDED to the file because code needs
-    it: `notifications (read ASC, createdAt ASC)` for the read-notification
-    cleanup in `hooks/useLeagueNotifications.ts`; if the Composite tab lacks
-    it, create it (a failing cleanup logs a console error with the create
-    link). Still open from the P2 bullet: an indexes diff step in CI.
+    missing from the file. Console vs file reconciliation (2026-09-13, from
+    the owner's pass): the console's `profile` collection-group index is
+    (engagement.lastLogin, engagement.loginStreak) — the file now matches that
+    order; the notifications composite the file briefly listed is gone again
+    (the cleanup query in `hooks/useLeagueNotifications.ts` was rewritten to
+    need only the automatic single-field index). **One index must be CREATED
+    in the console — a live bug until it is:** `articles`, query scope
+    **Collection group**, fields `authorUid` Ascending, `isPublished`
+    Ascending, `createdAt` Descending. `api/directorArticles.getDirectorArticles`
+    (the profile Newsroom's "your articles" list) runs exactly that query and
+    fails with a missing-index error today. Still open from the P2 bullet: an
+    indexes diff step in CI.
 
 ## Evergreen ratchets (any session, any size)
 
