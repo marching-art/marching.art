@@ -123,6 +123,13 @@ export interface PodiumStateResponse {
   /** Assistant-director outlook: consecutive autopilot days and the fading yield. */
   assistant?: PodiumAssistantOutlook;
   autoDays?: number[];
+  /**
+   * The Eastern Classic night (41|42) this corps performs. Provisional (a
+   * deterministic placeholder) until the division-seeded split publishes on
+   * Day 39 — `easternNightFinal` says which.
+   */
+  easternNight?: number;
+  easternNightFinal?: boolean;
   routePreview?: PodiumRouteLeg[];
   currentLocation?: PodiumCurrentLocation;
   staffOutlook?: PodiumStaffOutlook;

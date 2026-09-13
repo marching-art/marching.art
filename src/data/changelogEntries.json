@@ -1,5 +1,15 @@
 [
   {
+    "id": "2026-09-13-podium-eastern-classic-registered-both-nights",
+    "date": "2026-09-13",
+    "title": "Your Podium corps now shows as registered for both Eastern Classic nights",
+    "category": "fix",
+    "summary": "The two-night Eastern Classic in Allentown is one registration that covers both nights, with everyone split across them — and your fantasy corps have always been marked on both. Your Podium corps was only marked on one night. The Schedule page now shows the Podium badge on both nights, and the show sheet names your performing night once the night lineups publish on Day 39.",
+    "highlights": [
+      "Opening either night from the Schedule shows your Podium corps as auto-attended. Until the split is published it says when the night lineups land, instead of a 'not your assigned night' notice."
+    ]
+  },
+  {
     "id": "2026-09-12-scores-highlight-every-one-of-your-corps",
     "date": "2026-09-12",
     "title": "Score sheets now highlight every one of your corps",

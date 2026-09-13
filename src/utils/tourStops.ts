@@ -25,6 +25,7 @@
 
 import { locationPoint, venueLatLng, type VenuePoint } from './tourMap';
 import { CORPS_CLASS_ALIASES } from './corps';
+import { isPodiumAutoAnchor, type PodiumAttendance } from './podiumAttendance';
 import type { StopKind } from '../data/tourPosterTheme';
 
 /** Weeks in a season — selectedShows is keyed `week1`…`week7`. */
@@ -63,10 +64,7 @@ export interface TourStop {
   point: VenuePoint | null;
 }
 
-export interface PodiumAttendance {
-  events?: Set<string>;
-  autoDays?: Set<number>;
-}
+export type { PodiumAttendance };
 
 export interface BuildTourStopsParams {
   /** Profile corps record (`corps.worldClass`, …). Ignored for the Podium corps. */
@@ -81,24 +79,6 @@ export interface BuildTourStopsParams {
    */
   championshipEvents?: TourSource[];
   podiumAttendance?: PodiumAttendance | null;
-}
-
-/**
- * The one event a Podium corps auto-attends on an auto-day: the regional major
- * or its division's championship — never a pool show that merely shares the
- * date, and never the day-49 SoundSport festival. Mirrors isPodiumAutoAnchor
- * in src/pages/ScheduleParts.jsx.
- */
-function isPodiumAutoAnchor(show: TourSource): boolean {
-  const eligible = show?.eligibleClasses;
-  if (Array.isArray(eligible) && eligible.length === 1 && eligible[0] === 'soundSport')
-    return false;
-  return Boolean(
-    show?.eventTier === 'regional' ||
-    show?.isChampionship === true ||
-    show?.type === 'championship' ||
-    MAJOR_NAME_RE.test(show?.eventName || '')
-  );
 }
 
 /** Which marker treatment a stop earns. */
