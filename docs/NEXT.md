@@ -291,13 +291,14 @@ ops step below)_
   (`enforceAppCheck: false → true`) and let the functions deploy run. Flipping
   blind locks out clients on stale cached bundles; roll back by flipping it
   back.
-- **Flip lineup privacy** (production credentials required; two steps, in
-  order). The public mirror (`profile/public`, `triggers/profileMirror.js`)
-  ships with the next functions deploy and the client already reads it, but
-  profiles that predate the trigger have no mirror until they are next
-  written. (1) `cd functions && node src/scripts/backfillPublicProfiles.js
---dry-run`, then `--commit`. (2) In `firestore.rules`, change
-  `match /profile/data { allow read: if isAuthenticated();` to
+- **Flip lineup privacy** (two steps, in order). The public mirror
+  (`profile/public`, `triggers/profileMirror.js`) is deployed and the client
+  already reads it, but profiles that predate the trigger have no mirror until
+  they are next written. (1) **Owner, from the Actions tab:** run "Backfill
+  public profile mirrors" (`.github/workflows/backfill-public-profiles.yml`,
+  added 2026-09-13) with `commit` unchecked, read the "Would write N" total,
+  then again with `commit` checked. (2) **Then a PR:** in `firestore.rules`,
+  change `match /profile/data { allow read: if isAuthenticated();` to
   `allow read: if isOwner(userId) || isAdmin();`, update the two
   `profile/data` read assertions in `firestore-tests/rules.test.mjs`
   (third-party read must now FAIL), drop the raw-doc fallbacks in
