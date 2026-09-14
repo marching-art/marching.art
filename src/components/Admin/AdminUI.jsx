@@ -1,9 +1,13 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Shared Admin panel UI primitives. Extracted from pages/Admin.jsx.
 
 import { CheckCircle, RefreshCw, Terminal } from 'lucide-react';
 import { ADMIN_TABS } from './adminTabs';
 
+/** @typedef {import('react').ComponentType<{ className?: string }>} IconComponent */
+
+/**
+ * @param {{ stats: { totalUsers: number, activeUsers: number, totalCorps: number } }} props
+ */
 const TelemetryStrip = ({ stats }) => (
   <div className="bg-surface-card border-b border-line">
     <div className="flex items-center divide-x divide-line">
@@ -23,6 +27,9 @@ const TelemetryStrip = ({ stats }) => (
   </div>
 );
 
+/**
+ * @param {{ label: string, value: string | number, color?: string, icon?: IconComponent }} props
+ */
 const TelemetryStat = ({ label, value, color = 'text-white', icon: Icon }) => (
   <div className="flex items-center gap-3 px-4 py-2">
     <span className="text-[9px] font-bold uppercase tracking-wider text-muted">{label}:</span>
@@ -37,6 +44,9 @@ const TelemetryStat = ({ label, value, color = 'text-white', icon: Icon }) => (
 // NAVIGATION TABS (Segmented Control)
 // =============================================================================
 
+/**
+ * @param {{ activeTab: string, onTabChange: (tabId: string) => void }} props
+ */
 const NavTabs = ({ activeTab, onTabChange }) => (
   <div className="bg-surface-card border-b border-line px-4 py-2">
     <div className="flex items-center gap-1">
@@ -61,6 +71,15 @@ const NavTabs = ({ activeTab, onTabChange }) => (
 // PROCESS TABLE ROW
 // =============================================================================
 
+/**
+ * @param {{
+ *   name: string,
+ *   description: string,
+ *   icon: IconComponent,
+ *   loading?: boolean,
+ *   onExecute: () => void,
+ * }} props
+ */
 const ProcessRow = ({ name, description, icon: Icon, loading, onExecute }) => (
   <div className="flex items-center justify-between px-4 py-3 border-b border-line hover:bg-surface-sunken transition-colors">
     <div className="flex items-center gap-3 min-w-0">
@@ -85,6 +104,9 @@ const ProcessRow = ({ name, description, icon: Icon, loading, onExecute }) => (
 // SECTION HEADER
 // =============================================================================
 
+/**
+ * @param {{ title: string, icon?: IconComponent }} props
+ */
 const SectionHeader = ({ title, icon: Icon }) => (
   <div className="bg-surface-raised px-4 py-3 border-b border-line flex items-center gap-2">
     {Icon && <Icon className="w-3.5 h-3.5 text-muted" />}
@@ -96,6 +118,9 @@ const SectionHeader = ({ title, icon: Icon }) => (
 // INFO ROW (for data display)
 // =============================================================================
 
+/**
+ * @param {{ label: string, value?: React.ReactNode, badge?: boolean, mono?: boolean }} props
+ */
 const InfoRow = ({ label, value, badge, mono }) => (
   <div className="flex justify-between items-center px-4 py-2.5 border-b border-line-subtle last:border-b-0">
     <span className="text-[11px] uppercase tracking-wider text-muted">{label}</span>

@@ -12,18 +12,20 @@ import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { getStreakStatus, purchaseStreakFreeze } from '../../api/functions';
 import { friendlyCallableError } from '../../utils/callableErrors';
 
+/** @typedef {import('../../api/functions').StreakStatusResult} StreakStatusResult */
+
 /**
- * @param {{ onClose: () => void; corpsCoin?: number }} props
+ * @param {{ onClose: () => void, corpsCoin?: number }} props
+ * @returns {React.JSX.Element}
  */
 const StreakModal = ({ onClose, corpsCoin = 0 }) => {
   useEscapeKey(onClose);
+  /** @type {React.RefObject<HTMLDivElement | null>} */
   const dialogRef = useRef(null);
   // Trap keyboard focus inside the dialog (WCAG 2.4.3); restores on close
   useFocusTrap(dialogRef);
 
-  const [status, setStatus] = useState(
-    /** @type {import('../../api/functions').StreakStatusResult | null} */ (null)
-  );
+  const [status, setStatus] = useState(/** @type {StreakStatusResult | null} */ (null));
   const [loading, setLoading] = useState(true);
   const [purchasing, setPurchasing] = useState(false);
 
@@ -159,18 +161,15 @@ const StreakModal = ({ onClose, corpsCoin = 0 }) => {
                   {status?.hasActiveFreeze ? (
                     <div className="flex items-center gap-2 text-xs text-cyan-300">
                       <ShieldCheck className="w-4 h-4" />
-                      Freeze ready — the next day you miss won&apos;t break your streak
-                      {status.freezeExpiresAt && (
-                        <>
-                          {' '}
-                          (held through{' '}
-                          {new Date(status.freezeExpiresAt).toLocaleDateString([], {
+                      Freeze ready — the next day you miss won&apos;t break your streak (held
+                      through{' '}
+                      {status.freezeExpiresAt
+                        ? new Date(status.freezeExpiresAt).toLocaleDateString([], {
                             month: 'short',
                             day: 'numeric',
-                          })}
-                          )
-                        </>
-                      )}
+                          })
+                        : 'the next missed day'}
+                      )
                     </div>
                   ) : (
                     <>

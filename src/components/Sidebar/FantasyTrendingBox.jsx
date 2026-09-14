@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Flame, TrendingUp, TrendingDown, ChevronRight } from 'lucide-react';
 
-/** @type {(props: { trendingPlayers: any[], loading?: boolean, dayLabel?: string }) => JSX.Element} */
+/** @type {(props: { trendingPlayers: any[], loading?: boolean, dayLabel?: string }) => React.JSX.Element} */
 const FantasyTrendingBox = ({ trendingPlayers, loading, dayLabel }) => {
   return (
     <div className="bg-surface-card border border-line rounded-none">
