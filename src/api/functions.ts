@@ -14,6 +14,8 @@ export * from './articleSocial';
 export * from './articleAdmin';
 // Podium Class callables (Phase 2).
 export * from './podium';
+// Director directory / username search (the /directors page).
+export * from './directors';
 
 // =============================================================================
 // USER MANAGEMENT

@@ -1,5 +1,17 @@
 [
   {
+    "id": "2026-09-14-find-any-director",
+    "date": "2026-09-14",
+    "title": "Find any director — the new Directors page",
+    "category": "feature",
+    "summary": "There's finally a way to look someone up. The Directors page lists every director A–Z and lets you search by username, with each row opening that director's profile. Find it under Explore on desktop or the More sheet on your phone.",
+    "highlights": [
+      "Search matches the start of a username and ignores capitalization — typing \"mae\" finds MaestroMax.",
+      "Each row shows the director's level, title, home and the corps they field, so you can tell who's who before you click.",
+      "Only signed-in directors can browse the list, and it shows nothing a profile page doesn't already."
+    ]
+  },
+  {
     "id": "2026-09-14-no-rehearsing-after-the-show",
     "date": "2026-09-14",
     "title": "No rehearsing after the show — the next day opens at 2 AM ET",

@@ -20,6 +20,7 @@ import {
   History,
   Palette,
   Store,
+  Users,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -47,3 +48,8 @@ export const ARCHIVE_LINKS: AppLink[] = [
   { to: '/retired-corps', label: 'Retired Corps', icon: Archive },
   { to: '/corps-history', label: 'Corps History', icon: History },
 ];
+
+// The other people playing. Until the Directors page existed, another
+// director's profile was reachable only by bumping into them (a league roster,
+// a scores sheet, a rival card) — there was no way to look someone up by name.
+export const COMMUNITY_LINKS: AppLink[] = [{ to: '/directors', label: 'Directors', icon: Users }];
