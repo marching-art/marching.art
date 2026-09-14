@@ -354,7 +354,10 @@ ops step below)_
   `ignoreHTTPSErrors` name was already dead). Verified by launching the
   bundled binary locally (`HeadlessChrome/152.0.7977.0`). `dependabot.yml`
   now ignores `@sparticuz/chromium` majors the same way it ignores
-  `puppeteer-core` majors — the pair is bumped together, by hand.
+  `puppeteer-core` majors — the pair is bumped together, by hand. Follow-up
+  the same day (replaces #1559): `functions/` `@google/genai` 2.21 → 2.22;
+  the two `ai.models.generateContent` call sites and the `Type` schema
+  enum are unchanged, functions suite green.
 - 2026-09-13 (dependency sweep, replaces Dependabot #1540/#1541/#1542):
   `firebase-admin` is `^14.4.0` in root, `functions/`, `functions-scraper/`
   and `scripts/`. v14 deleted the namespaced API, so Dependabot's
