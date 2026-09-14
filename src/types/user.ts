@@ -56,6 +56,10 @@ export interface EnsembleProfileInfo {
 export interface UserProfile {
   uid: string;
   username: string;
+  /** Set by the username-reservation repair when this account lost a shared
+   *  name to an older account and was given a numbered stand-in; the app asks
+   *  for a new username until updateUsername clears it. */
+  usernameTemporary?: boolean;
   displayName: string;
   email: string;
   createdAt: Timestamp;

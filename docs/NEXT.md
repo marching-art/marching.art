@@ -281,6 +281,19 @@ ops step below)_
 
 ## Operational — owner only, standing until done
 
+- **Backfill username reservations** — the Directors page surfaced that some
+  older accounts have a username on the profile but no `usernames/{lower}`
+  reservation doc, so their `/profile/@handle` link 404s and nothing stopped a
+  newer director claiming the same name. Actions → "Backfill username
+  reservations" → Run workflow: dry run first (unchecked) and read the
+  `RESERVE` / `RENAME` lines, then run again with commit checked. Rule: the
+  OLDEST account (profile `createdAt`; missing = oldest) keeps a shared name;
+  each newer one is renamed to the name + the smallest free number
+  (`alice2`), reserved for them, flagged `usernameTemporary`, and told why in
+  their inbox — the username prompt modal then asks them to pick a new name
+  (deferrable) until `updateUsername` clears the flag. Idempotent. Script:
+  `functions/src/scripts/backfillUsernameReservations.js`.
+
 - **Flip App Check enforcement** — monitor phase started 2026-09-13: a
   score-based reCAPTCHA Enterprise key (`marching-art`, domain `marching.art`,
   no challenges) was created, the web app registered under reCAPTCHA
