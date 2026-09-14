@@ -7,7 +7,7 @@ import { formatEventName } from '../../../utils/season';
 import { getSoundSportRating } from './constants';
 
 const RecentResultsFeed = memo(
-  /** @type {(props: { results?: any[], loading?: boolean, corpsClass?: string }) => JSX.Element} */
+  /** @type {(props: { results?: any[], loading?: boolean, corpsClass?: string }) => React.JSX.Element} */
   ({ results, loading, corpsClass }) => {
     const isSoundSport = corpsClass === 'soundSport';
 

@@ -21,9 +21,17 @@ initializeApp();
 //   firebase functions:secrets:set SCRAPER_INVOKE_KEY
 const scraperInvokeKey = defineSecret("SCRAPER_INVOKE_KEY");
 
-// Puppeteer and Chromium loaded at module level since this codebase only contains scraper
+// Puppeteer and Chromium loaded at module level since this codebase only contains scraper.
+// @sparticuz/chromium is ESM-only from v133; Node 22.12+ can require() it, but the
+// class lives on `.default`. Its version must match the Chrome revision puppeteer-core
+// pins (pptr.dev/chromium-support) — bump the two together, never one alone.
 const puppeteer = require("puppeteer-core");
-const chromium = require("@sparticuz/chromium");
+const chromium = require("@sparticuz/chromium").default;
+
+// @sparticuz/chromium ships headless_shell, which only supports the classic
+// ("shell") headless mode. 1920x1080 is what the package's own defaultViewport
+// returned before v133 removed it.
+const SCRAPER_VIEWPORT = { width: 1920, height: 1080, deviceScaleFactor: 1 };
 
 /**
  * Scrapes upcoming DCI events from dci.org/events/
@@ -39,11 +47,11 @@ async function scrapeUpcomingDciEventsLogic(year) {
 
   try {
     browser = await puppeteer.launch({
-      args: chromium.args,
-      defaultViewport: chromium.defaultViewport,
+      args: await puppeteer.defaultArgs({ args: chromium.args, headless: "shell" }),
+      defaultViewport: SCRAPER_VIEWPORT,
       executablePath: await chromium.executablePath(),
-      headless: chromium.headless,
-      ignoreHTTPSErrors: true,
+      headless: "shell",
+      acceptInsecureCerts: true,
     });
 
     const page = await browser.newPage();

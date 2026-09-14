@@ -19,7 +19,7 @@ const ChartSkeleton = ({ height = '100%' }) => (
 );
 
 // Lazy Line chart wrapper
-/** @type {(props: { data?: any, options?: any, [key: string]: any }) => JSX.Element} */
+/** @type {(props: { data?: any, options?: any, [key: string]: any }) => React.JSX.Element} */
 export const Line = ({ data, options, ...props }) => (
   <Suspense fallback={<ChartSkeleton />}>
     <LazyLineChart data={data} options={options} {...props} />
@@ -27,7 +27,7 @@ export const Line = ({ data, options, ...props }) => (
 );
 
 // Lazy Bar chart wrapper
-/** @type {(props: { data?: any, options?: any, [key: string]: any }) => JSX.Element} */
+/** @type {(props: { data?: any, options?: any, [key: string]: any }) => React.JSX.Element} */
 export const Bar = ({ data, options, ...props }) => (
   <Suspense fallback={<ChartSkeleton />}>
     <LazyBarChart data={data} options={options} {...props} />
