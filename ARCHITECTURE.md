@@ -80,6 +80,9 @@ centralized — never hand-write path strings:
 ```
 users/{uid}/profile/data          # The main profile: xp, level, corpsCoin, unlockedClasses,
                                   #   cosmetics, trophies, lifetimeStats, seasonLadder, streak…
+directory/{uid}                   # Director directory index row (helpers/directory.js): identity +
+                                  # corps names + lowercase search keys, mirror-trigger-written,
+                                  # queried 50 rows at a time by /directors (rules cap the page)
 users/{uid}/profile/public        # Server-mirrored public projection of profile/data (identity,
                                   #   progression, trophies, corps minus lineups/picks) — what
                                   #   league rosters and other directors read (triggers/profileMirror.js)

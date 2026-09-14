@@ -24,6 +24,8 @@ import {
   getDocs,
   query,
   where,
+  orderBy,
+  limit,
 } from 'firebase/firestore';
 
 const APP = 'marching-art';
@@ -1734,6 +1736,62 @@ await check(
 await check(
   'signed-in user cannot list usernames via a filter either',
   assertFails(getDocs(query(collection(mallory(), 'usernames'), where('uid', '==', ALICE))))
+);
+
+// The director directory index (helpers/directory.js): signed-in reads,
+// page-capped lists, server-only writes.
+await testEnv.withSecurityRulesDisabled(async (ctx) => {
+  await setDoc(doc(ctx.firestore(), `directory/${ALICE}`), {
+    uid: ALICE,
+    username: 'alice',
+    usernameKey: 'alice',
+    searchTokens: ['al', 'ali', 'alic', 'alice'],
+  });
+});
+
+await check(
+  'signed-in director can get a directory row',
+  assertSucceeds(getDoc(doc(mallory(), `directory/${ALICE}`)))
+);
+
+await check(
+  'signed-in director can list the directory a page at a time (limit ≤ 50)',
+  assertSucceeds(
+    getDocs(query(collection(mallory(), 'directory'), orderBy('usernameKey'), limit(50)))
+  )
+);
+
+await check(
+  'signed-in director can search the directory by token with a page limit',
+  assertSucceeds(
+    getDocs(
+      query(
+        collection(mallory(), 'directory'),
+        where('searchTokens', 'array-contains', 'ali'),
+        limit(50)
+      )
+    )
+  )
+);
+
+await check(
+  'directory cannot be listed without a page limit (bulk enumeration)',
+  assertFails(getDocs(collection(mallory(), 'directory')))
+);
+
+await check(
+  'directory cannot be listed with a limit above the page cap',
+  assertFails(getDocs(query(collection(mallory(), 'directory'), limit(51))))
+);
+
+await check(
+  'unauthenticated visitor cannot read the directory',
+  assertFails(getDoc(doc(testEnv.unauthenticatedContext().firestore(), `directory/${ALICE}`)))
+);
+
+await check(
+  'owner cannot write their own directory row (server-only)',
+  assertFails(updateDoc(doc(authed(), `directory/${ALICE}`), { username: 'admin' }))
 );
 
 // =============================================================================

@@ -276,6 +276,10 @@ export async function callFunction<TData = unknown, TResult = unknown>(
  * Build Firestore paths with the data namespace
  */
 export const paths = {
+  // The director directory index (functions/src/helpers/directory.js): one
+  // row per director, written by the profile mirror trigger, queried a page at
+  // a time by /directors. Top-level (not namespaced) like `usernames`.
+  directory: () => 'directory',
   // User paths
   users: () => `artifacts/${DATA_NAMESPACE}/users`,
   user: (uid: string) => `artifacts/${DATA_NAMESPACE}/users/${uid}`,
