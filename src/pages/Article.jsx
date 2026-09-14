@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // =============================================================================
 // ARTICLE PAGE - Full Article View with Site Layout
 // =============================================================================
@@ -49,7 +48,77 @@ import { useYoutubeSearch } from '../hooks/useYoutubeSearch';
 import { shareLink, articleShareUrl } from '../utils/shareSheet';
 import { formatEventName } from '../utils/season';
 
-/** Meta descriptions get cut around ~160 chars in search results; trim on a word. */
+/**
+ * The article this page renders. It arrives either as a feed entry (NewsEntry,
+ * via navigation state from the news hub) or as a resolved article document
+ * (resolveArticleById, an untyped Firestore doc), so only `id` is guaranteed —
+ * a feed-only entry lacks the full-story fields until the background fetch
+ * fills them in. The extra fields are what the generated-article panels read.
+ * @typedef {Omit<Partial<import('../types').NewsEntry>, 'trendingCorps'> &
+ *   import('../components/Articles/ArticleDataSections').ArticleData &
+ *   import('../utils/seasonProgress').DayGateArticle & {
+ *     id: string,
+ *     type?: string,
+ *     articleType?: string,
+ *     narrative?: string | null,
+ *     captionInsights?: Record<string, unknown> | null,
+ *     captionBreakdown?: Record<string, unknown> | null,
+ *     recommendations?: React.ComponentProps<typeof RecommendationCards>['recommendations'],
+ *     seasonSummary?: React.ComponentProps<typeof SeasonSummaryCards>['seasonSummary'],
+ *   }} ArticleDoc
+ */
+
+/**
+ * Engagement as this page holds it: getArticleEngagement's per-article result,
+ * or just a comment count once the comments section reports one before the
+ * reactions have loaded.
+ * @typedef {Partial<import('../types').ArticleEngagement>} EngagementState
+ */
+
+/** What the news hub passes through router state when linking to an article. */
+/** @typedef {{ article?: ArticleDoc | null, engagement?: EngagementState | null }} ArticleNavState */
+
+/**
+ * Article types whose narrative has structured sections and goes through
+ * ArticleNarrativeParser. The Podium Report is an editorial magazine column,
+ * so it routes there too — otherwise its **subheads** render as literal
+ * asterisks in the plain-paragraph fallback.
+ */
+const PARSED_NARRATIVE_TYPES = [
+  'fantasy_recap',
+  'fantasy_daily',
+  'dci_recap',
+  'dci_daily',
+  'dci_feature',
+  'season_summary',
+  'podium_report',
+];
+
+/** A sidebar trending entry, derived from the ticker's movers. */
+/** @typedef {{ name: string, change: string, direction: 'up' | 'down', absChange: number }} TrendingPlayer */
+
+// ArticleReactions and ArticleNarrativeParser are still @ts-nocheck'd, and
+// their JSDoc (`@param {string} articleId` on a destructured props object)
+// types the whole props argument as a string. Re-type them here with their
+// real props until those files are cleaned up, then delete these wrappers.
+const ReactionsBar =
+  /** @type {React.ComponentType<{
+   *   articleId: string,
+   *   initialCounts?: import('../types').ArticleReactionCounts | null,
+   *   initialUserReaction?: import('../types').ArticleReactionType | null,
+   * }>} */ (/** @type {unknown} */ (ArticleReactions));
+const NarrativeParser =
+  /** @type {React.ComponentType<{
+   *   narrative?: string | null,
+   *   summary?: string,
+   *   articleType?: string,
+   * }>} */ (/** @type {unknown} */ (ArticleNarrativeParser));
+
+/**
+ * Meta descriptions get cut around ~160 chars in search results; trim on a word.
+ * @param {unknown} text
+ * @param {number} [max]
+ */
 const truncateForMeta = (text, max = 160) => {
   if (!text) return undefined;
   const clean = String(text).replace(/\s+/g, ' ').trim();
@@ -57,16 +126,19 @@ const truncateForMeta = (text, max = 160) => {
   return `${clean.slice(0, max - 1).replace(/\s+\S*$/, '')}…`;
 };
 
-/** Article createdAt arrives as a string/number/Date (or a Firestore Timestamp
-    on some legacy docs); normalize to ISO for article:published_time. */
+/**
+ * Article createdAt arrives as a string/number/Date (or a Firestore Timestamp
+ * on some legacy docs); normalize to ISO for article:published_time.
+ * @param {string | number | Date | { toDate?: () => Date, seconds?: number } | null | undefined} value
+ */
 const toIsoDate = (value) => {
   if (!value) return undefined;
   const date =
-    typeof value?.toDate === 'function'
-      ? value.toDate()
-      : typeof value?.seconds === 'number'
-        ? new Date(value.seconds * 1000)
-        : new Date(value);
+    typeof value === 'object' && !(value instanceof Date)
+      ? typeof value.toDate === 'function'
+        ? value.toDate()
+        : new Date(typeof value.seconds === 'number' ? value.seconds * 1000 : NaN)
+      : new Date(value);
   return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
 };
 
@@ -75,9 +147,12 @@ const toIsoDate = (value) => {
  */
 const Article = () => {
   useBodyScroll();
-  const { user } = useAuth();
-  const { id } = useParams();
+  const user = useAuth()?.user;
+  // The route is /article/:id, so id is always present; the default only
+  // satisfies react-router's `string | undefined` param type.
+  const { id = '' } = useParams();
   const location = useLocation();
+  const navState = /** @type {ArticleNavState | null} */ (location.state);
   const { tickerData, loading: tickerLoading } = useTickerData();
   const {
     liveScores,
@@ -87,13 +162,13 @@ const Article = () => {
   } = useLandingScores();
 
   // Get article from navigation state or fetch it
-  const [article, setArticle] = useState(location.state?.article || null);
-  const [engagement, setEngagement] = useState(location.state?.engagement || null);
-  const [loading, setLoading] = useState(!location.state?.article);
-  const [error, setError] = useState(null);
+  const [article, setArticle] = useState(navState?.article || null);
+  const [engagement, setEngagement] = useState(navState?.engagement || null);
+  const [loading, setLoading] = useState(!navState?.article);
+  const [error, setError] = useState(/** @type {string | null} */ (null));
 
   // Ref for scrolling to comments
-  const commentsRef = useRef(null);
+  const commentsRef = useRef(/** @type {HTMLDivElement | null} */ (null));
   const [expandComments, setExpandComments] = useState(false);
 
   // Standings modal state
@@ -107,7 +182,7 @@ const Article = () => {
   // OR if article from navigation is missing full content (feedOnly mode)
   useEffect(() => {
     const fetchArticle = async () => {
-      const navArticle = location.state?.article;
+      const navArticle = navState?.article;
 
       // Check if we need to fetch full article data
       // Articles from feed (feedOnly mode) won't have narrative/fullStory
@@ -157,12 +232,13 @@ const Article = () => {
     // `engagement` is read only as a guard to avoid a redundant engagement fetch;
     // including it would re-run the article fetch whenever engagement loads.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, location.state?.article]);
+  }, [id, navState?.article]);
 
   // Compute trending players from movers across all classes
   const trendingPlayers = useMemo(() => {
     if (!tickerData?.byClass) return [];
 
+    /** @type {TrendingPlayer[]} */
     const allMovers = [];
     for (const classKey of ['worldClass', 'openClass', 'aClass']) {
       const classData = tickerData.byClass[classKey];
@@ -212,6 +288,7 @@ const Article = () => {
   const handleShare = () =>
     shareLink({ title: article?.headline, url: articleShareUrl(article?.id || id) });
 
+  /** @param {number} newCount */
   const handleCommentCountChange = (newCount) => {
     setEngagement((prev) =>
       prev ? { ...prev, commentCount: newCount } : { commentCount: newCount }
@@ -241,40 +318,46 @@ const Article = () => {
   // article-type canonical, and NewsArticle structured data. Must run every
   // render (hooks rule), so the not-yet-loaded and not-found cases are handled
   // via the arguments rather than by skipping the call.
-  const showArticleMeta = Boolean(article) && !isDayGated && !error;
-  const publishedTime = showArticleMeta ? toIsoDate(article.createdAt) : undefined;
+  // `metaArticle` is the article only when its metadata should be emitted
+  // (loaded, not day-gated, no error); null otherwise.
+  const metaArticle = article && !isDayGated && !error ? article : null;
+  const publishedTime = toIsoDate(metaArticle?.createdAt);
   const articleJsonLd = useMemo(() => {
-    if (!showArticleMeta) return null;
+    if (!metaArticle) return null;
+    /** @type {Record<string, unknown>} */
     const jsonLd = {
       '@context': 'https://schema.org',
       '@type': 'NewsArticle',
-      headline: article.headline,
-      description: truncateForMeta(article.summary),
-      mainEntityOfPage: `https://marching.art/article/${article.id}`,
+      headline: metaArticle.headline,
+      description: truncateForMeta(metaArticle.summary),
+      mainEntityOfPage: `https://marching.art/article/${metaArticle.id}`,
       publisher: {
         '@type': 'Organization',
         name: 'marching.art',
         url: 'https://marching.art',
       },
     };
-    if (article.imageUrl) jsonLd.image = [article.imageUrl];
+    if (metaArticle.imageUrl) jsonLd.image = [metaArticle.imageUrl];
     if (publishedTime) jsonLd.datePublished = publishedTime;
-    if (article.authorUsername || article.authorName) {
-      jsonLd.author = { '@type': 'Person', name: article.authorUsername || article.authorName };
+    if (metaArticle.authorUsername || metaArticle.authorName) {
+      jsonLd.author = {
+        '@type': 'Person',
+        name: metaArticle.authorUsername || metaArticle.authorName,
+      };
     }
     return jsonLd;
-  }, [showArticleMeta, article, publishedTime]);
+  }, [metaArticle, publishedTime]);
 
   useSEO({
-    title: showArticleMeta ? `${article.headline} | marching.art` : undefined,
-    description: showArticleMeta ? truncateForMeta(article.summary) : undefined,
+    title: metaArticle ? `${metaArticle.headline} | marching.art` : undefined,
+    description: metaArticle ? truncateForMeta(metaArticle.summary) : undefined,
     path: `/article/${id}`,
     // Loading renders indexable defaults; a missing or day-gated article is a
     // dead-end page that should stay out of the index.
-    noindex: !loading && !showArticleMeta,
-    image: showArticleMeta ? article.imageUrl : undefined,
-    imageAlt: showArticleMeta ? article.headline : undefined,
-    type: showArticleMeta ? 'article' : undefined,
+    noindex: !loading && !metaArticle,
+    image: metaArticle?.imageUrl,
+    imageAlt: metaArticle?.headline,
+    type: metaArticle ? 'article' : undefined,
     publishedTime,
     jsonLd: articleJsonLd,
   });
@@ -307,7 +390,7 @@ const Article = () => {
     );
   }
 
-  const config = getCategoryConfig(article.category);
+  const config = getCategoryConfig(article.category ?? '');
   const fullContent =
     article.fullStory || (article.narrative && article.narrative.trim()) || article.summary;
 
@@ -334,7 +417,7 @@ const Article = () => {
                 <div className="w-full mb-6 border border-line relative">
                   <OptimizedImage
                     src={article.imageUrl}
-                    alt={article.headline}
+                    alt={article.headline ?? ''}
                     aspectRatio="21/9"
                     priority={true}
                   />
@@ -353,7 +436,7 @@ const Article = () => {
                     >
                       {config.label}
                     </span>
-                    <span>{formatArticleDate(article.createdAt)}</span>
+                    {article.createdAt && <span>{formatArticleDate(article.createdAt)}</span>}
                     {article.metadata?.eventName && (
                       <>
                         <span className="text-muted">•</span>
@@ -412,7 +495,7 @@ const Article = () => {
                       >
                         <Share2 className="w-4 h-4" />
                       </button>
-                      <ArticleReactions
+                      <ReactionsBar
                         articleId={article.id}
                         initialCounts={engagement?.reactionCounts}
                         initialUserReaction={engagement?.userReaction}
@@ -433,30 +516,12 @@ const Article = () => {
 
                 {/* Full Story - only show if different from summary */}
                 <div className="p-5 lg:p-6">
-                  {/* Articles with structured sections get parsed layout. The
-                      Podium Report is an editorial magazine column, so it routes
-                      here too — otherwise its **subheads** render as literal
-                      asterisks in the plain-paragraph fallback below. */}
-                  {[
-                    'fantasy_recap',
-                    'fantasy_daily',
-                    'dci_recap',
-                    'dci_daily',
-                    'dci_feature',
-                    'season_summary',
-                    'podium_report',
-                  ].includes(article.type) ||
-                  [
-                    'fantasy_recap',
-                    'fantasy_daily',
-                    'dci_recap',
-                    'dci_daily',
-                    'dci_feature',
-                    'season_summary',
-                    'podium_report',
-                  ].includes(article.articleType) ? (
+                  {/* Articles with structured sections get parsed layout; see
+                      PARSED_NARRATIVE_TYPES. */}
+                  {PARSED_NARRATIVE_TYPES.includes(article.type ?? '') ||
+                  PARSED_NARRATIVE_TYPES.includes(article.articleType ?? '') ? (
                     <div className="mb-8">
-                      <ArticleNarrativeParser
+                      <NarrativeParser
                         narrative={article.narrative}
                         summary={article.summary}
                         articleType={article.type || article.articleType}
@@ -490,9 +555,9 @@ const Article = () => {
                   {/* Structured Recommendations - for fantasy_recap articles (object format) */}
                   {(article.type === 'fantasy_recap' || article.articleType === 'fantasy_recap') &&
                     article.recommendations &&
-                    (article.recommendations.buy?.length > 0 ||
-                      article.recommendations.hold?.length > 0 ||
-                      article.recommendations.sell?.length > 0) && (
+                    ((article.recommendations.buy?.length ?? 0) > 0 ||
+                      (article.recommendations.hold?.length ?? 0) > 0 ||
+                      (article.recommendations.sell?.length ?? 0) > 0) && (
                       <RecommendationCards recommendations={article.recommendations} />
                     )}
 
