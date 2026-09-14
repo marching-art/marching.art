@@ -318,7 +318,8 @@ ops step below)_
 
 - 2026-09-14 (Directors page — community request for a basic profile
   search): `/directors` (`pages/Directors.tsx`) browses every director A–Z
-  and searches by username prefix, each row linking to `/profile/{uid}`.
+  and searches by username prefix, each row (fantasy + Podium corps by name)
+  linking to `/profile/{uid}`.
   Backed by the `searchDirectors` callable (`callable/users.js`,
   `helpers/directorSearch.js`): signed-in, `rate_directory` budget, page
   ≤ 50, an ordered document-id range over `usernames/{lower}` (already

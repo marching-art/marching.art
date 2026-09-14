@@ -7,7 +7,7 @@
     "summary": "There's finally a way to look someone up. The Directors page lists every director A–Z and lets you search by username, with each row opening that director's profile. Find it under Explore on desktop or the More sheet on your phone.",
     "highlights": [
       "Search matches the start of a username and ignores capitalization — typing \"mae\" finds MaestroMax.",
-      "Each row shows the director's level, title, home and the corps they field, so you can tell who's who before you click.",
+      "Each row shows the director's level, title, home and the corps they field — fantasy classes and their Podium Division corps — so you can tell who's who before you click.",
       "Only signed-in directors can browse the list, and it shows nothing a profile page doesn't already."
     ]
   },
