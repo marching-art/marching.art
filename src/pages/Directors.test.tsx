@@ -35,7 +35,10 @@ const ALICE = entry({
   userTitle: 'Field Marshal',
   location: 'Denver, CO',
   seasonsPlayed: 3,
-  corps: [{ classKey: 'worldClass', corpsName: 'Blue Horizon' }],
+  corps: [
+    { classKey: 'worldClass', corpsName: 'Blue Horizon' },
+    { classKey: 'podiumClass', corpsName: 'Granite Line' },
+  ],
 });
 const BOB = entry({ uid: 'u-bob', username: 'Bob', displayName: 'Bob' });
 
@@ -77,6 +80,8 @@ describe('Directors page', () => {
     expect(screen.getByText('@Alice')).toBeInTheDocument();
     expect(screen.getByText('Field Marshal')).toBeInTheDocument();
     expect(screen.getByText('Blue Horizon')).toBeInTheDocument();
+    expect(screen.getByText('Granite Line')).toBeInTheDocument();
+    expect(screen.getByText('Podium')).toBeInTheDocument();
     expect(screen.getByText('3 seasons')).toBeInTheDocument();
     // The viewer's own row is tagged.
     expect(screen.getByRole('link', { name: /Bob/ })).toHaveTextContent('You');

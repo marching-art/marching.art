@@ -49,7 +49,7 @@ describe("directoryEntryFromProfile", () => {
     assert.equal(directoryEntryFromProfile("u1", { displayName: "Ghost" }), null);
   });
 
-  test("projects identity, progression and named corps in display order", () => {
+  test("projects identity, progression and named corps (Podium included) in display order", () => {
     const entry = directoryEntryFromProfile("u1", {
       username: "MaestroMax",
       displayName: "  Max  ",
@@ -59,6 +59,7 @@ describe("directoryEntryFromProfile", () => {
       location: "Denver, CO ",
       stats: { seasonsPlayed: 3, championships: 1 },
       corps: {
+        podiumClass: { corpsName: "Granite Line", class: "podiumClass" },
         soundSport: { corpsName: "Echo Brass" },
         worldClass: { corpsName: "Blue Horizon", lineup: { GE1: "x" } },
         aClass: { corpsName: "   " },
@@ -78,6 +79,7 @@ describe("directoryEntryFromProfile", () => {
       corps: [
         { classKey: "worldClass", corpsName: "Blue Horizon" },
         { classKey: "soundSport", corpsName: "Echo Brass" },
+        { classKey: "podiumClass", corpsName: "Granite Line" },
       ],
     });
   });

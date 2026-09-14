@@ -20,7 +20,7 @@ export interface DirectorSearchEntry {
   userTitle: string;
   location: string;
   seasonsPlayed: number;
-  /** Named corps in display order (World, Open, A, SoundSport). */
+  /** Named corps in display order (World, Open, A, SoundSport, Podium). */
   corps: Array<{ classKey: string; corpsName: string }>;
 }
 

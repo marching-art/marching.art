@@ -21,9 +21,12 @@ const MAX_PAGE_SIZE = 50;
 /** Username shape enforced by the profile callables: 3-15 word chars. */
 const USERNAME_KEY_RE = /^[a-z0-9_]{1,15}$/;
 
-// Ranked classes first, SoundSport last — the display order the profile UI
-// uses (PROFILE_CORPS_CLASS_ORDER in src/utils/corps).
-const CORPS_CLASS_ORDER = ["worldClass", "openClass", "aClass", "soundSport"];
+// Ranked classes first, SoundSport, then the Podium Division — the display
+// order the profile UI uses (PROFILE_CORPS_CLASS_ORDER in src/utils/corps).
+// A Podium corps lives on the profile as a display copy at
+// `corps.podiumClass` (callable/podium.js registerPodiumCorps), which the
+// public mirror carries like any other class entry.
+const CORPS_CLASS_ORDER = ["worldClass", "openClass", "aClass", "soundSport", "podiumClass"];
 
 /**
  * Normalize a raw search string into the lowercase username-key prefix.
