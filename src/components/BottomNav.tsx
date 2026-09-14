@@ -47,7 +47,7 @@ import { triggerHaptic } from '../hooks/useHaptic';
 import { prefetchRoute } from '../lib/prefetch';
 import { useNavBadges } from '../hooks/useNavBadges';
 import { BottomSheet } from './ui/BottomSheet';
-import { GAME_LINKS, ARCHIVE_LINKS, type AppLink } from '../utils/exploreLinks';
+import { GAME_LINKS, ARCHIVE_LINKS, COMMUNITY_LINKS, type AppLink } from '../utils/exploreLinks';
 
 // =============================================================================
 // TYPES
@@ -260,7 +260,9 @@ const BottomNav: React.FC = () => {
           <div className="px-4 pt-4 pb-1 text-[10px] font-bold uppercase tracking-wider text-muted">
             Explore
           </div>
-          {[...GAME_LINKS, ...ARCHIVE_LINKS].map((item) => renderSheetRow(item, item.to))}
+          {[...GAME_LINKS, ...ARCHIVE_LINKS, ...COMMUNITY_LINKS].map((item) =>
+            renderSheetRow(item, item.to)
+          )}
         </nav>
       </BottomSheet>
     </>

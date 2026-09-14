@@ -84,6 +84,7 @@ const RetiredCorpsGallery = lazyWithRetry(
   'RetiredCorpsGallery'
 );
 const CorpsHistory = lazyWithRetry(() => import('./pages/CorpsHistory'), 'CorpsHistory');
+const Directors = lazyWithRetry(() => import('./pages/Directors'), 'Directors');
 const Privacy = lazyWithRetry(() => import('./pages/Privacy'), 'Privacy');
 const Terms = lazyWithRetry(() => import('./pages/Terms'), 'Terms');
 const StyleGuide = lazyWithRetry(() => import('./pages/StyleGuide'), 'StyleGuide');
@@ -220,6 +221,23 @@ const ProtectedRoute = ({ children, requireProfile = true }) => {
 // tab; logged-out visitors (e.g. a shared link) are sent to the Buy Me a Coffee
 // page. External redirects can't use React Router's <Navigate>, so we use
 // window.location for that leg.
+// The gallery-style GameShell pages (Records, Shop, Studio, Exchange,
+// Achievements, Admin, the archive galleries, Directors) share one wrapper:
+// protected, in the app shell, gallery skeleton while the chunk loads. Kept
+// as a component so each route is one line instead of thirteen.
+/** @param {{ name: string, page: React.ComponentType }} props */
+const GalleryPage = ({ name, page: PageComponent }) => (
+  <ProtectedRoute>
+    <GameShell>
+      <Suspense fallback={<GalleryPageSkeleton />}>
+        <Page name={name}>
+          <PageComponent />
+        </Page>
+      </Suspense>
+    </GameShell>
+  </ProtectedRoute>
+);
+
 const SupportersEntry = () => {
   const { user, loading } = useAppAuth();
   useEffect(() => {
@@ -661,33 +679,10 @@ function App() {
 
                     <Route
                       path="/records"
-                      element={
-                        <ProtectedRoute>
-                          <GameShell>
-                            <Suspense fallback={<GalleryPageSkeleton />}>
-                              <Page name="Records">
-                                <Records />
-                              </Page>
-                            </Suspense>
-                          </GameShell>
-                        </ProtectedRoute>
-                      }
+                      element={<GalleryPage name="Records" page={Records} />}
                     />
 
-                    <Route
-                      path="/shop"
-                      element={
-                        <ProtectedRoute>
-                          <GameShell>
-                            <Suspense fallback={<GalleryPageSkeleton />}>
-                              <Page name="Shop">
-                                <Shop />
-                              </Page>
-                            </Suspense>
-                          </GameShell>
-                        </ProtectedRoute>
-                      }
-                    />
+                    <Route path="/shop" element={<GalleryPage name="Shop" page={Shop} />} />
 
                     <Route
                       path="/scores"
@@ -726,49 +721,16 @@ function App() {
                       }
                     />
 
-                    <Route
-                      path="/studio"
-                      element={
-                        <ProtectedRoute>
-                          <GameShell>
-                            <Suspense fallback={<GalleryPageSkeleton />}>
-                              <Page name="Studio">
-                                <Studio />
-                              </Page>
-                            </Suspense>
-                          </GameShell>
-                        </ProtectedRoute>
-                      }
-                    />
+                    <Route path="/studio" element={<GalleryPage name="Studio" page={Studio} />} />
 
                     <Route
                       path="/exchange"
-                      element={
-                        <ProtectedRoute>
-                          <GameShell>
-                            <Suspense fallback={<GalleryPageSkeleton />}>
-                              <Page name="Exchange">
-                                <Exchange />
-                              </Page>
-                            </Suspense>
-                          </GameShell>
-                        </ProtectedRoute>
-                      }
+                      element={<GalleryPage name="Exchange" page={Exchange} />}
                     />
 
                     <Route
                       path="/achievements"
-                      element={
-                        <ProtectedRoute>
-                          <GameShell>
-                            <Suspense fallback={<GalleryPageSkeleton />}>
-                              <Page name="Achievements">
-                                <Achievements />
-                              </Page>
-                            </Suspense>
-                          </GameShell>
-                        </ProtectedRoute>
-                      }
+                      element={<GalleryPage name="Achievements" page={Achievements} />}
                     />
 
                     {/* Settings is now integrated into Profile - redirect for backwards compatibility */}
@@ -776,20 +738,7 @@ function App() {
 
                     <Route path="/hall-of-champions" element={<HallOfChampionsEntry />} />
 
-                    <Route
-                      path="/admin"
-                      element={
-                        <ProtectedRoute>
-                          <GameShell>
-                            <Suspense fallback={<GalleryPageSkeleton />}>
-                              <Page name="Admin">
-                                <Admin />
-                              </Page>
-                            </Suspense>
-                          </GameShell>
-                        </ProtectedRoute>
-                      }
-                    />
+                    <Route path="/admin" element={<GalleryPage name="Admin" page={Admin} />} />
 
                     {/* A league needs a URL. Detail used to be component state,
                         so there was no shareable link, no browser back, nothing
@@ -813,32 +762,17 @@ function App() {
 
                     <Route
                       path="/retired-corps"
-                      element={
-                        <ProtectedRoute>
-                          <GameShell>
-                            <Suspense fallback={<GalleryPageSkeleton />}>
-                              <Page name="Retired Corps">
-                                <RetiredCorpsGallery />
-                              </Page>
-                            </Suspense>
-                          </GameShell>
-                        </ProtectedRoute>
-                      }
+                      element={<GalleryPage name="Retired Corps" page={RetiredCorpsGallery} />}
+                    />
+
+                    <Route
+                      path="/directors"
+                      element={<GalleryPage name="Directors" page={Directors} />}
                     />
 
                     <Route
                       path="/corps-history"
-                      element={
-                        <ProtectedRoute>
-                          <GameShell>
-                            <Suspense fallback={<GalleryPageSkeleton />}>
-                              <Page name="Corps History">
-                                <CorpsHistory />
-                              </Page>
-                            </Suspense>
-                          </GameShell>
-                        </ProtectedRoute>
-                      }
+                      element={<GalleryPage name="Corps History" page={CorpsHistory} />}
                     />
 
                     {/* SoundSport rules were consolidated into the unified Game

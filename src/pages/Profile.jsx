@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // =============================================================================
 // PROFILE - DIRECTOR CAREER PORTFOLIO
 // =============================================================================
@@ -72,7 +71,7 @@ const Profile = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { user } = useAuth();
+  const user = useAuth()?.user;
   const queryClient = useQueryClient();
   const [showEditModal, setShowEditModal] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -88,10 +87,12 @@ const Profile = () => {
   const isUsernameParam = rawParam.startsWith('@');
   const usernameKey = isUsernameParam ? rawParam.slice(1).toLowerCase() : null;
   const [resolvedUid, setResolvedUid] = useState(isUsernameParam ? null : userId || null);
-  const [usernameResolveError, setUsernameResolveError] = useState(null);
+  const [usernameResolveError, setUsernameResolveError] = useState(
+    /** @type {string | null} */ (null)
+  );
 
   useEffect(() => {
-    if (!isUsernameParam) {
+    if (!isUsernameParam || usernameKey === null) {
       setResolvedUid(userId || null);
       setUsernameResolveError(null);
       return;
@@ -109,7 +110,11 @@ const Profile = () => {
         }
         setResolvedUid(result.uid);
       } catch (err) {
-        if (!cancelled) setUsernameResolveError(err.message || 'Failed to resolve username');
+        if (!cancelled) {
+          setUsernameResolveError(
+            (err instanceof Error && err.message) || 'Failed to resolve username'
+          );
+        }
       }
     })();
     return () => {
@@ -134,7 +139,7 @@ const Profile = () => {
     }
   }, [searchParams, isOwnProfile, setSearchParams]);
 
-  const profileUserId = isUsernameParam ? resolvedUid : userId || user?.uid;
+  const profileUserId = (isUsernameParam ? resolvedUid : userId || user?.uid) || undefined;
   // Own profile: the raw doc (settings, wallet, lineups). Anyone else: the
   // server-mirrored public projection — never their lineup or picks.
   const {
@@ -180,6 +185,7 @@ const Profile = () => {
 
   // Handle profile avatar corps selection
   const handleSelectAvatarCorps = useCallback(
+    /** @param {import('../types/corps').CorpsClass} corpsClass */
     async (corpsClass) => {
       if (!user) return;
       try {
@@ -200,6 +206,10 @@ const Profile = () => {
   // server fetches, size-checks, crops to a square, and re-hosts the image,
   // returning the stored URL — mirror the regenerate flow's cache update.
   const handleSetCustomAvatar = useCallback(
+    /**
+     * @param {import('../types/corps').CorpsClass} corpsClass
+     * @param {string} imageUrl
+     */
     async (corpsClass, imageUrl) => {
       if (!user) return;
       try {
@@ -208,22 +218,26 @@ const Profile = () => {
         if (result.data.success) {
           const newAvatarUrl = result.data.avatarUrl;
           if (newAvatarUrl) {
-            queryClient.setQueryData(queryKeys.profile(user.uid), (oldData) => {
-              if (!oldData) return oldData;
-              return {
-                ...oldData,
-                corps: {
-                  ...oldData.corps,
-                  [corpsClass]: {
-                    ...oldData.corps?.[corpsClass],
-                    avatarUrl: newAvatarUrl,
-                    avatarSource: 'custom',
-                    avatarGeneratedAt: new Date().toISOString(),
+            queryClient.setQueryData(
+              queryKeys.profile(user.uid),
+              /** @param {import('../types/user').UserProfile | undefined} oldData */
+              (oldData) => {
+                if (!oldData) return oldData;
+                return {
+                  ...oldData,
+                  corps: {
+                    ...oldData.corps,
+                    [corpsClass]: {
+                      ...oldData.corps?.[corpsClass],
+                      avatarUrl: newAvatarUrl,
+                      avatarSource: 'custom',
+                      avatarGeneratedAt: new Date().toISOString(),
+                    },
                   },
-                },
-                profileAvatarCorps: corpsClass,
-              };
-            });
+                  profileAvatarCorps: corpsClass,
+                };
+              }
+            );
           } else {
             await new Promise((resolve) => setTimeout(resolve, 500));
             refetch();
@@ -237,7 +251,9 @@ const Profile = () => {
       } catch (err) {
         // Surface the server's message (bad URL, too large, banned, etc.) so
         // the modal can show it — rethrow after toasting.
-        toast.error(err.message || 'Failed to set custom avatar', { id: 'custom-avatar' });
+        toast.error((err instanceof Error && err.message) || 'Failed to set custom avatar', {
+          id: 'custom-avatar',
+        });
         throw err;
       }
     },
@@ -246,6 +262,7 @@ const Profile = () => {
 
   // Handle avatar regeneration
   const handleRegenerateAvatar = useCallback(
+    /** @param {import('../types/corps').CorpsClass} corpsClass */
     async (corpsClass) => {
       if (!user) return;
       try {
@@ -256,20 +273,24 @@ const Profile = () => {
           const newAvatarUrl = result.data.avatarUrl;
           if (newAvatarUrl) {
             // Update cache for current user's profile
-            queryClient.setQueryData(queryKeys.profile(user.uid), (oldData) => {
-              if (!oldData) return oldData;
-              return {
-                ...oldData,
-                corps: {
-                  ...oldData.corps,
-                  [corpsClass]: {
-                    ...oldData.corps?.[corpsClass],
-                    avatarUrl: newAvatarUrl,
-                    avatarGeneratedAt: new Date().toISOString(),
+            queryClient.setQueryData(
+              queryKeys.profile(user.uid),
+              /** @param {import('../types/user').UserProfile | undefined} oldData */
+              (oldData) => {
+                if (!oldData) return oldData;
+                return {
+                  ...oldData,
+                  corps: {
+                    ...oldData.corps,
+                    [corpsClass]: {
+                      ...oldData.corps?.[corpsClass],
+                      avatarUrl: newAvatarUrl,
+                      avatarGeneratedAt: new Date().toISOString(),
+                    },
                   },
-                },
-              };
-            });
+                };
+              }
+            );
           } else {
             // Fallback: if avatarUrl not returned, refetch from server
             // This handles cases where the function hasn't been deployed yet
@@ -314,7 +335,7 @@ const Profile = () => {
       }
     } catch (err) {
       // User canceled share sheet — fall through to clipboard copy
-      if (err?.name === 'AbortError') return;
+      if (err instanceof Error && err.name === 'AbortError') return;
     }
     try {
       if (typeof navigator !== 'undefined' && navigator.clipboard) {
@@ -329,9 +350,20 @@ const Profile = () => {
   }, [profile]);
 
   const handleSaveProfile = useCallback(
+    /**
+     * @param {{
+     *   displayName: string,
+     *   location: string,
+     *   directorInfo: import('../types/user').DirectorProfileInfo,
+     *   ensembleInfo?: Record<string, unknown> | null,
+     * }} payload
+     */
     async ({ displayName, location, directorInfo, ensembleInfo }) => {
       if (!user) return;
       try {
+        // Dotted `corps.{class}.ensembleInfo` keys ride alongside the typed
+        // top-level fields — hence the index signature.
+        /** @type {import('../types/api').DeepPartial<import('../types/user').UserProfile> & Record<string, unknown>} */
         const updateData = {
           displayName,
           location,

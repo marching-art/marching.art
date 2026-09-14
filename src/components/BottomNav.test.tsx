@@ -168,6 +168,10 @@ describe('BottomNav', () => {
       'href',
       '/corps-history'
     );
+    expect(within(sheet).getByRole('link', { name: 'Directors' })).toHaveAttribute(
+      'href',
+      '/directors'
+    );
   });
 
   it('leaves Admin out of the sheet for ordinary directors', () => {

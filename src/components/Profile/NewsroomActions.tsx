@@ -45,7 +45,7 @@ const PressReleaseModal = lazyWithRetry(
 interface NewsroomActionsProps {
   profile:
     | {
-        corps?: Record<string, { corpsName?: string }> | null;
+        corps?: Record<string, { corpsName?: string } | undefined> | null;
         articleStats?: { approvedCount?: number; approvedPressReleaseCount?: number } | null;
       }
     | null

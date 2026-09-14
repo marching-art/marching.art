@@ -17,7 +17,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { LayoutGrid } from 'lucide-react';
 import { prefetchRoute } from '../../lib/prefetch';
-import { GAME_LINKS, ARCHIVE_LINKS } from '../../utils/exploreLinks';
+import { GAME_LINKS, ARCHIVE_LINKS, COMMUNITY_LINKS } from '../../utils/exploreLinks';
 
 const itemClass =
   'flex items-center gap-2.5 px-3 py-2.5 min-h-touch text-sm text-secondary hover:text-white hover:bg-white/5 transition-colors';
@@ -105,6 +105,11 @@ const ExploreMenu = () => {
 
           {/* The game world's archive */}
           {ARCHIVE_LINKS.map(renderLink)}
+
+          <div className="my-1 border-t border-line" />
+
+          {/* The other directors */}
+          {COMMUNITY_LINKS.map(renderLink)}
         </div>
       )}
     </div>

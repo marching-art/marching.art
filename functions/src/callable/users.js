@@ -18,6 +18,15 @@ const {
 } = require("../helpers/showRegistrations");
 const { homeGeoFor } = require("../helpers/corpsGeo");
 const podiumStore = require("../helpers/podium/store");
+const {
+  DEFAULT_PAGE_SIZE: DIRECTORY_PAGE_SIZE,
+  MAX_PAGE_SIZE: DIRECTORY_MAX_PAGE_SIZE,
+  normalizeDirectorQuery,
+  normalizeDirectorCursor,
+  directoryEntryFromProfile,
+} = require("../helpers/directorSearch");
+const { clampLimit } = require("../helpers/callableGuards");
+const { FieldPath } = require("firebase-admin/firestore");
 
 exports.setUserRole = onCall({ cors: true }, async (request) => {
   assertAdmin(request);
@@ -585,4 +594,53 @@ exports.fixProfileFields = onCall({ cors: true, timeoutSeconds: 540, memory: "51
     if (error instanceof HttpsError) throw error;
     throw new HttpsError("internal", "Profile fix failed.");
   }
+});
+
+/**
+ * Director directory + search. Signed-in only, budgeted, page-capped.
+ *
+ * `query` (optional) is a username prefix, matched case-insensitively against
+ * the `usernames/{lower}` reservation collection (helpers/directorSearch.js
+ * explains why that collection is the index). No query = the whole directory
+ * in alphabetical username order. `cursor` is the `nextCursor` of the previous
+ * page. Each hit resolves to the director's `profile/public` mirror — the same
+ * projection a signed-in director may already read one profile at a time — and
+ * ghost reservations (no mirror) are dropped rather than advertised.
+ */
+exports.searchDirectors = onCall({ cors: true }, async (request) => {
+  const uid = assertAuth(request);
+  const { query, cursor, limit } = request.data || {};
+  const prefix = normalizeDirectorQuery(query);
+  const after = normalizeDirectorCursor(cursor);
+  const pageSize = clampLimit(limit, { fallback: DIRECTORY_PAGE_SIZE, max: DIRECTORY_MAX_PAGE_SIZE });
+
+  // Reads only, but the page fans out into up to 51 profile gets — keep it
+  // far above a human's browse/typing rate and well below a scraper's.
+  const db = getDb();
+  await assertWriteBudget(db, uid, "directory", { max: 240, windowMs: 10 * 60 * 1000 });
+
+  let usernamesQuery = db.collection("usernames").orderBy(FieldPath.documentId());
+  if (prefix) usernamesQuery = usernamesQuery.startAt(prefix).endAt(`${prefix}\uf8ff`);
+  // startAfter replaces the startAt bound; the endAt bound still applies.
+  if (after) usernamesQuery = usernamesQuery.startAfter(after);
+  const snapshot = await usernamesQuery.limit(pageSize + 1).get();
+
+  const hits = snapshot.docs.slice(0, pageSize);
+  const hasMore = snapshot.docs.length > pageSize;
+  const nextCursor = hasMore ? hits[hits.length - 1].id : null;
+
+  const targets = hits
+    .map((doc) => ({ uid: doc.data()?.uid }))
+    .filter((t) => typeof t.uid === "string" && t.uid !== "");
+  const mirrors = targets.length
+    ? await db.getAll(...targets.map((t) => db.doc(paths.userProfilePublic(t.uid))))
+    : [];
+
+  const directors = [];
+  mirrors.forEach((mirror, index) => {
+    const entry = directoryEntryFromProfile(targets[index].uid, mirror.exists ? mirror.data() : null);
+    if (entry) directors.push(entry);
+  });
+
+  return { directors, nextCursor };
 });
