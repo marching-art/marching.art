@@ -185,9 +185,11 @@ exports.updateUsername = onCall({ cors: true }, async (request) => {
       // concurrent claim got there first.
       t.create(newUsernameRef, { uid: userId });
 
-      // Update profile
+      // Update profile. A rename also retires the temporary-handle flag the
+      // username-reservation repair sets (scripts/backfillUsernameReservations.js).
       t.update(profileRef, {
         username: trimmedUsername,
+        usernameTemporary: FieldValue.delete(),
         updatedAt: FieldValue.serverTimestamp()
       });
       return { unchanged: false, oldUsername };

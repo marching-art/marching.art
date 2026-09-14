@@ -1,25 +1,34 @@
-// Director directory / search — the pure half of the searchDirectors callable
-// (callable/users.js). Firestore-free so the query normalization and the row
-// projection pin down in unit tests.
+// Director directory — the pure half of the searchDirectors callable
+// (callable/users.js). Firestore-free so the row projection, ordering and
+// the per-instance cache pin down in unit tests.
 //
-// How search works: `usernames/{lower}` (the username reservation collection,
-// written only by the profile callables) is keyed by the LOWERCASED username,
-// so an ordered document-id range query on it IS a case-insensitive prefix
-// search — no search index, no derived field on the profile mirror, no
-// backfill. The callable resolves each hit to `profile/public` (the server
-// mirror every signed-in director may already read one at a time) and hands
-// back the small projection below. Client rules keep `usernames` list-closed
-// (firestore.rules), so the directory is reachable ONLY through the callable:
-// signed in, budgeted, page-capped.
+// How the directory is built: every director is a document location under
+// `artifacts/{ns}/users/` (listDocuments() returns those locations even when
+// the user doc itself is absent — accountErasure.js relies on the same
+// behavior for seasons), and every director's public projection lives at
+// `profile/public`, kept in step by triggers/profileMirror.js and backfilled
+// for every existing profile (docs/NEXT.md, 2026-09-13). Reading those
+// mirrors in bulk is therefore the one enumeration that is complete by
+// construction: no side index to drift (the first cut keyed on the
+// `usernames/{lower}` reservation collection and silently dropped every
+// director whose reservation was missing), no derived search field, no
+// composite index, no backfill. The whole list is small (hundreds of rows of
+// ~200 bytes), so the callable returns it in one response and the client
+// filters locally — which also lets search match display and corps names,
+// not just the username prefix a Firestore range could serve.
+//
+// Cost: one listDocuments plus one profile/public read per director, per
+// call, per function instance — absorbed by a short in-memory cache so a
+// burst of visits doesn't re-read the mirrors each time. If the game ever
+// passes MAX_DIRECTORY_SIZE directors the response is truncated and flagged;
+// that is the point to move to a materialized index, not before.
 
-const { HttpsError } = require("firebase-functions/v2/https");
-
-/** Page size when the client sends none / clamp ceiling. */
-const DEFAULT_PAGE_SIZE = 25;
-const MAX_PAGE_SIZE = 50;
-
-/** Username shape enforced by the profile callables: 3-15 word chars. */
-const USERNAME_KEY_RE = /^[a-z0-9_]{1,15}$/;
+/** Hard ceiling on rows per response (keeps the payload well under 1 MiB). */
+const MAX_DIRECTORY_SIZE = 2000;
+/** getAll batch size — Firestore caps a single getAll well above this. */
+const MIRROR_BATCH_SIZE = 300;
+/** Per-instance cache lifetime. */
+const DIRECTORY_CACHE_TTL_MS = 60 * 1000;
 
 // Ranked classes first, SoundSport, then the Podium Division — the display
 // order the profile UI uses (PROFILE_CORPS_CLASS_ORDER in src/utils/corps).
@@ -27,47 +36,6 @@ const USERNAME_KEY_RE = /^[a-z0-9_]{1,15}$/;
 // `corps.podiumClass` (callable/podium.js registerPodiumCorps), which the
 // public mirror carries like any other class entry.
 const CORPS_CLASS_ORDER = ["worldClass", "openClass", "aClass", "soundSport", "podiumClass"];
-
-/**
- * Normalize a raw search string into the lowercase username-key prefix.
- * Empty (browse the whole directory alphabetically) is a valid query; a
- * leading "@" is tolerated because that is how usernames are written in the
- * app. Anything that could never prefix a username is rejected before any
- * Firestore read.
- *
- * @param {unknown} raw
- * @returns {string} "" for browse, else the lowercase prefix.
- */
-function normalizeDirectorQuery(raw) {
-  if (raw === undefined || raw === null) return "";
-  if (typeof raw !== "string") {
-    throw new HttpsError("invalid-argument", "Search text must be a string.");
-  }
-  const key = raw.trim().replace(/^@/, "").toLowerCase();
-  if (key === "") return "";
-  if (!USERNAME_KEY_RE.test(key)) {
-    throw new HttpsError(
-      "invalid-argument",
-      "Search by username: letters, numbers and underscores only (up to 15 characters)."
-    );
-  }
-  return key;
-}
-
-/**
- * Validate a page cursor (the last username key of the previous page, as the
- * callable returned it). null/undefined = first page.
- *
- * @param {unknown} raw
- * @returns {string | null}
- */
-function normalizeDirectorCursor(raw) {
-  if (raw === undefined || raw === null || raw === "") return null;
-  if (typeof raw !== "string" || !USERNAME_KEY_RE.test(raw)) {
-    throw new HttpsError("invalid-argument", "Invalid page cursor.");
-  }
-  return raw;
-}
 
 /**
  * The directory row for one director, projected from their profile/public
@@ -82,8 +50,8 @@ function normalizeDirectorCursor(raw) {
  *   uid: string, username: string, displayName: string, photoURL: string | null,
  *   xpLevel: number, userTitle: string, location: string,
  *   seasonsPlayed: number, corps: Array<{classKey: string, corpsName: string}>,
- * } | null} null when the mirror is missing or has no username (a ghost
- *   reservation — never advertise a profile that cannot render).
+ * } | null} null when the mirror is missing or has no username (a profile that
+ *   cannot render — never advertise it).
  */
 function directoryEntryFromProfile(uid, data) {
   if (!data || typeof data !== "object") return null;
@@ -118,10 +86,81 @@ function directoryEntryFromProfile(uid, data) {
   };
 }
 
+/**
+ * Alphabetical by username, case-insensitively, uid as the tiebreak so the
+ * order is stable between calls.
+ * @template {{username: string, uid: string}} T
+ * @param {T[]} entries
+ * @returns {T[]} a new sorted array
+ */
+function sortDirectoryEntries(entries) {
+  return [...entries].sort((a, b) => {
+    const au = a.username.toLowerCase();
+    const bu = b.username.toLowerCase();
+    if (au !== bu) return au < bu ? -1 : 1;
+    return a.uid < b.uid ? -1 : a.uid > b.uid ? 1 : 0;
+  });
+}
+
+/**
+ * Build the whole directory: every user location's profile/public mirror,
+ * projected and sorted. Locations without a mirror (an account mid-erasure,
+ * or one that never finished onboarding) are skipped.
+ *
+ * @param {FirebaseFirestore.Firestore} db
+ * @param {{users: () => string, userProfilePublic: (uid: string) => string}} paths
+ * @returns {Promise<{directors: ReturnType<typeof directoryEntryFromProfile>[], total: number, truncated: boolean}>}
+ */
+async function loadDirectory(db, paths) {
+  const userRefs = await db.collection(paths.users()).listDocuments();
+  const uids = userRefs.map((ref) => ref.id).filter((id) => typeof id === "string" && id !== "");
+  const truncated = uids.length > MAX_DIRECTORY_SIZE;
+  const wanted = truncated ? uids.slice(0, MAX_DIRECTORY_SIZE) : uids;
+
+  const directors = [];
+  for (let i = 0; i < wanted.length; i += MIRROR_BATCH_SIZE) {
+    const batch = wanted.slice(i, i + MIRROR_BATCH_SIZE);
+    const mirrors = await db.getAll(...batch.map((uid) => db.doc(paths.userProfilePublic(uid))));
+    mirrors.forEach((mirror, index) => {
+      const entry = directoryEntryFromProfile(batch[index], mirror.exists ? mirror.data() : null);
+      if (entry) directors.push(entry);
+    });
+  }
+  const sorted = sortDirectoryEntries(directors);
+  return { directors: sorted, total: sorted.length, truncated };
+}
+
+/** @type {{at: number, value: Awaited<ReturnType<typeof loadDirectory>>} | null} */
+let cache = null;
+
+/**
+ * loadDirectory behind a per-instance TTL cache. A cache hit costs no reads;
+ * a miss rebuilds and stores. Failures are not cached.
+ *
+ * @param {FirebaseFirestore.Firestore} db
+ * @param {{users: () => string, userProfilePublic: (uid: string) => string}} paths
+ * @param {{now?: () => number, ttlMs?: number}} [opts]
+ */
+async function loadDirectoryCached(db, paths, { now = Date.now, ttlMs = DIRECTORY_CACHE_TTL_MS } = {}) {
+  const at = now();
+  if (cache && at - cache.at < ttlMs) return cache.value;
+  const value = await loadDirectory(db, paths);
+  cache = { at, value };
+  return value;
+}
+
+/** Tests only. */
+function resetDirectoryCacheForTesting() {
+  cache = null;
+}
+
 module.exports = {
-  DEFAULT_PAGE_SIZE,
-  MAX_PAGE_SIZE,
-  normalizeDirectorQuery,
-  normalizeDirectorCursor,
+  MAX_DIRECTORY_SIZE,
+  MIRROR_BATCH_SIZE,
+  DIRECTORY_CACHE_TTL_MS,
   directoryEntryFromProfile,
+  sortDirectoryEntries,
+  loadDirectory,
+  loadDirectoryCached,
+  resetDirectoryCacheForTesting,
 };

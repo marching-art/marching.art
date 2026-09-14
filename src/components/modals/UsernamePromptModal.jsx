@@ -38,8 +38,16 @@ const UsernamePromptModal = () => {
   const [submitting, setSubmitting] = useState(false);
   const usernameCheckTimeout = useRef(/** @type {ReturnType<typeof setTimeout> | null} */ (null));
 
-  // Determine if modal should show - username is mandatory, cannot be dismissed
-  const shouldShow = !loading && profile && !profile.username && user;
+  // Two reasons to open: no username at all (mandatory, cannot be dismissed),
+  // or a temporary numbered handle assigned by the username-reservation repair
+  // (functions/src/scripts/backfillUsernameReservations.js) because an older
+  // account owned the name. The temporary handle works, so that case can be
+  // put off with "Later" — but it asks again on the next visit until
+  // updateUsername clears the flag.
+  const isTemporary = !!profile?.username && profile?.usernameTemporary === true;
+  const [deferred, setDeferred] = useState(false);
+  const shouldShow =
+    !loading && profile && user && (!profile.username || (isTemporary && !deferred));
 
   const dialogRef = useRef(/** @type {HTMLDivElement | null} */ (null));
   // Trap keyboard focus inside the dialog (WCAG 2.4.3); restores on close
@@ -140,9 +148,13 @@ const UsernamePromptModal = () => {
               </div>
               <div>
                 <h2 id="username-prompt-title" className="text-sm font-bold text-white">
-                  Choose Your Username
+                  {isTemporary ? 'Pick a New Username' : 'Choose Your Username'}
                 </h2>
-                <p className="text-xs text-muted">This will be your unique identifier</p>
+                <p className="text-xs text-muted">
+                  {isTemporary
+                    ? `Your current handle @${profile.username} is temporary`
+                    : 'This will be your unique identifier'}
+                </p>
               </div>
             </div>
           </div>
@@ -150,8 +162,9 @@ const UsernamePromptModal = () => {
           {/* Body */}
           <div className="p-5 space-y-4">
             <p className="text-sm text-secondary">
-              Welcome back! A username is now required to identify players. Please choose a unique
-              username to continue using your account.
+              {isTemporary
+                ? `Another director registered this username before you did, so your account was given the temporary handle @${profile.username}. Choose a new username to keep.`
+                : 'Welcome back! A username is now required to identify players. Please choose a unique username to continue using your account.'}
             </p>
 
             <div>
@@ -207,7 +220,17 @@ const UsernamePromptModal = () => {
           </div>
 
           {/* Footer */}
-          <div className="px-5 py-4 border-t border-line bg-surface-raised">
+          <div className="px-5 py-4 border-t border-line bg-surface-raised space-y-2">
+            {isTemporary && (
+              <button
+                type="button"
+                onClick={() => setDeferred(true)}
+                disabled={submitting}
+                className="w-full px-4 py-2 text-xs font-semibold text-muted hover:text-white transition-colors disabled:opacity-50"
+              >
+                {`Later — keep @${profile.username} for now`}
+              </button>
+            )}
             <button
               onClick={handleSubmit}
               disabled={usernameStatus.valid !== true || submitting}

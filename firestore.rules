@@ -39,7 +39,7 @@ function isOwner(userId) {
 function touchesProtectedProfileFields() {
   return request.resource.data.diff(resource.data).affectedKeys().hasAny([
     'corpsCoin', 'xp', 'xpLevel', 'userTitle', 'unlockedClasses',
-    'stats', 'trophies', 'username', 'createdAt', 'uid',
+    'stats', 'trophies', 'username', 'usernameTemporary', 'createdAt', 'uid',
     'lifetimeStats', 'activeSeasonId', 'lastScoredDay', 'challenges',
     'predictions', 'predictionStats', 'achievements', 'lastRewardedLevel',
     'journey', 'cosmetics', 'seasonLadder', 'xpAtSeasonStart',
@@ -890,9 +890,9 @@ match /activeLineups/{lineupKey} {
 // Username → uid lookup. Single-document gets only: `read` would also grant
 // `list`, and listing this collection hands out the full username → uid map
 // for every director (the key to their profile doc, comments, and season
-// detail). Every client consumer resolves one exact username. The Directors
-// page's browse/search goes through the searchDirectors callable
-// (callable/users.js: signed-in, budgeted, page-capped) — never a client list.
+// detail). Every client consumer resolves one exact username. (The Directors
+// page does not read this collection at all — its searchDirectors callable
+// enumerates profile/public mirrors server-side; helpers/directorSearch.js.)
 match /usernames/{username} {
   allow get: if true;
   allow list: if false;

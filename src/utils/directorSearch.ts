@@ -1,16 +1,31 @@
-// Client-side half of the director search contract (functions/src/helpers/
-// directorSearch.js): normalize what the director typed into the username key
-// the callable matches on, and know what the server will accept so the page
-// never sends a query it would reject. Pure, so it's testable without Firebase.
+// Client-side search over the director directory (api/directors). The whole
+// list arrives in one response, so matching is a plain case-insensitive
+// substring test across the fields a director would type: username, display
+// name, and the names of the corps they field. Pure, so it's testable
+// without Firebase.
 
-/** A username key: what the server matches against. Empty = browse everyone. */
-export const DIRECTOR_QUERY_RE = /^[a-z0-9_]{0,15}$/;
+export interface DirectorSearchable {
+  username: string;
+  displayName: string;
+  corps: Array<{ corpsName: string }>;
+}
 
-/** Lowercase, trimmed, "@"-stripped — the form the callable matches on. */
+/** Lowercase, trimmed, "@"-stripped — how a typed handle is matched. */
 export function toDirectorQuery(raw: string): string {
   return raw.trim().replace(/^@/, '').toLowerCase();
 }
 
-export function isValidDirectorQuery(query: string): boolean {
-  return DIRECTOR_QUERY_RE.test(query);
+/** Whether one directory row matches an already-normalized query. */
+export function matchesDirector(entry: DirectorSearchable, query: string): boolean {
+  if (!query) return true;
+  if (entry.username.toLowerCase().includes(query)) return true;
+  if (entry.displayName.toLowerCase().includes(query)) return true;
+  return entry.corps.some((corps) => corps.corpsName.toLowerCase().includes(query));
+}
+
+/** The rows matching a typed search, in their original order. */
+export function filterDirectors<T extends DirectorSearchable>(entries: T[], raw: string): T[] {
+  const query = toDirectorQuery(raw);
+  if (!query) return entries;
+  return entries.filter((entry) => matchesDirector(entry, query));
 }

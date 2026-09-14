@@ -1,0 +1,76 @@
+name: Backfill username reservations
+
+# One-off (re-runnable) data repair that creates the `usernames/{lower}`
+# reservation doc for every profile that has a username but no reservation.
+#
+# WHY: `usernames/{lower}` is the username → uid map behind /profile/@handle
+# links and the uniqueness check in updateUsername / createUserProfile.
+# Accounts that onboarded before reservations were made server-side have a
+# username on the profile and nothing in the collection — their handle
+# resolves to "not found" and anyone could later claim the same name. (This
+# is also why the first Directors page, keyed on the collection, missed
+# them.) See functions/src/scripts/backfillUsernameReservations.js.
+#
+# HOW TO RUN (all from the Actions tab):
+#   1. Actions → "Backfill username reservations" → Run workflow.
+#   2. Leave "commit" UNCHECKED for a dry run: the log lists every
+#      WOULD / CONFLICT / SKIP line and ends with a summary.
+#   3. Run again with "commit" CHECKED to write the missing reservations.
+#      Idempotent — a re-run finds them held and creates nothing.
+#
+# CONFLICT lines (a reservation held by another account, or two profiles with
+# the same handle) are NEVER written: rename one of the two directors and
+# re-run. Only `usernames/{key}` docs are created (profile/data is read,
+# never modified). This job writes to Firestore only — no repo commits.
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: 'Create the missing reservations (leave unchecked for a dry run)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backfill-username-reservations
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Install function dependencies
+        run: cd functions && npm ci
+
+      - name: Run backfill (${{ inputs.commit && 'COMMIT' || 'dry run' }})
+        env:
+          # Same Firestore credentials the deploy workflow uses.
+          GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          # Production data namespace (paths.users resolves here); matches
+          # functions/.env.marching-art.
+          DATA_NAMESPACE: marching-art
+        run: |
+          echo "$GOOGLE_APPLICATION_CREDENTIALS_JSON" > /tmp/sa-key.json
+          export GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa-key.json
+          trap 'rm -f /tmp/sa-key.json' EXIT
+
+          cd functions
+          if [ "${{ inputs.commit }}" = "true" ]; then
+            echo "Running WITH --commit: missing usernames/{key} reservations will be created."
+            node src/scripts/backfillUsernameReservations.js --commit
+          else
+            echo "Dry run: no writes. Check 'commit' to apply."
+            node src/scripts/backfillUsernameReservations.js --dry-run
+          fi

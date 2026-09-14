@@ -1,12 +1,12 @@
 // =============================================================================
-// DIRECTOR DIRECTORY — search / browse other directors' profiles
+// DIRECTOR DIRECTORY — every director, for the /directors page
 // =============================================================================
-// One callable (functions/src/callable/users.js searchDirectors) serves both
-// the alphabetical directory and the username search on /directors. Signed-in
-// only: the `usernames` collection is list-closed to clients by rule, so this
-// is the sole way to enumerate directors, and it is budgeted and page-capped
-// server-side. Rows come from each director's server-mirrored public profile
-// projection — never lineups or picks.
+// One callable (functions/src/callable/users.js searchDirectors) returns the
+// whole directory in a single response: each director's server-mirrored
+// public profile projection, reduced to the row below and sorted by username.
+// Signed-in only and budgeted server-side. Search runs locally on the list
+// (utils/directorSearch), which is why it can match display and corps names
+// and why there is no query parameter here. Rows never carry lineups or picks.
 
 import { createCallable } from './callable';
 
@@ -24,21 +24,12 @@ export interface DirectorSearchEntry {
   corps: Array<{ classKey: string; corpsName: string }>;
 }
 
-export interface SearchDirectorsInput {
-  /** Username prefix (case-insensitive; a leading "@" is fine). Empty = browse. */
-  query?: string;
-  /** `nextCursor` from the previous page. */
-  cursor?: string | null;
-  /** Page size, server-clamped to 1..50 (default 25). */
-  limit?: number;
-}
-
-export interface SearchDirectorsResult {
+export interface DirectoryResult {
+  /** Every director, sorted by username (case-insensitive). */
   directors: DirectorSearchEntry[];
-  /** Pass back as `cursor` for the next page; null when this was the last. */
-  nextCursor: string | null;
+  total: number;
+  /** True only if the server hit its row ceiling — never expected in practice. */
+  truncated: boolean;
 }
 
-export const searchDirectors = createCallable<SearchDirectorsInput, SearchDirectorsResult>(
-  'searchDirectors'
-);
+export const listDirectors = createCallable<void, DirectoryResult>('searchDirectors');
