@@ -15,6 +15,7 @@ const divisions = require("../helpers/podium/divisions");
 const staffMarket = require("../helpers/podium/staffMarket");
 const assessment = require("../helpers/podium/assessment");
 const { podiumContext } = require("./podium");
+const { getPodiumRehearsalWindow } = require("../helpers/gameDay");
 
 // Branded names for the fixed majors on the route sheet.
 const MAJOR_ROUTE_LABELS = {
@@ -419,6 +420,11 @@ exports.getPodiumState = onCall({ cors: true }, async (request) => {
     }
   );
   const blockCaps = store.planBlockCaps();
+  // Overnight close: after the 9 PM ET processing run the day has rolled, but
+  // a corps doesn't rehearse after the show — blocks open at 2 AM ET. The
+  // same rule allocateRehearsalBlock enforces, so the planner can show the
+  // opening time instead of bouncing taps off the server.
+  const overnight = getPodiumRehearsalWindow();
   // Assistant director outlook (design §5.2): how many days in a row the
   // assistant has run the corps, and the yield it will run at if the director
   // stays away tomorrow — fading past the grace window down to the floor.
@@ -469,6 +475,9 @@ exports.getPodiumState = onCall({ cors: true }, async (request) => {
     maxBlocksToday,
     blocksUsedToday,
     blocksRemainingToday,
+    // ISO instant rehearsal blocks open (the next 2 AM ET) while the corps is
+    // closed for the night after the show; null while the day is open.
+    rehearsalOpensAt: overnight.locked && overnight.opensAt ? overnight.opensAt.toISOString() : null,
     blockCaps,
     assistant,
     division,

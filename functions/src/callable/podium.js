@@ -14,7 +14,11 @@ const { getDb } = require("../config");
 const economy = require("../helpers/economy");
 const { assertAuth, assertWriteBudget } = require("../helpers/callableGuards");
 const { isPodiumEnabled } = require("../helpers/features");
-const { getActivePodiumCalendarDay, toCompetitionDay } = require("../helpers/gameDay");
+const {
+  getActivePodiumCalendarDay,
+  getPodiumRehearsalWindow,
+  toCompetitionDay,
+} = require("../helpers/gameDay");
 const engine = require("../helpers/podium/engine");
 const store = require("../helpers/podium/store");
 const venues = require("../helpers/podium/venues");
@@ -572,6 +576,19 @@ exports.allocateRehearsalBlock = onCall({ cors: true }, async (request) => {
   }
   if (competitionDay > 49) {
     throw new HttpsError("failed-precondition", "The season is over.");
+  }
+  // A corps doesn't rehearse after the show. The day rolled at 9 PM ET with
+  // the processing run, but its blocks stay closed until 2 AM ET — the same
+  // overnight boundary the fantasy caption windows keep (gameDay.js
+  // getPodiumRehearsalWindow). The planner mirrors this from
+  // getPodiumState.rehearsalOpensAt, so a tap here is a stale client.
+  const overnight = getPodiumRehearsalWindow();
+  if (overnight.locked) {
+    const dayLabel = competitionDay < 1 ? `Day ${calendarDay} of camp` : `Day ${competitionDay}`;
+    throw new HttpsError(
+      "failed-precondition",
+      `The corps is done for the night — ${dayLabel} rehearsal opens at 2:00 AM ET.`
+    );
   }
 
   const sRef = store.stateRef(db, uid);

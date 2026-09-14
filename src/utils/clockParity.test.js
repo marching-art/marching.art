@@ -27,7 +27,7 @@
  *     pendingScoresDay, which needs Firestore access (isDayScoresProcessed)
  *     to act on and is meaningless client-side. Only the shared contract —
  *     day, week, phase, status, tradeLimit, periodKey, unlimitedEndsAt,
- *     locksAt, reopensAt — must agree.
+ *     locksAt, allotmentEndsAt, reopensAt — must agree.
  *   - Game day: the client clamps to [1, 49] / weeks to [1, 7] for display
  *     (day 0 / week 0 with no start date) while the backend returns raw
  *     values its callers validate. Parity is asserted on the clamped value
@@ -127,7 +127,7 @@ const ms = (date) => (date instanceof Date ? date.getTime() : date === null ? nu
 
 describe('caption-change window parity (functions captionWindows <-> client seasonClock)', () => {
   const SHARED_SCALARS = ['day', 'week', 'phase', 'status', 'tradeLimit', 'periodKey'];
-  const SHARED_INSTANTS = ['unlimitedEndsAt', 'locksAt', 'reopensAt'];
+  const SHARED_INSTANTS = ['unlimitedEndsAt', 'locksAt', 'allotmentEndsAt', 'reopensAt'];
 
   it.each(SEASONS)(
     'agrees across the full matrix (start %s, spring %i)',

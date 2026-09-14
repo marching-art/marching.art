@@ -146,13 +146,21 @@ beyond its guaranteed window.
 
 Additional locks:
 
-- Every **Saturday at 8:00 PM ET** (the end of days 7/14/21/28/35/42), changes
-  **lock** until the **2:00 AM ET reopen boundary**. Scores drop earlier than
+- **Every night at the 8:00 PM ET day boundary** (the show), changes **lock**
+  until the **2:00 AM ET reopen boundary** — a corps doesn't rework its lineup
+  for the next day the moment tonight's scores post. Scores drop earlier than
   that under the timezone-aware pipeline, but the lock deliberately holds
   until 2:00 AM (the server gate is 2:00 AM AND the night's recap existing;
-  if a day had no events, changes reopen at 2:00 AM regardless).
+  if a day had no events, changes reopen at 2:00 AM regardless). Day 1 has no
+  show behind it and opens with the season. An overnight lock keeps the
+  week's allotment; unused weekly changes expire at the **Saturday 8:00 PM ET
+  close** (the end of days 14/21/28/35/42).
 - During Championship Week, changes close at **8:00 PM ET each day** and reopen
   at 2:00 AM ET; each competing class gets a fresh 2 changes each day.
+
+The Podium Division keeps the same overnight rule for its rehearsal blocks:
+the day rolls with the 9:00 PM ET recap, but the next day's blocks open at
+2:00 AM ET (see [`PODIUM.md`](PODIUM.md)).
 
 The client display (`src/utils/seasonClock.js`) is kept exactly in sync with
 what the server (`captionWindows.js`) enforces on save, so the countdown you see

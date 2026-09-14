@@ -1136,8 +1136,13 @@ New stage `processPodiumDay(seasonUid, day)` after fantasy scoring, inside the e
 > `scheduled/dropDispatcher.js`), independent of `features.dropScheduling` and of fantasy scoring,
 > so Podium's drop never moves with the fantasy ladder's westernmost show. The interactive day
 > rolls at 9 PM too — after the stage ends a corps' day, rehearsal verbs act on tomorrow
-> (`getActivePodiumCalendarDay`) — unconditionally, since Podium always processes at 9 PM. Gated
-> only by `features.podiumClass`. See [`SCORE_DROPS.md`](SCORE_DROPS.md) §4.
+> (`getActivePodiumCalendarDay`) — unconditionally, since Podium always processes at 9 PM. But a
+> corps doesn't rehearse after the show: rehearsal blocks stay **closed from 9 PM until 2 AM ET**
+> (`getPodiumRehearsalWindow`, enforced by `allocateRehearsalBlock`, surfaced as
+> `getPodiumState.rehearsalOpensAt` so the planner shows a lights-out notice with the opening
+> time) — the same overnight boundary the fantasy caption windows keep. Declaring a rest day for
+> the new day is still allowed overnight. Gated only by `features.podiumClass`. See
+> [`SCORE_DROPS.md`](SCORE_DROPS.md) §4.
 
 ### New scripts
 
@@ -1782,7 +1787,9 @@ additions; conflicts are things that **must** be resolved before Phase 1 code.
    (`seasonClock.js` is the declared single source of truth). Podium's "one day's blocks" roll
    at the PROCESSING hour — **9 PM ET year-round** (`getActivePodiumCalendarDay`), independent
    of `features.dropScheduling` — or players near the boundary double-allocate into an
-   already-processed day. Every Podium callable
+   already-processed day. The rolled day's blocks then stay closed until **2 AM ET**
+   (`getPodiumRehearsalWindow`): a corps doesn't rehearse after the show, and the fantasy
+   caption windows reopen at the same boundary. Every Podium callable
    validates "today" server-side against the same clock module — never client time. See
    `SCORE_DROPS.md` §4.
 5. **Profile-write security.** Podium state lives on the profile doc

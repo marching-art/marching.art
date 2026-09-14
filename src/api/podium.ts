@@ -118,6 +118,13 @@ export interface PodiumStateResponse {
   maxBlocksToday?: number;
   blocksUsedToday?: number;
   blocksRemainingToday?: number;
+  /**
+   * ISO instant rehearsal blocks open (the next 2 AM ET) while the corps is
+   * closed for the night after the show — the day rolls at the 9 PM ET
+   * processing run, but a corps doesn't rehearse after the show. Null while
+   * the day is open.
+   */
+  rehearsalOpensAt?: string | null;
   /** Base caps for the assistant-director plan editor (per day type). */
   blockCaps?: PodiumBlockCaps;
   /** Assistant-director outlook: consecutive autopilot days and the fading yield. */

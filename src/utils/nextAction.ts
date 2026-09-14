@@ -60,6 +60,7 @@ export type NextActionId =
   // rendered by the same hero.
   | 'podium_rehearse'
   | 'podium_rest'
+  | 'podium_overnight'
   | 'podium_plan';
 
 /**

@@ -21,10 +21,19 @@ export function usePodiumNextAction(
 ): NextAction | null {
   // Podium keeps its own class-agnostic drop clock; the caption-change window
   // is irrelevant here, so the class-agnostic call is right.
-  const { scoresInMs, scoresPending } = useSeasonDeadlines();
+  const { scoresInMs, scoresPending, now } = useSeasonDeadlines();
 
   return useMemo(() => {
     if (!enabled || !data?.exists) return null;
+
+    // Closed for the night after the show (blocks open at 2 AM ET). The
+    // ticking `now` from the season clock flips this the minute it opens,
+    // so the hero moves on without a refetch.
+    const opensAt = data.rehearsalOpensAt ? new Date(data.rehearsalOpensAt) : null;
+    const rehearsalOpensAt =
+      opensAt && !Number.isNaN(opensAt.getTime()) && opensAt.getTime() > now.getTime()
+        ? opensAt
+        : null;
 
     const state = (data.state || {}) as {
       today?: { restDay?: boolean } | null;
@@ -46,8 +55,9 @@ export function usePodiumNextAction(
       hasPlan: (state.planTemplate?.length ?? 0) > 0,
       scoresPending,
       scoresInMs,
+      rehearsalOpensAt,
     });
-  }, [enabled, data, scoresPending, scoresInMs]);
+  }, [enabled, data, scoresPending, scoresInMs, now]);
 }
 
 export default usePodiumNextAction;

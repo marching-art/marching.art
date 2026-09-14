@@ -10,6 +10,9 @@
  *     unlimited when it reopens, so there's nothing to lose);
  *   - each Championship Week day (45-49), when that day's 2 changes close
  *     for the classes still competing.
+ * Changes also lock EVERY night from the boundary until 2 AM ET, but an
+ * overnight lock that keeps the allotment costs nothing — the reminder keys
+ * on the window's allotmentEndsAt, never on the nightly locksAt.
  *
  * A daily afternoon job (pushNotifications.lineupLockReminderPushJob) calls
  * getLineupLockContext; when a lock lands within the next few hours it
@@ -53,10 +56,11 @@ function getLineupLockContext(seasonData, now = new Date()) {
   const window = getCaptionChangeWindow(seasonData, now);
   if (!window || window.status !== "open") return null;
 
-  // During the unlimited phase only the END of the phase matters — the
-  // day-7 overnight lock costs nothing (changes are unlimited when it
-  // reopens), so remind on unlimitedEndsAt, not locksAt.
-  const lockAt = window.phase === "unlimited" ? window.unlimitedEndsAt : window.locksAt;
+  // Only the end of the current ALLOTMENT matters — the end of the unlimited
+  // phase, the Saturday close of a weekly allotment, tonight in Championship
+  // Week. The nightly overnight lock (locksAt) keeps the allotment, so it is
+  // nothing to lose and never worth a push.
+  const lockAt = window.allotmentEndsAt;
   if (!lockAt) return null;
 
   const untilLock = lockAt.getTime() - now.getTime();

@@ -233,13 +233,99 @@ function getActivePodiumCalendarDay(seasonStartDate, now = new Date()) {
   return Math.floor((etDateUtc - startNormalized) / MS_PER_DAY) + 1;
 }
 
+// A corps doesn't rehearse after the show. The active Podium day rolls at the
+// 9 PM ET processing moment (above), but its rehearsal blocks stay closed
+// overnight until 2 AM ET — the same reopen boundary the fantasy caption
+// windows use (captionWindows.js) — so "tomorrow" can't be rehearsed the
+// moment tonight's scores post.
+const PODIUM_REHEARSAL_OPEN_HOUR_ET = 2;
+
+/**
+ * UTC instant for an Eastern wall-clock hour on a given ET calendar date.
+ * Tries both offsets and keeps the one that round-trips; a wall time that
+ * doesn't exist (spring-forward skips 2 AM) resolves to 3 AM EDT.
+ *
+ * @param {string} year - "YYYY"
+ * @param {string} month - "MM"
+ * @param {string} day - "DD"
+ * @param {number} hour - 0-23 (ET)
+ * @returns {Date}
+ */
+function easternWallTimeToDate(year, month, day, hour) {
+  const hh = String(hour).padStart(2, "0");
+  for (const offset of ["-05:00", "-04:00"]) {
+    const candidate = new Date(`${year}-${month}-${day}T${hh}:00:00${offset}`);
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/New_York",
+      hourCycle: "h23",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+    }).formatToParts(candidate);
+    /** @type {Record<string, string>} */
+    const values = {};
+    for (const part of parts) values[part.type] = part.value;
+    const candidateHour = values.hour === "24" ? 0 : Number(values.hour);
+    if (values.year === year && values.month === month && values.day === day && candidateHour === hour) {
+      return candidate;
+    }
+  }
+  return new Date(`${year}-${month}-${day}T03:00:00-04:00`);
+}
+
+/**
+ * Whether Podium rehearsal blocks are closed for the night, and when they
+ * open. Locked from the 9 PM ET processing run (the show) until 2 AM ET;
+ * open the rest of the day. Enforced by allocateRehearsalBlock and surfaced
+ * by getPodiumState so the planner shows the same clock the server keeps.
+ *
+ * @param {Date} [now] - Injectable clock for tests.
+ * @returns {{locked: boolean, opensAt: Date|null}} opensAt is the next
+ *   2 AM ET while locked, null when open.
+ */
+function getPodiumRehearsalWindow(now = new Date()) {
+  const etParts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    hourCycle: "h23",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+  }).formatToParts(now);
+  /** @type {Record<string, string>} */
+  const etValues = {};
+  for (const part of etParts) etValues[part.type] = part.value;
+  const hour = etValues.hour === "24" ? 0 : Number(etValues.hour);
+  const locked = hour >= PODIUM_PROCESS_HOUR_ET || hour < PODIUM_REHEARSAL_OPEN_HOUR_ET;
+  if (!locked) return { locked: false, opensAt: null };
+
+  // Before 2 AM: opens later this ET date. After 9 PM: opens tomorrow (ET).
+  let { year, month, day } = etValues;
+  if (hour >= PODIUM_PROCESS_HOUR_ET) {
+    const tomorrow = new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/New_York",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).formatToParts(new Date(now.getTime() + MS_PER_DAY));
+    /** @type {Record<string, string>} */
+    const t = {};
+    for (const part of tomorrow) t[part.type] = part.value;
+    ({ year, month, day } = t);
+  }
+  return { locked: true, opensAt: easternWallTimeToDate(year, month, day, PODIUM_REHEARSAL_OPEN_HOUR_ET) };
+}
+
 module.exports = {
   getCompletedGameDayET,
   getCompletedCalendarDay,
   getActiveCalendarDay,
   getActivePodiumCalendarDay,
+  getPodiumRehearsalWindow,
   toCompetitionDay,
   getActiveCompetitionDay,
   getCurrentSeasonWeek,
   PODIUM_PROCESS_HOUR_ET,
+  PODIUM_REHEARSAL_OPEN_HOUR_ET,
 };

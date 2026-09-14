@@ -25,7 +25,7 @@ const SECTIONS = [
   {
     n: 3,
     title: 'The daily loop',
-    body: `Every day you get 12 rehearsal blocks (20 in spring training; on show days you get 8, each worth half). Seven block types cover the ensemble: Stretching/PT, Visual Basics, Visual Ensemble, Guard Sectionals, Brass Sectionals, Percussion Sectionals (battery + front ensemble), and Full Ensemble. Each block installs CONTENT early and CLEANS it late — the balance shifts across the season, just like a real summer. Hammering the same block all day pays less per rep after the first four. A caption you ignore starts to decay after a few days.`,
+    body: `Every day you get 12 rehearsal blocks (20 in spring training; on show days you get 8, each worth half). A corps doesn't rehearse after the show: the day ends with the 9 PM ET recap and the next day's blocks open at 2 AM ET. Seven block types cover the ensemble: Stretching/PT, Visual Basics, Visual Ensemble, Guard Sectionals, Brass Sectionals, Percussion Sectionals (battery + front ensemble), and Full Ensemble. Each block installs CONTENT early and CLEANS it late — the balance shifts across the season, just like a real summer. Hammering the same block all day pays less per rep after the first four. A caption you ignore starts to decay after a few days.`,
   },
   {
     n: 4,
