@@ -83,11 +83,11 @@
       "queryScope": "COLLECTION_GROUP",
       "fields": [
         {
-          "fieldPath": "engagement.loginStreak",
+          "fieldPath": "engagement.lastLogin",
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "engagement.lastLogin",
+          "fieldPath": "engagement.loginStreak",
           "order": "ASCENDING"
         }
       ]
@@ -177,20 +177,6 @@
         {
           "fieldPath": "createdAt",
           "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "notifications",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "read",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "createdAt",
-          "order": "ASCENDING"
         }
       ]
     }
