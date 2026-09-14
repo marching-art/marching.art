@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // =============================================================================
 // STREAK MODAL - streak status, next milestone, and streak freeze purchase
 // =============================================================================
@@ -13,13 +12,20 @@ import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { getStreakStatus, purchaseStreakFreeze } from '../../api/functions';
 import { friendlyCallableError } from '../../utils/callableErrors';
 
+/** @typedef {import('../../api/functions').StreakStatusResult} StreakStatusResult */
+
+/**
+ * @param {{ onClose: () => void, corpsCoin?: number }} props
+ * @returns {React.JSX.Element}
+ */
 const StreakModal = ({ onClose, corpsCoin = 0 }) => {
   useEscapeKey(onClose);
+  /** @type {React.RefObject<HTMLDivElement | null>} */
   const dialogRef = useRef(null);
   // Trap keyboard focus inside the dialog (WCAG 2.4.3); restores on close
   useFocusTrap(dialogRef);
 
-  const [status, setStatus] = useState(null);
+  const [status, setStatus] = useState(/** @type {StreakStatusResult | null} */ (null));
   const [loading, setLoading] = useState(true);
   const [purchasing, setPurchasing] = useState(false);
 
@@ -157,10 +163,12 @@ const StreakModal = ({ onClose, corpsCoin = 0 }) => {
                       <ShieldCheck className="w-4 h-4" />
                       Freeze ready — the next day you miss won&apos;t break your streak (held
                       through{' '}
-                      {new Date(status.freezeExpiresAt).toLocaleDateString([], {
-                        month: 'short',
-                        day: 'numeric',
-                      })}
+                      {status.freezeExpiresAt
+                        ? new Date(status.freezeExpiresAt).toLocaleDateString([], {
+                            month: 'short',
+                            day: 'numeric',
+                          })
+                        : 'the next missed day'}
                       )
                     </div>
                   ) : (

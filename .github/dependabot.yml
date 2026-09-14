@@ -60,6 +60,13 @@ updates:
       # CI covers. Upgrade both together, deliberately. Closed PR #1466.
       - dependency-name: puppeteer-core
         update-types: [version-update:semver-major]
+      # Same pairing from the other side: @sparticuz/chromium majors track
+      # Chromium releases (and its API breaks at any level — v133 went
+      # ESM-only and dropped the headless/defaultViewport getters), so a
+      # chromium-only bump leaves puppeteer-core driving the wrong Chrome.
+      # Closed PR #1549.
+      - dependency-name: '@sparticuz/chromium'
+        update-types: [version-update:semver-major]
     groups:
       all-dependencies:
         update-types: [minor, patch]

@@ -8,7 +8,7 @@ import { m } from 'framer-motion';
 interface TabsContextValue {
   activeTab: string;
   setActiveTab: (tab: string) => void;
-  tabListRef: React.RefObject<HTMLDivElement>;
+  tabListRef: React.RefObject<HTMLDivElement | null>;
 }
 
 const TabsContext = createContext<TabsContextValue | null>(null);

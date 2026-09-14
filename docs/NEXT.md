@@ -204,13 +204,15 @@ ops step below)_
   package (`functions/`, scraper, `scripts/`, root) is on `^14.4`, and the
   functions tree was migrated off the namespaced `admin.*` API that v14
   removed (see Recently shipped). `npm audit` is 0 in all four. Still open
-  from this item: `.npmrc` `legacy-peer-deps=true` hides the React 19 peer
-  conflicts. (S)
+  from this item: `.npmrc` `legacy-peer-deps=true` stays because
+  `eslint-plugin-react@7.37.5` (latest) caps its `eslint` peer at `^9.7`
+  while we run eslint 10 — drop the override when upstream ships a
+  release that declares 10. (S)
 - **P3** `hosting.ignore` doesn't exclude `**/*.map`, so hidden source maps
   are publicly fetchable (`firebase.json:36`, `vite.config.js:55`). (S)
 - **P3** No root `engines` / `.nvmrc` (functions pin Node 22, `@types/node`
   is `^26`); `react-firebase-hooks` (unmaintained) exists for one
-  `useAuthState`; React 18 → 19 has no explicit line item. (S)
+  `useAuthState`. (React 18 → 19 landed 2026-09-14.) (S)
 - **P3** Four `workflow_dispatch`-only migration workflows are documented
   nowhere; ARCHITECTURE.md lists 5 of 9. Table + delete the finished ones. (S)
 
@@ -314,6 +316,25 @@ ops step below)_
 
 ## Recently shipped (context, newest first — prune when stale)
 
+- 2026-09-14 (dependency sweep, replaces Dependabot #1549–#1554): React
+  18.3 → **19.3** with `@types/react{,-dom}` 19 — every React peer already
+  accepted 19, the 1,502-test suite, lint and build passed untouched, and
+  the only fallout was typing: `@types/react` 19 drops the global `JSX`
+  namespace (five JSDoc signatures now say `React.JSX.Element`) and
+  `useRef<T>(null)` is `RefObject<T | null>` (`Tabs.tsx` context type).
+  Minor bumps folded in: `firebase` 12.19 (root + `firestore-tests`),
+  `lucide-react` 1.45, `@playwright/test` 1.63, `autoprefixer` 10.6,
+  `eslint` 10.10, `vite` 8.3. Scraper: `@sparticuz/chromium` 131 → **152**
+  paired with `puppeteer-core` 24.43 → **25.10** (both pin Chrome 152; the
+  old pair was already mismatched at 131 vs 148). Dependabot's chromium-only
+  PR would have broken the scraper at runtime: v133+ is ESM-only (the class
+  is on `require(...).default`) and dropped the `headless` /
+  `defaultViewport` getters, so `index.js` now launches with an explicit
+  `headless: "shell"`, a 1920×1080 viewport and `acceptInsecureCerts` (the
+  `ignoreHTTPSErrors` name was already dead). Verified by launching the
+  bundled binary locally (`HeadlessChrome/152.0.7977.0`). `dependabot.yml`
+  now ignores `@sparticuz/chromium` majors the same way it ignores
+  `puppeteer-core` majors — the pair is bumped together, by hand.
 - 2026-09-13 (dependency sweep, replaces Dependabot #1540/#1541/#1542):
   `firebase-admin` is `^14.4.0` in root, `functions/`, `functions-scraper/`
   and `scripts/`. v14 deleted the namespaced API, so Dependabot's

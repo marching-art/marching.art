@@ -16,7 +16,7 @@ const CLASS_NAMES = {
   worldClass: 'World Class',
 };
 
-/** @type {(props: { onClose: () => void, onConfirm: () => void, corpsName?: string, corpsClass: string }) => JSX.Element} */
+/** @type {(props: { onClose: () => void, onConfirm: () => void, corpsName?: string, corpsClass: string }) => React.JSX.Element} */
 const DeleteCorpsModal = ({ onClose, onConfirm, corpsName, corpsClass }) => {
   // Close on Escape key
   useEscapeKey(onClose);
