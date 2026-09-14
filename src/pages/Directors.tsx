@@ -1,39 +1,28 @@
 // =============================================================================
-// DIRECTORS — the player directory: browse every director, search by username
+// DIRECTORS — the player directory: every director, searchable
 // =============================================================================
-// Deliberately basic. One search box (username prefix, case-insensitive), one
-// alphabetical list, one "Load more". Every row links to the director's
-// in-app profile (/profile/{uid}). Data comes from the searchDirectors
-// callable (src/api/directors.ts) — signed-in only, server-paged, and built
-// from each director's public profile projection, so nothing here can show
-// more than a profile page already does.
+// Deliberately basic. One search box, one alphabetical list. Every row links
+// to the director's in-app profile (/profile/{uid}). The whole directory
+// arrives in one call (src/api/directors.ts — signed-in only, built from each
+// director's public profile projection, so nothing here can show more than a
+// profile page already does) and search filters it locally, matching
+// username, display name and corps names.
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useInfiniteQuery } from '@tanstack/react-query';
-import { Users, Search, X, MapPin, Loader2, ChevronDown } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { Users, Search, X, MapPin, Loader2 } from 'lucide-react';
 import { PageHeader } from '../components/ui';
 import { useAuth } from '../context/AuthContext';
-import { searchDirectors, type DirectorSearchEntry } from '../api/directors';
-import { toDirectorQuery, isValidDirectorQuery } from '../utils/directorSearch';
+import { listDirectors, type DirectorSearchEntry } from '../api/directors';
+import { filterDirectors, toDirectorQuery } from '../utils/directorSearch';
 import { avatarHue, avatarInitials } from '../utils/chatFormat';
 import { CORPS_CLASS_SHORT_LABELS } from '../utils/corps';
 
-const PAGE_SIZE = 25;
-const DEBOUNCE_MS = 300;
-
-function useDebouncedValue<T>(value: T, delayMs: number): T {
-  const [debounced, setDebounced] = useState(value);
-  useEffect(() => {
-    const timer = window.setTimeout(() => setDebounced(value), delayMs);
-    return () => window.clearTimeout(timer);
-  }, [value, delayMs]);
-  return debounced;
-}
+const DIRECTORY_QUERY_KEY = ['directors'] as const;
 
 const DirectorAvatar: React.FC<{ entry: DirectorSearchEntry }> = ({ entry }) => {
   const [broken, setBroken] = useState(false);
-  useEffect(() => setBroken(false), [entry.photoURL]);
   if (entry.photoURL && !broken) {
     return (
       <img
@@ -115,33 +104,17 @@ const DirectorRow: React.FC<{ entry: DirectorSearchEntry; isViewer: boolean }> =
 const Directors: React.FC = () => {
   const user = useAuth()?.user;
   const [input, setInput] = useState('');
-  const debouncedInput = useDebouncedValue(input, DEBOUNCE_MS);
-  const query = useMemo(() => toDirectorQuery(debouncedInput), [debouncedInput]);
-  const queryValid = isValidDirectorQuery(query);
-  const liveInvalid = !isValidDirectorQuery(toDirectorQuery(input));
 
-  const result = useInfiniteQuery({
-    queryKey: ['directors', query],
-    queryFn: async ({ pageParam }) => {
-      const response = await searchDirectors({
-        query,
-        cursor: pageParam ?? null,
-        limit: PAGE_SIZE,
-      });
-      return response.data;
-    },
-    initialPageParam: null as string | null,
-    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
-    enabled: queryValid,
-    staleTime: 60 * 1000,
+  const directory = useQuery({
+    queryKey: DIRECTORY_QUERY_KEY,
+    queryFn: async () => (await listDirectors()).data,
+    staleTime: 5 * 60 * 1000,
   });
 
-  const directors = useMemo(
-    () => result.data?.pages.flatMap((page) => page.directors) ?? [],
-    [result.data]
-  );
+  const all = useMemo(() => directory.data?.directors ?? [], [directory.data]);
+  const query = toDirectorQuery(input);
+  const shown = useMemo(() => filterDirectors(all, input), [all, input]);
   const searching = query !== '';
-  const showInitialLoading = queryValid && result.isPending;
 
   return (
     <div className="h-full flex flex-col overflow-hidden bg-background">
@@ -150,8 +123,13 @@ const Directors: React.FC = () => {
         title="Directors"
         subtitle="Find another director and open their profile"
         stats={
-          directors.length > 0
-            ? [{ label: searching ? 'Matches' : 'Listed', value: directors.length }]
+          all.length > 0
+            ? searching
+              ? [
+                  { label: 'Matches', value: shown.length },
+                  { label: 'Directors', value: all.length },
+                ]
+              : [{ label: 'Directors', value: all.length }]
             : undefined
         }
       />
@@ -167,9 +145,8 @@ const Directors: React.FC = () => {
             type="search"
             value={input}
             onChange={(event) => setInput(event.target.value)}
-            placeholder="Search by username"
-            aria-label="Search directors by username"
-            aria-invalid={liveInvalid || undefined}
+            placeholder="Search by username, name or corps"
+            aria-label="Search directors"
             autoComplete="off"
             autoCapitalize="none"
             spellCheck={false}
@@ -188,69 +165,47 @@ const Directors: React.FC = () => {
           )}
         </div>
         <p className="mt-1 text-[10px] text-muted">
-          {liveInvalid
-            ? 'Usernames use letters, numbers and underscores (up to 15 characters).'
-            : 'Type the start of a username. Leave it empty to browse everyone A–Z.'}
+          Matches usernames, display names and corps names. Leave it empty to browse everyone A–Z.
         </p>
       </div>
 
       {/* Results */}
       <div className="flex-1 min-h-0 overflow-y-auto">
-        {showInitialLoading ? (
+        {directory.isPending ? (
           <div
             className="flex items-center justify-center gap-2 py-12 text-sm text-muted"
             role="status"
           >
             <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
-            {searching ? 'Searching…' : 'Loading directors…'}
+            Loading directors…
           </div>
-        ) : result.isError ? (
+        ) : directory.isError ? (
           <div className="py-12 px-4 text-center text-sm text-muted" role="alert">
             <p>Couldn&apos;t load directors right now.</p>
             <button
               type="button"
-              onClick={() => result.refetch()}
+              onClick={() => directory.refetch()}
               className="mt-3 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider bg-surface-card text-secondary border border-line hover:text-white hover:bg-white/5 transition-colors"
             >
               Try again
             </button>
           </div>
-        ) : !queryValid ? null : directors.length === 0 ? (
+        ) : shown.length === 0 ? (
           <div className="py-12 px-4 text-center text-sm text-muted">
             {searching ? (
               <>
-                No director&apos;s username starts with{' '}
-                <span className="text-secondary">“{query}”</span>.
+                No director matches <span className="text-secondary">“{input.trim()}”</span>.
               </>
             ) : (
               'No directors to show yet.'
             )}
           </div>
         ) : (
-          <>
-            <ul className="max-w-3xl">
-              {directors.map((entry) => (
-                <DirectorRow key={entry.uid} entry={entry} isViewer={entry.uid === user?.uid} />
-              ))}
-            </ul>
-            {result.hasNextPage && (
-              <div className="max-w-3xl px-3 py-3">
-                <button
-                  type="button"
-                  onClick={() => result.fetchNextPage()}
-                  disabled={result.isFetchingNextPage}
-                  className="w-full flex items-center justify-center gap-1.5 py-2.5 min-h-touch text-[10px] font-bold uppercase tracking-wider bg-surface-card text-secondary border border-line hover:text-white hover:bg-white/5 disabled:opacity-60 transition-colors"
-                >
-                  {result.isFetchingNextPage ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
-                  ) : (
-                    <ChevronDown className="w-3.5 h-3.5" aria-hidden="true" />
-                  )}
-                  {result.isFetchingNextPage ? 'Loading…' : 'Load more'}
-                </button>
-              </div>
-            )}
-          </>
+          <ul className="max-w-3xl">
+            {shown.map((entry) => (
+              <DirectorRow key={entry.uid} entry={entry} isViewer={entry.uid === user?.uid} />
+            ))}
+          </ul>
         )}
       </div>
     </div>

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
@@ -7,12 +7,12 @@ vi.mock('../context/AuthContext', () => ({
   useAuth: () => ({ user: { uid: 'u-bob' } }),
 }));
 vi.mock('../api/directors', () => ({
-  searchDirectors: vi.fn(),
+  listDirectors: vi.fn(),
 }));
 
 import Directors from './Directors';
-import { searchDirectors, type DirectorSearchEntry } from '../api/directors';
-import { toDirectorQuery } from '../utils/directorSearch';
+import { listDirectors, type DirectorSearchEntry } from '../api/directors';
+import { filterDirectors, matchesDirector, toDirectorQuery } from '../utils/directorSearch';
 
 const entry = (overrides: Partial<DirectorSearchEntry>): DirectorSearchEntry => ({
   uid: 'u-x',
@@ -40,11 +40,13 @@ const ALICE = entry({
     { classKey: 'podiumClass', corpsName: 'Granite Line' },
   ],
 });
-const BOB = entry({ uid: 'u-bob', username: 'Bob', displayName: 'Bob' });
+const BOB = entry({ uid: 'u-bob', username: 'Bob', displayName: 'Robert' });
 
-const mockedSearch = vi.mocked(searchDirectors);
-const page = (directors: DirectorSearchEntry[], nextCursor: string | null = null) =>
-  ({ data: { directors, nextCursor } }) as Awaited<ReturnType<typeof searchDirectors>>;
+const mocked = vi.mocked(listDirectors);
+const directory = (directors: DirectorSearchEntry[]) =>
+  ({ data: { directors, total: directors.length, truncated: false } }) as Awaited<
+    ReturnType<typeof listDirectors>
+  >;
 
 function renderDirectors() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -57,22 +59,38 @@ function renderDirectors() {
   );
 }
 
-describe('toDirectorQuery', () => {
-  it('normalizes the way the server matches', () => {
+describe('directorSearch utils', () => {
+  it('normalizes a typed handle', () => {
     expect(toDirectorQuery('  @MaestroMax ')).toBe('maestromax');
     expect(toDirectorQuery('')).toBe('');
+  });
+
+  it('matches username, display name and corps names, case-insensitively', () => {
+    expect(matchesDirector(ALICE, 'ali')).toBe(true);
+    expect(matchesDirector(ALICE, 'alice a')).toBe(true);
+    expect(matchesDirector(ALICE, 'horizon')).toBe(true);
+    expect(matchesDirector(ALICE, 'granite')).toBe(true);
+    expect(matchesDirector(ALICE, 'zed')).toBe(false);
+    expect(matchesDirector(ALICE, '')).toBe(true);
+  });
+
+  it('filterDirectors keeps order and returns the input untouched for a blank search', () => {
+    const list = [ALICE, BOB];
+    expect(filterDirectors(list, '  ')).toBe(list);
+    expect(filterDirectors([ALICE, BOB], '@bob')).toEqual([BOB]);
+    expect(filterDirectors([ALICE, BOB], 'ROBERT')).toEqual([BOB]);
   });
 });
 
 describe('Directors page', () => {
   afterEach(() => vi.clearAllMocks());
 
-  it('browses the directory on load and links each row to the profile', async () => {
-    mockedSearch.mockResolvedValueOnce(page([ALICE, BOB]));
+  it('lists every director on load and links each row to the profile', async () => {
+    mocked.mockResolvedValueOnce(directory([ALICE, BOB]));
     renderDirectors();
 
     expect(await screen.findByText('Alice A.')).toBeInTheDocument();
-    expect(mockedSearch).toHaveBeenCalledWith({ query: '', cursor: null, limit: 25 });
+    expect(mocked).toHaveBeenCalledTimes(1);
     expect(screen.getByRole('link', { name: /Alice A\./ })).toHaveAttribute(
       'href',
       '/profile/u-alice'
@@ -84,55 +102,31 @@ describe('Directors page', () => {
     expect(screen.getByText('Podium')).toBeInTheDocument();
     expect(screen.getByText('3 seasons')).toBeInTheDocument();
     // The viewer's own row is tagged.
-    expect(screen.getByRole('link', { name: /Bob/ })).toHaveTextContent('You');
-    expect(screen.queryByRole('button', { name: 'Load more' })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Robert/ })).toHaveTextContent('You');
   });
 
-  it('searches by username prefix after a pause and shows the empty state', async () => {
-    mockedSearch.mockResolvedValueOnce(page([ALICE, BOB]));
-    mockedSearch.mockResolvedValueOnce(page([]));
+  it('filters locally as you type, by name or corps, without another call', async () => {
+    mocked.mockResolvedValueOnce(directory([ALICE, BOB]));
     renderDirectors();
     await screen.findByText('Alice A.');
 
-    fireEvent.change(screen.getByRole('searchbox', { name: /Search directors/ }), {
-      target: { value: '@Zed' },
-    });
-    await waitFor(() =>
-      expect(mockedSearch).toHaveBeenLastCalledWith({ query: 'zed', cursor: null, limit: 25 })
-    );
-    expect(await screen.findByText(/No director.s username starts with/)).toBeInTheDocument();
-    expect(screen.getByText('“zed”')).toBeInTheDocument();
-  });
-
-  it('never sends a query the server would reject', async () => {
-    mockedSearch.mockResolvedValueOnce(page([ALICE]));
-    renderDirectors();
-    await screen.findByText('Alice A.');
-
-    const box = screen.getByRole('searchbox', { name: /Search directors/ });
-    fireEvent.change(box, { target: { value: 'a b' } });
-    expect(await screen.findByText(/letters, numbers and underscores/)).toBeInTheDocument();
-    expect(box).toHaveAttribute('aria-invalid', 'true');
-    await new Promise((resolve) => setTimeout(resolve, 400));
-    expect(mockedSearch).toHaveBeenCalledTimes(1);
-  });
-
-  it('loads the next page with the server cursor', async () => {
-    mockedSearch.mockResolvedValueOnce(page([ALICE], 'alice'));
-    mockedSearch.mockResolvedValueOnce(page([BOB]));
-    renderDirectors();
-    await screen.findByText('Alice A.');
-
-    fireEvent.click(screen.getByRole('button', { name: 'Load more' }));
-    expect(await screen.findByText('@Bob')).toBeInTheDocument();
-    expect(mockedSearch).toHaveBeenLastCalledWith({ query: '', cursor: 'alice', limit: 25 });
+    const box = screen.getByRole('searchbox', { name: 'Search directors' });
+    fireEvent.change(box, { target: { value: 'horizon' } });
     expect(screen.getByText('Alice A.')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Load more' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Robert')).not.toBeInTheDocument();
+
+    fireEvent.change(box, { target: { value: '@Zed' } });
+    expect(screen.getByText(/No director matches/)).toBeInTheDocument();
+    expect(screen.getByText('“@Zed”')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Clear search' }));
+    expect(screen.getByText('Robert')).toBeInTheDocument();
+    expect(mocked).toHaveBeenCalledTimes(1);
   });
 
   it('offers a retry when the callable fails', async () => {
-    mockedSearch.mockRejectedValueOnce(new Error('boom'));
-    mockedSearch.mockResolvedValueOnce(page([ALICE]));
+    mocked.mockRejectedValueOnce(new Error('boom'));
+    mocked.mockResolvedValueOnce(directory([ALICE]));
     renderDirectors();
 
     fireEvent.click(await screen.findByRole('button', { name: 'Try again' }));

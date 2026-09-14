@@ -8,7 +8,7 @@ burns an hour to conclude "everything's about covered." Don't. If you ship,
 cut, or discover something, edit THIS file in the same PR — that's the whole
 maintenance contract.
 
-_Last updated: 2026-09-14 (**Directors page** — `/directors`: a very basic player directory / username search for signed-in directors, served by the new `searchDirectors` callable (a document-id range over the lowercase `usernames/{lower}` reservation collection, hydrated from `profile/public`; no index, no derived field, no backfill); linked from Explore + the mobile More sheet; App.jsx gallery routes folded into one `GalleryPage` helper). Same day: (**No rehearsing after the show** — in both divisions the day closes with the show and the next day opens at 2 AM ET: Podium rehearsal blocks are refused from the 9 PM ET roll until 2 AM ET with a lights-out planner state, and fantasy caption changes now lock every night at the 8 PM ET boundary, not only Saturdays; the lineup-lock reminders key on the new `allotmentEndsAt` so nightly locks never ping). Previous: 2026-09-13 (**Firestore indexes reconciled** — console pruned to the 12 composites in `firestore.indexes.json` (exact match, verified row by row), a duplicate profile collection-group index deleted, and two indexes the console had been MISSING created: `articles` CG (authorUid, isPublished, createdAt) for the Newsroom's director-articles list and `news_submissions` (authorUid, createdAt) for "my submissions" — both queries had been failing with missing-index errors; ops item closed. Firestore indexes: `firestore.indexes.json` pruned 31 → 13 composites (+1 added that code needs) and the `users.seasonYear` override dropped, every survivor matched to a live query; the file no longer triggers a functions deploy; the console deletion is an owner step with the explicit list in the ops section. Stale league matchups: "Archive stale league matchups" run #1 (COMMIT, 22:09Z) scanned 21 leagues and found 0 stale weeks — no league is frozen; ops item closed. Four leagues report "no matchup weeks" (World Corps Association, North American Marching Arts Association, The Grandmasters Table, Cheese Appreciaters United) — expected for non-matchup formats, worth a glance if any of them is head-to-head. **Lineup privacy flipped** — `profile/data` is owner/admin-only in rules after the backfill workflow wrote 125/125 `profile/public` mirrors; raw-doc fallbacks dropped from `api/profile.getPublicProfile` and `api/leagues.getMemberProfiles`; rules tests flipped + owner/admin reads added; ops item closed). Same day: (storage bucket done — `VITE_FIREBASE_STORAGE_BUCKET` secret set ~2026-08-30, run #446 confirms `marching.art` linked and `storage.rules` released with no warning; ops item closed. `main` ruleset imported and Active — seven CI checks required, no bypass; ops item closed. BMAC webhook confirmed live — endpoint Active on the function URL, test event answered 200 "Ignored (test event)", signature verified; ops item closed. Podium medal correction re-run with commit on the show-field rule — 21 recap days / 83 rows re-ranked, 23 live medal counters rebuilt; ops item closed. Overture days 19–23 will NOT be re-scored — owner decision, the five hash-ordered nights stand as posted; ops item dropped). Same day: (Podium corps badged on BOTH Eastern Classic nights on the Schedule page + registration modal, matching fantasy — shared `utils/podiumAttendance` helpers now feed ScheduleParts, the modal and tourStops; community report). Same day: (firebase-admin 14.4 everywhere + functions/scraper/scripts migrated to the modular `firebase-admin/*` API; `uuid` advisory closed via a scoped `gaxios` override; unused `firebase-functions-test` dropped). Previous: 2026-09-12 (Scores page highlights every one of the director's corps — all fantasy classes + Podium, matched by uid with a name fallback via `utils/corps.buildViewerCorpsMatcher` / `isViewerCorps`; community report). Previous: 2026-09-11 (league chat rebuilt — threaded rows, reactions, replies, @mention picker, report control, scroll that stays put, optimistic sends, `lastChatAt` unread dot on the league card). Previous: 2026-09-09 (score-age column on the Fantasy + Podium season standings); 2026-09-06 (director-authored articles exempt from the score-reveal gate — dead Discord/notification links fixed; scheduled-vs-pending admin email + working admin deep link; assistant director fades with consecutive days
+_Last updated: 2026-09-14 (**Directors page** — `/directors`: a very basic player directory for signed-in directors, served by the new `searchDirectors` callable (every `profile/public` mirror via `listDocuments` + `getAll`, one response, 60 s instance cache; search is local and matches username / display name / corps names, Podium included); linked from Explore + the mobile More sheet; App.jsx gallery routes folded into one `GalleryPage` helper). Same day: (**No rehearsing after the show** — in both divisions the day closes with the show and the next day opens at 2 AM ET: Podium rehearsal blocks are refused from the 9 PM ET roll until 2 AM ET with a lights-out planner state, and fantasy caption changes now lock every night at the 8 PM ET boundary, not only Saturdays; the lineup-lock reminders key on the new `allotmentEndsAt` so nightly locks never ping). Previous: 2026-09-13 (**Firestore indexes reconciled** — console pruned to the 12 composites in `firestore.indexes.json` (exact match, verified row by row), a duplicate profile collection-group index deleted, and two indexes the console had been MISSING created: `articles` CG (authorUid, isPublished, createdAt) for the Newsroom's director-articles list and `news_submissions` (authorUid, createdAt) for "my submissions" — both queries had been failing with missing-index errors; ops item closed. Firestore indexes: `firestore.indexes.json` pruned 31 → 13 composites (+1 added that code needs) and the `users.seasonYear` override dropped, every survivor matched to a live query; the file no longer triggers a functions deploy; the console deletion is an owner step with the explicit list in the ops section. Stale league matchups: "Archive stale league matchups" run #1 (COMMIT, 22:09Z) scanned 21 leagues and found 0 stale weeks — no league is frozen; ops item closed. Four leagues report "no matchup weeks" (World Corps Association, North American Marching Arts Association, The Grandmasters Table, Cheese Appreciaters United) — expected for non-matchup formats, worth a glance if any of them is head-to-head. **Lineup privacy flipped** — `profile/data` is owner/admin-only in rules after the backfill workflow wrote 125/125 `profile/public` mirrors; raw-doc fallbacks dropped from `api/profile.getPublicProfile` and `api/leagues.getMemberProfiles`; rules tests flipped + owner/admin reads added; ops item closed). Same day: (storage bucket done — `VITE_FIREBASE_STORAGE_BUCKET` secret set ~2026-08-30, run #446 confirms `marching.art` linked and `storage.rules` released with no warning; ops item closed. `main` ruleset imported and Active — seven CI checks required, no bypass; ops item closed. BMAC webhook confirmed live — endpoint Active on the function URL, test event answered 200 "Ignored (test event)", signature verified; ops item closed. Podium medal correction re-run with commit on the show-field rule — 21 recap days / 83 rows re-ranked, 23 live medal counters rebuilt; ops item closed. Overture days 19–23 will NOT be re-scored — owner decision, the five hash-ordered nights stand as posted; ops item dropped). Same day: (Podium corps badged on BOTH Eastern Classic nights on the Schedule page + registration modal, matching fantasy — shared `utils/podiumAttendance` helpers now feed ScheduleParts, the modal and tourStops; community report). Same day: (firebase-admin 14.4 everywhere + functions/scraper/scripts migrated to the modular `firebase-admin/*` API; `uuid` advisory closed via a scoped `gaxios` override; unused `firebase-functions-test` dropped). Previous: 2026-09-12 (Scores page highlights every one of the director's corps — all fantasy classes + Podium, matched by uid with a name fallback via `utils/corps.buildViewerCorpsMatcher` / `isViewerCorps`; community report). Previous: 2026-09-11 (league chat rebuilt — threaded rows, reactions, replies, @mention picker, report control, scroll that stays put, optimistic sends, `lastChatAt` unread dot on the league card). Previous: 2026-09-09 (score-age column on the Fantasy + Podium season standings); 2026-09-06 (director-authored articles exempt from the score-reveal gate — dead Discord/notification links fixed; scheduled-vs-pending admin email + working admin deep link; assistant director fades with consecutive days
 away; Podium field = the registered field; majors and championship rounds
 carry the Podium roster; roster audit workflow; season re-mint guard). Previous: 2026-09-04 (site-review row 20 — one onboarding checklist (the Journey; Quick Start modal deleted, `?reveal=` deep link) and one How-to-Play route by auth state; device-aware install guide at /install — in-app-browser detection with an Open-in-Safari/Chrome escape hatch, per-browser steps, one-tap native install, linked from footer / ? menu / home / Settings / the nudge; site-review row 19 — honest functions coverage gate, first admin / league-automation tests; row 18 — one-click unsubscribe + List-Unsubscribe headers, noindex auth wall; row 17 — vendor-firebase trimmed, GameShell + overlays lazy for guests; row 16 — focus traps + Escape in every raw dialog, icon buttons named; row 15 — one dashboard interrupt per visit, celebrations to the inbox; row 14 — weekly XP / win bonus / finish bonus paid per director; row 13 — league weeks decided per show, percentile edge cases; row 12 — server-enforced age gate + consent-gated analytics; AI imagery now built from the full Uniform Studio design + rendered reference image; main ruleset + gazetteer PR flow; site-review Fix-first 1–11 + quick wins shipped)._
 
@@ -317,121 +317,22 @@ ops step below)_
 ## Recently shipped (context, newest first — prune when stale)
 
 - 2026-09-14 (Directors page — community request for a basic profile
-  search): `/directors` (`pages/Directors.tsx`) browses every director A–Z
-  and searches by username prefix, each row (fantasy + Podium corps by name)
-  linking to `/profile/{uid}`.
-  Backed by the `searchDirectors` callable (`callable/users.js`,
-  `helpers/directorSearch.js`): signed-in, `rate_directory` budget, page
-  ≤ 50, an ordered document-id range over `usernames/{lower}` (already
-  lowercase, so the query is case-insensitive for free) hydrated via `getAll`
-  from `profile/public`; ghost reservations without a mirror are dropped.
-  Client rules are unchanged — `usernames` stays list-closed, the callable is
-  the only enumeration path. Deliberately username-only: display-name /
-  corps-name search would need a lowercased search key on the public mirror
-  plus a backfill — add it only if directors ask. Also: the nine identical
-  gallery-skeleton routes in `App.jsx` are one `GalleryPage` helper (the
-  file had crossed the 700-line lint ceiling).
-- 2026-09-14 (no rehearsing after the show — both divisions): the game day
-  now closes with the show and the next day opens at **2 AM ET**. Podium:
-  the interactive day still rolls at the 9 PM ET processing run, but
-  `allocateRehearsalBlock` refuses blocks until 2 AM ET
-  (`gameDay.getPodiumRehearsalWindow`), `getPodiumState.rehearsalOpensAt`
-  carries the opening instant, the planner shows a lights-out notice with a
-  countdown and refetches when the day opens, and the Podium next-action hero
-  says "Lights out after the show" instead of nudging a rehearsal that would
-  bounce (`podium_overnight`). Rest-day declarations stay allowed overnight.
-  Fantasy: `captionWindows.getCaptionChangeWindow` / `seasonClock
-.getCaptionChangeInfo` now lock **every** night from the 8 PM ET boundary
-  until 2 AM ET + scores processed (previously only Saturdays and Championship
-  Week); `locksAt` is tonight's lock and the new shared `allotmentEndsAt`
-  field is when the current allotment expires (Saturday close / end of Day 14
-  / tonight in Championship Week) — the lineup-lock push reminders key on
-  that, so an overnight lock that keeps the allotment never pings anyone.
-  Parity spec compares the new field. Deadline chip, caption badges, modal
-  copy, guides, GAMEPLAY.md and PODIUM.md updated. Changelog (balance) entry
-  added. `@ts-nocheck` ratchet: 50 → 49 (`Admin/AdminUI.jsx`; `StreakModal.jsx`
-  was typed on main the same day).
-- 2026-09-14 (dependency sweep, replaces Dependabot #1549–#1554): React
-  18.3 → **19.3** with `@types/react{,-dom}` 19 — every React peer already
-  accepted 19, the 1,502-test suite, lint and build passed untouched, and
-  the only fallout was typing: `@types/react` 19 drops the global `JSX`
-  namespace (five JSDoc signatures now say `React.JSX.Element`) and
-  `useRef<T>(null)` is `RefObject<T | null>` (`Tabs.tsx` context type).
-  Minor bumps folded in: `firebase` 12.19 (root + `firestore-tests`),
-  `lucide-react` 1.45, `@playwright/test` 1.63, `autoprefixer` 10.6,
-  `eslint` 10.10, `vite` 8.3. Scraper: `@sparticuz/chromium` 131 → **152**
-  paired with `puppeteer-core` 24.43 → **25.10** (both pin Chrome 152; the
-  old pair was already mismatched at 131 vs 148). Dependabot's chromium-only
-  PR would have broken the scraper at runtime: v133+ is ESM-only (the class
-  is on `require(...).default`) and dropped the `headless` /
-  `defaultViewport` getters, so `index.js` now launches with an explicit
-  `headless: "shell"`, a 1920×1080 viewport and `acceptInsecureCerts` (the
-  `ignoreHTTPSErrors` name was already dead). Verified by launching the
-  bundled binary locally (`HeadlessChrome/152.0.7977.0`). `dependabot.yml`
-  now ignores `@sparticuz/chromium` majors the same way it ignores
-  `puppeteer-core` majors — the pair is bumped together, by hand. Follow-up
-  the same day (replaces #1559): `functions/` `@google/genai` 2.21 → 2.22;
-  the two `ai.models.generateContent` call sites and the `Type` schema
-  enum are unchanged, functions suite green.
-- 2026-09-13 (dependency sweep, replaces Dependabot #1540/#1541/#1542):
-  `firebase-admin` is `^14.4.0` in root, `functions/`, `functions-scraper/`
-  and `scripts/`. v14 deleted the namespaced API, so Dependabot's
-  `functions/` bump alone would have crashed every function on
-  `admin.firestore.FieldValue` / `admin.auth()` / `admin.initializeApp()`
-  (and the scraper, already on ^14.3, was broken the same way). All 66
-  functions files, the scraper and the `scripts/` inspectors now import
-  `initializeApp`/`getApps`/`cert` from `firebase-admin/app`,
-  `getFirestore`/`FieldValue`/`FieldPath`/`Timestamp` from
-  `firebase-admin/firestore`, and `getAuth`/`getStorage`/`getMessaging`
-  from their modules; `profile.test.js` stubs `getAuth` on the auth module
-  instead of swapping the whole package in `require.cache`. The
-  `uuid <11.1.1` advisory that Dependabot's PRs did _not_ actually close
-  (it rides in via `@google-cloud/storage` → `gaxios@6`) is closed with a
-  scoped `overrides.gaxios.uuid` in each package; root's `brace-expansion`
-  advisory closed via `npm audit fix`; the unused `firebase-functions-test`
-  devDependency (peer-pinned to admin ≤13) is gone. `npm audit` is 0 in all
-  four packages.
-- 2026-09-11 (league chat redesign): the Chat tab is a threaded column
-  (`tabs/ChatTab.tsx` + `ChatMessageRow.tsx` + `ChatComposer.tsx`, pure
-  helpers in `utils/chatFormat.ts`): run-grouped rows with avatar/name/time
-  on the first of a run, sticky day separators, a "New" line at the frozen
-  read marker, reactions (`toggleLeagueMessageReaction`, palette fixed
-  server-side, `reactions: {emoji: uid[]}` on the message doc), replies
-  (`postLeagueMessage` takes `replyTo` and snapshots the quote itself),
-  @mention picker over the roster (inserts `@username`, which
-  `onLeagueChatMessage` already pushes on), report to admins
-  (`reportLeagueMessage`, deduped by doc id), delete via ConfirmModal,
-  long-press/keyboard action sheet, hover action bar. Scroll: pinned only
-  while at the bottom, otherwise a "N new messages" pill; prepends preserve
-  position; IntersectionObserver auto-loads history. Sends are optimistic
-  with in-place Retry/Discard (`useLeagueChat` pending list). The composer
-  moved out of `LeagueDetailView` into the tab (`SmackTalkInput` deleted);
-  1,000-char cap matches the server. `postLeagueMessage` stamps
-  `lastChatAt` on the league doc so the league card's unread dot finally
-  reads something real (`Leagues.tsx` vs `getLeagueChatReadAt`).
-- 2026-09-10 (dependencies): the six open Dependabot PRs (#1531-#1536) folded
-  into one branch and closed. Root: `vitest` + `@vitest/coverage-v8` 4 → 5,
-  `framer-motion` 13.2.0, `lucide-react` 1.40, `@types/node`, `globals`,
-  `postcss`, `tsx`, `typescript-eslint`, `eslint-plugin-react-refresh`;
-  `functions/` `@google/genai` 2.21.0; `firestore-tests/` `firebase-tools`
-  15.29.0. Vitest 5 broke `tsc` on every `.tsx` test: jest-dom still ships its
-  matcher augmentation against vitest 4's `Assertion<T>` while vitest 5 uses
-  `Assertion<R, T>`, so declaration merging silently stopped applying and
-  ~200 `toBeInTheDocument` calls became TS2339 — fixed by re-declaring the
-  augmentation at the right arity in `src/types/vitest.d.ts` (delete it when
-  jest-dom ships vitest 5 types). Coverage was measured on both majors to
-  confirm the v8 provider bump moved nothing (4: 31.21/24.93/26.86/31.11,
-  5: 30.90/24.89/26.83/30.78) and the stale floors were raised to
-  30.5/24.5/26.4/30.4. Also: `vite.config.js` off `__dirname` onto
-  `import.meta.dirname` (the config-loader deprecation vitest 5 started
-  warning on), and `useYoutubeSearch` now normalizes `year` to a string —
-  callers pass `sourceYear`, which is `string|number`, so the 2018-SCV /
-  2023-Mandarins hardcoded-video and abbreviated-search cases could miss on a
-  numeric year. `@ts-nocheck` ratchet: 59 → 58 (`pages/Landing.jsx`, which
-  also pulled the duplicated live-score row typedef out of `LiveScoresBox`
-  and `StandingsModal` into a single `LandingScoreRow` owned by
-  `useLandingScores`, and gave `ProfileDoc` explicit `xp` / `xpLevel` /
-  `corpsCoin` fields).
+  search): `/directors` (`pages/Directors.tsx`) lists every director A–Z and
+  searches locally by username, display name or corps name (fantasy + Podium
+  corps by name), each row linking to `/profile/{uid}`. Backed by the
+  `searchDirectors` callable (`callable/users.js`, `helpers/directorSearch.js`):
+  signed-in, `rate_directory` budget, returns the WHOLE directory in one
+  response — `listDocuments()` over the users collection (every location,
+  parent doc or not) + batched `getAll` of each `profile/public` mirror,
+  projected and sorted, behind a 60 s per-instance cache. The first cut keyed
+  on the `usernames/{lower}` reservation collection and silently dropped every
+  director whose reservation doc was missing ("not all directors show up") —
+  the mirrors are complete by construction (trigger + 2026-09-13 backfill), a
+  reservation index is not. Ceiling `MAX_DIRECTORY_SIZE` = 2000 rows
+  (`truncated: true` + a warn log past it) — that is the point to materialize
+  an index, not before. Also: the nine identical gallery-skeleton routes in
+  `App.jsx` are one `GalleryPage` helper (the file had crossed the 700-line
+  lint ceiling).
 
 - 2026-09-09 (score age on the season standings, from a director suggestion):
   a season standings sheet ranks every corps on its LATEST total, but corps

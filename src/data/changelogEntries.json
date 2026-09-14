@@ -1,5 +1,17 @@
 [
   {
+    "id": "2026-09-14-directors-everyone-listed-search-by-name",
+    "date": "2026-09-14",
+    "title": "Directors page: everyone is listed, and search matches names and corps",
+    "category": "fix",
+    "summary": "Some directors were missing from the new Directors page. The list is now built from every profile, so everyone appears, and it loads in one go instead of page by page. Search also got smarter: type part of a username, a display name or a corps name.",
+    "highlights": [
+      "The full A–Z list loads at once — no more \"Load more\".",
+      "Searching \"horizon\" finds the director who fields Blue Horizon, in any class or the Podium Division.",
+      "The header shows how many directors are listed and how many match your search."
+    ]
+  },
+  {
     "id": "2026-09-14-find-any-director",
     "date": "2026-09-14",
     "title": "Find any director — the new Directors page",
