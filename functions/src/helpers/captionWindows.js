@@ -10,11 +10,14 @@
  *   - Days 1-14:  unlimited changes, ending when Day 14 ends (the day
  *                 boundary falls at 8:00 PM ET during the summer).
  *   - Days 15-42: 3 changes per week per class. Changes can be spent one at
- *                 a time or all at once; the counter resets each week.
- *   - Every Saturday at 8:00 PM ET (the end of days 7/14/21/28/35/42):
- *                 changes lock until that night's scores are processed
- *                 (nightly processor runs at 2:00 AM ET; if the day had no
- *                 events, changes reopen at 2:00 AM ET).
+ *                 a time or all at once; the counter resets each week
+ *                 (unused changes expire at the Saturday 8:00 PM ET close).
+ *   - Every night at the 8:00 PM ET day boundary (the show): changes lock
+ *                 until 2:00 AM ET AND that night's scores are processed —
+ *                 a corps doesn't rework its lineup for the next day the
+ *                 moment tonight's scores post (if the day had no events,
+ *                 changes reopen at 2:00 AM ET). Day 1 has no show behind
+ *                 it and opens with the season.
  *   - Days 43-44: no caption changes at all.
  *   - Days 45-49 (Championship Week): 2 changes PER DAY for each class that
  *                 still competes that day; the allotment resets every
@@ -162,13 +165,18 @@ function nextScoresProcessingAfter(after) {
  *   periodKey: number,
  *   unlimitedEndsAt: Date|null,
  *   locksAt: Date|null,
+ *   allotmentEndsAt: Date|null,
  *   reopensAt: Date|null,
  *   pendingScoresDay: number|null,
  * }|null} null when the season has no start date. `periodKey` identifies the
  *   allotment window the counter resets on: the week number for weekly limits,
  *   the competition day during Championship Week (per-day reset). Callers store
  *   it with the trade count and treat a mismatch as a fresh allotment.
- *   `pendingScoresDay` is set
+ *   While open, `locksAt` is tonight's overnight lock (the 8 PM ET day
+ *   boundary) and `allotmentEndsAt` is when the CURRENT allotment expires
+ *   unused — the Saturday close for weekly limits, the end of Day 14 for the
+ *   unlimited phase, tonight for Championship Week (reminders key on this,
+ *   not on the nightly lock). `pendingScoresDay` is set
  *   when the window only counts as open once that day's scores have been
  *   processed — callers with Firestore access must verify via
  *   isDayScoresProcessed() before allowing a change.
@@ -200,6 +208,7 @@ function getCaptionChangeWindow(seasonData, now = new Date(), corpsClass = null)
     periodKey: week,
     unlimitedEndsAt: null,
     locksAt: null,
+    allotmentEndsAt: null,
     reopensAt: null,
     pendingScoresDay: null,
   };
@@ -249,18 +258,23 @@ function getCaptionChangeWindow(seasonData, now = new Date(), corpsClass = null)
       periodKey: day,
       reopensAt: locked ? opensAt : null,
       locksAt: locked ? null : dayStart(day + 1),
+      allotmentEndsAt: locked ? null : dayStart(day + 1),
       pendingScoresDay: locked ? null : day - 1,
     };
   }
 
   // Days 1-42 (day < 1 means spring training / pre-season: treated as the
   // unlimited phase with no lock, since there are no scores pending).
-  // Weeks begin on days 8, 15, 22, 29, 36 — the morning after a Saturday
-  // 8 PM ET close — and stay locked until that night's scores process.
-  const isWeekStartDay = day > 1 && day % 7 === 1;
-  const opensAt = isWeekStartDay ? reopenAfter(day) : null;
+  // Every day after Day 1 begins locked — the 8 PM ET boundary is the show,
+  // and the next day's lineup opens at 2 AM ET once that night's scores have
+  // processed. Day 1 has no show behind it and opens with the season.
+  const followsAShow = day > 1;
+  const opensAt = followsAShow ? reopenAfter(day) : null;
   const locked = opensAt !== null && now.getTime() < opensAt.getTime();
   const isUnlimited = day <= UNLIMITED_THROUGH_DAY;
+  // When the current allotment expires unused: the end of Day 14 for the
+  // unlimited phase, the Saturday close (days 7/14/21/28/35/42) otherwise.
+  const allotmentEndsAt = isUnlimited ? dayStart(UNLIMITED_THROUGH_DAY + 1) : dayStart(week * 7 + 1);
 
   return {
     ...base,
@@ -268,17 +282,18 @@ function getCaptionChangeWindow(seasonData, now = new Date(), corpsClass = null)
     status: locked ? "locked" : "open",
     tradeLimit: isUnlimited ? Infinity : WEEKLY_TRADE_LIMIT,
     unlimitedEndsAt: isUnlimited ? dayStart(UNLIMITED_THROUGH_DAY + 1) : null,
-    locksAt: locked ? null : dayStart(week * 7 + 1),
+    locksAt: locked ? null : dayStart(day + 1),
+    allotmentEndsAt: locked ? null : allotmentEndsAt,
     reopensAt: locked ? opensAt : null,
-    pendingScoresDay: !locked && isWeekStartDay ? day - 1 : null,
+    pendingScoresDay: !locked && followsAShow ? day - 1 : null,
   };
 }
 
 /**
  * Have the given competition day's scores been processed (or was there
- * nothing to process)? Used to end the Saturday-night / championship-night
- * lockouts: changes stay closed after 2 AM ET until the nightly processor
- * has actually written the day's recap.
+ * nothing to process)? Used to end the nightly lockout: changes stay closed
+ * after 2 AM ET until the nightly processor has actually written the day's
+ * recap.
  *
  * @param {{doc: (path: string) => {get: () => Promise<any>}}} db - Firestore
  *   instance (only `.doc().get()` is used, so the shape is stated rather than

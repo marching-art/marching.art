@@ -1,11 +1,15 @@
 // RehearsalPlanner — the Podium Class daily verb (Phase 2, design §6.1).
 // One screen: pick today's rehearsal blocks (12 on a normal day, 20 in spring
 // training, 8 on a show day at half value each), watch the Action Complete
-// panel, or declare a rest day. Condition strip included.
+// panel, or declare a rest day. Condition strip included. After the 9 PM ET
+// show the day has rolled but the blocks stay closed until 2 AM ET (a corps
+// doesn't rehearse after the show) — the grid gives way to a lights-out notice
+// with the opening time the server reports.
 
-import React, { useState } from 'react';
-import { Flame, BatteryCharging, Moon, Loader2, Coins, Trophy } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Flame, BatteryCharging, Moon, MoonStar, Loader2, Coins, Trophy } from 'lucide-react';
 import { BLOCKS, CAPTION_LABELS } from './podiumConstants';
+import { formatCountdown, formatEtShort } from '../../utils/seasonClock';
 
 /**
  * @param {{
@@ -39,9 +43,27 @@ function ConditionBar({ label, value, icon: Icon, color }) {
  * @param {{ podium: ReturnType<typeof import('../../hooks/usePodium').usePodium> }} props
  */
 export default function RehearsalPlanner({ podium }) {
-  const { data, lastPanel, queueAllocate, declareRestDay, pending = {} } = podium;
+  const { data, lastPanel, queueAllocate, declareRestDay, reload, pending = {} } = podium;
   const [restBusy, setRestBusy] = useState(false);
   const [actionError, setActionError] = useState(/** @type {string | null} */ (null));
+
+  // Closed for the night after the show: the server reports when the blocks
+  // open (the next 2 AM ET). A 30 s tick lets the countdown run and the grid
+  // come back on its own the minute the day opens; the refetch on that flip
+  // replaces the stale lockout with the server's own view of the fresh day.
+  const opensAtMs = data?.rehearsalOpensAt ? new Date(data.rehearsalOpensAt).getTime() : NaN;
+  const [now, setNow] = useState(() => Date.now());
+  const overnight = Number.isFinite(opensAtMs) && now < opensAtMs;
+  useEffect(() => {
+    if (!overnight) return undefined;
+    const id = setInterval(() => setNow(Date.now()), 30_000);
+    return () => clearInterval(id);
+  }, [overnight]);
+  const wasOvernight = useRef(overnight);
+  useEffect(() => {
+    if (wasOvernight.current && !overnight) reload?.();
+    wasOvernight.current = overnight;
+  }, [overnight, reload]);
 
   const state = data?.state;
   if (!state) return null;
@@ -117,6 +139,10 @@ export default function RehearsalPlanner({ podium }) {
   const blocksDone = blocksRemainingToday !== null && blocksRemainingToday <= 0;
   const exhausted = seasonOver || today.restDay || blocksDone;
   const isShowDay = Boolean(data.isShowDay) && !seasonOver;
+  // The lights-out notice replaces the grid only while there is a day to
+  // rehearse into — a rest day or a spent budget already says what matters.
+  const lightsOut = overnight && !exhausted;
+  const dayLabel = isSpringTraining ? `Day ${data.calendarDay} of camp` : `Day ${competitionDay}`;
 
   return (
     <div
@@ -190,10 +216,33 @@ export default function RehearsalPlanner({ podium }) {
 
       {/* Block allocator + schedule panel */}
       <div className="flex flex-col lg:flex-row gap-3">
+        {/* Lights out: the day rolled with the 9 PM ET recap, but a corps
+            doesn't rehearse after the show. The server bounces any block
+            until 2 AM ET, so the grid stands down instead of erroring. */}
+        {lightsOut && (
+          <div
+            className="flex-1 flex flex-col items-center justify-center text-center gap-2 px-4 py-6 border border-line bg-surface-sunken rounded-none"
+            role="status"
+          >
+            <MoonStar className="w-6 h-6 text-blue-300" aria-hidden="true" />
+            <div className="text-sm font-bold text-white">Lights out after the show</div>
+            <p className="text-[11px] text-secondary max-w-xs leading-relaxed">
+              A corps doesn’t rehearse after the show. {dayLabel} rehearsal opens{' '}
+              <span className="text-white font-bold whitespace-nowrap">
+                {formatEtShort(new Date(opensAtMs))}
+              </span>{' '}
+              — in{' '}
+              <span className="text-interactive font-bold tabular-nums">
+                {formatCountdown(opensAtMs - now)}
+              </span>
+              .
+            </p>
+          </div>
+        )}
         {/* Block grid (fundraiser lives inside the grid). Buttons stay live
             while allocations drain — only the day's remaining budget gates
             them — so a director can tap a full day's blocks in one thumb-run. */}
-        {!exhausted && (
+        {!exhausted && !lightsOut && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 flex-1 content-start">
             {BLOCKS.map((block) => {
               const confirmedCount = (today.blocks || []).filter(
@@ -267,7 +316,9 @@ export default function RehearsalPlanner({ podium }) {
           </div>
           {!seasonOver && !today.restDay && blocksRemainingToday !== null && (
             <div className="mt-1 text-[10px] font-bold uppercase tracking-wider text-right">
-              {blocksRemainingToday > 0 ? (
+              {lightsOut ? (
+                <span className="text-blue-300">Opens {formatEtShort(new Date(opensAtMs))}</span>
+              ) : blocksRemainingToday > 0 ? (
                 <span className="text-interactive">{blocksRemainingToday} left</span>
               ) : (
                 <span className="text-green-400">All blocks used</span>

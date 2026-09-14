@@ -171,10 +171,10 @@ exports.saveLineup = onCall({ cors: true }, async (request) => {
 
         if (!isInitialSetup && !isForcedUpdate) {
           // Caption-change rules (mirrored in src/utils/seasonClock.js):
-          // days 1-14 unlimited; days 15-42 three per week; every Saturday
-          // 8 PM ET through scores processing locked; days 43-44 closed;
-          // days 45-49 two per day for each class still competing that day,
-          // locking nightly at the 8 PM ET boundary.
+          // days 1-14 unlimited; days 15-42 three per week; every night
+          // locked from the 8 PM ET boundary (the show) until 2 AM ET and
+          // scores processed; days 43-44 closed; days 45-49 two per day for
+          // each class still competing that day.
           const window = getCaptionChangeWindow(seasonData, new Date(), corpsClass);
 
           if (window) {
@@ -195,8 +195,8 @@ exports.saveLineup = onCall({ cors: true }, async (request) => {
             }
             if (window.status === "locked") {
               throw new HttpsError("failed-precondition",
-                "Caption changes are locked while scores are processed. " +
-                "They reopen around 2:00 AM ET once results are in.");
+                "Your corps is done for the night — caption changes for the next day " +
+                "open at 2:00 AM ET, once tonight's scores are final.");
             }
             if (window.pendingScoresDay) {
               const processed = await isDayScoresProcessed(db, seasonData, window.pendingScoresDay);

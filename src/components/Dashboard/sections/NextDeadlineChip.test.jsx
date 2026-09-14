@@ -59,10 +59,36 @@ describe('NextDeadlineChip', () => {
     expect(screen.getByText(/Scores in/i)).toBeInTheDocument();
   });
 
-  it('shows the upcoming lock while changes are open during limited weeks', () => {
-    seedSeason('off-season', new Date(Date.now() - 30 * 24 * 3600e3));
-    render(<NextDeadlineChip />);
-    expect(screen.getByText(/Changes lock/i)).toBeInTheDocument();
+  it("shows tonight's lock while changes are open during limited weeks", () => {
+    // Freeze at noon EDT (Sun Jul 5) with day 31 begun at midnight EDT: the
+    // 2 AM ET reopen has passed, so the window is open and tonight's 8 PM ET
+    // overnight lock is the deadline that matters.
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-07-05T16:00:00Z'));
+      seedSeason('off-season', new Date(Date.now() - 30.5 * 24 * 3600e3));
+      render(<NextDeadlineChip />);
+      expect(screen.getByText(/Changes lock/i)).toBeInTheDocument();
+      expect(screen.queryByText(/locked until/i)).not.toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('shows the overnight lock on an ordinary weeknight (no reset)', () => {
+    // 10 PM EDT Tue Jul 7: day 18 began at the 8 PM ET boundary (the show),
+    // so changes are locked until 2 AM ET — and the week's allotment keeps,
+    // so it is a lock, not a reset.
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-07-08T02:00:00Z'));
+      seedSeason('off-season', new Date('2026-06-21T00:00:00Z'));
+      render(<NextDeadlineChip />);
+      expect(screen.getByText(/Changes locked until/i)).toBeInTheDocument();
+      expect(screen.queryByText(/Changes reset/i)).not.toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('shows the change-limit reset once changes are locked', () => {
@@ -81,9 +107,16 @@ describe('NextDeadlineChip', () => {
   });
 
   it('shows the unlimited window during live-season week 1', () => {
-    seedSeason('live-season', new Date(Date.now() - 1 * 24 * 3600e3));
-    render(<NextDeadlineChip variant="strip" />);
-    expect(screen.getByText(/Unlimited changes until/i)).toBeInTheDocument();
+    // Noon EDT on day 2 (begun at midnight EDT; the 2 AM ET reopen passed).
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-07-05T16:00:00Z'));
+      seedSeason('live-season', new Date(Date.now() - 1.5 * 24 * 3600e3));
+      render(<NextDeadlineChip variant="strip" />);
+      expect(screen.getByText(/Unlimited changes until/i)).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('shows the blackout notice on days 43-44', () => {

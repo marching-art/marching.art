@@ -242,6 +242,49 @@ describe("getActivePodiumCalendarDay", () => {
   });
 });
 
+describe("getPodiumRehearsalWindow", () => {
+  const { getPodiumRehearsalWindow } = require("./gameDay");
+
+  test("open through the day, from 2 AM ET until the 9 PM ET processing run", () => {
+    // 2:00 AM EDT Jul 2 (06:00Z) -> open.
+    assert.deepEqual(getPodiumRehearsalWindow(new Date("2026-07-02T06:00:00Z")), {
+      locked: false,
+      opensAt: null,
+    });
+    // Noon EDT -> open.
+    assert.equal(getPodiumRehearsalWindow(new Date("2026-07-02T16:00:00Z")).locked, false);
+    // 8:59 PM EDT Jul 1 (00:59Z Jul 2) -> still open.
+    assert.equal(getPodiumRehearsalWindow(new Date("2026-07-02T00:59:00Z")).locked, false);
+  });
+
+  test("locked after the show: 9 PM ET through 2 AM ET, opening at the next 2 AM ET", () => {
+    // 9:00 PM EDT Jul 1 (01:00Z Jul 2) -> locked until 2 AM EDT Jul 2 (06:00Z).
+    const atNine = getPodiumRehearsalWindow(new Date("2026-07-02T01:00:00Z"));
+    assert.equal(atNine.locked, true);
+    assert.equal(atNine.opensAt.toISOString(), "2026-07-02T06:00:00.000Z");
+    // 1:30 AM EDT Jul 2 (05:30Z) -> still locked, same opening instant.
+    const lateNight = getPodiumRehearsalWindow(new Date("2026-07-02T05:30:00Z"));
+    assert.equal(lateNight.locked, true);
+    assert.equal(lateNight.opensAt.toISOString(), "2026-07-02T06:00:00.000Z");
+  });
+
+  test("tracks EST in winter", () => {
+    // 9:30 PM EST Nov 10 (02:30Z Nov 11) -> locked until 2 AM EST Nov 11 (07:00Z).
+    const w = getPodiumRehearsalWindow(new Date("2026-11-11T02:30:00Z"));
+    assert.equal(w.locked, true);
+    assert.equal(w.opensAt.toISOString(), "2026-11-11T07:00:00.000Z");
+    // 2:00 AM EST Nov 11 -> open.
+    assert.equal(getPodiumRehearsalWindow(new Date("2026-11-11T07:00:00Z")).locked, false);
+  });
+
+  test("spring-forward night opens at 3 AM EDT (2 AM does not exist)", () => {
+    // 1:30 AM EST Mar 8 2026 (06:30Z) -> locked; 2 AM is skipped, so 3 AM EDT (07:00Z).
+    const w = getPodiumRehearsalWindow(new Date("2026-03-08T06:30:00Z"));
+    assert.equal(w.locked, true);
+    assert.equal(w.opensAt.toISOString(), "2026-03-08T07:00:00.000Z");
+  });
+});
+
 describe("getActiveCompetitionDay", () => {
   const { getActiveCompetitionDay } = require("./gameDay");
   const season = (startIso, extra = {}) => ({

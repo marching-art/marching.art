@@ -16,22 +16,27 @@
 //                              than grinding tired would earn. Surfaced before
 //                              "rehearse" so the game doesn't push a director
 //                              to dig the hole deeper.
-//   3. Blocks to spend       — the daily habit. Unspent blocks are lost growth
+//   3. Closed for the night  — after the 9 PM ET show the day has rolled but
+//                              a corps doesn't rehearse after the show: the
+//                              blocks open at 2 AM ET. Surfaced before the
+//                              rehearse nudge so the hero never sends a
+//                              director to a planner that will bounce them.
+//   4. Blocks to spend       — the daily habit. Unspent blocks are lost growth
 //                              (the assistant plan only recovers a *missed*
 //                              day at 85%; a day you're present for should be
 //                              rehearsed deliberately).
-//   4. No shows registered   — a corps that never competes never scores. Lower
+//   5. No shows registered   — a corps that never competes never scores. Lower
 //                              than the daily verb because majors/championship
 //                              auto-enroll, so it's rarely a hard zero.
-//   5. No assistant plan     — protective: without one, a day you miss is lost
+//   6. No assistant plan     — protective: without one, a day you miss is lost
 //                              entirely. Worth prompting once the daily work is
 //                              done.
-//   6. All set               — blocks spent or resting; show the countdown.
+//   7. All set               — blocks spent or resting; show the countdown.
 //
 // Pure and React-free so the whole ladder is unit-testable. Returns the same
 // NextAction shape the fantasy resolver and the mobile hero already use.
 
-import { formatCountdown } from './seasonClock';
+import { formatCountdown, formatEtShort } from './seasonClock';
 import type { NextAction } from './nextAction';
 
 /**
@@ -70,6 +75,11 @@ export interface PodiumNextActionInput {
   scoresPending: boolean;
   /** Milliseconds until the next score drop. */
   scoresInMs: number;
+  /**
+   * When rehearsal blocks open (the next 2 AM ET) while the corps is closed
+   * for the night after the show; null or undefined while the day is open.
+   */
+  rehearsalOpensAt?: Date | null;
 }
 
 /**
@@ -91,6 +101,7 @@ export function resolvePodiumNextAction(input: PodiumNextActionInput): NextActio
     hasPlan,
     scoresPending,
     scoresInMs,
+    rehearsalOpensAt = null,
   } = input;
 
   if (!exists) return null;
@@ -124,7 +135,23 @@ export function resolvePodiumNextAction(input: PodiumNextActionInput): NextActio
     };
   }
 
-  // --- 3. Spend today's blocks ------------------------------------------
+  // --- 3. Closed for the night after the show ----------------------------
+  // The day rolled at the 9 PM ET processing run, but the blocks don't open
+  // until 2 AM ET (server rule: getPodiumRehearsalWindow). Say so instead of
+  // sending the director to a planner that will bounce every tap.
+  if (blocksToSpend && rehearsalOpensAt) {
+    return {
+      id: 'podium_overnight',
+      title: 'Lights out after the show',
+      detail: `A corps doesn't rehearse after the show. Day ${Math.max(1, competitionDay)} rehearsal opens ${formatEtShort(rehearsalOpensAt)}.`,
+      cta: 'View Scores',
+      target: { type: 'route', to: '/scores' },
+      progress: null,
+      tone: 'waiting',
+    };
+  }
+
+  // --- 4. Spend today's blocks ------------------------------------------
   if (blocksToSpend) {
     const total = blocksRemainingToday + blocksUsedToday;
     return {
@@ -143,7 +170,7 @@ export function resolvePodiumNextAction(input: PodiumNextActionInput): NextActio
     };
   }
 
-  // --- 4. Never registered for a show -----------------------------------
+  // --- 5. Never registered for a show -----------------------------------
   if (!hasShows && !hasAutoShows) {
     return {
       id: 'register_shows',
@@ -156,7 +183,7 @@ export function resolvePodiumNextAction(input: PodiumNextActionInput): NextActio
     };
   }
 
-  // --- 5. No assistant plan to cover missed days ------------------------
+  // --- 6. No assistant plan to cover missed days ------------------------
   if (!hasPlan) {
     return {
       id: 'podium_plan',
@@ -170,7 +197,7 @@ export function resolvePodiumNextAction(input: PodiumNextActionInput): NextActio
     };
   }
 
-  // --- 6. Nothing outstanding -------------------------------------------
+  // --- 7. Nothing outstanding -------------------------------------------
   if (scoresPending) {
     return {
       id: 'all_clear',

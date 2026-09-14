@@ -449,13 +449,13 @@ const TradesRemainingIndicator = ({ tradesRemaining, isInitialSetup, changeInfo 
 
   if (!changeInfo) return null;
 
-  // Nightly lockout: Saturday 8 PM ET (and every championship night) until
-  // the 2 AM ET reopen boundary (the night's scores are final by then).
+  // Nightly lockout: every 8 PM ET day boundary (the show) until the 2 AM ET
+  // reopen boundary (the night's scores are final by then).
   if (changeInfo.status === 'locked') {
     return (
       <div
         className="flex items-center gap-1.5 px-2 py-1 bg-warning/10 border border-warning/30 rounded-none"
-        title={`Caption changes reopen ${formatEtDayTime(changeInfo.reopensAt)}, once the night's scores are final`}
+        title={`Your corps is done for the night. Caption changes reopen ${formatEtDayTime(changeInfo.reopensAt)}, once the night's scores are final`}
       >
         <Lock className="w-3 h-3 text-warning" />
         <span className="text-[10px] font-bold text-warning uppercase tracking-wider">
@@ -507,7 +507,7 @@ const TradesRemainingIndicator = ({ tradesRemaining, isInitialSetup, changeInfo 
         className="flex items-center gap-1.5 px-2 py-1 bg-interactive/10 border border-interactive/30 rounded-none"
         title={
           changeInfo.unlimitedEndsAt
-            ? `Weekly limits begin ${formatEtDayTime(changeInfo.unlimitedEndsAt)}`
+            ? `Weekly limits begin ${formatEtDayTime(changeInfo.unlimitedEndsAt)}.${changeInfo.locksAt ? ` Changes lock ${formatEtDayTime(changeInfo.locksAt)} overnight, reopening at 2 AM ET.` : ''}`
             : undefined
         }
       >
@@ -554,7 +554,7 @@ const TradesRemainingIndicator = ({ tradesRemaining, isInitialSetup, changeInfo 
       className={`flex items-center gap-1.5 px-2 py-1 border rounded-none ${colorClass}`}
       title={
         changeInfo.resetsAt
-          ? `Change limit resets ${formatEtDayTime(changeInfo.resetsAt)}. Changes lock ${formatEtDayTime(changeInfo.locksAt)} overnight.`
+          ? `Change limit resets ${formatEtDayTime(changeInfo.resetsAt)}${changeInfo.allotmentEndsAt ? ` — unused changes expire ${formatEtDayTime(changeInfo.allotmentEndsAt)}` : ''}. Changes lock ${formatEtDayTime(changeInfo.locksAt)} overnight, reopening at 2 AM ET.`
           : undefined
       }
     >

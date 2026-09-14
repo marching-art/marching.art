@@ -90,6 +90,41 @@ describe('resolvePodiumNextAction — the daily block verb', () => {
   });
 });
 
+describe('resolvePodiumNextAction — closed for the night after the show', () => {
+  const opensAt = new Date('2026-07-02T06:00:00Z'); // 2 AM EDT
+
+  it('holds the rehearse nudge while the blocks are closed overnight', () => {
+    const action = resolvePodiumNextAction(
+      baseInput({ blocksRemainingToday: 12, blocksUsedToday: 0, rehearsalOpensAt: opensAt })
+    );
+    expect(action?.id).toBe('podium_overnight');
+    expect(action?.tone).toBe('waiting');
+    expect(action?.title).toBe('Lights out after the show');
+    expect(action?.detail).toContain('Day 20 rehearsal opens');
+  });
+
+  it('still yields to the exhaustion rest prompt (a rest day can be declared into the closed day)', () => {
+    const action = resolvePodiumNextAction(
+      baseInput({
+        blocksRemainingToday: 12,
+        blocksUsedToday: 0,
+        stamina: 10,
+        rehearsalOpensAt: opensAt,
+      })
+    );
+    expect(action?.id).toBe('podium_rest');
+  });
+
+  it('is irrelevant once the day is open or the blocks are spent', () => {
+    expect(
+      resolvePodiumNextAction(
+        baseInput({ blocksRemainingToday: 12, blocksUsedToday: 0, rehearsalOpensAt: null })
+      )?.id
+    ).toBe('podium_rehearse');
+    expect(resolvePodiumNextAction(baseInput({ rehearsalOpensAt: opensAt }))?.id).toBe('all_clear');
+  });
+});
+
 describe('resolvePodiumNextAction — exhaustion', () => {
   it('recommends rest before rehearsing when the day opened critically low', () => {
     const action = resolvePodiumNextAction(

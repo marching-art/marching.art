@@ -40,6 +40,38 @@ test("Saturday 8 PM ET locks changes even during the unlimited weeks", () => {
   assert.equal(w.reopensAt.toISOString(), "2026-06-28T06:00:00.000Z");
 });
 
+test("every night locks at the day boundary — the show — until 2 AM ET", () => {
+  // Day 3 begins 2026-06-23T00:00:00Z (Mon June 22, 8 PM EDT). A corps
+  // doesn't rework tomorrow's lineup the moment tonight's scores post.
+  const w = win("2026-06-23T01:00:00Z"); // 9 PM EDT Monday
+  assert.equal(w.day, 3);
+  assert.equal(w.phase, "unlimited");
+  assert.equal(w.status, "locked");
+  assert.equal(w.locksAt, null);
+  assert.equal(w.allotmentEndsAt, null);
+  assert.equal(w.reopensAt.toISOString(), "2026-06-23T06:00:00.000Z"); // 2 AM EDT
+  // 1:59 AM EDT: still locked. 2:00 AM: open, with last night's scores pending.
+  assert.equal(win("2026-06-23T05:59:00Z").status, "locked");
+  const reopened = win("2026-06-23T06:00:00Z");
+  assert.equal(reopened.status, "open");
+  assert.equal(reopened.pendingScoresDay, 2);
+  // A weekday in the weekly phase locks the same way (day 17, Tue 9 PM EDT).
+  const weekday = win("2026-07-07T01:00:00Z");
+  assert.equal(weekday.day, 17);
+  assert.equal(weekday.phase, "weekly");
+  assert.equal(weekday.status, "locked");
+  assert.equal(weekday.reopensAt.toISOString(), "2026-07-07T06:00:00.000Z");
+});
+
+test("day 1 has no show behind it and opens with the season", () => {
+  const w = win("2026-06-21T01:00:00Z"); // 9 PM EDT on the season's first night
+  assert.equal(w.day, 1);
+  assert.equal(w.status, "open");
+  assert.equal(w.pendingScoresDay, null);
+  // Locks tonight at the day-2 boundary.
+  assert.equal(w.locksAt.toISOString(), "2026-06-22T00:00:00.000Z");
+});
+
 test("reopens after 2 AM ET with the previous day's scores pending", () => {
   const w = win("2026-06-28T07:00:00Z"); // 3 AM EDT Sunday, day 8
   assert.equal(w.status, "open");
@@ -52,8 +84,16 @@ test("days 15-42 allow 3 changes per week", () => {
   assert.equal(w.status, "open");
   assert.equal(w.tradeLimit, 3);
   assert.equal(w.week, 3);
-  // Next Saturday close: end of day 21 = start + 21d
-  assert.equal(w.locksAt.toISOString(), "2026-07-12T00:00:00.000Z");
+  // Tonight's overnight lock: the day-17 boundary = start + 16d
+  assert.equal(w.locksAt.toISOString(), "2026-07-07T00:00:00.000Z");
+  // The week's allotment expires at the Saturday close: end of day 21 = start + 21d
+  assert.equal(w.allotmentEndsAt.toISOString(), "2026-07-12T00:00:00.000Z");
+});
+
+test("the unlimited allotment expires at the end of Day 14", () => {
+  const w = win("2026-06-23T12:00:00Z"); // day 3
+  assert.equal(w.allotmentEndsAt.toISOString(), "2026-07-05T00:00:00.000Z");
+  assert.equal(w.locksAt.toISOString(), "2026-06-24T00:00:00.000Z");
 });
 
 test("week-start days are locked until 2 AM ET", () => {
@@ -88,6 +128,7 @@ test("championship days give 2 changes per day and lock nightly at the 8 PM ET b
   assert.equal(openW.week, 7);
   assert.equal(openW.periodKey, 45);
   assert.equal(openW.locksAt.toISOString(), "2026-08-05T00:00:00.000Z");
+  assert.equal(openW.allotmentEndsAt.toISOString(), "2026-08-05T00:00:00.000Z");
   assert.equal(openW.pendingScoresDay, 44);
 
   // Next day (46) keys on a new period, so the 2-change limit is fresh.

@@ -95,10 +95,42 @@ describe('getCaptionChangeInfo', () => {
     expect(w.status).toBe('open');
     expect(w.week).toBe(3);
     expect(w.tradeLimit).toBe(3);
-    // Locks at the Saturday 8 PM ET boundary ending week 3 (day 21)
-    expect(w.locksAt.toISOString()).toBe('2026-07-12T00:00:00.000Z');
+    // Locks overnight at tonight's 8 PM ET boundary (day 17 begins)
+    expect(w.locksAt.toISOString()).toBe('2026-07-07T00:00:00.000Z');
+    // The week's allotment expires at the Saturday close ending week 3 (day 21)
+    expect(w.allotmentEndsAt.toISOString()).toBe('2026-07-12T00:00:00.000Z');
     // Fresh allotment once week 4 opens after the 2 AM ET run
     expect(w.resetsAt.toISOString()).toBe('2026-07-12T06:00:00.000Z');
+  });
+
+  it('locks every night at the day boundary — the show — until 2 AM ET', () => {
+    // Day 17 begins 2026-07-07T00:00:00Z (Mon July 6, 8 PM EDT); 9 PM EDT:
+    const w = info('2026-07-07T01:00:00Z');
+    expect(w.day).toBe(17);
+    expect(w.phase).toBe('weekly');
+    expect(w.status).toBe('locked');
+    expect(w.locksAt).toBeNull();
+    expect(w.allotmentEndsAt).toBeNull();
+    expect(w.reopensAt.toISOString()).toBe('2026-07-07T06:00:00.000Z'); // 2 AM EDT
+    // A mid-week overnight lock keeps the week's allotment: the reset stays Sunday.
+    expect(w.resetsAt.toISOString()).toBe('2026-07-12T06:00:00.000Z');
+    // 2 AM ET: open again, same week, same allotment.
+    const reopened = info('2026-07-07T06:00:00Z');
+    expect(reopened.status).toBe('open');
+    expect(reopened.periodKey).toBe(3);
+    // The unlimited weeks lock the same way (day 3, Mon 9 PM EDT).
+    const early = info('2026-06-23T01:00:00Z');
+    expect(early.day).toBe(3);
+    expect(early.phase).toBe('unlimited');
+    expect(early.status).toBe('locked');
+  });
+
+  it('opens Day 1 with the season (no show behind it)', () => {
+    const w = info('2026-06-21T01:00:00Z'); // 9 PM EDT on opening night
+    expect(w.day).toBe(1);
+    expect(w.status).toBe('open');
+    expect(w.locksAt.toISOString()).toBe('2026-06-22T00:00:00.000Z');
+    expect(w.allotmentEndsAt.toISOString()).toBe('2026-07-05T00:00:00.000Z');
   });
 
   it('locks week-start days until the 2 AM ET score run', () => {
@@ -107,6 +139,10 @@ describe('getCaptionChangeInfo', () => {
     expect(w.day).toBe(22);
     expect(w.status).toBe('locked');
     expect(w.reopensAt.toISOString()).toBe('2026-07-12T06:00:00.000Z');
+    // The fresh week's allotment lands at this reopen (unlike a mid-week
+    // overnight lock, which keeps the current week's changes).
+    expect(w.resetsAt.toISOString()).toBe('2026-07-12T06:00:00.000Z');
+    expect(w.nextLimit).toBe(3);
   });
 
   it('closes changes entirely on days 43-44', () => {

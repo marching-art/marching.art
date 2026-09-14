@@ -27,6 +27,7 @@ import {
   Gift,
   Lock,
   Moon,
+  MoonStar,
   Music,
   Palette,
   Trophy,
@@ -50,6 +51,7 @@ const ICONS: Record<NextActionId, LucideIcon> = {
   // Podium (director sim)
   podium_rehearse: Activity,
   podium_rest: Moon,
+  podium_overnight: MoonStar,
   podium_plan: ClipboardList,
 };
 

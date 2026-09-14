@@ -130,8 +130,8 @@ export function useCaptionSelectionModal({
     return Math.max(0, changeInfo.tradeLimit - used);
   }, [changeInfo, weeklyTrades, seasonUid]);
 
-  // Whether the change window is shut right now (Saturday-night / nightly
-  // championship lockout, Days 43-44 blackout, or season complete). Initial
+  // Whether the change window is shut right now (the nightly after-the-show
+  // lockout until 2 AM ET, Days 43-44 blackout, or season complete). Initial
   // lineup setup is always allowed.
   const changesBlocked = !isInitialSetup && !!changeInfo && changeInfo.status !== 'open';
 
@@ -269,7 +269,7 @@ export function useCaptionSelectionModal({
   const confirmHint = useMemo(() => {
     if (changesBlocked) {
       if (changeInfo?.status === 'locked')
-        return 'Changes are locked overnight — reopen at 2 AM ET.';
+        return 'Your corps is done for the night — changes reopen at 2 AM ET.';
       if (changeInfo?.phase === 'blackout') return 'Changes are closed on Days 43-44.';
       if (changeInfo?.phase === 'championship') return 'This class has finished competing.';
       return 'The season has ended — changes are closed.';
@@ -417,7 +417,7 @@ export function useCaptionSelectionModal({
       // Mirrors the saveLineup enforcement messages.
       if (changeInfo.status === 'locked') {
         setSaveError(
-          "Caption changes are locked overnight. They reopen at 2:00 AM ET, once the night's scores are final."
+          "Your corps is done for the night — caption changes for the next day open at 2:00 AM ET, once tonight's scores are final."
         );
       } else if (changeInfo.phase === 'blackout') {
         setSaveError(

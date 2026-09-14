@@ -231,10 +231,12 @@ export function getShowRegistrationCloseEstimate(eventDate, seasonData) {
  *   - Days 1-14: unlimited changes, ending at the day-14 boundary (8 PM ET
  *     during EDT).
  *   - Days 15-42: 3 changes per week per class, spendable one at a time or
- *     all at once.
- *   - Every Saturday 8 PM ET (end of days 7/14/21/28/35/42): changes lock
- *     until the 2 AM ET reopen boundary (that night's scores are final by
- *     then — they drop earlier, but the lock holds until 2 AM).
+ *     all at once; unused changes expire at the Saturday 8 PM ET close.
+ *   - Every night at the 8 PM ET day boundary (the show): changes lock
+ *     until the 2 AM ET reopen boundary — a corps doesn't rework tomorrow's
+ *     lineup the moment tonight's scores post (they drop earlier, but the
+ *     lock holds until 2 AM). Day 1 has no show behind it and opens with
+ *     the season.
  *   - Days 43-44: no changes at all.
  *   - Days 45-49 (Championship Week): 2 changes per day for each class still
  *     competing that day (the allotment resets every competition day); changes
@@ -264,10 +266,14 @@ export function getShowRegistrationCloseEstimate(eventDate, seasonData) {
  *   isUnlimited: boolean,
  *   unlimitedEndsAt: Date|null,
  *   locksAt: Date|null,
+ *   allotmentEndsAt: Date|null,
  *   reopensAt: Date|null,
  *   resetsAt: Date|null,
  *   nextLimit: number|null,
- * }|null} null when the season has no start date
+ * }|null} null when the season has no start date. While open, `locksAt` is
+ *   tonight's overnight lock and `allotmentEndsAt` is when the current
+ *   allotment expires unused (the Saturday close / end of Day 14 / tonight in
+ *   Championship Week); `resetsAt` is when the NEXT allotment becomes usable.
  */
 export function getCaptionChangeInfo(seasonData, now = new Date(), corpsClass = null) {
   const startTs = seasonData?.schedule?.startDate;
@@ -294,6 +300,7 @@ export function getCaptionChangeInfo(seasonData, now = new Date(), corpsClass = 
     isUnlimited: false,
     unlimitedEndsAt: null,
     locksAt: null,
+    allotmentEndsAt: null,
     reopensAt: null,
     resetsAt: null,
     nextLimit: null,
@@ -342,23 +349,36 @@ export function getCaptionChangeInfo(seasonData, now = new Date(), corpsClass = 
       periodKey: day,
       reopensAt: locked ? opensAt : null,
       locksAt: locked ? null : dayStart(day + 1),
+      allotmentEndsAt: locked ? null : dayStart(day + 1),
     };
   }
 
   // Days 1-42 (day < 1 is spring training / pre-season: unlimited, no lock).
-  // Weeks begin on days 8, 15, 22, 29, 36 — the morning after a Saturday
-  // 8 PM ET close — and stay locked until the 2 AM ET reopen boundary.
-  const isWeekStartDay = day > 1 && day % 7 === 1;
-  const opensAt = isWeekStartDay ? reopenAfter(day) : null;
+  // Every day after Day 1 begins locked — the 8 PM ET boundary is the show,
+  // and the next day's lineup opens at the 2 AM ET reopen boundary. Day 1
+  // has no show behind it and opens with the season.
+  const followsAShow = day > 1;
+  const opensAt = followsAShow ? reopenAfter(day) : null;
   const locked = opensAt !== null && now.getTime() < opensAt.getTime();
   const isUnlimited = day <= UNLIMITED_THROUGH_DAY;
+  // When the current allotment expires unused: the end of Day 14 for the
+  // unlimited phase, the Saturday close (days 7/14/21/28/35/42) otherwise.
+  const allotmentEndsAt = isUnlimited
+    ? dayStart(UNLIMITED_THROUGH_DAY + 1)
+    : dayStart(week * 7 + 1);
 
-  // When the next fresh allotment becomes usable, and how big it is.
+  // When the next fresh allotment becomes usable, and how big it is. On a
+  // locked week-start night (days 15/22/29/36) the fresh week lands at THIS
+  // reopen; an ordinary overnight lock keeps the current allotment, so the
+  // reset stays at the next week's reopen.
+  const freshWeekAtReopen = locked && !isUnlimited && day % 7 === 1;
   const resets = isUnlimited
     ? { at: reopenAfter(UNLIMITED_THROUGH_DAY + 1), limit: WEEKLY_TRADE_LIMIT }
-    : week < 6
-      ? { at: reopenAfter(week * 7 + 1), limit: WEEKLY_TRADE_LIMIT }
-      : { at: reopenAfter(CHAMPIONSHIP_START_DAY), limit: CHAMPIONSHIP_TRADE_LIMIT };
+    : freshWeekAtReopen
+      ? { at: opensAt, limit: WEEKLY_TRADE_LIMIT }
+      : week < 6
+        ? { at: reopenAfter(week * 7 + 1), limit: WEEKLY_TRADE_LIMIT }
+        : { at: reopenAfter(CHAMPIONSHIP_START_DAY), limit: CHAMPIONSHIP_TRADE_LIMIT };
 
   return {
     ...base,
@@ -367,7 +387,8 @@ export function getCaptionChangeInfo(seasonData, now = new Date(), corpsClass = 
     tradeLimit: isUnlimited ? Infinity : WEEKLY_TRADE_LIMIT,
     isUnlimited,
     unlimitedEndsAt: isUnlimited ? dayStart(UNLIMITED_THROUGH_DAY + 1) : null,
-    locksAt: locked ? null : dayStart(week * 7 + 1),
+    locksAt: locked ? null : dayStart(day + 1),
+    allotmentEndsAt: locked ? null : allotmentEndsAt,
     reopensAt: locked ? opensAt : null,
     resetsAt: resets.at,
     nextLimit: resets.limit,
