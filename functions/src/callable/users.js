@@ -18,7 +18,6 @@ const {
 } = require("../helpers/showRegistrations");
 const { homeGeoFor } = require("../helpers/corpsGeo");
 const podiumStore = require("../helpers/podium/store");
-const { loadDirectoryCached } = require("../helpers/directorSearch");
 
 exports.setUserRole = onCall({ cors: true }, async (request) => {
   assertAdmin(request);
@@ -586,27 +585,4 @@ exports.fixProfileFields = onCall({ cors: true, timeoutSeconds: 540, memory: "51
     if (error instanceof HttpsError) throw error;
     throw new HttpsError("internal", "Profile fix failed.");
   }
-});
-
-/**
- * The director directory (the /directors page). Signed-in only, budgeted.
- *
- * Returns EVERY director — each user location's `profile/public` mirror,
- * projected to the small directory row and sorted by username — in one
- * response; the client searches the list locally (username, display name and
- * corps names). helpers/directorSearch.js explains why the mirrors are the
- * index (complete by construction) and caches the build per instance. The
- * callable keeps its original name so no function service is created or
- * deleted by the change; it takes no input.
- */
-exports.searchDirectors = onCall({ cors: true }, async (request) => {
-  const uid = assertAuth(request);
-  // Reads only, but a cold call reads one mirror per director — well above a
-  // human's visit rate, well below a scraper's.
-  const db = getDb();
-  await assertWriteBudget(db, uid, "directory", { max: 60, windowMs: 10 * 60 * 1000 });
-
-  const { directors, total, truncated } = await loadDirectoryCached(db, paths);
-  if (truncated) logger.warn(`Director directory truncated at ${total} rows — time for a materialized index.`);
-  return { directors, total, truncated };
 });

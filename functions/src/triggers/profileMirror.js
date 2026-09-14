@@ -1,4 +1,5 @@
-// Keeps users/{uid}/profile/public in step with profile/data.
+// Keeps users/{uid}/profile/public — and the directory/{uid} index row the
+// /directors page queries (helpers/directory.js) — in step with profile/data.
 //
 // Every write to a profile doc — the nightly scoring pass, a daily-login
 // claim, a cosmetic edit — re-projects the public view (helpers/
@@ -15,6 +16,7 @@ const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
 const { paths } = require("../helpers/paths");
 const { projectPublicProfile, publicProjectionEquals } = require("../helpers/publicProfileMirror");
+const { directoryRowFromProfile, directoryDocPath } = require("../helpers/directory");
 
 exports.onProfileDataWritten = onDocumentWritten(
   {
@@ -33,21 +35,31 @@ exports.onProfileDataWritten = onDocumentWritten(
     if (namespace !== liveNamespace) return;
     const before = event.data?.before?.exists ? event.data.before.data() : null;
     const after = event.data?.after?.exists ? event.data.after.data() : null;
-    const publicRef = getDb().doc(paths.userProfilePublic(userId));
+    const db = getDb();
+    const publicRef = db.doc(paths.userProfilePublic(userId));
+    const directoryRef = db.doc(directoryDocPath(userId));
 
     try {
       if (!after) {
-        await publicRef.delete();
+        await Promise.all([publicRef.delete(), directoryRef.delete()]);
         return;
       }
       const next = projectPublicProfile(after);
       // Skip when nothing public changed AND a mirror already exists (a
       // pre-trigger profile has no mirror yet — its first write must create it).
+      // The directory row is a strict subset of the public projection, so
+      // "nothing public changed" covers it too.
       if (before && publicProjectionEquals(projectPublicProfile(before), next)) {
         const existing = await publicRef.get();
         if (existing.exists) return;
       }
-      await publicRef.set({ ...next, mirroredAt: new Date().toISOString() });
+      const stamp = new Date().toISOString();
+      const row = directoryRowFromProfile(userId, next);
+      await Promise.all([
+        publicRef.set({ ...next, mirroredAt: stamp }),
+        // A profile with no username is not listable; make sure no stale row lingers.
+        row ? directoryRef.set({ ...row, updatedAt: stamp }) : directoryRef.delete(),
+      ]);
     } catch (error) {
       logger.error(`Public profile mirror failed for ${userId}:`, error);
     }

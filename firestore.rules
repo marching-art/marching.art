@@ -887,12 +887,26 @@ match /activeLineups/{lineupKey} {
   allow read, write: if false; // Backend only
 }
 
+// The director directory index (helpers/directory.js): one small row per
+// director — the public projection's identity fields, the corps they field
+// by name, and lowercase search keys — written only by the profile mirror
+// trigger / backfill. Readable by any signed-in director, which is exactly
+// who may read profile/public. `list` is page-capped: the /directors page
+// reads 50 rows at a time (browse by usernameKey, search by searchTokens),
+// and a rule-enforced limit is what keeps a scraper from pulling the
+// collection in one query.
+match /directory/{uid} {
+  allow get: if isAuthenticated();
+  allow list: if isAuthenticated() && request.query.limit <= 50;
+  allow write: if false; // Backend only (mirror trigger + backfill)
+}
+
 // Username → uid lookup. Single-document gets only: `read` would also grant
 // `list`, and listing this collection hands out the full username → uid map
 // for every director (the key to their profile doc, comments, and season
 // detail). Every client consumer resolves one exact username. (The Directors
-// page does not read this collection at all — its searchDirectors callable
-// enumerates profile/public mirrors server-side; helpers/directorSearch.js.)
+// page never reads this collection — it queries the page-capped `directory`
+// index above.)
 match /usernames/{username} {
   allow get: if true;
   allow list: if false;

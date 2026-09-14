@@ -1,7 +1,8 @@
 /**
- * One-off backfill: write users/{uid}/profile/public for every profile that
- * predates the mirror trigger (triggers/profileMirror.js). Idempotent —
- * re-running rewrites the same projection.
+ * One-off backfill: write users/{uid}/profile/public — and the directory/{uid}
+ * index row the /directors page queries (helpers/directory.js) — for every
+ * profile that predates the mirror trigger (triggers/profileMirror.js).
+ * Idempotent — re-running rewrites the same projection and row.
  *
  * Run it (with production credentials) BEFORE flipping profile/data to
  * owner/admin-only in firestore.rules; until every profile has a mirror,
@@ -18,6 +19,7 @@ if (!getApps().length) initializeApp();
 
 const { paths } = require("../helpers/paths");
 const { projectPublicProfile } = require("../helpers/publicProfileMirror");
+const { directoryRowFromProfile, directoryDocPath } = require("../helpers/directory");
 
 const BATCH = 400;
 
@@ -31,6 +33,7 @@ async function main() {
   const prefix = `${paths.users()}/`;
   let scanned = 0;
   let written = 0;
+  let rows = 0;
   let cursor = null;
 
   for (;;) {
@@ -50,16 +53,25 @@ async function main() {
       const projection = projectPublicProfile(doc.data());
       if (!projection) continue;
       const publicRef = doc.ref.parent.doc("public");
+      // .../users/{uid}/profile/data
+      const uid = doc.ref.parent.parent.id;
+      const row = directoryRowFromProfile(uid, projection);
+      const stamp = new Date().toISOString();
       if (commit) {
-        batch.set(publicRef, { ...projection, mirroredAt: new Date().toISOString() });
+        batch.set(publicRef, { ...projection, mirroredAt: stamp });
         inBatch++;
-        if (inBatch >= BATCH) {
+        if (row) {
+          batch.set(db.doc(directoryDocPath(uid)), { ...row, updatedAt: stamp });
+          inBatch++;
+        }
+        if (inBatch >= BATCH - 1) {
           await batch.commit();
           batch = db.batch();
           inBatch = 0;
         }
       }
       written++;
+      if (row) rows++;
     }
     if (commit && inBatch > 0) await batch.commit();
 
@@ -67,7 +79,9 @@ async function main() {
     if (snap.docs.length < BATCH) break;
   }
 
-  console.log(`${commit ? "Wrote" : "Would write"} ${written} public mirrors (${scanned} profiles scanned).`);
+  console.log(
+    `${commit ? "Wrote" : "Would write"} ${written} public mirrors and ${rows} directory rows (${scanned} profiles scanned).`
+  );
 }
 
 main().catch((error) => {

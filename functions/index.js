@@ -54,7 +54,6 @@ const {
   getUserRankings,
   createUserProfile,
   fixProfileFields,
-  searchDirectors,
 } = require("./src/callable/users");
 const {
   validateLineup,
@@ -347,7 +346,6 @@ const { reconcileSupporters } = require("./src/scheduled/supporterReconcile");
 module.exports = {
   // Callable
   checkUsername,
-  searchDirectors,
   setUserRole,
   getShowRegistrations,
   getUserRankings,

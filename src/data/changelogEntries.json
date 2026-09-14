@@ -1,5 +1,17 @@
 [
   {
+    "id": "2026-09-14-directors-page-built-to-scale",
+    "date": "2026-09-14",
+    "title": "Directors page loads instantly at any size",
+    "category": "improvement",
+    "summary": "The Directors page now opens on the first screen of names right away and fetches more only as you scroll, instead of downloading the whole list. Search answers from an index, so it stays quick however many directors join.",
+    "highlights": [
+      "Browse A–Z with the list filling in as you scroll — no waiting on a full download.",
+      "Search matches the start of any word: a username, a display name or a corps name (\"hori\" finds Blue Horizon). Add a second word to narrow it down.",
+      "The header shows the total number of directors and, while searching, how many match."
+    ]
+  },
+  {
     "id": "2026-09-14-directors-everyone-listed-search-by-name",
     "date": "2026-09-14",
     "title": "Directors page: everyone is listed, and search matches names and corps",
