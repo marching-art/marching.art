@@ -450,3 +450,75 @@ describe("enrichScheduleRunningOrdersLogic", () => {
     assert.equal(a.podiumSchedule, undefined);
   });
 });
+
+describe("two-night event (Eastern Classic) fantasy field", () => {
+  // Days 41/42 (week 6), 26-27 days out from NOW. The registration index
+  // holds ONE event under night one's date (showSelection stores the first
+  // night's entry), with every registrant.
+  const NIGHT_1 = {
+    id: "ec1", name: "marching.art Eastern Classic", day: 41, week: 6,
+    location: "Allentown, PA", date: "2026-07-11", eventTier: "regional",
+    multiNight: { nights: [41, 42] },
+  };
+  const NIGHT_2 = { ...NIGHT_1, id: "ec2", day: 42, date: "2026-07-12" };
+  const ecKey = showRegistrationEventKey(6, NIGHT_1.name, NIGHT_1.date);
+  const ecRegs = {
+    u1_worldClass: { uid: "u1", corpsClass: "worldClass", corpsName: "Cadets" },
+    u2_worldClass: { uid: "u2", corpsClass: "worldClass", corpsName: "Bluecoats" },
+    u3_worldClass: { uid: "u3", corpsClass: "worldClass", corpsName: "Crossmen" },
+    u4_worldClass: { uid: "u4", corpsClass: "worldClass", corpsName: "Mandarins" },
+  };
+  const uidsOf = (sched) => (sched ? sched.lineup.map((e) => e.uid).sort() : []);
+
+  test("each corps marches exactly one night — never the whole field on both", async () => {
+    const seed = seedWith([NIGHT_1, NIGHT_2]);
+    seed[paths.showRegistrationEvent("s1", ecKey)] = {
+      week: 6, eventName: NIGHT_1.name, date: NIGHT_1.date, registrations: ecRegs,
+    };
+    const db = fakeDb(seed);
+    await enrichScheduleRunningOrdersLogic(db, { now: NOW, podiumEnabled: false });
+    const comps = db.store.get("schedules/s1").competitions;
+    const n1 = comps.find((c) => c.id === "ec1").fantasySchedule;
+    const n2 = comps.find((c) => c.id === "ec2").fantasySchedule;
+    assert.ok(n1 && n2, "both nights materialized from the single registration doc");
+    assert.equal(n1.fieldSize + n2.fieldSize, 4);
+    assert.equal(n1.fieldSize, 2);
+    assert.deepEqual([...uidsOf(n1), ...uidsOf(n2)].sort(), ["u1", "u2", "u3", "u4"]);
+    assert.deepEqual(n1.night, { day: 41, nights: [41, 42], status: "provisional" });
+    assert.deepEqual(n2.night, { day: 42, nights: [41, 42], status: "provisional" });
+  });
+
+  test("the published split seats the nights exactly as announced", async () => {
+    const seed = seedWith([NIGHT_1, NIGHT_2]);
+    seed[paths.showRegistrationEvent("s1", ecKey)] = {
+      week: 6, eventName: NIGHT_1.name, date: NIGHT_1.date, registrations: ecRegs,
+    };
+    seed["eastern-classic/s1"] = {
+      nights: [41, 42],
+      preview: {
+        assignments: {
+          41: [{ key: "u1_worldClass", uid: "u1", corpsClass: "worldClass" }],
+          42: [
+            { key: "u2_worldClass", uid: "u2", corpsClass: "worldClass" },
+            { key: "u3_worldClass", uid: "u3", corpsClass: "worldClass" },
+            { key: "u4_worldClass", uid: "u4", corpsClass: "worldClass" },
+          ],
+        },
+      },
+    };
+    const db = fakeDb(seed);
+    await enrichScheduleRunningOrdersLogic(db, { now: NOW, podiumEnabled: false });
+    const comps = db.store.get("schedules/s1").competitions;
+    const n1 = comps.find((c) => c.id === "ec1").fantasySchedule;
+    const n2 = comps.find((c) => c.id === "ec2").fantasySchedule;
+    assert.deepEqual(uidsOf(n1), ["u1"]);
+    assert.deepEqual(uidsOf(n2), ["u2", "u3", "u4"]);
+    assert.equal(n1.night.status, "preview");
+
+    // Locking the final split (same seats) flips the label without moving anyone.
+    seed["eastern-classic/s1"].final = seed["eastern-classic/s1"].preview;
+    const again = await enrichScheduleRunningOrdersLogic(db, { now: NOW, podiumEnabled: false });
+    assert.ok(again.updated >= 1, "a status change alone rewrites the show");
+    assert.equal(db.store.get("schedules/s1").competitions.find((c) => c.id === "ec1").fantasySchedule.night.status, "final");
+  });
+});

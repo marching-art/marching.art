@@ -267,6 +267,73 @@ async function resolveEasternNightSet(db, seasonData, profilesSnapshot, dayEvent
   return new Set(nightEntries.map((entry) => entry.key));
 }
 
+/**
+ * The published night assignment, in the form the schedule materializer
+ * (scheduled/scheduleRunningOrder.js) seats the FANTASY field by: the final
+ * split when the first night's run has persisted it, else the day-38+
+ * preview, else null (nothing published yet — the caller falls back to a
+ * provisional snake over the current registrants).
+ *
+ * @returns {Promise<?{nights: number[], status: "final"|"preview",
+ *   lineup: Object}>} `lineup` is a lineupIndex (key -> {night, ...}).
+ */
+async function loadNightAssignmentIndex(db, seasonUid) {
+  const snapshot = await splitDocRef(db, seasonUid).get();
+  const data = (snapshot.exists ? snapshot.data() : null) || {};
+  const source =
+    data.final && data.final.assignments
+      ? { status: /** @type {"final"} */ ("final"), split: data.final }
+      : data.preview && data.preview.assignments
+        ? { status: /** @type {"preview"} */ ("preview"), split: data.preview }
+        : null;
+  if (!source) return null;
+  const nights = Array.isArray(data.nights) && data.nights.length > 1 ? data.nights : EASTERN_NIGHTS;
+  return { nights, status: source.status, lineup: lineupIndex(source.split.assignments) };
+}
+
+/**
+ * The registrants who perform on ONE night of a two-night show (pure).
+ *
+ * One registration covers both nights, so the registration index holds the
+ * whole field under the event; seating everyone on both nights (the v0
+ * materializer) showed every corps marching twice. Each corps is placed on
+ * exactly one night: the published assignment (`index`, from
+ * loadNightAssignmentIndex) wins; anyone it doesn't cover — nothing published
+ * yet, or a corps that registered after the last republish — takes the seat
+ * the same snake gives them over the current registrants, seeded by
+ * `scoreFor(uid, corpsClass)` (the standings metric; 0 unscored). The
+ * provisional split re-seeds as corps register, exactly as the published
+ * preview does until it is final.
+ *
+ * @param {Object} params
+ * @param {Array<{uid: ?string, corpsClass: string, corpsName?: ?string}>} params.registrations
+ * @param {number} params.night - The night being materialized.
+ * @param {number[]} params.nights - Both nights of the event.
+ * @param {string} params.seasonUid
+ * @param {?{lineup: Object, status: string}} [params.index]
+ * @param {(uid: ?string, corpsClass: string) => number} [params.scoreFor]
+ * @returns {{registrations: Array, status: "final"|"preview"|"provisional"}}
+ */
+function nightFieldFor({ registrations, night, nights, seasonUid, index = null, scoreFor }) {
+  const keyOf = (r) => `${r.uid || "?"}_${r.corpsClass}`;
+  const enrollees = (registrations || []).map((r) => ({
+    key: keyOf(r),
+    uid: r.uid || null,
+    corpsClass: r.corpsClass,
+    corpsName: r.corpsName || null,
+    score: typeof scoreFor === "function" ? Number(scoreFor(r.uid, r.corpsClass)) || 0 : 0,
+  }));
+  const provisional = lineupIndex(snakeSplitByClass(enrollees, nights, seasonNightParity(seasonUid)));
+  const published = (index && index.lineup) || {};
+  const seated = (registrations || []).filter((r) => {
+    const key = keyOf(r);
+    const assigned = published[key] ? published[key].night : provisional[key] && provisional[key].night;
+    return assigned === night;
+  });
+  const status = index && index.status === "final" ? "final" : index ? "preview" : "provisional";
+  return { registrations: seated, status };
+}
+
 /** "Night 1 (Day 41)" — how a night reads inside inbox prose. */
 function nightLabel(night, nights) {
   const index = nights.indexOf(Number(night));
@@ -404,6 +471,8 @@ module.exports = {
   diffLineups,
   hasLineupChange,
   computeSplit,
+  loadNightAssignmentIndex,
+  nightFieldFor,
   resolveEasternNightSet,
   publishEasternPreview,
 };

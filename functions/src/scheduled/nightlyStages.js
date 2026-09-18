@@ -321,9 +321,10 @@ async function runPodiumScoreDropStage(
  * the split it reads out is a fantasy-class event that predates Podium, and
  * the Podium half of the post is additive when present.
  *
- * Runs AFTER fantasy scoring, which is what publishes the preview (day 38);
- * calling it on other nights is a cheap no-op (an out-of-window day never
- * reads the doc at all).
+ * Runs AFTER fantasy scoring, which is what publishes the preview (day 38)
+ * and, on night one (day 41), locks the FINAL split that the same stage then
+ * posts; calling it on other nights is a cheap no-op (an out-of-window day
+ * never reads the doc at all).
  *
  * @param {FirebaseFirestore.Firestore} db
  * @param {string} webhookUrl - #announcements webhook; falsy disables the stage.

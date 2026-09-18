@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // src/pages/CorpsHistory.jsx
 // Fixed Height Split Layout: Top Stats + Bottom Split (Chart/Timeline)
 import React, { useState, useEffect, useMemo, useRef } from 'react';
@@ -33,17 +32,34 @@ import { useFocusTrap } from '../hooks/useFocusTrap';
 import { SeasonLookSwatches } from '../components/uniform/SeasonUniformSection';
 import SeasonDetail from './CorpsHistorySeasonDetail';
 
+/**
+ * One archived season as the profile's `seasonHistory` carries it: the panel's
+ * row plus the keys this page reads to pick, dedupe and lazy-load it.
+ * @typedef {import('./CorpsHistorySeasonDetail').ArchivedSeasonRow & {
+ *   seasonId?: string,
+ *   corpsClass?: string,
+ *   weeks?: number,
+ * }} HistoryRow
+ *
+ * The slice of one corps (profile `corps[corpsClass]`) this page reads.
+ * @typedef {{ corpsName?: string, seasonHistory?: HistoryRow[] }} CorpsSummary
+ *
+ * @typedef {import('./CorpsHistorySeasonDetail').ArchivedSeasonDetail} ArchivedSeasonDetail
+ */
+
 const CorpsHistory = () => {
-  const { user } = useAuth();
+  const user = useAuth()?.user;
   // Current-user profile comes from the app-wide profileStore listener —
   // this page used to open a second onSnapshot on the same (large) profile
   // doc, doubling the download on every server-side profile write while
   // mounted (and re-subscribing on every corps-class selection).
-  const corps = useProfileStore((state) => state.corps);
+  const corps = /** @type {Record<string, CorpsSummary> | null} */ (
+    useProfileStore((state) => state.corps)
+  );
   const loading = useProfileStore((state) => state.loading);
   const error = useProfileStore((state) => state.error);
-  const [selectedCorpsClass, setSelectedCorpsClass] = useState(null);
-  const [selectedSeason, setSelectedSeason] = useState(null);
+  const [selectedCorpsClass, setSelectedCorpsClass] = useState(/** @type {string | null} */ (null));
+  const [selectedSeason, setSelectedSeason] = useState(/** @type {number | null} */ (null));
   // The mobile season-detail sheet is a dialog: Escape closes it and Tab stays
   // inside it. On desktop the same selection renders an inline side panel and
   // the sheet is not mounted, so the trap has nothing to hold (its ref is null).
@@ -53,14 +69,16 @@ const CorpsHistory = () => {
   const [activeView, setActiveView] = useState('chart'); // 'chart' or 'timeline'
   // detailId -> heavy per-season detail (lineup + weekly scores), or null once a
   // fetch resolves to "no detail doc". Loaded lazily below.
-  const [seasonDetails, setSeasonDetails] = useState({});
+  const [seasonDetails, setSeasonDetails] = useState(
+    /** @type {Record<string, ArchivedSeasonDetail | null>} */ ({})
+  );
 
   // Auto-select first corps with history once profile data is available
   useEffect(() => {
     if (!user?.uid || selectedCorpsClass || !corps) return;
 
     const corpsWithHistory = Object.entries(corps).find(
-      ([_, corpsData]) => corpsData?.seasonHistory?.length > 0
+      ([_, corpsData]) => (corpsData?.seasonHistory?.length ?? 0) > 0
     );
     if (corpsWithHistory) {
       setSelectedCorpsClass(corpsWithHistory[0]);
@@ -70,24 +88,26 @@ const CorpsHistory = () => {
     }
   }, [user, corps, selectedCorpsClass]);
 
+  /** @param {string | undefined} corpsClass */
   const getClassDisplayName = (corpsClass) => {
-    const classNames = {
+    const classNames = /** @type {Record<string, string>} */ ({
       worldClass: 'World Class',
       openClass: 'Open Class',
       aClass: 'A Class',
       soundSport: 'SoundSport',
-    };
-    return classNames[corpsClass] || corpsClass;
+    });
+    return (corpsClass && classNames[corpsClass]) || corpsClass;
   };
 
+  /** @param {string | undefined} corpsClass */
   const getClassColor = (corpsClass) => {
-    const colors = {
+    const colors = /** @type {Record<string, string>} */ ({
       worldClass: 'text-secondary bg-surface-raised border-line',
       openClass: 'text-purple-400 bg-purple-500/20 border-purple-500/30',
       aClass: 'text-blue-400 bg-blue-500/20 border-blue-500/30',
       soundSport: 'text-green-400 bg-green-500/20 border-green-500/30',
-    };
-    return colors[corpsClass] || 'text-muted bg-white/20 border-white/30';
+    });
+    return (corpsClass && colors[corpsClass]) || 'text-muted bg-white/20 border-white/30';
   };
 
   const activeCorps = selectedCorpsClass ? corps?.[selectedCorpsClass] : null;
@@ -153,7 +173,8 @@ const CorpsHistory = () => {
   // records the class it was competed in — so the climb is visible here.
   const classJourney = useMemo(() => {
     const ordered = [...seasonHistory].reverse(); // seasonHistory is newest-first
-    const path = [];
+    const path = /** @type {string[]} */ ([]);
+    /** @param {string | null | undefined} key */
     const pushClass = (key) => {
       const canonical = toCanonicalClassKey(key || '');
       if (canonical && path[path.length - 1] !== canonical) path.push(canonical);
@@ -585,8 +606,8 @@ const CorpsHistory = () => {
                                 <span className="flex items-center gap-1">
                                   <Star className="w-3 h-3" />
                                   {isSoundSportView
-                                    ? season.totalSeasonScore > 0
-                                      ? getSoundSportRating(season.totalSeasonScore)
+                                    ? (season.totalSeasonScore ?? 0) > 0
+                                      ? getSoundSportRating(season.totalSeasonScore ?? 0)
                                       : '—'
                                     : `${(season.totalSeasonScore || 0).toFixed(3)} pts`}
                                 </span>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Clock, Star } from 'lucide-react';
-import { getRunningOrderStatus } from '../../utils/scheduleUtils';
+import { getRunningOrderStatus, nightAssignmentLabel } from '../../utils/scheduleUtils';
 import { normalizeCorpsName as normalize, highlightLabel } from '../../utils/pickHighlights';
 
 /**
@@ -19,6 +19,13 @@ import { normalizeCorpsName as normalize, highlightLabel } from '../../utils/pic
  * @property {string|null} [timezone]
  * @property {string|null} [startsAt]
  * @property {string|null} [scoresAt]
+ * @property {NightAssignment|null} [night] - Set on one night of a two-night
+ *   event: which night this field is, and how settled the split is.
+ *
+ * @typedef {Object} NightAssignment
+ * @property {number} day - The competition day this running order is for.
+ * @property {number[]} nights - Every night of the event, in order.
+ * @property {'provisional'|'preview'|'final'} status
  */
 
 /**
@@ -65,6 +72,10 @@ const RunningOrder = ({ show, highlights, highlightCorps, myUid, compact = false
   const encore = show?.encore && show.encore.corps ? show.encore : null;
   const encoreMine = !!(encore && myUid && encore.uid === myUid);
 
+  // One registration covers both nights of a two-night event; this field is
+  // the corps assigned to THIS night, so say so (and how settled that is).
+  const nightLabel = nightAssignmentLabel(show?.night);
+
   const status = getRunningOrderStatus(show, now);
   const current = /** @type {LineupEntry|null} */ (status.current);
   const next = /** @type {LineupEntry|null} */ (status.next);
@@ -82,6 +93,14 @@ const RunningOrder = ({ show, highlights, highlightCorps, myUid, compact = false
           {lineup.length + overflow.length} corps
         </span>
       </div>
+      {nightLabel && (
+        <div
+          className="px-4 py-1.5 border-b border-line bg-interactive/5 text-[10px] text-secondary"
+          data-testid="running-order-night"
+        >
+          {nightLabel}
+        </div>
+      )}
 
       <div className="divide-y divide-line/50">
         {lineup.map((entry) => {

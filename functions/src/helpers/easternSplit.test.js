@@ -19,6 +19,8 @@ const {
   hasLineupChange,
   lineupIndex,
   resolveEasternNightSet,
+  loadNightAssignmentIndex,
+  nightFieldFor,
 } = require("./easternSplit");
 
 // --- fixtures -------------------------------------------------------------
@@ -413,5 +415,80 @@ describe("resolveEasternNightSet", () => {
       db, seasonData, snapshot, { shows: [{ eventName: "Normal Show" }] }, 6, 41
     );
     assert.equal(result, null);
+  });
+});
+
+describe("nightFieldFor / loadNightAssignmentIndex (schedule materializer)", () => {
+  const regs = [
+    { uid: "u1", corpsClass: "worldClass", corpsName: "One" },
+    { uid: "u2", corpsClass: "worldClass", corpsName: "Two" },
+    { uid: "u3", corpsClass: "worldClass", corpsName: "Three" },
+    { uid: "u4", corpsClass: "worldClass", corpsName: "Four" },
+    { uid: "u5", corpsClass: "aClass", corpsName: "Five" },
+  ];
+  const scores = { u1: 90, u2: 80, u3: 70, u4: 60, u5: 50 };
+  const scoreFor = (uid) => scores[uid] || 0;
+
+  test("with nothing published, the two nights are a provisional snake complement", () => {
+    const n41 = nightFieldFor({ registrations: regs, night: 41, nights: [41, 42], seasonUid: "s1", scoreFor });
+    const n42 = nightFieldFor({ registrations: regs, night: 42, nights: [41, 42], seasonUid: "s1", scoreFor });
+    assert.equal(n41.status, "provisional");
+    assert.equal(n42.status, "provisional");
+    const keys = (r) => r.registrations.map((x) => `${x.uid}_${x.corpsClass}`).sort();
+    assert.equal(n41.registrations.length + n42.registrations.length, regs.length);
+    assert.deepEqual([...keys(n41), ...keys(n42)].sort(), regs.map((r) => `${r.uid}_${r.corpsClass}`).sort());
+    // Seeds 1 and 4 share a night; 2 and 3 the other (per class).
+    const worldOn41 = n41.registrations.filter((r) => r.corpsClass === "worldClass").map((r) => r.uid);
+    assert.ok(
+      (worldOn41.includes("u1") && worldOn41.includes("u4") && worldOn41.length === 2) ||
+        (worldOn41.includes("u2") && worldOn41.includes("u3") && worldOn41.length === 2)
+    );
+    // Deterministic across runs.
+    assert.deepEqual(keys(nightFieldFor({ registrations: regs, night: 41, nights: [41, 42], seasonUid: "s1", scoreFor })), keys(n41));
+  });
+
+  test("a published assignment wins; a corps it doesn't cover keeps its snake seat", () => {
+    const index = {
+      status: "preview",
+      nights: [41, 42],
+      lineup: {
+        u1_worldClass: { night: 42 },
+        u2_worldClass: { night: 42 },
+        u3_worldClass: { night: 41 },
+        u4_worldClass: { night: 41 },
+        // u5 registered after the preview — not in the published index.
+      },
+    };
+    const n41 = nightFieldFor({ registrations: regs, night: 41, nights: [41, 42], seasonUid: "s1", index, scoreFor });
+    const n42 = nightFieldFor({ registrations: regs, night: 42, nights: [41, 42], seasonUid: "s1", index, scoreFor });
+    assert.equal(n41.status, "preview");
+    assert.deepEqual(n41.registrations.filter((r) => r.corpsClass === "worldClass").map((r) => r.uid).sort(), ["u3", "u4"]);
+    assert.deepEqual(n42.registrations.filter((r) => r.corpsClass === "worldClass").map((r) => r.uid).sort(), ["u1", "u2"]);
+    const fiveNights = [n41, n42].filter((n) => n.registrations.some((r) => r.uid === "u5"));
+    assert.equal(fiveNights.length, 1, "the late registrant sits on exactly one night");
+    assert.equal(
+      nightFieldFor({ registrations: regs, night: 41, nights: [41, 42], seasonUid: "s1", index: { ...index, status: "final" }, scoreFor }).status,
+      "final"
+    );
+  });
+
+  test("loadNightAssignmentIndex prefers final over preview, null when neither exists", async () => {
+    const docs = {};
+    const db = { doc: (path) => ({ get: async () => ({ exists: path in docs, data: () => docs[path] }) }) };
+    assert.equal(await loadNightAssignmentIndex(db, "s1"), null);
+    docs["eastern-classic/s1"] = {
+      nights: [41, 42],
+      preview: { assignments: { 41: [{ key: "u1_worldClass", uid: "u1", corpsClass: "worldClass" }], 42: [] } },
+    };
+    const preview = await loadNightAssignmentIndex(db, "s1");
+    assert.equal(preview.status, "preview");
+    assert.equal(preview.lineup.u1_worldClass.night, 41);
+    docs["eastern-classic/s1"].final = {
+      assignments: { 41: [], 42: [{ key: "u1_worldClass", uid: "u1", corpsClass: "worldClass" }] },
+    };
+    const final = await loadNightAssignmentIndex(db, "s1");
+    assert.equal(final.status, "final");
+    assert.equal(final.lineup.u1_worldClass.night, 42);
+    assert.deepEqual(final.nights, [41, 42]);
   });
 });

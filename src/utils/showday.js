@@ -37,6 +37,8 @@ import { CAPTION_LABELS, normalizeCorpsName } from './pickHighlights';
  * @property {string} [timezone]
  * @property {LineupEntry[]} [lineup]
  * @property {Array<{uid?: string|null, corps?: string}>} [overflow]
+ * @property {{day: number, nights: number[], status: 'provisional'|'preview'|'final'}|null} [night]
+ *   - On a two-night event, which night this field is and how settled the split is.
  */
 
 /**

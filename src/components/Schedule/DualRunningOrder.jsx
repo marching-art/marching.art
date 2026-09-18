@@ -43,8 +43,9 @@ const DualRunningOrder = ({ show, myUid, highlights, compact = false }) => {
           gatesAt: podium?.gatesAt ?? null,
           timezone: podium?.timezone ?? null,
           encore: show.podiumEncore ?? null, // the podium field's own encore
+          night: podium?.night ?? null,
         }
-      : show;
+      : { ...show, night: show?.fantasySchedule?.night ?? null };
 
   const showToggle = fantasyHasField && podiumHasField;
 
