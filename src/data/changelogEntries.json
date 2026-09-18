@@ -1,5 +1,17 @@
 [
   {
+    "id": "2026-09-18-eastern-classic-fantasy-nights",
+    "date": "2026-09-18",
+    "title": "Eastern Classic: the schedule shows the night your fantasy corps actually marches",
+    "category": "fix",
+    "summary": "Both nights of the Eastern Classic in Allentown listed every registered fantasy corps, as if the whole field performed twice. Each running order now shows only the corps assigned to that night, the same way the Podium field already did, and the Discord announcements now cover the locked lineup too.",
+    "highlights": [
+      "Each night's running order lists only the corps marching that night, labeled Night 1 or Night 2 with how settled the split is.",
+      "Before lineups are announced on Day 39 you see a provisional split that re-seeds as corps register; once announced, the schedule matches the announcement.",
+      "After Night 1 scores, Discord posts the final, locked lineup and names any corps that changed nights since the announcement."
+    ]
+  },
+  {
     "id": "2026-09-14-directors-page-built-to-scale",
     "date": "2026-09-14",
     "title": "Directors page loads instantly at any size",

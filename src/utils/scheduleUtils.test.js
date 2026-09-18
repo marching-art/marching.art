@@ -6,6 +6,7 @@ import {
   getPerformanceStatus,
   getMyPerformanceSlots,
   pickMyNextPerformance,
+  nightAssignmentLabel,
 } from './scheduleUtils';
 
 // Regression: "Drums Across Nebraska" starts Wed 2026-07-01 8:46 PM CDT, which
@@ -215,5 +216,24 @@ describe('personal performance status (the "my corps right now" element)', () =>
 
   it('returns null when the director has no corps in any field', () => {
     expect(pickMyNextPerformance([show], 'nobody', new Date('2026-06-18T20:00:00Z'))).toBe(null);
+  });
+});
+
+describe('nightAssignmentLabel', () => {
+  it('is null for ordinary shows', () => {
+    expect(nightAssignmentLabel(null)).toBeNull();
+    expect(nightAssignmentLabel({ day: 18, nights: [18], status: 'final' })).toBeNull();
+  });
+
+  it('names the night and how settled the split is', () => {
+    expect(nightAssignmentLabel({ day: 41, nights: [41, 42], status: 'provisional' })).toBe(
+      'Night 1 of 2 · provisional split, lineups announced Day 39'
+    );
+    expect(nightAssignmentLabel({ day: 42, nights: [41, 42], status: 'preview' })).toBe(
+      'Night 2 of 2 · published lineup, re-seeds as corps register'
+    );
+    expect(nightAssignmentLabel({ day: 42, nights: [41, 42], status: 'final' })).toBe(
+      'Night 2 of 2 · final lineup'
+    );
   });
 });

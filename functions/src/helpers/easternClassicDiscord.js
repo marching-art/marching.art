@@ -56,11 +56,18 @@ const TAG = "eastern-classic";
 // lineup, and every later "it moved" correction to it.
 const PREVIEW_KIND = "eastern-preview";
 const UPDATE_KIND = "eastern-lineup-update";
+// The third: the FINAL split, locked from final enrollment by night one's
+// scoring run (easternSplit.resolveEasternNightSet). Night two's field is
+// settled the moment it exists, and it is the last word on who moved.
+const FINAL_KIND = "eastern-final";
 
 // The preview is written by the day-38 run; the post stops being news once
-// the first night is actually scored.
+// the first night is actually scored — from then on the FINAL split is the
+// news, posted with night one's drop (and only then: a night later it would
+// land after night two had already marched).
 const ANNOUNCE_FROM_DAY = PREVIEW_TRIGGER_DAY;
 const ANNOUNCE_THROUGH_DAY = EASTERN_NIGHTS[0] - 1;
+const FINAL_ANNOUNCE_DAY = EASTERN_NIGHTS[0];
 
 // Fantasy classes in tier order. Registry order rather than the registry
 // itself: this is presentation copy, exactly like scoreDrop.js CLASS_LABELS.
@@ -302,6 +309,72 @@ function buildEasternUpdatePayload({ seasonName, data, changes }) {
 }
 
 /**
+ * The "final split locked" embed, posted with night one's score drop: night
+ * two's field is settled, and anyone the final split moved off the night they
+ * were told (a late registration re-seeded the snake; the standings shifted
+ * on the last night before the event) is named. Stands on its own — a season
+ * whose preview never made it to the channel still gets the whole lineup.
+ *
+ * @param {Object} params
+ * @param {string} params.seasonName
+ * @param {Object} params.data - The `eastern-classic/{seasonUid}` doc.
+ * @param {?{moved: Array, added: Array, removed: Array}} params.changes - The
+ *   diff between the announced lineup and the final one; null when nothing
+ *   was ever announced.
+ * @returns {?Object} Webhook payload, or null when no final split exists.
+ */
+function buildEasternFinalPayload({ seasonName, data, changes }) {
+  const assignments = data && data.final && data.final.assignments;
+  if (!assignments) return null;
+
+  const nights =
+    Array.isArray(data.nights) && data.nights.length === 2 ? data.nights : EASTERN_NIGHTS;
+  const podiumCounts = podiumCountsByNight(data.podium && data.podium.assignments, nights);
+  const perNight = nights.map((night) => ({
+    night,
+    entries: assignments[String(night)] || [],
+    podium: podiumCounts[String(night)] || 0,
+  }));
+  const total = perNight.reduce((sum, n) => sum + n.entries.length + n.podium, 0);
+  if (total === 0) return null;
+
+  const eventName = clampName(data.eventName || "marching.art Eastern Classic", 80);
+  const { moved = [], added = [], removed = [] } = changes || {};
+  const changed = hasLineupChange(changes);
+  const changeLine = !changes
+    ? ""
+    : changed
+      ? ` Since the lineup was posted, ${moved.length} corps ${moved.length === 1 ? "has" : "have"}` +
+        ` changed nights${added.length > 0 ? `, ${added.length} joined` : ""}` +
+        `${removed.length > 0 ? `, ${removed.length} dropped` : ""}.`
+      : " Nobody moved from the lineup that was posted.";
+  const splitLine = perNight
+    .map((n, i) => `${n.entries.length + n.podium} on Night ${i + 1}`)
+    .join(" · ");
+
+  const fields = [
+    buildChangeField("🔀 Changed nights", moved, (entry) => `now ${nightLabel(entry.to, nights)}`),
+    buildChangeField("➕ Newly registered", added, (entry) => nightLabel(entry.night, nights)),
+    buildChangeField("➖ No longer registered", removed, () => "withdrawn from the event"),
+    ...perNight.map((n, i) => buildNightField(n.night, i, n.entries, n.podium)),
+  ].filter(Boolean);
+
+  return payloadOf({
+    title: "🔒 Eastern Classic — final lineup locked",
+    url: SCHEDULE_URL,
+    description:
+      `${seasonName} — ${eventName} Night 1 (Day ${nights[0]}) is in the books, and the ` +
+      `split is now final from tonight's enrollment. ${total} corps: ${splitLine}.` +
+      `${changeLine} Night 2 (Day ${nights[1]}) marches tomorrow — this is its field.`,
+    color: COLORS.lineup,
+    fields,
+    footer: {
+      text: "Final — night assignments no longer move. One registration covered both nights.",
+    },
+  });
+}
+
+/**
  * Remember the lineup this module just put on the channel, so the next run
  * diffs against what directors were actually told rather than against
  * whatever the split doc happened to hold.
@@ -341,6 +414,9 @@ async function announceEasternPreview(
   db,
   { seasonUid, seasonName, competitionDay, webhookUrl, fetchImpl }
 ) {
+  if (competitionDay === FINAL_ANNOUNCE_DAY) {
+    return announceEasternFinal(db, { seasonUid, seasonName, competitionDay, webhookUrl, fetchImpl });
+  }
   if (
     typeof competitionDay !== "number" ||
     competitionDay < ANNOUNCE_FROM_DAY ||
@@ -405,12 +481,66 @@ async function announceEasternPreview(
   return { ...result, moved: changes.moved.length };
 }
 
+/**
+ * Announce the FINAL split on night one — after its scoring run has locked
+ * it (easternSplit.resolveEasternNightSet) — diffed against whatever lineup
+ * was last announced so the directors it moved are named. Posts at most
+ * once, on that night only: night two's run would be too late to matter.
+ *
+ * @param {FirebaseFirestore.Firestore} db
+ * @param {Object} params
+ * @param {string} params.seasonUid
+ * @param {string} params.seasonName
+ * @param {number} params.competitionDay
+ * @param {string} params.webhookUrl
+ * @param {typeof fetch} [params.fetchImpl]
+ * @returns {Promise<{kind: string, status: string, [k: string]: unknown}>}
+ */
+async function announceEasternFinal(
+  db,
+  { seasonUid, seasonName, competitionDay, webhookUrl, fetchImpl }
+) {
+  if (competitionDay !== FINAL_ANNOUNCE_DAY) {
+    return { kind: FINAL_KIND, status: "out-of-window", competitionDay };
+  }
+  const ref = splitDocRef(db, seasonUid);
+  const snapshot = await ref.get();
+  const data = snapshot.exists ? snapshot.data() : null;
+  if (!data || !data.final || !data.final.assignments) {
+    return { kind: FINAL_KIND, status: "not-published", competitionDay };
+  }
+  const lineup = lineupIndex(data.final.assignments);
+  const announced = data.announced && data.announced.lineup ? data.announced.lineup : null;
+  const changes = announced ? diffLineups(announced, lineup) : null;
+
+  const payload = buildEasternFinalPayload({ seasonName, data, changes });
+  if (!payload) return { kind: FINAL_KIND, status: "not-published", competitionDay };
+  const result = await postOnce(db, {
+    kind: FINAL_KIND,
+    tag: TAG,
+    leaseKey: `${seasonUid}_eastern_final`,
+    leaseDay: competitionDay,
+    payload,
+    webhookUrl,
+    fetchImpl,
+  });
+  if (result.status === "posted") {
+    await ref.set(
+      { announced: { revision: null, final: true, postedAt: new Date().toISOString(), lineup } },
+      { merge: true }
+    );
+  }
+  return { ...result, moved: changes ? changes.moved.length : 0 };
+}
+
 module.exports = {
   TAG,
   PREVIEW_KIND,
   UPDATE_KIND,
+  FINAL_KIND,
   ANNOUNCE_FROM_DAY,
   ANNOUNCE_THROUGH_DAY,
+  FINAL_ANNOUNCE_DAY,
   CLASS_LABELS,
   nightLabel,
   rosterNames,
@@ -420,5 +550,7 @@ module.exports = {
   buildChangeField,
   buildEasternPreviewPayload,
   buildEasternUpdatePayload,
+  buildEasternFinalPayload,
+  announceEasternFinal,
   announceEasternPreview,
 };

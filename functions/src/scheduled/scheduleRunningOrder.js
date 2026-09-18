@@ -39,6 +39,12 @@ const { isPodiumEnabled } = require("../helpers/features");
 const { homeGeoFor } = require("../helpers/corpsGeo");
 const { assignEncore, encoreKey } = require("../helpers/encore");
 const podiumStore = require("../helpers/podium/store");
+const {
+  EASTERN_NIGHTS,
+  isTwoNightShow,
+  loadNightAssignmentIndex,
+  nightFieldFor,
+} = require("../helpers/easternSplit");
 
 // Batch size for the getAll fan-out over Podium state docs (matches users.js).
 const GETALL_CHUNK = 300;
@@ -98,7 +104,8 @@ function resolveScoresDropAt(comp, date, isLive) {
 function scheduleSignature(sched) {
   if (!sched) return "";
   const ids = sched.lineup.map((e) => `${e.uid || "?"}:${e.order}`).join(",");
-  return `${sched.fieldSize}|${sched.intervalMin}|${sched.scoresAt}|${sched.overflow.length}|${ids}`;
+  const night = sched.night ? `${sched.night.day}:${sched.night.status}` : "";
+  return `${sched.fieldSize}|${sched.intervalMin}|${sched.scoresAt}|${sched.overflow.length}|${night}|${ids}`;
 }
 
 /** Shape a builder result into the stored schedule object (sans updatedAt). */
@@ -221,6 +228,15 @@ async function enrichScheduleRunningOrdersLogic(db, deps = {}) {
       logger.warn(`[running-order] podium roster read failed: ${err.message}`);
     }
   }
+  // The fantasy field's Eastern night assignment (helpers/easternSplit.js):
+  // final once night one has scored, the day-38+ preview before that, null
+  // until anything is published (provisional snake per show below).
+  let fantasyNightIndex = null;
+  try {
+    fantasyNightIndex = await loadNightAssignmentIndex(db, seasonId);
+  } catch (err) {
+    logger.warn(`[running-order] eastern night assignment read failed: ${err.message}`);
+  }
   // Cut survivors per advancement round (46/48/49), read lazily once per day
   // the walk actually reaches; null = no cut known yet, the whole field marches.
   const advancingByDay = new Map();
@@ -262,8 +278,21 @@ async function enrichScheduleRunningOrdersLogic(db, deps = {}) {
     }
 
     if (date && isUpcoming) {
-      const week = comp.week || Math.ceil((comp.day || 1) / 7);
-      const eventKey = showRegistrationEventKey(week, comp.name, comp.date ?? null);
+      // A two-night event (the Eastern Classic) is ONE registration covering
+      // both nights, stored under the FIRST night's entry (showSelection
+      // .resolveShowsAgainstSchedule) — so its index doc is keyed by night
+      // one's week + date, whichever night is being materialized.
+      const twoNight = isTwoNightShow(comp) && !isChampionship(comp);
+      const nights = twoNight
+        ? (Array.isArray(comp.multiNight?.nights) && comp.multiNight.nights.length > 1
+          ? comp.multiNight.nights
+          : EASTERN_NIGHTS)
+        : null;
+      const regComp = twoNight
+        ? competitions.find((c) => c && c.name === comp.name && c.day === nights[0]) || comp
+        : comp;
+      const week = regComp.week || Math.ceil((regComp.day || 1) / 7);
+      const eventKey = showRegistrationEventKey(week, comp.name, regComp.date ?? null);
       try {
         // One venue geocode, shared by both sides' proximity encore.
         const venueGeo = homeGeoFor(comp.location);
@@ -271,7 +300,7 @@ async function enrichScheduleRunningOrdersLogic(db, deps = {}) {
         // Championship rounds keep their heritage synthesis on this side.
         if (!isChampionship(comp)) {
           const regSnap = await db.doc(paths.showRegistrationEvent(seasonId, eventKey)).get();
-          const registrations = regSnap.exists
+          let registrations = regSnap.exists
             ? Object.values(regSnap.data().registrations || {}).map((r) => ({
                 uid: r.uid || null,
                 corpsClass: r.corpsClass,
@@ -280,6 +309,25 @@ async function enrichScheduleRunningOrdersLogic(db, deps = {}) {
                 encoreDeclined: r.encoreDeclined === true,
               }))
             : [];
+          // Each corps marches ONE night of a two-night event: seat only this
+          // night's assignment (published snake, else the provisional one) —
+          // the whole field on both nights is the bug this replaces.
+          let night = null;
+          if (twoNight && Number.isFinite(comp.day)) {
+            const seated = nightFieldFor({
+              registrations,
+              night: comp.day,
+              nights,
+              seasonUid: seasonId,
+              index: fantasyNightIndex,
+              scoreFor: (uid, cls) => {
+                const m = metricFor(uid, cls);
+                return m ? Number(m.totalScore ?? m.score) || 0 : 0;
+              },
+            });
+            registrations = seated.registrations;
+            night = { day: comp.day, nights: [...nights], status: seated.status };
+          }
           built += 1;
           const fantasy = toScheduleDoc(
             build({
@@ -290,6 +338,7 @@ async function enrichScheduleRunningOrdersLogic(db, deps = {}) {
               location: comp.location || "",
             })
           );
+          if (night) fantasy.night = night;
           // Write when there's a field, or to CLEAR a schedule whose field emptied.
           // An always-empty far-out show writes nothing (no churn).
           if (

@@ -70,6 +70,25 @@ export function transformCompetitionToShow(competition) {
   };
 }
 
+/**
+ * "Night 1 of 2 · lineups announced Day 39" — the one-line explanation of why
+ * a two-night field is half the registrants. Null for ordinary shows.
+ * @param {{day: number, nights: number[], status: string}|null|undefined} night
+ * @returns {string|null}
+ */
+export function nightAssignmentLabel(night) {
+  if (!night || !Array.isArray(night.nights) || night.nights.length < 2) return null;
+  const index = night.nights.indexOf(night.day);
+  const which = index >= 0 ? `Night ${index + 1} of ${night.nights.length}` : `Day ${night.day}`;
+  const state =
+    night.status === 'final'
+      ? 'final lineup'
+      : night.status === 'preview'
+        ? 'published lineup, re-seeds as corps register'
+        : `provisional split, lineups announced Day ${night.nights[0] - 2}`;
+  return `${which} · ${state}`;
+}
+
 // A show is considered "live" from its real start time until scores are announced
 // (or, if we only know the start, for an estimated 3-hour window). Runs entirely
 // on the enriched `startsAt`/`scoresAt` instants — no guessing from wall-clock.

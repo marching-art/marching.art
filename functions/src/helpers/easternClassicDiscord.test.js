@@ -293,10 +293,12 @@ describe("Eastern Classic announcement window", () => {
     assert.equal(posts.length, 1);
   });
 
-  test("silent outside days 38-40, without reading the split doc", async () => {
+  test("silent outside days 38-41, without reading the split doc", async () => {
+    // Day 41 is the final-split post's night (its own describe below); every
+    // other day outside the preview window says nothing.
     const db = fakeDb({ "eastern-classic/s12": splitDoc() });
     const posts = [];
-    for (const competitionDay of [1, 37, 41, 42, 49]) {
+    for (const competitionDay of [1, 37, 42, 49]) {
       const result = await easternClassicDiscord.announceEasternPreview(db, {
         seasonUid: "s12",
         seasonName: "Season 12",
@@ -453,5 +455,117 @@ describe("Eastern Classic announcement window", () => {
     assert.equal(result.status, "not-published");
     assert.equal(posts.length, 0);
     assert.deepEqual(Object.keys(db.writes), []);
+  });
+});
+
+describe("Eastern Classic final split (night one)", () => {
+  /** The split doc after night one's run persisted the final assignment. */
+  function finalDoc(overrides = {}) {
+    const announcedPreview = splitDoc().preview;
+    return splitDoc({
+      announced: {
+        revision: 0,
+        postedAt: "2026-07-08T01:00:00Z",
+        lineup: easternClassicDiscord.__lineupIndexForTest
+          ? easternClassicDiscord.__lineupIndexForTest(announcedPreview.assignments)
+          : require("./easternSplit").lineupIndex(announcedPreview.assignments),
+      },
+      final: {
+        assignments: {
+          // Carolina Crown re-seeded onto Night 2; Raiders dropped; Cavaliers joined.
+          41: [entry("Blue Devils", "worldClass", 1), entry("Cavaliers", "worldClass", 4)],
+          42: [
+            entry("Bluecoats", "worldClass", 2),
+            entry("Boston Crusaders", "worldClass", 3),
+            entry("Carolina Crown", "worldClass", 5),
+            entry("Spartans", "aClass", 1),
+          ],
+        },
+        counts: { 41: 2, 42: 4 },
+        enrolled: 6,
+        finalizedAfterDay: 40,
+      },
+      ...overrides,
+    });
+  }
+
+  test("posts the locked lineup with night one's drop, naming who moved", async () => {
+    const db = fakeDb({ "eastern-classic/s12": finalDoc() });
+    const posts = [];
+    const result = await easternClassicDiscord.announceEasternPreview(db, {
+      seasonUid: "s12",
+      seasonName: "Season 12",
+      competitionDay: 41,
+      webhookUrl: "https://discord.test/hook",
+      fetchImpl: recordingFetch(posts),
+    });
+    assert.equal(result.kind, "eastern-final");
+    assert.equal(result.status, "posted");
+    assert.equal(result.moved, 1);
+    assert.equal(posts.length, 1);
+    const embed = posts[0].payload.embeds[0];
+    assert.match(embed.title, /final lineup locked/);
+    assert.match(embed.description, /1 corps has changed nights, 1 joined, 1 dropped/);
+    assert.match(embed.description, /Night 2 \(Day 42\) marches tomorrow/);
+    const names = embed.fields.map((f) => f.name);
+    assert.deepEqual(names, [
+      "🔀 Changed nights",
+      "➕ Newly registered",
+      "➖ No longer registered",
+      "Night 1 · Day 41",
+      "Night 2 · Day 42",
+    ]);
+    assert.match(embed.fields[0].value, /Carolina Crown.*now Night 2 · Day 42/);
+    assert.match(embed.fields[4].value, /Carolina Crown/);
+    // The final lineup becomes the announced baseline.
+    assert.equal(db.writes["eastern-classic/s12"].announced.final, true);
+  });
+
+  test("posts once, and only on night one", async () => {
+    const db = fakeDb({ "eastern-classic/s12": finalDoc() });
+    const posts = [];
+    const args = {
+      seasonUid: "s12",
+      seasonName: "Season 12",
+      competitionDay: 41,
+      webhookUrl: "https://discord.test/hook",
+      fetchImpl: recordingFetch(posts),
+    };
+    assert.equal((await easternClassicDiscord.announceEasternPreview(db, args)).status, "posted");
+    assert.equal((await easternClassicDiscord.announceEasternPreview(db, args)).status, "skipped");
+    const late = await easternClassicDiscord.announceEasternPreview(db, { ...args, competitionDay: 42 });
+    assert.equal(late.status, "out-of-window");
+    assert.equal(posts.length, 1);
+  });
+
+  test("a season whose preview never posted still gets the whole final lineup", async () => {
+    const db = fakeDb({ "eastern-classic/s12": finalDoc({ announced: undefined }) });
+    const posts = [];
+    const result = await easternClassicDiscord.announceEasternPreview(db, {
+      seasonUid: "s12",
+      seasonName: "Season 12",
+      competitionDay: 41,
+      webhookUrl: "https://discord.test/hook",
+      fetchImpl: recordingFetch(posts),
+    });
+    assert.equal(result.status, "posted");
+    assert.equal(result.moved, 0);
+    const embed = posts[0].payload.embeds[0];
+    assert.doesNotMatch(embed.description, /Since the lineup was posted/);
+    assert.deepEqual(embed.fields.map((f) => f.name), ["Night 1 · Day 41", "Night 2 · Day 42"]);
+  });
+
+  test("night one with no persisted final split claims no lease", async () => {
+    const db = fakeDb({ "eastern-classic/s12": splitDoc() });
+    const posts = [];
+    const result = await easternClassicDiscord.announceEasternPreview(db, {
+      seasonUid: "s12",
+      seasonName: "Season 12",
+      competitionDay: 41,
+      webhookUrl: "https://discord.test/hook",
+      fetchImpl: recordingFetch(posts),
+    });
+    assert.deepEqual(result, { kind: "eastern-final", status: "not-published", competitionDay: 41 });
+    assert.equal(posts.length, 0);
   });
 });
