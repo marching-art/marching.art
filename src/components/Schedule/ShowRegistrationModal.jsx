@@ -45,6 +45,17 @@ import { multiNightNights, podiumAutoNightFor } from '../../utils/podiumAttendan
 // MAIN MODAL COMPONENT
 // =============================================================================
 
+/**
+ * @param {{
+ *   show: Record<string, any>,
+ *   userProfile: any,
+ *   formattedDate: string,
+ *   eventDate: Date|null,
+ *   hostedEvent?: Record<string, any>|null,
+ *   onClose: () => void,
+ *   onSuccess?: () => void,
+ * }} props
+ */
 const ShowRegistrationModal = ({
   show,
   userProfile,

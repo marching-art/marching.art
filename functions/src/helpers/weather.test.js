@@ -94,6 +94,10 @@ describe("toIsoDate", () => {
   test("null for a bad value", () => {
     assert.equal(toIsoDate(null), null);
     assert.equal(toIsoDate("not a date"), null);
+    // A season-calendar day string passes through untouched in every timezone
+    // (new Date("2026-09-22") would be UTC midnight → Sept 21 with local getters
+    // anywhere west of Greenwich).
+    assert.equal(toIsoDate("2026-09-22"), "2026-09-22");
   });
 });
 

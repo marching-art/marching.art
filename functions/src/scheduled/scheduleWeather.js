@@ -16,12 +16,24 @@
 // evening events, and that beats a daily high/low for "what it felt like at the
 // show". Everything is best-effort: a lookup that fails or returns nothing simply
 // leaves that competition's existing weather untouched.
+//
+// WHICH date: the night the show is played in THIS season — the season calendar
+// (start + spring training + day − 1, gameDay.competitionDayToIsoDate), never the
+// row's own `date`. An off-season row's `date` is the archive night it replays
+// (kept so heritage running orders can be matched, and years old), and the
+// generated championship rounds carry no date at all; both used to be dated
+// wrong here — the off-season cards showed a past summer's weather in January,
+// and a live season's Championship Week was dated three weeks early, before
+// spring training. Every competition — regular, major, championship — is now
+// dated the same way, so the Open & A Class Prelims card carries Marion's
+// forecast for the actual night, whatever month the season runs in.
 
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
 const { getShowtimeWeather, SHOWTIME_HOUR, FORECAST_HORIZON_DAYS } = require("../helpers/weather");
 const { cleanLocation } = require("../helpers/newsArticleShared");
+const { competitionDayToIsoDate } = require("../helpers/gameDay");
 
 const DAY_MS = 86400000;
 
@@ -33,25 +45,36 @@ function coerceDate(value) {
 }
 
 /**
- * A competition's real calendar date: its own `date` when present, otherwise
- * derived from the season start plus its day number (off-season shows carry a day
- * but often no explicit date). Returns a Date or null.
+ * The calendar day a competition is played on in the active season, as a
+ * `YYYY-MM-DD` string: the season calendar for its day number (spring-training
+ * aware), so an off-season replay is dated in the season being played rather
+ * than the archive year its row was copied from. The row's own `date` is only a
+ * fallback for a season doc with no usable start date (or a row with no day).
+ * Null when neither yields a date.
+ *
+ * @param {{day?: number, date?: unknown}} comp
+ * @param {{schedule?: {startDate?: unknown, springTrainingDays?: number}, startDate?: unknown}|null|undefined} season
+ * @returns {string|null}
  */
-function competitionDate(comp, seasonStartDate) {
+function competitionIsoDate(comp, season) {
+  const fromCalendar = competitionDayToIsoDate(season, comp.day);
+  if (fromCalendar) return fromCalendar;
   const explicit = coerceDate(comp.date);
-  if (explicit) return explicit;
-  if (seasonStartDate && Number.isFinite(comp.day)) {
-    const d = new Date(seasonStartDate);
-    d.setDate(d.getDate() + (comp.day - 1));
-    return d;
-  }
-  return null;
+  if (!explicit) return null;
+  const y = explicit.getUTCFullYear();
+  const m = String(explicit.getUTCMonth() + 1).padStart(2, "0");
+  const d = String(explicit.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 }
 
-/** True when the two weather objects carry the same rendered facts. */
+/**
+ * True when the two weather objects carry the same rendered facts for the same
+ * calendar day. An entry with no `date` predates season-calendar dating (it may
+ * be the archive year's weather), so it never counts as the same.
+ */
 function sameWeather(a, b) {
   if (!a || !b) return false;
-  return a.summary === b.summary && a.tempF === b.tempF && a.code === b.code;
+  return a.summary === b.summary && a.tempF === b.tempF && a.code === b.code && a.date === b.date;
 }
 
 /**
@@ -78,9 +101,6 @@ async function enrichScheduleWeatherLogic(db, deps = {}) {
     logger.info("[schedule-weather] active season has no seasonUid; skipping.");
     return { updated: 0, looked: 0, total: 0, seasonId: null };
   }
-  const seasonStartDate =
-    coerceDate(season.schedule && season.schedule.startDate) || coerceDate(season.startDate);
-
   const schedRef = db.doc(`schedules/${seasonId}`);
   const schedSnap = await schedRef.get();
   const competitions = (schedSnap.exists && schedSnap.data().competitions) || [];
@@ -95,10 +115,10 @@ async function enrichScheduleWeatherLogic(db, deps = {}) {
   for (const comp of competitions) {
     const entry = { ...comp };
     const location = cleanLocation(comp.location);
-    const date = competitionDate(comp, seasonStartDate);
+    const date = competitionIsoDate(comp, season);
 
     if (location && date) {
-      const ageDays = Math.floor((now - date.getTime()) / DAY_MS);
+      const ageDays = Math.floor((now - Date.parse(`${date}T12:00:00Z`)) / DAY_MS);
       // Skip only shows beyond the forecast horizon (no data exists yet); they
       // get picked up on a later run once they enter the window. Past and near
       // shows are looked up (and served from cache when already resolved).
@@ -112,6 +132,9 @@ async function enrichScheduleWeatherLogic(db, deps = {}) {
               tempF: w.tempF == null ? null : w.tempF,
               code: w.code == null ? null : w.code,
               hour: SHOWTIME_HOUR,
+              // The calendar day the conditions are for, so a card (and a
+              // re-run) can tell a season-dated entry from a stale one.
+              date,
             };
             if (!sameWeather(comp.weather, next)) updated += 1;
             entry.weather = next;
@@ -138,7 +161,7 @@ async function enrichScheduleWeatherLogic(db, deps = {}) {
 }
 
 exports.enrichScheduleWeatherLogic = enrichScheduleWeatherLogic;
-exports.competitionDate = competitionDate;
+exports.competitionIsoDate = competitionIsoDate;
 exports.coerceDate = coerceDate;
 exports.sameWeather = sameWeather;
 

@@ -8,6 +8,7 @@ import {
   pickMyNextPerformance,
   nightAssignmentLabel,
   advancementLabel,
+  championshipShowFor,
 } from './scheduleUtils';
 
 // Regression: "Drums Across Nebraska" starts Wed 2026-07-01 8:46 PM CDT, which
@@ -319,5 +320,88 @@ describe('nightAssignmentLabel', () => {
     expect(nightAssignmentLabel({ day: 42, nights: [41, 42], status: 'final' })).toBe(
       'Night 2 of 2 · final lineup'
     );
+  });
+});
+
+describe('championshipShowFor — Championship Week card ↔ schedule row', () => {
+  const weather = {
+    summary: 'partly cloudy, 58°F',
+    tempF: 58,
+    code: 2,
+    hour: 20,
+    date: '2026-09-22',
+  };
+  const shows = [
+    { day: 44, eventName: 'Regular Show', isChampionship: false },
+    {
+      day: 45,
+      eventName: 'Open and A Class Prelims',
+      isChampionship: true,
+      location: 'Marion, IN',
+      allowedClasses: ['openClass', 'aClass'],
+      weather,
+    },
+    {
+      day: 49,
+      eventName: 'marching.art World Championship Finals',
+      type: 'championship',
+      allowedClasses: ['World Class', 'Open Class', 'A Class'],
+      weather: { summary: 'clear skies, 71°F', tempF: 71, code: 0 },
+    },
+    {
+      day: 49,
+      eventName: 'SoundSport International Music & Food Festival',
+      type: 'championship',
+      allowedClasses: ['SoundSport'],
+      weather: { summary: 'clear skies, 74°F', tempF: 74, code: 0 },
+    },
+  ];
+
+  it('joins a card to the same-day row by name, carrying venue and weather', () => {
+    const row = championshipShowFor(shows, { day: 45, eventName: 'Open and A Class Prelims' });
+    expect(row?.location).toBe('Marion, IN');
+    expect(row?.weather).toBe(weather);
+  });
+
+  it('matches names regardless of case, punctuation and DCI/marching.art branding', () => {
+    const row = championshipShowFor(shows, {
+      day: 49,
+      eventName: 'DCI World Championship Finals'.replace('DCI', 'marching.art'),
+    });
+    expect(row?.weather?.tempF).toBe(71);
+    expect(
+      championshipShowFor(shows, { day: 45, eventName: 'open-and-a-class-prelims' })?.location
+    ).toBe('Marion, IN');
+  });
+
+  it('falls back to the only championship row on the day when names differ', () => {
+    const row = championshipShowFor(shows, { day: 45, eventName: 'Open & A Class Prelims' });
+    expect(row?.weather).toBe(weather);
+    const solo = [{ day: 46, eventName: 'Open/A Finals', isChampionship: true, weather }];
+    expect(championshipShowFor(solo, { day: 46, eventName: 'Open and A Class Finals' })).toBe(
+      solo[0]
+    );
+  });
+
+  it('splits Finals night from the SoundSport festival by class when names differ', () => {
+    const finals = championshipShowFor(shows, {
+      day: 49,
+      eventName: 'World Championship Finals',
+      eligibleClasses: ['worldClass', 'openClass', 'aClass'],
+    });
+    expect(finals?.weather?.tempF).toBe(71);
+    const festival = championshipShowFor(shows, {
+      day: 49,
+      eventName: 'SoundSport Festival',
+      eligibleClasses: ['soundSport'],
+    });
+    expect(festival?.weather?.tempF).toBe(74);
+  });
+
+  it('ignores regular shows and returns null without a row', () => {
+    expect(championshipShowFor(shows, { day: 44, eventName: 'Regular Show' })).toBeNull();
+    expect(championshipShowFor(shows, { day: 47, eventName: 'Prelims' })).toBeNull();
+    expect(championshipShowFor(/** @type {any} */ (null), { day: 45, eventName: 'x' })).toBeNull();
+    expect(championshipShowFor(shows, /** @type {any} */ (null))).toBeNull();
   });
 });

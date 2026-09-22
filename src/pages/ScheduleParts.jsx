@@ -6,7 +6,7 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, MapPin, Check, ChevronRight, Trophy, Landmark, Users } from 'lucide-react';
-import { isEventPast } from '../utils/scheduleUtils';
+import { isEventPast, championshipShowFor } from '../utils/scheduleUtils';
 import { formatEventName } from '../utils/season';
 import { CLASS_CONFIG, CHAMPIONSHIP_EVENTS } from './scheduleConstants';
 import {
@@ -32,6 +32,29 @@ const weatherEmoji = (code) => {
   if (c === 85 || c === 86) return '🌨️';
   if (c >= 95 && c <= 99) return '⛈️';
   return '🌡️';
+};
+
+// The show-time weather chip shared by every schedule card: the sky as an emoji
+// and the temperature, with the full conditions line in the tooltip. Renders
+// nothing until the backend has stamped weather on the competition (the
+// producer dates every show — regular, major, championship — from the season
+// calendar, so this is the venue's forecast for the night the show is actually
+// played this season).
+const WeatherChip = ({ weather }) => {
+  if (!weather?.summary) return null;
+  const hour = typeof weather.hour === 'number' ? weather.hour : 20;
+  const clock =
+    hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`;
+  return (
+    <span
+      className="flex items-center gap-1 flex-shrink-0 tabular-nums"
+      title={`${clock} · ${weather.summary}`}
+      aria-label={`Show-time weather: ${weather.summary}`}
+    >
+      <span aria-hidden="true">{weatherEmoji(weather.code)}</span>
+      {typeof weather.tempF === 'number' && <span>{weather.tempF}°</span>}
+    </span>
+  );
 };
 
 // =============================================================================
@@ -247,15 +270,7 @@ const ShowCard = ({
                   <span className="truncate">{show.location}</span>
                 </span>
               )}
-              {show.weather?.summary && (
-                <span
-                  className="flex items-center gap-1 flex-shrink-0 tabular-nums"
-                  title={`8 PM · ${show.weather.summary}`}
-                >
-                  <span aria-hidden="true">{weatherEmoji(show.weather.code)}</span>
-                  {typeof show.weather.tempF === 'number' && <span>{show.weather.tempF}°</span>}
-                </span>
-              )}
+              <WeatherChip weather={show.weather} />
             </div>
             {isHosted && (
               <div className="mt-1 flex items-center gap-2 text-[10px] text-cyan-400/90">
@@ -501,6 +516,7 @@ const ShowsList = ({
 
 const ChampionshipEventCard = ({
   event,
+  scheduled,
   userProfile,
   getActualDate,
   seasonUid: _seasonUid,
@@ -511,6 +527,12 @@ const ChampionshipEventCard = ({
   const formattedDate = date
     ? date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
     : `Day ${event.day}`;
+  // `scheduled` is this round's row in the season schedule (see
+  // championshipShowFor): the venue the season actually stamped and the
+  // show-time weather the backend produced for the night, both absent from
+  // the hard-coded event constants. The constants remain the fallback.
+  const location = scheduled?.location || event.location;
+  const weather = scheduled?.weather || null;
 
   // Find which of user's corps are eligible for this event
   const eligibleCorps = useMemo(() => {
@@ -558,8 +580,9 @@ const ChampionshipEventCard = ({
               </span>
               <span className="flex items-center gap-1 truncate">
                 <MapPin className="w-3 h-3 text-purple-400" />
-                <span className="truncate">{event.location}</span>
+                <span className="truncate">{location}</span>
               </span>
+              <WeatherChip weather={weather} />
               <span className="text-muted font-data">Day {event.day}</span>
             </div>
           </div>
@@ -648,15 +671,18 @@ const ChampionshipWeekDisplay = ({
   podiumAttendance,
   hostedByKey,
 }) => {
-  // Group championship events by day
+  // Group championship events by day. Each card is paired with its row in the
+  // season schedule (`regularShows` is the whole of week 7, championship rounds
+  // included) so it can show the venue and show-time weather the backend
+  // stamped for that night — the constants alone know neither.
   const eventsByDay = useMemo(() => {
     const grouped = {};
     CHAMPIONSHIP_EVENTS.forEach((event) => {
       if (!grouped[event.day]) grouped[event.day] = [];
-      grouped[event.day].push(event);
+      grouped[event.day].push({ event, scheduled: championshipShowFor(regularShows, event) });
     });
     return grouped;
-  }, []);
+  }, [regularShows]);
 
   // Group regular shows (days 43-44) by day
   const regularShowsByDay = useMemo(() => {
@@ -737,10 +763,11 @@ const ChampionshipWeekDisplay = ({
 
             {/* Events for this day */}
             <div className="flex-1 grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-              {eventsByDay[day].map((event, idx) => (
+              {eventsByDay[day].map(({ event, scheduled }, idx) => (
                 <ChampionshipEventCard
                   key={`${event.eventName}-${idx}`}
                   event={event}
+                  scheduled={scheduled}
                   userProfile={userProfile}
                   getActualDate={getActualDate}
                   seasonUid={seasonUid}

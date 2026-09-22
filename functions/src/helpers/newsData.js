@@ -5,6 +5,7 @@
 
 const { logger } = require("firebase-functions/v2");
 const { cleanLocation } = require("./newsArticleShared");
+const { competitionDayToDate } = require("./gameDay");
 const { loadHistoricalYears } = require("./historicalScores");
 
 const CAPTIONS = {
@@ -283,17 +284,23 @@ async function fetchShowContext(db, seasonId, historicalData, reportDay) {
       }
     }
 
-    // 3. Calculate actual date from season start + day number
+    // 3. The real calendar date of this night: the season calendar for the day
+    //    number (spring-training aware), read from the active season doc when it
+    //    is the season being reported, else the legacy seasons/{id} record. The
+    //    scheduled show's own `date` is NOT used here: on an off-season row it is
+    //    the archive night being replayed, years old, and this date keys the
+    //    fantasy article's real-weather lookup — a January off-season must read
+    //    as January.
     let actualDate = null;
     try {
-      const seasonDoc = await db.doc(`seasons/${seasonId}`).get();
-      if (seasonDoc.exists) {
-        const seasonData = seasonDoc.data();
-        const startDate = seasonData.startDate?.toDate?.() || seasonData.startDate;
-        if (startDate) {
-          actualDate = new Date(startDate);
-          actualDate.setDate(actualDate.getDate() + reportDay - 1);
-        }
+      const activeDoc = await db.doc("game-settings/season").get();
+      const active = activeDoc.exists ? activeDoc.data() : null;
+      if (active && active.seasonUid === seasonId) {
+        actualDate = competitionDayToDate(active, reportDay);
+      }
+      if (!actualDate) {
+        const seasonDoc = await db.doc(`seasons/${seasonId}`).get();
+        if (seasonDoc.exists) actualDate = competitionDayToDate(seasonDoc.data(), reportDay);
       }
     } catch (seasonError) {
       logger.warn("Could not fetch season for date calculation:", seasonError.message);

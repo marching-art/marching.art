@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // =============================================================================
 // SCHEDULE - SHOW REGISTRATION & BROWSING
 // =============================================================================
@@ -24,6 +23,9 @@ import { useHostedEvents } from '../hooks/useHostedEvents';
 import { CHAMPIONSHIP_EVENTS } from './scheduleConstants';
 import { WeekPills, ShowsList, ChampionshipWeekDisplay } from './ScheduleParts';
 
+/** @typedef {import('../store/scheduleStore').ScheduleShow} ScheduleShow */
+/** @typedef {import('../api/podium').HostedEventRecord} HostedEventRecord */
+
 // The tour map carries the projected US geography (~80 KB) plus the poster
 // renderer — lazy so browsing the schedule never pays for it. lazyWithRetry (not
 // raw React.lazy) so a stale chunk hash after a deploy self-recovers.
@@ -37,13 +39,13 @@ const TourMapModal = lazyWithRetry(
 // =============================================================================
 
 const Schedule = () => {
-  const { user } = useAuth();
+  const user = useAuth()?.user;
   const { scoresAt, scoresInMs, scoresExact, scoresPending } = useSeasonDeadlines();
   const [loading, setLoading] = useState(true);
-  const [selectedShow, setSelectedShow] = useState(null);
+  const [selectedShow, setSelectedShow] = useState(/** @type {ScheduleShow|null} */ (null));
   const [registrationModal, setRegistrationModal] = useState(false);
   const [tourMapOpen, setTourMapOpen] = useState(false);
-  const [selectedWeek, setSelectedWeek] = useState(null);
+  const [selectedWeek, setSelectedWeek] = useState(/** @type {number|null} */ (null));
 
   // Deep link from the dashboard's Show Day strip: `/schedule?show=<name>&day=<n>`
   // jumps to that show's week and opens its detail (running order). Consumed once,
@@ -76,6 +78,7 @@ const Schedule = () => {
   // (once scored) the attendee roster — to badge and describe hosted shows.
   const { events: hostedEvents, reload: reloadHosted } = useHostedEvents(seasonUid);
   const hostedByKey = useMemo(() => {
+    /** @type {Record<string, Record<string, any>>} */
     const map = {};
     for (const event of hostedEvents || []) {
       if (event && event.eventName != null && event.day != null) {
@@ -154,12 +157,14 @@ const Schedule = () => {
   // Get actual date from day number — spring-training aware, shared with the
   // setup wizard and scores views via utils/competitionCalendar.
   const getActualDate = useCallback(
+    /** @param {number} dayNumber */
     (dayNumber) => competitionDayToDate(seasonData?.schedule, dayNumber),
     [seasonData]
   );
 
   // Format date
   const formatDate = useCallback(
+    /** @param {number} dayNumber */
     (dayNumber) => {
       const date = getActualDate(dayNumber);
       if (!date) return `Day ${dayNumber}`;
@@ -170,13 +175,14 @@ const Schedule = () => {
 
   // Get week date range
   const getWeekDateRange = useCallback(
+    /** @param {number} weekNumber */
     (weekNumber) => {
       const startDay = (weekNumber - 1) * 7 + 1;
       const endDay = weekNumber * 7;
       const startDate = getActualDate(startDay);
       const endDate = getActualDate(endDay);
       if (!startDate || !endDate) return '';
-      const opts = { month: 'short', day: 'numeric' };
+      const opts = /** @type {Intl.DateTimeFormatOptions} */ ({ month: 'short', day: 'numeric' });
       return `${startDate.toLocaleDateString('en-US', opts)} - ${endDate.toLocaleDateString('en-US', opts)}`;
     },
     [getActualDate]
@@ -192,6 +198,7 @@ const Schedule = () => {
 
   // For Week 7, include both regular shows (days 43-44) and championship events
   const getWeekShowCount = useCallback(
+    /** @param {number} week */
     (week) => {
       if (week === 7) {
         // Count regular shows on days 43-44
@@ -206,10 +213,13 @@ const Schedule = () => {
   );
 
   // Handle show click
-  const handleShowClick = useCallback((show) => {
-    setSelectedShow(show);
-    setRegistrationModal(true);
-  }, []);
+  const handleShowClick = useCallback(
+    /** @param {ScheduleShow} show */ (show) => {
+      setSelectedShow(show);
+      setRegistrationModal(true);
+    },
+    []
+  );
 
   // Count registrations
   const registrationStats = useMemo(() => {
@@ -218,7 +228,11 @@ const Schedule = () => {
     let total = 0;
     let thisWeek = 0;
 
-    Object.values(userProfile.corps).forEach((corps) => {
+    Object.values(
+      /** @type {Record<string, {selectedShows?: Record<string, unknown[]>}|null>} */ (
+        userProfile.corps
+      )
+    ).forEach((corps) => {
       if (!corps?.selectedShows) return;
       Object.entries(corps.selectedShows).forEach(([weekKey, shows]) => {
         const count = (shows || []).length;
@@ -367,7 +381,7 @@ const Schedule = () => {
           />
         ) : (
           <ShowsList
-            shows={showsByWeek[selectedWeek] || []}
+            shows={(selectedWeek != null && showsByWeek[selectedWeek]) || []}
             userProfile={userProfile}
             formatDate={formatDate}
             getActualDate={getActualDate}
@@ -381,7 +395,11 @@ const Schedule = () => {
         {/* Director-hosted events (all classes) — flag-gated, self-hiding.
             Shares the hosted-events fetch with the schedule's hosted badges. */}
         {user && (
-          <HostEventCard seasonUid={seasonUid} events={hostedEvents} onReload={reloadHosted} />
+          <HostEventCard
+            seasonUid={seasonUid}
+            events={/** @type {HostedEventRecord[]|null} */ (hostedEvents)}
+            onReload={reloadHosted}
+          />
         )}
       </div>
 

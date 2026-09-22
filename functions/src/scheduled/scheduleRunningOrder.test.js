@@ -23,8 +23,17 @@ describe("isChampionship / competitionDate", () => {
     assert.ok(isChampionship({ mandatory: true }));
     assert.ok(!isChampionship({ type: "regional" }));
   });
-  test("competitionDate derives from season start + day when no explicit date", () => {
-    assert.equal(competitionDate({ day: 3 }, new Date("2026-06-01T00:00:00Z")).getUTCDate(), 3);
+  test("competitionDate is the season calendar day, never the row's archive date", () => {
+    const season = { schedule: { startDate: new Date("2026-06-01T00:00:00Z") } };
+    assert.equal(competitionDate({ day: 3 }, season).getUTCDate(), 3);
+    // An off-season row replaying a 2014 night is still played on Day 3 of this season.
+    assert.equal(competitionDate({ day: 3, date: "2014-07-12" }, season).getUTCFullYear(), 2026);
+    // Live seasons land after spring training.
+    const live = { status: "live-season", schedule: { startDate: new Date("2026-06-01T00:00:00Z"), springTrainingDays: 21 } };
+    assert.equal(competitionDate({ day: 1 }, live).toISOString(), "2026-06-22T00:00:00.000Z");
+    // Only a season with no usable start falls back to the row's own date.
+    assert.equal(competitionDate({ day: 3, date: "2026-07-04" }, {}).getUTCDate(), 4);
+    assert.equal(competitionDate({ day: 3 }, {}), null);
   });
 });
 
