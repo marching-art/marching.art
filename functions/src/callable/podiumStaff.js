@@ -4,8 +4,10 @@
  * instance whose id, tenure, and resume persist for the rest of its career.
  * Experience is EARNED by retaining a staffer across seasons — veteran and
  * above are never hired directly. Directors can RELEASE a staffer to free the
- * seat, and RETRAIN one into a new specialty (tenure kept, reduced boost for
- * the rest of the season).
+ * seat (buying out any seasons still under contract), and RETRAIN one into a
+ * new specialty (tenure kept, reduced boost for the rest of the season).
+ * Re-signing a lapsed contract happens at re-registration (registerPodiumCorps
+ * `staffContracts`), where the floated rate is known.
  */
 
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
@@ -80,7 +82,7 @@ exports.hirePodiumStaff = onCall({ cors: true }, async (request) => {
 });
 
 exports.releasePodiumStaff = onCall({ cors: true }, async (request) => {
-  const { uid, db, seasonData } = await podiumContext(request);
+  const { uid, db, seasonData, competitionDay } = await podiumContext(request);
   // Abuse throttle (shared podium bucket) — rehearsal/staff actions are the
   // Podium core loop, so the budget is generous (still far above human rate).
   await assertWriteBudget(db, uid, "podium", { max: 120, windowMs: 10 * 60 * 1000 });
@@ -99,11 +101,21 @@ exports.releasePodiumStaff = onCall({ cors: true }, async (request) => {
       throw new HttpsError("not-found", `You do not employ a ${specialty} staff member.`);
     }
     // The season's salary is already spent — releasing frees the seat, no
-    // refund. Their tenure and history end here.
+    // refund. A contract binds both ways: seasons still locked beyond this
+    // one are bought out at the contract premium, from the Corps Budget.
+    // Their tenure and history end here.
+    const member = state.staff[specialty];
+    const buyout = staffMarket.buyoutFor(member, store.balance);
+    if (buyout > 0 && !store.debitBudget(state, buyout, `staffBuyout:${specialty}`, Math.max(0, competitionDay))) {
+      throw new HttpsError(
+        "failed-precondition",
+        `Not enough Corps Budget to buy out the remaining contract (${buyout} CC).`
+      );
+    }
     delete state.staff[specialty];
     state.updatedAt = new Date().toISOString();
     transaction.set(sRef, state);
-    return { released: specialty, staff: state.staff };
+    return { released: specialty, buyout, staff: state.staff, budget: state.budget };
   });
 
   return { success: true, ...result };

@@ -16,6 +16,7 @@ const fmt = (n) => (n ?? 0).toLocaleString();
 export default function PodiumRegistrationDone({ done }) {
   const retained = done.retainedStaff || [];
   const lapsed = done.lapsedStaff || [];
+  const renewed = done.renewedStaff || [];
   /** @type {Record<string, string>} */
   const reasonWord = { unaffordable: 'unfunded', released: 'released', retired: 'retired' };
   return (
@@ -59,6 +60,19 @@ export default function PodiumRegistrationDone({ done }) {
               </span>
             </div>
           )}
+          {renewed.length > 0 && (
+            <div>
+              Re-signed:{' '}
+              <span className="text-secondary">
+                {renewed
+                  .map(
+                    (/** @type {any} */ s) =>
+                      `${SPECIALTY[s.specialty] || s.specialty} (${s.seasons} season${s.seasons > 1 ? 's' : ''} at ${fmt(s.salary)} CC)`
+                  )
+                  .join(', ')}
+              </span>
+            </div>
+          )}
           {lapsed.length > 0 && (
             <div>
               Left the corps:{' '}
@@ -66,7 +80,7 @@ export default function PodiumRegistrationDone({ done }) {
                 {lapsed
                   .map(
                     (/** @type {any} */ s) =>
-                      `${SPECIALTY[s.specialty] || s.specialty} (${reasonWord[s.reason] || s.reason})`
+                      `${SPECIALTY[s.specialty] || s.specialty} (${reasonWord[s.reason] || s.reason}${s.buyout > 0 ? `, ${fmt(s.buyout)} CC buyout` : ''})`
                   )
                   .join(', ')}
               </span>

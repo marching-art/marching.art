@@ -4,7 +4,8 @@
  * pool: a director never claims a pre-made person, the catalog offers a ROLE
  * (specialty) at an ENTRY experience level, and hiring MINTS a staff instance
  * owned by that corps. The instance keeps a stable id, its tenure, and its
- * resume for the rest of its career.
+ * resume for the rest of its career. A staffer never leaves for another corps:
+ * they stay until released, unaffordable, or retired.
  *
  * EARN experience by RETAINING (the whole game):
  *   - Only entry tiers (apprentice, journeyman) are hireable. Veteran ->
@@ -13,13 +14,24 @@
  *     something bought off the shelf.
  *   - Each retained season ages the instance one year: the tenure floor
  *     raises its tier (and boost), and its salary escalates
- *     (base x (1 + tenureSalaryPerSeason x careerSeasons)).
+ *     (base x (1 + tenureSalaryPerSeason x min(careerSeasons,
+ *     tenureSalaryCapSeasons))). Tier bases are proportional to the boost
+ *     each tier yields, and the tenure premium stops growing once a career
+ *     reaches the legend threshold, so a veteran costs the same per boost
+ *     point as an apprentice plus a bounded experience premium — loyalty is
+ *     never punished by a runaway bill.
  *   - CONTRACTS lock the salary for their length (a hedge against tenure
- *     inflation); once the lock lapses the salary floats to the current
- *     tenured rate. A staffer is retained automatically each season the corps
- *     can pay their salary from the fresh Corps Budget; an unaffordable season
- *     lapses the contract (released, never a debt), and a 30-season career
- *     ends in retirement.
+ *     inflation and the promotion raises at 3/8/15/22 seasons). Once the lock
+ *     lapses the salary floats to the current tenured rate — and the director
+ *     may RE-SIGN the staffer at that rate for another 1-3 seasons at the next
+ *     re-registration (renewContract). Renewal is only offered on a lapsed
+ *     lock, so a signed price can never be rolled forward indefinitely.
+ *   - A contract binds both ways: releasing a still-locked staffer costs a
+ *     BUYOUT (buyoutPremium x salary x unexpired seasons), in season or at the
+ *     season boundary. A staffer is retained automatically each season the
+ *     corps can pay their salary from the fresh Corps Budget; an unaffordable
+ *     season lapses the contract (released, never a debt, never a buyout),
+ *     and a 30-season career ends in retirement.
  *
  * Effects (applied in the callable/processor, capped at maxTotalBoost):
  *   - Caption techs boost rehearsal yield on blocks where their caption is a
@@ -58,10 +70,80 @@ function tierForCareer(hiredTier, careerSeasons, cfg) {
   return TIER_ORDER[Math.max(hiredRank < 0 ? 0 : hiredRank, floorRank)];
 }
 
-/** Tenure-escalated per-season salary (a year-25 legend costs multiples). */
+/**
+ * Tenure-escalated per-season salary. The tenure premium grows per season up
+ * to `tenureSalaryCapSeasons` (the legend threshold) and then holds, so a
+ * legend's price is a ceiling, not a treadmill.
+ */
 function salaryFor(tier, careerSeasons, cfg) {
   const base = cfg.staff.tiers[tier].salary;
-  return Math.round(base * (1 + cfg.staff.career.tenureSalaryPerSeason * careerSeasons));
+  const cap = cfg.staff.career.tenureSalaryCapSeasons;
+  const seasons =
+    Number.isFinite(cap) && cap >= 0 ? Math.min(careerSeasons, cap) : careerSeasons;
+  return Math.round(base * (1 + cfg.staff.career.tenureSalaryPerSeason * seasons));
+}
+
+/**
+ * The next tier a career will reach by tenure alone, and the season it lands
+ * — null once the staffer is at the top of the ladder (or their hired tier
+ * already outranks every remaining floor).
+ * @returns {{tier:string, atSeason:number, seasonsAway:number}|null}
+ */
+function nextPromotion(member, cfg) {
+  const currentRank = TIER_ORDER.indexOf(member.tier || member.hiredTier || "apprentice");
+  const careerSeasons = member.careerSeasons || 0;
+  let best = null;
+  for (const [tier, seasons] of Object.entries(cfg.staff.career.promotionSeasons)) {
+    if (TIER_ORDER.indexOf(tier) <= currentRank) continue;
+    if (best === null || seasons < best.atSeason) {
+      best = { tier, atSeason: seasons, seasonsAway: Math.max(0, seasons - careerSeasons) };
+    }
+  }
+  return best;
+}
+
+/**
+ * Seasons this staffer has left before their career retires (the season
+ * being played counts as one of them). 0 means this is their final season.
+ */
+function seasonsUntilRetirement(member, cfg) {
+  return Math.max(0, cfg.staff.career.maxSeasons - 1 - (member.careerSeasons || 0));
+}
+
+/**
+ * The buyout owed to release a still-contracted staffer: the contract premium
+ * on every locked season the corps walks away from. In season, the current
+ * season's salary is already paid so only the seasons beyond it are owed;
+ * at the season boundary (a re-registration release) every remaining locked
+ * season is unexpired. 0 once the lock has lapsed.
+ *
+ * @param {object} member the instance as stored (in season) or as aged by
+ *        ageStaff (at the boundary — its `remaining` already counts the
+ *        season being registered)
+ * @param {object} cfg balance config
+ * @param {{atBoundary?: boolean}} [opts]
+ */
+function buyoutFor(member, cfg, { atBoundary = false } = {}) {
+  const remaining = (member && member.contract && member.contract.remaining) || 0;
+  const unexpired = atBoundary ? remaining : Math.max(0, remaining - 1);
+  if (unexpired <= 0) return 0;
+  const premium = cfg.staff.career.buyoutPremium || 0;
+  return Math.round((member.salaryPerSeason || 0) * premium * unexpired);
+}
+
+/**
+ * Re-sign a staffer whose salary lock has lapsed (pure): a fresh 1-N season
+ * lock at their CURRENT tenured salary. Only a lapsed lock (remaining 0) is
+ * renewable — renewing mid-lock would let a signed price roll forward
+ * forever. Called on the AGED instance at re-registration, so the frozen
+ * rate is next season's floated rate and the lock counts that season.
+ * Returns null when the staffer is not renewable.
+ */
+function renewContract(member, seasons, cfg) {
+  const max = cfg.staff.career.maxContractSeasons;
+  if (!member || !Number.isInteger(seasons) || seasons < 1 || seasons > max) return null;
+  if (member.contract && member.contract.remaining > 0) return null;
+  return { ...member, contract: { seasons, remaining: seasons } };
 }
 
 /**
@@ -175,6 +257,14 @@ function ageStaff(member, cfg, completed) {
  * leave budget for food/travel), so the same list expresses both "keep these,
  * in this order" and "let these go".
  *
+ * Contracts bind both ways. A voluntarily released staffer whose lock still
+ * has seasons left owes a BUYOUT, charged from the commitment BEFORE payroll
+ * (an obligation, not a choice). An unaffordable lapse never owes one. A kept
+ * staffer whose lock has lapsed may be RE-SIGNED via `renewals`
+ * ({specialty: seasons}): the projection reports `renewable` and, when a valid
+ * renewal is requested, `renewSeasons` — the callable applies it with
+ * renewContract on the aged instance.
+ *
  * @param {object} roster        state.staff — { specialty: member }
  * @param {number} budget        CorpsCoin available for payroll (the commitment)
  * @param {object} cfg           balance config
@@ -182,15 +272,20 @@ function ageStaff(member, cfg, completed) {
  *                               omitted, every staffer is a keep candidate,
  *                               ordered priciest-first so a shortfall sheds the
  *                               cheapest staffer rather than an arbitrary one.
+ * @param {Record<string, number>} [renewals] contract lengths to re-sign, by
+ *                               specialty; ignored for staff who are not
+ *                               renewable (still locked, retiring, released).
  * @returns {{
  *   staff: Array<{specialty:string, id:string|null, tier:string,
  *                 nextTier:string|null, salary:number, nextSalary:number,
  *                 contract:{seasons:number, remaining:number}|null, locked:boolean,
+ *                 renewable:boolean, renewSeasons:number|null, buyout:number,
  *                 retiring:boolean, kept:boolean, lapseReason:string|null}>,
- *   payroll:number, kept:string[], lapsed:string[], affordable:boolean
+ *   payroll:number, buyoutTotal:number, kept:string[], lapsed:string[],
+ *   renewed:string[], affordable:boolean
  * }}
  */
-function projectRetention(roster, budget, cfg, keepOrder) {
+function projectRetention(roster, budget, cfg, keepOrder, renewals) {
   const staff = Object.values(roster || {})
     .filter((m) => m && m.specialty)
     .map((member) => {
@@ -217,6 +312,11 @@ function projectRetention(roster, budget, cfg, keepOrder) {
           ? { seasons: nextContract.seasons || 0, remaining: nextContract.remaining || 0 }
           : null,
         locked,
+        // A lapsed lock on a still-active career can be re-signed at the
+        // floated rate; the premium owed if a locked staffer is let go now.
+        renewable: Boolean(next) && !locked,
+        renewSeasons: null,
+        buyout: next && locked ? buyoutFor(next, cfg, { atBoundary: true }) : 0,
         kept: false,
         lapseReason: null,
       };
@@ -231,23 +331,35 @@ function projectRetention(roster, budget, cfg, keepOrder) {
     : [...active].sort((a, b) => b.nextSalary - a.nextSalary);
   const candidates = new Set(ordered.map((s) => s.specialty));
 
-  let remaining = Math.max(0, budget || 0);
-  const kept = [];
+  // Voluntary releases (active roster staff the director left out of
+  // keepOrder) are settled first: a buyout on a still-locked contract is an
+  // obligation the commitment must cover before it funds anyone's salary.
   const lapsed = [];
+  let buyoutTotal = 0;
+  for (const s of active) {
+    if (!candidates.has(s.specialty)) {
+      s.lapseReason = "released";
+      lapsed.push(s.specialty);
+      buyoutTotal += s.buyout;
+    }
+  }
+
+  let remaining = Math.max(0, (budget || 0) - buyoutTotal);
+  const kept = [];
+  const renewed = [];
+  const maxSeasons = cfg.staff.career.maxContractSeasons;
   for (const s of ordered) {
     if (s.nextSalary <= remaining) {
       remaining -= s.nextSalary;
       s.kept = true;
       kept.push(s.specialty);
+      const want = renewals && renewals[s.specialty];
+      if (s.renewable && Number.isInteger(want) && want >= 1 && want <= maxSeasons) {
+        s.renewSeasons = want;
+        renewed.push(s.specialty);
+      }
     } else {
       s.lapseReason = "unaffordable";
-      lapsed.push(s.specialty);
-    }
-  }
-  // Active roster staff the director left out of keepOrder: voluntary releases.
-  for (const s of active) {
-    if (!candidates.has(s.specialty)) {
-      s.lapseReason = "released";
       lapsed.push(s.specialty);
     }
   }
@@ -256,7 +368,15 @@ function projectRetention(roster, budget, cfg, keepOrder) {
   }
 
   const payroll = active.reduce((sum, s) => sum + s.nextSalary, 0);
-  return { staff, payroll, kept, lapsed, affordable: payroll <= Math.max(0, budget || 0) };
+  return {
+    staff,
+    payroll,
+    buyoutTotal,
+    kept,
+    lapsed,
+    renewed,
+    affordable: payroll <= Math.max(0, budget || 0),
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -306,6 +426,10 @@ module.exports = {
   boostFor,
   tierForCareer,
   salaryFor,
+  nextPromotion,
+  seasonsUntilRetirement,
+  buyoutFor,
+  renewContract,
   buildCatalog,
   mintStaff,
   ageStaff,

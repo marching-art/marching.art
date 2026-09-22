@@ -649,13 +649,13 @@ const BUDGET_LOG_LIMIT = 40;
 /**
  * Normalize a ledger `reason` into the coarse line-item category the
  * end-of-season financial report groups by. Debit reasons are namespaced
- * (`staff:brass`, `food:standard`, `staffRetrain:guard`); credits carry a flat
+ * (`staff:brass`, `food:standard`, `staffRetrain:guard`, `staffBuyout:guard`); credits carry a flat
  * source key. Anything unrecognized falls under "other" so the report always
  * balances against the aggregate `spent`/`earned` totals.
  */
 function budgetCategoryOf(reason) {
   const key = String(reason || "");
-  if (key.startsWith("staff")) return "staff"; // staff:*, staffRetrain:*
+  if (key.startsWith("staff")) return "staff"; // staff:*, staffRetrain:*, staffBuyout:*
   if (key === "travel" || key === "jointTravel" || key === "airfare") return "travel";
   if (key.startsWith("food")) return "food";
   if (key === "camp") return "camp"; // spring-training housing/food
