@@ -68,8 +68,16 @@ function slug(value) {
     .slice(0, 120);
 }
 
-/** A Date (or parseable value) as a local YYYY-MM-DD string, or null. */
+/**
+ * A Date (or parseable value) as a local YYYY-MM-DD string, or null. A value
+ * that already IS a `YYYY-MM-DD` calendar day passes through untouched: the
+ * schedule producer dates shows from the season calendar in that form
+ * (gameDay.competitionDayToIsoDate), and round-tripping it through `new Date`
+ * would read the UTC-midnight instant with local getters and land a day early
+ * in any negative-offset timezone.
+ */
 function toIsoDate(date) {
+  if (typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date)) return date;
   const d = date instanceof Date ? date : date ? new Date(date) : null;
   if (!d || Number.isNaN(d.getTime())) return null;
   const y = d.getFullYear();

@@ -153,6 +153,77 @@ function toCompetitionDay(calendarDay, seasonData) {
 }
 
 /**
+ * The season's start date as a Date, from either the `schedule.startDate`
+ * Timestamp/Date the season doc carries or a bare top-level `startDate`
+ * (legacy shape). Null when neither reads as a valid date.
+ *
+ * @param {{schedule?: {startDate?: unknown}, startDate?: unknown}|null|undefined} seasonData
+ * @returns {Date|null}
+ */
+function seasonStartDateOf(seasonData) {
+  const candidates = [seasonData?.schedule?.startDate, seasonData?.startDate];
+  for (const raw of candidates) {
+    if (!raw) continue;
+    const value = /** @type {{toDate?: unknown}} */ (raw);
+    const date =
+      typeof value.toDate === "function"
+        ? /** @type {{toDate: () => Date}} */ (value).toDate()
+        : raw instanceof Date
+          ? raw
+          : new Date(/** @type {string|number} */ (raw));
+    if (date instanceof Date && !isNaN(date.getTime())) return date;
+  }
+  return null;
+}
+
+/**
+ * The real calendar date competition day `day` (1–49) falls on, as a Date at
+ * UTC midnight — the server-side twin of the client's
+ * `utils/competitionCalendar.competitionDayToDate`, and the same arithmetic the
+ * scorer uses to date a recap (scoring.js LIVE_SEASON_STRATEGY.recapDate):
+ *
+ *     startDate + springTrainingDays + (day - 1)
+ *
+ * This is THE date a show happens on in the season being played — never the
+ * archive date an off-season row was replayed from (`comp.date` on an
+ * off-season show is the historical night it reproduces, kept so heritage
+ * running orders can be matched; it is years old). Anything that describes
+ * the night as it is lived — the weather at the venue, "is this show past" —
+ * must date it from the season calendar, so a January off-season reads as
+ * January and a live season's Championship Week lands after spring training.
+ *
+ * @param {{schedule?: {startDate?: unknown, springTrainingDays?: number},
+ *   startDate?: unknown}|null|undefined} seasonData - game-settings/season doc data.
+ * @param {number} day - Competition day (1–49).
+ * @returns {Date|null} UTC-midnight Date, or null without a usable start date.
+ */
+function competitionDayToDate(seasonData, day) {
+  const start = seasonStartDateOf(seasonData);
+  if (!start || !Number.isFinite(day)) return null;
+  const springTrainingDays = seasonData?.schedule?.springTrainingDays || 0;
+  return new Date(
+    Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate() + springTrainingDays + day - 1)
+  );
+}
+
+/**
+ * `competitionDayToDate` as a timezone-proof `YYYY-MM-DD` string (read with
+ * UTC getters, so the calendar day never shifts with the process timezone).
+ *
+ * @param {Parameters<typeof competitionDayToDate>[0]} seasonData
+ * @param {number} day
+ * @returns {string|null}
+ */
+function competitionDayToIsoDate(seasonData, day) {
+  const date = competitionDayToDate(seasonData, day);
+  if (!date) return null;
+  const y = date.getUTCFullYear();
+  const m = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const d = String(date.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+/**
  * The competition day (1–49) a user-published article belongs to when it goes
  * live right now. Derived from the season doc's schedule.startDate — the SAME
  * source the client season clock uses — because the season doc carries no
@@ -325,6 +396,9 @@ module.exports = {
   getPodiumRehearsalWindow,
   toCompetitionDay,
   getActiveCompetitionDay,
+  seasonStartDateOf,
+  competitionDayToDate,
+  competitionDayToIsoDate,
   getCurrentSeasonWeek,
   PODIUM_PROCESS_HOUR_ET,
   PODIUM_REHEARSAL_OPEN_HOUR_ET,

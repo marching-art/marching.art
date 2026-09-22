@@ -1,5 +1,17 @@
 [
   {
+    "id": "2026-09-22-championship-week-weather",
+    "date": "2026-09-22",
+    "title": "Show-time weather on Championship Week, dated to the night you play it",
+    "category": "improvement",
+    "summary": "The Championship Week cards — Open & A Class Prelims and Finals, World Championship Prelims, Semifinals and Finals, and the SoundSport festival — now carry the venue's show-time weather like every other show on the schedule. And every card's weather is for the night the show is played this season: a January off-season shows January weather at the venue, a July night shows July.",
+    "highlights": [
+      "Off-season shows used to show the weather from the year the show was originally held, not the night you're playing it. The forecast now follows this season's calendar.",
+      "Live-season Championship Week cards were dated three weeks early; they now land on the right nights.",
+      "The Dashboard's show-day card and the fantasy recap article's setting line use the same night, so the weather you see at showtime is the one the story opens with."
+    ]
+  },
+  {
     "id": "2026-09-22-championship-week-running-order",
     "date": "2026-09-22",
     "title": "Championship Week running orders show the directors' corps",

@@ -339,3 +339,40 @@ describe("getActiveCompetitionDay", () => {
     assert.equal(getActiveCompetitionDay(null), null);
   });
 });
+
+describe("competitionDayToDate / competitionDayToIsoDate / seasonStartDateOf", () => {
+  const { competitionDayToDate, competitionDayToIsoDate, seasonStartDateOf } = require("./gameDay");
+  const offSeason = { status: "off-season", schedule: { startDate: utcMidnight("2026-08-09") } };
+  const live = {
+    status: "live-season",
+    schedule: { startDate: { toDate: () => utcMidnight("2026-06-01") }, springTrainingDays: 21 },
+  };
+
+  test("off-season: day 1 is the start date, day 45 is start + 44", () => {
+    assert.equal(competitionDayToIsoDate(offSeason, 1), "2026-08-09");
+    // Open & A Class Prelims, 2026 fall off-season → September 22, 2026.
+    assert.equal(competitionDayToIsoDate(offSeason, 45), "2026-09-22");
+  });
+
+  test("live season: competition days start after spring training", () => {
+    assert.equal(competitionDayToIsoDate(live, 1), "2026-06-22");
+    assert.equal(competitionDayToIsoDate(live, 49), "2026-08-09");
+    const finals = competitionDayToDate(live, 49);
+    assert.equal(finals.getUTCHours(), 0, "UTC midnight, like every other season date");
+  });
+
+  test("crosses a month and a year boundary by calendar arithmetic", () => {
+    const winter = { schedule: { startDate: utcMidnight("2026-12-20") } };
+    assert.equal(competitionDayToIsoDate(winter, 12), "2026-12-31");
+    assert.equal(competitionDayToIsoDate(winter, 13), "2027-01-01");
+  });
+
+  test("reads a legacy top-level startDate and rejects unusable input", () => {
+    assert.equal(seasonStartDateOf({ startDate: "2026-06-01T00:00:00Z" }).toISOString(), "2026-06-01T00:00:00.000Z");
+    assert.equal(seasonStartDateOf({ schedule: { startDate: "garbage" } }), null);
+    assert.equal(seasonStartDateOf(null), null);
+    assert.equal(competitionDayToDate(null, 3), null);
+    assert.equal(competitionDayToDate(offSeason, NaN), null);
+    assert.equal(competitionDayToIsoDate({}, 3), null);
+  });
+});

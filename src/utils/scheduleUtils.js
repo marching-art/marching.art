@@ -166,6 +166,57 @@ export function transformCompetitionToShow(competition) {
 }
 
 /**
+ * A name folded for matching: lowercase, alphanumerics only.
+ * @param {unknown} name
+ */
+function foldName(name) {
+  return String(name || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '');
+}
+
+/**
+ * True when a class list (ids or display names) names SoundSport.
+ * @param {unknown} classes
+ */
+function namesSoundSport(classes) {
+  return (Array.isArray(classes) ? classes : []).some((c) => foldName(c) === 'soundsport');
+}
+
+/**
+ * The season schedule's row for a Championship Week card. The Championship
+ * Week panel lists its rounds from the hard-coded CHAMPIONSHIP_EVENTS constants,
+ * but the live facts about a round — the venue the season actually stamped and
+ * the backend-produced show-time weather — live on the `schedules/{seasonUid}`
+ * row for that day. This joins the two: the championship row on the same day
+ * with the same (folded) name; else the day's only championship row; else, on
+ * a two-event day (Finals night + the SoundSport festival), the row whose
+ * classes agree with the card on SoundSport. Null when the schedule has no
+ * such row yet (the card then renders from the constants alone).
+ *
+ * @param {Array<{day?: number, eventName?: string, isChampionship?: boolean, type?: string, allowedClasses?: string[]}>} shows - Transformed shows (any week).
+ * @param {{day: number, eventName: string, eligibleClasses?: string[]}} event - A CHAMPIONSHIP_EVENTS entry.
+ * @returns {*} The matching transformed show, or null.
+ */
+export function championshipShowFor(shows, event) {
+  if (!Array.isArray(shows) || !event) return null;
+  const candidates = shows.filter(
+    (show) =>
+      show && show.day === event.day && (show.isChampionship || show.type === 'championship')
+  );
+  if (candidates.length === 0) return null;
+  const wanted = foldName(event.eventName);
+  const byName = candidates.find((show) => foldName(show.eventName) === wanted);
+  if (byName) return byName;
+  if (candidates.length === 1) return candidates[0];
+  const wantsSoundSport = namesSoundSport(event.eligibleClasses);
+  const byClass = candidates.filter(
+    (show) => namesSoundSport(show.allowedClasses) === wantsSoundSport
+  );
+  return byClass.length === 1 ? byClass[0] : null;
+}
+
+/**
  * "Top 12 from Semifinals · field set by Day 48 scores" — the one-line
  * explanation of why an advancement round's field is (or will be) a cut of
  * the class, not everyone. Null for Prelims, the SoundSport festival and

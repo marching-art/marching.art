@@ -31,6 +31,7 @@
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
+const { competitionDayToDate } = require("../helpers/gameDay");
 const { paths } = require("../helpers/paths");
 const { RANKED_CLASSES } = require("../helpers/classRegistry");
 const { MODEL_VERSION } = require("../helpers/scheduleModel");
@@ -69,14 +70,21 @@ function coerceDate(value) {
   return d instanceof Date && !Number.isNaN(d.getTime()) ? d : null;
 }
 
-/** A competition's calendar date: its own `date`, else season start + day. */
-function competitionDate(comp, seasonStartDate) {
-  const explicit = coerceDate(comp.date);
-  if (explicit) return explicit;
-  if (seasonStartDate && Number.isFinite(comp.day)) {
-    return new Date(seasonStartDate.getTime() + (comp.day - 1) * DAY_MS);
-  }
-  return null;
+/**
+ * The calendar date a competition is played on in THIS season: the season
+ * calendar for its day number (gameDay.competitionDayToDate — spring-training
+ * aware, so a live season's Championship Week lands after spring training),
+ * falling back to the row's own `date` only when the season doc has no usable
+ * start. An off-season row's `date` is the archive night it replays, years
+ * old; dating the show from it would freeze every off-season show as "past"
+ * before the season begins.
+ *
+ * @param {{day?: number, date?: unknown}} comp
+ * @param {{schedule?: {startDate?: unknown, springTrainingDays?: number}, startDate?: unknown}|null|undefined} season
+ * @returns {Date|null}
+ */
+function competitionDate(comp, season) {
+  return competitionDayToDate(season, comp.day) || coerceDate(comp.date);
 }
 
 /** True for the auto-enrolled championship events (days 45-49). */
@@ -339,8 +347,6 @@ async function enrichScheduleRunningOrdersLogic(db, deps = {}) {
     return { updated: 0, built: 0, total: 0, seasonId: null };
   }
   const isLive = season.status === "live-season";
-  const seasonStartDate =
-    coerceDate(season.schedule && season.schedule.startDate) || coerceDate(season.startDate);
 
   const schedRef = db.doc(`schedules/${seasonId}`);
   const schedSnap = await schedRef.get();
@@ -415,7 +421,7 @@ async function enrichScheduleRunningOrdersLogic(db, deps = {}) {
   const podiumUsedKeys = new Set();
   for (const comp of competitions) {
     const entry = { ...comp };
-    const date = competitionDate(comp, seasonStartDate);
+    const date = competitionDate(comp, season);
     const daysFromNow = date ? Math.floor((date.getTime() - now) / DAY_MS) : null;
     // Materialize the whole REMAINING season, not a near window — a show's
     // running order should appear as soon as any corps registers for it, however
