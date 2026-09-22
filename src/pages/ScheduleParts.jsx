@@ -583,7 +583,6 @@ const ChampionshipEventCard = ({
                 <span className="truncate">{location}</span>
               </span>
               <WeatherChip weather={weather} />
-              <span className="text-muted font-data">Day {event.day}</span>
             </div>
           </div>
 
