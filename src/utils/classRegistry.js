@@ -62,6 +62,27 @@ export function getClass(classId) {
 }
 
 /**
+ * Canonical class id for any spelling the schedule uses — a registry id
+ * ("openClass"), an alias ("open"), or the display form ("Open Class",
+ * "SoundSport") older/admin-authored `allowedClasses` rows carry. Null for
+ * anything the registry doesn't know. Mirrors the server's
+ * `showRegistrations.classIdOf`.
+ * @param {unknown} value
+ * @returns {string|null}
+ */
+export function classIdOf(value) {
+  if (typeof value !== 'string' || !value) return null;
+  const direct = getClass(value);
+  if (direct) return direct.id;
+  const camel = value
+    .trim()
+    .split(/\s+/)
+    .map((w, i) => (i === 0 ? w.charAt(0).toLowerCase() + w.slice(1) : w))
+    .join('');
+  return getClass(camel)?.id ?? null;
+}
+
+/**
  * True when the class drafts an 8-caption lineup.
  *
  * Podium is the counter-example: it is a director simulation with a rehearsal

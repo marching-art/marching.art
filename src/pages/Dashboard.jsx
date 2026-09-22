@@ -93,6 +93,7 @@ import {
 } from '../hooks/useDashboardScores';
 import { useSeasonStore } from '../store/seasonStore';
 import { getNextSelectedShow } from '../utils/dashboardScoring';
+import { championshipRoundsFor } from '../utils/showday';
 import { useRevealedDay } from '../hooks/useRevealedDay';
 import { useScoreDropReturn } from '../hooks/useScoreDropReturn';
 import { getEquippedCosmetic } from '../utils/cosmetics';
@@ -272,9 +273,22 @@ const Dashboard = () => {
   // The director's actual next competition. Every caption competes together at
   // the shows the director registered for, so this is a single corps-level fact
   // shared by all lineup slots — not the source corps' real-world schedule.
+  // Championship Week is auto-enrolled by class, never picked, so those rounds
+  // come from the schedule (dropping one the corps has been cut from).
+  const championshipRounds = useMemo(
+    () =>
+      activeCorpsClass && activeCorpsClass !== 'podiumClass'
+        ? championshipRoundsFor(competitions, activeCorpsClass, { myUid: user?.uid }).map((c) => ({
+            day: c.day,
+            eventName: c.name,
+            location: c.location || '',
+          }))
+        : [],
+    [competitions, activeCorpsClass, user?.uid]
+  );
   const nextSelectedShow = useMemo(
-    () => getNextSelectedShow(activeCorps?.selectedShows, currentDay),
-    [activeCorps?.selectedShows, currentDay]
+    () => getNextSelectedShow(activeCorps?.selectedShows, currentDay, championshipRounds),
+    [activeCorps?.selectedShows, currentDay, championshipRounds]
   );
 
   const { lineupScoreData, lineupScoresLoading } = useLineupScores(

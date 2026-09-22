@@ -1,5 +1,18 @@
 import { describe, it, expect } from 'vitest';
-import { classHasLineup, POINT_CAPS, ENABLED_CLASSES } from './classRegistry';
+import { classHasLineup, classIdOf, POINT_CAPS, ENABLED_CLASSES } from './classRegistry';
+
+describe('classIdOf', () => {
+  it('accepts registry ids, aliases and display names', () => {
+    expect(classIdOf('openClass')).toBe('openClass');
+    expect(classIdOf('open')).toBe('openClass');
+    expect(classIdOf('Open Class')).toBe('openClass');
+    expect(classIdOf('A Class')).toBe('aClass');
+    expect(classIdOf('World Class')).toBe('worldClass');
+    expect(classIdOf('SoundSport')).toBe('soundSport');
+    expect(classIdOf('Drum Corps')).toBeNull();
+    expect(classIdOf(null)).toBeNull();
+  });
+});
 
 describe('classHasLineup', () => {
   it('is true for every fantasy class', () => {

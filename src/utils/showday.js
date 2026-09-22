@@ -21,6 +21,7 @@ import {
   showCalendarDay,
 } from './scheduleUtils';
 import { CAPTION_LABELS, normalizeCorpsName } from './pickHighlights';
+import { classIdOf } from './classRegistry';
 
 /**
  * @typedef {import('./scheduleUtils').LineupEntry} LineupEntry
@@ -87,26 +88,82 @@ const compKey = (day, name) => `${day}::${normalizeCorpsName(name)}`;
 const showStartMs = (s) => showStartsAtDate(s)?.getTime() ?? Infinity;
 
 /**
+ * The championship-week rounds a fantasy corps is auto-enrolled in: every
+ * championship competition whose eligible classes include the corps' class.
+ * These are never in `selectedShows` (the scorer enrolls by class and the
+ * registration UI hides them), so any "what's my next show" surface has to
+ * add them itself — without this the dashboard read "no upcoming shows" for
+ * all of Championship Week.
+ *
+ * An advancement round (Open & A Finals, Semifinals, Finals) is only the
+ * corps' show while it is still in it: once the round's cut is final
+ * (`fantasySchedule.advancement.status === 'final'`) and the director's
+ * corps is not in that field, the corps was eliminated and the round drops
+ * out. While the cut is pending the whole eligible class is in.
+ *
+ * @param {RawCompetition[]} competitions - Raw competitions from scheduleStore.
+ * @param {string|null|undefined} corpsClass - The corps' class id.
+ * @param {{myUid?: string|null}} [options] - The director's uid, for the cut check.
+ * @returns {RawCompetition[]} in schedule order
+ */
+export function championshipRoundsFor(competitions, corpsClass, { myUid = null } = {}) {
+  const classId = classIdOf(corpsClass);
+  if (!classId) return [];
+  const out = [];
+  for (const comp of competitions || []) {
+    if (!comp || comp.type !== 'championship') continue;
+    const classes = (comp.allowedClasses || []).map(classIdOf);
+    if (!classes.includes(classId)) continue;
+    const fs = comp.fantasySchedule || null;
+    if (fs?.advancement?.status === 'final' && myUid) {
+      const inField = [...(fs.lineup || []), ...(fs.overflow || [])].some(
+        (e) => e.uid === myUid && (!e.corpsClass || classIdOf(e.corpsClass) === classId)
+      );
+      if (!inField) continue;
+    }
+    out.push(comp);
+  }
+  return out;
+}
+
+/**
  * Join a fantasy corps' registered shows (corps.selectedShows, keyed
- * `week{n}` -> [{ day, eventName }]) to the schedule's competitions.
+ * `week{n}` -> [{ day, eventName }]) to the schedule's competitions, plus —
+ * when the corps' class is given — the Championship Week rounds it is
+ * auto-enrolled in (championshipRoundsFor). Deduped by day + event name.
  * @param {RawCompetition[]} competitions - Raw competitions from scheduleStore.
  * @param {Record<string, Array<{day?: number, eventName?: string, name?: string}>>|null|undefined} selectedShows
+ * @param {{corpsClass?: string|null, myUid?: string|null}} [options]
  * @returns {ShowLike[]} transformed shows (see transformCompetitionToShow)
  */
-export function joinFantasyShows(competitions, selectedShows) {
+export function joinFantasyShows(
+  competitions,
+  selectedShows,
+  { corpsClass = null, myUid = null } = {}
+) {
   /** @type {Map<string, RawCompetition>} */
   const byKey = new Map();
   for (const comp of competitions || []) {
     byKey.set(compKey(comp.day, comp.name), comp);
   }
+  /** @type {ShowLike[]} */
   const joined = [];
+  const seen = new Set();
+  /** @param {RawCompetition} comp */
+  const add = (comp) => {
+    const key = compKey(comp.day, comp.name);
+    if (seen.has(key)) return;
+    seen.add(key);
+    joined.push(transformCompetitionToShow(comp));
+  };
   for (const weekShows of Object.values(selectedShows || {})) {
     if (!Array.isArray(weekShows)) continue;
     for (const sel of weekShows) {
       const comp = byKey.get(compKey(sel.day, sel.eventName || sel.name));
-      if (comp) joined.push(transformCompetitionToShow(comp));
+      if (comp) add(comp);
     }
   }
+  for (const comp of championshipRoundsFor(competitions, corpsClass, { myUid })) add(comp);
   return joined;
 }
 

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   joinFantasyShows,
+  championshipRoundsFor,
   joinPodiumShows,
   projectPodiumShow,
   buildShowdayModel,
@@ -80,6 +81,87 @@ describe('joinFantasyShows', () => {
       week3: [{ day: 20, eventName: 'Ghost Show' }],
     });
     expect(shows).toEqual([]);
+  });
+
+  // Championship Week is auto-enrolled by class and never in selectedShows —
+  // without these rounds the dashboard read "no upcoming shows" all week.
+  const prelims = {
+    name: 'Open and A Class Prelims',
+    location: 'Marion, IN',
+    day: 45,
+    week: 7,
+    type: 'championship',
+    allowedClasses: ['openClass', 'aClass'],
+  };
+  const worldPrelims = {
+    name: 'marching.art World Championship Prelims',
+    location: 'Indianapolis, IN',
+    day: 47,
+    week: 7,
+    type: 'championship',
+    allowedClasses: ['worldClass', 'openClass', 'aClass'],
+  };
+  const semis = /** @type {import('./scheduleUtils').RawCompetition} */ ({
+    name: 'marching.art World Championship Semifinals',
+    location: 'Indianapolis, IN',
+    day: 48,
+    week: 7,
+    type: 'championship',
+    allowedClasses: ['worldClass', 'openClass', 'aClass'],
+    fantasySchedule: {
+      lineup: [{ order: 1, uid: 'rival-2', corpsClass: 'worldClass', corps: 'North Winds' }],
+      overflow: [],
+      advancement: { fromDay: 47, rule: 'Top 25 from Prelims', status: 'final' },
+    },
+  });
+
+  it('adds the Championship Week rounds the corps class is enrolled in', () => {
+    const shows = joinFantasyShows([laterComp, prelims, worldPrelims], selectedShows, {
+      corpsClass: 'aClass',
+      myUid: 'me',
+    });
+    expect(shows.map((s) => s.day)).toEqual([12, 45, 47]);
+    // A World Class corps has no Open & A night.
+    expect(
+      championshipRoundsFor([prelims, worldPrelims], 'worldClass', { myUid: 'me' }).map(
+        (c) => c.day
+      )
+    ).toEqual([47]);
+    // Display-form class names on the schedule entry are understood.
+    expect(
+      championshipRoundsFor(
+        [{ ...prelims, allowedClasses: ['Open Class', 'A Class'] }],
+        'aClass'
+      ).map((c) => c.day)
+    ).toEqual([45]);
+  });
+
+  it('drops an advancement round once its cut is final and the corps missed it', () => {
+    expect(championshipRoundsFor([semis], 'worldClass', { myUid: 'me' })).toEqual([]);
+    // Still in it: the corps is in the settled field.
+    expect(championshipRoundsFor([semis], 'worldClass', { myUid: 'rival-2' })).toEqual([semis]);
+    // Cut not decided yet: the whole class is in.
+    const pending = /** @type {import('./scheduleUtils').RawCompetition} */ ({
+      ...semis,
+      fantasySchedule: {
+        ...semis.fantasySchedule,
+        advancement: { fromDay: 47, rule: 'Top 25 from Prelims', status: 'pending' },
+      },
+    });
+    expect(championshipRoundsFor([pending], 'worldClass', { myUid: 'me' })).toEqual([pending]);
+    // No uid to check against: keep the round rather than guess.
+    expect(championshipRoundsFor([semis], 'worldClass')).toEqual([semis]);
+  });
+
+  it('never duplicates a round that is also (legacy) in selectedShows, and needs a class', () => {
+    const shows = joinFantasyShows(
+      [prelims],
+      { week7: [{ day: 45, eventName: 'Open and A Class Prelims' }] },
+      { corpsClass: 'openClass', myUid: 'me' }
+    );
+    expect(shows.map((s) => s.day)).toEqual([45]);
+    expect(joinFantasyShows([prelims], {}, { myUid: 'me' })).toEqual([]);
+    expect(joinFantasyShows([prelims], {})).toEqual([]);
   });
 });
 
@@ -178,6 +260,29 @@ describe('buildShowdayModel — fantasy', () => {
     const model = buildShowdayModel({ shows, currentDay: 30, myUid: 'me', now: NOW_PRE });
     expect(model.phase).toBe('none');
     expect(model.show).toBeNull();
+  });
+
+  it('sees Championship Week ahead for an auto-enrolled class (no picks needed)', () => {
+    const finals = {
+      name: 'marching.art World Championship Finals',
+      location: 'Indianapolis, IN',
+      day: 49,
+      week: 7,
+      type: 'championship',
+      allowedClasses: ['worldClass', 'openClass', 'aClass'],
+    };
+    const model = buildShowdayModel({
+      shows: joinFantasyShows(
+        [tonightComp, laterComp, finals],
+        {},
+        { corpsClass: 'worldClass', myUid: 'me' }
+      ),
+      currentDay: 45,
+      myUid: 'me',
+      now: NOW_PRE,
+    });
+    expect(model.phase).toBe('upcoming');
+    expect(model.show?.eventName).toBe('marching.art World Championship Finals');
   });
 });
 
