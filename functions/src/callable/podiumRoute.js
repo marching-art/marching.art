@@ -4,26 +4,26 @@
  * derivation + balance overrides) with the rest of the Podium API.
  */
 
-const { onCall, HttpsError } = require("firebase-functions/v2/https");
-const { assertWriteBudget } = require("../helpers/callableGuards");
-const store = require("../helpers/podium/store");
-const engine = require("../helpers/podium/engine");
-const venues = require("../helpers/podium/venues");
-const jointHelper = require("../helpers/podium/joint");
-const career = require("../helpers/podium/career");
-const divisions = require("../helpers/podium/divisions");
-const staffMarket = require("../helpers/podium/staffMarket");
-const staffNames = require("../helpers/podium/staffNames");
-const assessment = require("../helpers/podium/assessment");
-const { podiumContext } = require("./podium");
-const { getPodiumRehearsalWindow } = require("../helpers/gameDay");
+const { onCall, HttpsError } = require('firebase-functions/v2/https');
+const { assertWriteBudget } = require('../helpers/callableGuards');
+const store = require('../helpers/podium/store');
+const engine = require('../helpers/podium/engine');
+const venues = require('../helpers/podium/venues');
+const jointHelper = require('../helpers/podium/joint');
+const career = require('../helpers/podium/career');
+const divisions = require('../helpers/podium/divisions');
+const staffMarket = require('../helpers/podium/staffMarket');
+const staffNames = require('../helpers/podium/staffNames');
+const assessment = require('../helpers/podium/assessment');
+const { podiumContext } = require('./podium');
+const { getPodiumRehearsalWindow } = require('../helpers/gameDay');
 
 // Branded names for the fixed majors on the route sheet.
 const MAJOR_ROUTE_LABELS = {
-  28: "marching.art Southwestern Championship",
-  35: "marching.art Southeastern Championship",
-  41: "marching.art Eastern Classic",
-  42: "marching.art Eastern Classic",
+  28: 'marching.art Southwestern Championship',
+  35: 'marching.art Southeastern Championship',
+  41: 'marching.art Eastern Classic',
+  42: 'marching.art Eastern Classic',
 };
 
 /**
@@ -51,17 +51,30 @@ function currentVenueOf(state) {
 function buildCurrentLocation(state, uid, competitionDay, easternAssignments) {
   const venue = currentVenueOf(state);
   const atHome = !state.lastVenue;
-  // The show that moved the corps here — the most recent show day on or before
-  // today. Only meaningful once a show has actually been performed.
+  // The show that moved the corps here — the most recent show day BEFORE today.
+  // The nightly processor is what relocates a corps (it sets state.lastVenue at
+  // the 9 PM ET run that also rolls the day), so today's show — however far
+  // along the day is — hasn't moved anyone yet: on a show day the corps is
+  // still standing where last night's run left it, and today's leg is the first
+  // one on the route. Counting today here labelled the origin with the day of
+  // the show the corps is about to travel TO. Only meaningful once a show has
+  // actually been performed.
   let sinceDay = null;
   if (!atHome) {
-    for (let day = Math.min(Math.max(0, competitionDay), 49); day >= 1; day--) {
+    for (let day = Math.min(Math.max(0, competitionDay) - 1, 49); day >= 1; day--) {
       if (store.isShowDayFor(state, uid, day, easternAssignments)) {
         sinceDay = day;
         break;
       }
     }
   }
+  // Whether today's show is still ahead of the corps: the nightly run at 9 PM
+  // ET is what performs it and moves the corps to its venue, so during the
+  // active day the route sheet leads with today's leg out of this origin.
+  const showToday =
+    competitionDay >= 1 &&
+    competitionDay <= 49 &&
+    store.isShowDayFor(state, uid, competitionDay, easternAssignments);
   return {
     venueId: venue ? venue.venueId : null,
     city: venue ? `${venue.city}, ${venue.region}` : state.location || null,
@@ -71,6 +84,7 @@ function buildCurrentLocation(state, uid, competitionDay, easternAssignments) {
     mapped: Boolean(venue),
     atHome,
     sinceDay,
+    showToday,
   };
 }
 
@@ -91,14 +105,26 @@ exports.buildCurrentLocation = buildCurrentLocation;
  * schedule are routed between each other leg-to-leg: the cursor advances to
  * each show's location before pricing the next hop. Shown BEFORE selections
  * are confirmed (open-information routing).
+ *
+ * TODAY's show is on the route, first. The nightly processor performs it and
+ * relocates the corps at the 9 PM ET run — the same moment the active day
+ * rolls — so all day long the corps is still at last night's venue and
+ * tonight's leg is the next one it rides. Leaving it off priced tomorrow's leg
+ * from the wrong city: a corps at Centerville on the eve of Championship Week
+ * saw Day 46 (Marion) routed as a 122-mile day trip from Centerville, when the
+ * Day 45 prelims — also in Marion — would have already moved it there. The
+ * today leg carries `isToday` so the portal can mark it and withhold the
+ * airfare toggle (setPodiumAirfare only books days still ahead of today).
  */
 async function buildRoutePreview(db, seasonData, state, uid, competitionDay, easternAssignments) {
   const division = divisions.normalizeDivision(state.division);
   // Accepted joint rehearsals are real legs on the tour (design §5.12), so fold
   // each upcoming joint day into the route alongside the shows.
+  // Today counts: nothing on it has been processed yet (see the header).
+  const firstDay = Math.max(1, competitionDay);
   const jointByDay = {};
   for (const j of jointHelper.pendingJoints(state)) {
-    if (j.day > Math.max(0, competitionDay)) jointByDay[j.day] = j;
+    if (j.day >= firstDay) jointByDay[j.day] = j;
   }
   const upcoming = [
     ...new Set([
@@ -107,7 +133,7 @@ async function buildRoutePreview(db, seasonData, state, uid, competitionDay, eas
       ...Object.keys(jointByDay).map(Number),
     ]),
   ]
-    .filter((day) => day > Math.max(0, competitionDay) && day <= 49)
+    .filter((day) => day >= firstDay && day <= 49)
     .sort((a, b) => a - b)
     .slice(0, 8);
   if (upcoming.length === 0) return [];
@@ -125,7 +151,7 @@ async function buildRoutePreview(db, seasonData, state, uid, competitionDay, eas
     }
   }
 
-  return buildRouteLegs(state, upcoming, { jointByDay, locations });
+  return buildRouteLegs(state, upcoming, { jointByDay, locations, today: competitionDay });
 }
 
 /**
@@ -145,8 +171,12 @@ async function buildRoutePreview(db, seasonData, state, uid, competitionDay, eas
  * The nightly processor already treats a joint this way — it never sets
  * state.lastVenue on a joint day, so the corps' next show is priced from its
  * last real venue — and this preview must match that authority.
+ *
+ * `today` is the active competition day; a leg on it is flagged `isToday` (the
+ * show the nightly run performs tonight, priced from the corps' current origin
+ * exactly as the processor will price it).
  */
-function buildRouteLegs(state, upcoming, { jointByDay, locations }) {
+function buildRouteLegs(state, upcoming, { jointByDay, locations, today = 0 }) {
   const legs = [];
   let cursor = currentVenueOf(state);
   for (const day of upcoming) {
@@ -163,9 +193,9 @@ function buildRouteLegs(state, upcoming, { jointByDay, locations }) {
       legs.push({
         day,
         eventName: null,
-        city: venue ? `${venue.city}, ${venue.region}` : joint.city || "TBA",
+        city: venue ? `${venue.city}, ${venue.region}` : joint.city || 'TBA',
         stadium: venue ? venues.stadiumFor(venue.venueId) : null,
-        label: `Joint rehearsal · ${joint.partnerCorpsName || "corps"}`,
+        label: `Joint rehearsal · ${joint.partnerCorpsName || 'corps'}`,
         isJoint: true,
         partnerCorpsName: joint.partnerCorpsName || null,
         ensembleBonusPct: Math.round(((joint.bonusMult || 1) - 1) * 100),
@@ -175,6 +205,7 @@ function buildRouteLegs(state, upcoming, { jointByDay, locations }) {
         staminaCost: tierCfg ? tierCfg.staminaCost : 0,
         heat: 0,
         isMajor: false,
+        isToday: day === today,
       });
       // A joint day-trips out and back — the cursor stays at the corps' real
       // tour position, so the next show is never priced from the host city.
@@ -198,7 +229,7 @@ function buildRouteLegs(state, upcoming, { jointByDay, locations }) {
     legs.push({
       day,
       eventName: pick?.eventName || null,
-      city: venue ? `${venue.city}, ${venue.region}` : "TBA",
+      city: venue ? `${venue.city}, ${venue.region}` : 'TBA',
       stadium: venue ? venues.stadiumFor(venue.venueId) : null,
       label: store.championshipEventFor(day) || MAJOR_ROUTE_LABELS[day] || null,
       tier: leg ? leg.tier : null,
@@ -207,6 +238,8 @@ function buildRouteLegs(state, upcoming, { jointByDay, locations }) {
       staminaCost: rawStamina,
       heat: venues.heatStamina(venue, store.balance),
       isMajor,
+      // Tonight's show — the leg the nightly run is about to ride and charge.
+      isToday: day === today,
       // Airfare affordance for this leg (absent/eligible:false on short legs).
       airfareEligible: airfare.eligible,
       airfareCost: airfare.coinCost,
@@ -286,8 +319,8 @@ exports.getPodiumRegistrationPreview = onCall({ cors: true }, async (request) =>
     bankedReport ||
     (hasCarried
       ? store.buildSeasonFinancialReport(staleSnapshot.data(), {
-        seasonUid: staleSnapshot.data().seasonUid,
-      })
+          seasonUid: staleSnapshot.data().seasonUid,
+        })
       : null);
   // Estimated budget for a comparable next season: last season's operating
   // spend (travel/food/camp/clinicians) plus next season's exact aged staff
@@ -296,7 +329,10 @@ exports.getPodiumRegistrationPreview = onCall({ cors: true }, async (request) =>
   // clamped to the division cap. Null with no prior season to learn from.
   const roundUpToStep = (value) => Math.ceil(Math.max(0, value) / 50) * 50;
   const estimatedSeasonBudget = lastSeasonReport
-    ? Math.min(commitmentCap, roundUpToStep((lastSeasonReport.operatingSpend || 0) + projection.payroll))
+    ? Math.min(
+        commitmentCap,
+        roundUpToStep((lastSeasonReport.operatingSpend || 0) + projection.payroll)
+      )
     : null;
 
   return {
@@ -342,15 +378,16 @@ exports.getPodiumRegistrationPreview = onCall({ cors: true }, async (request) =>
     // published by the archival sweep, shown BEFORE the director decides. Null
     // for a first-time director (no prior season to assess). `assessment.decisions`
     // gains "unretire" here when banked lineages exist.
-    assessment: careerData && careerData.pendingAssessment
-      ? {
-        ...careerData.pendingAssessment,
-        decisions: [
-          ...(careerData.pendingAssessment.decisions || ["continue", "retire", "startNew"]),
-          ...((careerData.retiredCareers || []).length > 0 ? ["unretire"] : []),
-        ],
-      }
-      : null,
+    assessment:
+      careerData && careerData.pendingAssessment
+        ? {
+            ...careerData.pendingAssessment,
+            decisions: [
+              ...(careerData.pendingAssessment.decisions || ['continue', 'retire', 'startNew']),
+              ...((careerData.retiredCareers || []).length > 0 ? ['unretire'] : []),
+            ],
+          }
+        : null,
     // Between-seasons home relocation (design §5.3): the CorpsCoin-per-mile rate
     // so the client can price a move as the director picks a new home, matching
     // the authoritative charge in registerPodiumCorps.
@@ -359,29 +396,27 @@ exports.getPodiumRegistrationPreview = onCall({ cors: true }, async (request) =>
     // instead of a blank founding form.
     carryover: hasCarried
       ? {
-        corpsName: staleSnapshot.data().corpsName || null,
-        location: staleSnapshot.data().location || null,
-        // The current official home, resolved to a tour-map venue so the client
-        // can preselect it AND measure the distance to any new pick (the move
-        // fee). Legacy corps with only a free-text `location` resolve here too.
-        ...(() => {
-          const home =
-            staleSnapshot.data().home ||
-            venues.venueFor(staleSnapshot.data().location) ||
-            null;
-          return home
-            ? {
-              homeVenueId: home.venueId,
-              homeCity: `${home.city}, ${home.region}`,
-              homeLat: home.lat,
-              homeLng: home.lng,
-            }
-            : {};
-        })(),
-        showConcept: staleSnapshot.data().showConcept || null,
-        reputation: careerData ? careerData.reputation || 0 : 0,
-        tier: engineTierLabel(careerData),
-      }
+          corpsName: staleSnapshot.data().corpsName || null,
+          location: staleSnapshot.data().location || null,
+          // The current official home, resolved to a tour-map venue so the client
+          // can preselect it AND measure the distance to any new pick (the move
+          // fee). Legacy corps with only a free-text `location` resolve here too.
+          ...(() => {
+            const home =
+              staleSnapshot.data().home || venues.venueFor(staleSnapshot.data().location) || null;
+            return home
+              ? {
+                  homeVenueId: home.venueId,
+                  homeCity: `${home.city}, ${home.region}`,
+                  homeLat: home.lat,
+                  homeLng: home.lng,
+                }
+              : {};
+          })(),
+          showConcept: staleSnapshot.data().showConcept || null,
+          reputation: careerData ? careerData.reputation || 0 : 0,
+          tier: engineTierLabel(careerData),
+        }
       : null,
     // Banked lineages a director can un-retire (each re-assessed on selection).
     retiredLineages: (careerData && careerData.retiredCareers ? careerData.retiredCareers : []).map(
@@ -398,7 +433,7 @@ exports.getPodiumRegistrationPreview = onCall({ cors: true }, async (request) =>
 
 /** Named tier label for a career's current reputation (helper for the preview). */
 function engineTierForCareer(careerData) {
-  const engine = require("../helpers/podium/engine");
+  const engine = require('../helpers/podium/engine');
   return engine.tierForReputation((careerData && careerData.reputation) || 0, store.balance);
 }
 function engineTierLabel(careerData) {
@@ -427,7 +462,7 @@ exports.getPodiumState = onCall({ cors: true }, async (request) => {
       isShowDay,
       // Same rule as allocateRehearsalBlock and the nightly processor: the
       // 20-block camp cap belongs to the live season's preseason only.
-      isSpringTraining: seasonData.status === "live-season" && competitionDay < 1,
+      isSpringTraining: seasonData.status === 'live-season' && competitionDay < 1,
     }
   );
   const blockCaps = store.planBlockCaps();
@@ -451,7 +486,12 @@ exports.getPodiumState = onCall({ cors: true }, async (request) => {
     ),
   };
   const routePreview = await buildRoutePreview(
-    db, seasonData, state, uid, competitionDay, easternAssignments
+    db,
+    seasonData,
+    state,
+    uid,
+    competitionDay,
+    easternAssignments
   );
   // Resolved independently of the route so the origin still shows when there
   // are no upcoming shows left to route.
@@ -482,7 +522,11 @@ exports.getPodiumState = onCall({ cors: true }, async (request) => {
   // director will have to release or retrain someone at re-registration no
   // matter how much CorpsCoin they save — the season-boundary warning worth
   // surfacing NOW, while there's still time to act (design §5.6).
-  const staffProjection = staffMarket.projectRetention(state.staff || {}, commitmentCap, store.balance);
+  const staffProjection = staffMarket.projectRetention(
+    state.staff || {},
+    commitmentCap,
+    store.balance
+  );
   const staffOutlook = {
     payroll: staffProjection.payroll,
     commitmentCap,
@@ -503,7 +547,8 @@ exports.getPodiumState = onCall({ cors: true }, async (request) => {
     blocksRemainingToday,
     // ISO instant rehearsal blocks open (the next 2 AM ET) while the corps is
     // closed for the night after the show; null while the day is open.
-    rehearsalOpensAt: overnight.locked && overnight.opensAt ? overnight.opensAt.toISOString() : null,
+    rehearsalOpensAt:
+      overnight.locked && overnight.opensAt ? overnight.opensAt.toISOString() : null,
     blockCaps,
     assistant,
     division,
@@ -531,11 +576,11 @@ exports.getPodiumState = onCall({ cors: true }, async (request) => {
     currentLocation,
     career: careerData
       ? {
-        reputation: careerData.reputation,
-        historicalPeak: careerData.historicalPeak,
-        seasonsPlayed: careerData.seasonsPlayed,
-        history: (careerData.history || []).slice(-5),
-      }
+          reputation: careerData.reputation,
+          historicalPeak: careerData.historicalPeak,
+          seasonsPlayed: careerData.seasonsPlayed,
+          history: (careerData.history || []).slice(-5),
+        }
       : null,
     state,
   };
@@ -555,21 +600,21 @@ exports.setPodiumAirfare = onCall({ cors: true }, async (request) => {
   const day = Number(request.data && request.data.day);
   const fly = Boolean(request.data && request.data.fly);
   if (!Number.isInteger(day) || day < 1 || day > 49) {
-    throw new HttpsError("invalid-argument", "Airfare day must be a competition day (1-49).");
+    throw new HttpsError('invalid-argument', 'Airfare day must be a competition day (1-49).');
   }
   if (day <= Math.max(0, competitionDay)) {
     throw new HttpsError(
-      "failed-precondition",
-      "That show has already passed — airfare is set ahead of the show."
+      'failed-precondition',
+      'That show has already passed — airfare is set ahead of the show.'
     );
   }
-  await assertWriteBudget(db, uid, "podium", { max: 120, windowMs: 10 * 60 * 1000 });
+  await assertWriteBudget(db, uid, 'podium', { max: 120, windowMs: 10 * 60 * 1000 });
   const easternAssignments = await store.loadEasternAssignments(db, seasonData.seasonUid);
   const sRef = store.stateRef(db, uid);
   await db.runTransaction(async (transaction) => {
     const snapshot = await transaction.get(sRef);
     if (!snapshot.exists || snapshot.data().seasonUid !== seasonData.seasonUid) {
-      throw new HttpsError("failed-precondition", "Register a Podium corps first.");
+      throw new HttpsError('failed-precondition', 'Register a Podium corps first.');
     }
     const state = snapshot.data();
     // Only show days the corps rides on tour are flyable — auto-attended majors
@@ -582,7 +627,7 @@ exports.setPodiumAirfare = onCall({ cors: true }, async (request) => {
     ]);
     if (!showDays.has(day)) {
       throw new HttpsError(
-        "failed-precondition",
+        'failed-precondition',
         "You're not attending a show that day — add it before booking airfare."
       );
     }
