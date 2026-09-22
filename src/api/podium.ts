@@ -49,6 +49,9 @@ export interface PodiumBlockResult {
 export interface PodiumRouteLeg {
   day: number;
   eventName: string | null;
+  // Branded label for a fixed major or Championship Week round (null on a
+  // self-pick, whose name is `eventName`).
+  label?: string | null;
   city: string;
   stadium?: string | null;
   tier: string | null;
@@ -57,6 +60,10 @@ export interface PodiumRouteLeg {
   staminaCost: number;
   heat: number;
   isMajor: boolean;
+  // Tonight's show: the leg the 9 PM ET nightly run is about to ride and
+  // charge from the corps' current origin. Airfare can no longer be toggled on
+  // it (booking closes once the day is the active one).
+  isToday?: boolean;
   // Airfare (design §5.3): a long leg (over the tier floor) can be flown to
   // halve its travel-stamina hit for a CorpsCoin fare of 1 CC per 2 leg-miles,
   // charged in place of the ground fare. Present on show legs only.
@@ -64,6 +71,7 @@ export interface PodiumRouteLeg {
   airfareCost?: number; // CC fare if flown (0 when not eligible)
   airfareStaminaCost?: number | null; // the halved travel stamina if flown
   airfarePurchased?: boolean; // director has booked the flight for this leg
+  airfareStranded?: boolean; // booked to fly, but the leg rerouted under the floor
   // Set on a joint-rehearsal leg (design §5.12).
   isJoint?: boolean;
   partnerCorpsName?: string | null;
@@ -79,7 +87,8 @@ export interface PodiumCurrentLocation {
   stadium: string | null;
   mapped: boolean; // false when the hometown isn't in the venue gazetteer
   atHome: boolean; // no show performed yet — still at the hometown
-  sinceDay: number | null; // the show day that moved the corps here
+  sinceDay: number | null; // the show day that moved the corps here (before today)
+  showToday?: boolean; // a show is on today — still ahead until the nightly run
 }
 
 // Next-season payroll warning (design §5.6): when a corps' aged staff payroll

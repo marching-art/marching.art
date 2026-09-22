@@ -1,5 +1,17 @@
 [
   {
+    "id": "2026-09-22-podium-route-tonight",
+    "date": "2026-09-22",
+    "title": "Podium's Upcoming Route now starts with tonight's show",
+    "category": "fix",
+    "summary": "On a show day, the Podium route sheet used to leave tonight's show off the itinerary and price tomorrow's leg from where you were the night before — so a corps playing Open & A Prelims in Marion saw the next night's Finals, also in Marion, routed as a 122-mile day trip from its last stop. Tonight's show is now the first leg on the route, marked Tonight, and every later leg is priced from where it leaves you.",
+    "highlights": [
+      "The \"Now\" location is dated by the show that actually moved you there, not by the show you are about to travel to.",
+      "Back-to-back nights at the same venue show as Local with no miles and no travel stamina, matching what the nightly run charges.",
+      "Tonight's long leg shows whether you fly or ride the bus — airfare booking closes once the show day begins."
+    ]
+  },
+  {
     "id": "2026-09-22-championship-week-weather",
     "date": "2026-09-22",
     "title": "Show-time weather on Championship Week, dated to the night you play it",

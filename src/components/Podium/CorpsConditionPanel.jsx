@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // CorpsConditionPanel — logistics for the tour (Phase 3, design §5.3):
 // weekly food plan, the assistant-director plan template, the upcoming route
 // with travel tiers + heat, and the Family Day diagnostic when present.
@@ -25,6 +24,10 @@ import {
 import { formatEventName } from '../../utils/season';
 import { BLOCKS } from './podiumConstants';
 
+/** @typedef {import('../../api/podium').PodiumRouteLeg} PodiumRouteLeg */
+/** @typedef {import('../../api/podium').PodiumCurrentLocation} PodiumCurrentLocation */
+/** @typedef {ReturnType<typeof import('../../hooks/usePodium').usePodium>} PodiumHook */
+
 // Costs mirror functions balanceConfig condition.foodTiers — charged from
 // the Corps Budget once per week (never your CorpsCoin wallet directly).
 const FOOD_TIERS = [
@@ -33,6 +36,7 @@ const FOOD_TIERS = [
   { id: 'fullKitchen', label: 'Full kitchen', detail: '150 Budget/week · best recovery + morale' },
 ];
 
+/** @type {Record<string, string>} */
 const TIER_LABELS = {
   local: 'Local',
   dayTrip: 'Day trip',
@@ -42,6 +46,7 @@ const TIER_LABELS = {
 };
 
 // Shared section header — icon + uppercase label, matches the panel's tone.
+/** @param {{icon: React.ElementType, children: React.ReactNode, className?: string}} props */
 function SectionLabel({ icon: Icon, children, className = '' }) {
   return (
     <div
@@ -56,6 +61,9 @@ function SectionLabel({ icon: Icon, children, className = '' }) {
 // §5.12): the corps sits at its most recent show venue, or at its hometown
 // until the first show. Rendered above the legs so the first leg's mileage has
 // a visible starting point, and kept on screen even when nothing is booked.
+// On a show day the corps is STILL here — the nightly run performs tonight's
+// show and moves it — so the row says the tour rolls out from here tonight.
+/** @param {{location: PodiumCurrentLocation | null, hasRoute: boolean}} props */
 function CurrentLocationRow({ location, hasRoute }) {
   if (!location || !location.city) return null;
   const detail = !location.mapped
@@ -67,7 +75,11 @@ function CurrentLocationRow({ location, hasRoute }) {
         ? 'Official home — the tour rolls out from here.'
         : 'Official home — the tour starts once you add a show.'
       : `Last show venue${location.sinceDay ? ` · since day ${location.sinceDay}` : ''}${
-          hasRoute ? ' — the next leg is routed from here.' : '.'
+          location.showToday
+            ? " — tonight's show is routed from here; the corps moves on after it."
+            : hasRoute
+              ? ' — the next leg is routed from here.'
+              : '.'
         }`;
   return (
     <div className="mb-1.5 flex items-start gap-2 rounded-none border border-line bg-surface-sunken px-3 py-2">
@@ -98,6 +110,15 @@ const ROUTE_COLS = 'grid grid-cols-[2.25rem_minmax(0,1fr)_auto_auto_auto] gap-x-
 // free and reversible here — the fare only lands at the nightly processor,
 // priced against the leg the corps actually flies. Shown only on eligible
 // (over-the-floor) legs; disabled to book when the Budget can't cover the fare.
+/**
+ * @param {{
+ *   leg: PodiumRouteLeg,
+ *   budgetBalance: number,
+ *   busy: boolean,
+ *   disabled: boolean,
+ *   onToggle: (fly: boolean) => void,
+ * }} props
+ */
 function AirfareRow({ leg, budgetBalance, busy, disabled, onToggle }) {
   const affordable = budgetBalance >= (leg.airfareCost || 0);
   const flownStamina = leg.airfareStaminaCost != null ? leg.airfareStaminaCost : leg.staminaCost;
@@ -140,6 +161,30 @@ function AirfareRow({ leg, budgetBalance, busy, disabled, onToggle }) {
   );
 }
 
+// Tonight's long leg: airfare booking closed with the day (setPodiumAirfare only
+// books days still ahead of today), so say what the nightly run will do —
+// fly it if a flight was booked, otherwise ride the bus — with no toggle.
+/** @param {{leg: PodiumRouteLeg}} props */
+function TodayAirfareNote({ leg }) {
+  return (
+    <div className="px-3 py-1 border-t border-line-subtle bg-surface-sunken/40 flex items-center gap-1.5 text-[9px] text-muted">
+      <Plane
+        className={`w-3 h-3 shrink-0 ${leg.airfarePurchased ? 'text-interactive' : 'text-muted'}`}
+      />
+      {leg.airfarePurchased ? (
+        <span className="truncate">
+          Flying tonight — <span className="text-interactive font-bold">{leg.airfareCost} CC</span>{' '}
+          from Budget, travel stamina halved to −{leg.airfareStaminaCost}.
+        </span>
+      ) : (
+        <span className="truncate">
+          Riding the bus tonight — airfare closes once the show day begins.
+        </span>
+      )}
+    </div>
+  );
+}
+
 // A previously-booked fly intent whose leg has since rerouted under the airfare
 // floor (design §5.3). The flag lingers harmlessly — the nightly processor
 // prices airfare on the REALIZED leg and simply won't fly a short one, so no
@@ -147,6 +192,7 @@ function AirfareRow({ leg, budgetBalance, busy, disabled, onToggle }) {
 // silently dropping the "Flying" badge, which reads like a vanished purchase.
 // Offers a one-click clear to tidy the stale flag (re-book later if it reroutes
 // long again — toggling airfare is always free and reversible).
+/** @param {{busy: boolean, disabled: boolean, onClear: () => void}} props */
 function StrandedAirfareNote({ busy, disabled, onClear }) {
   return (
     <div className="px-3 py-1 border-t border-line-subtle bg-surface-sunken/40 flex items-center justify-between gap-2">
@@ -168,29 +214,38 @@ function StrandedAirfareNote({ busy, disabled, onClear }) {
   );
 }
 
+/** @param {{podium: PodiumHook}} props */
 export default function CorpsConditionPanel({ podium }) {
   const state = podium.data?.state;
+  /** @type {PodiumRouteLeg[]} */
   const routePreview = podium.data?.routePreview || [];
+  /** @type {PodiumCurrentLocation | null} */
   const currentLocation = podium.data?.currentLocation || null;
-  const [busy, setBusy] = useState(null);
-  const [error, setError] = useState(null);
+  const [busy, setBusy] = useState(/** @type {string | null} */ (null));
+  const [error, setError] = useState(/** @type {string | null} */ (null));
   const [editingTemplate, setEditingTemplate] = useState(false);
-  const [templateDraft, setTemplateDraft] = useState([]);
+  const [templateDraft, setTemplateDraft] = useState(/** @type {string[]} */ ([]));
   // Which day-type plan the assistant-director editor is showing (§5.2):
   // 'rehearsal', 'show', or 'springTraining'.
-  const [planType, setPlanType] = useState('rehearsal');
+  const [planType, setPlanType] = useState(
+    /** @type {'rehearsal' | 'show' | 'springTraining'} */ ('rehearsal')
+  );
   const [topUp, setTopUp] = useState(100);
   const [clinicianBlock, setClinicianBlock] = useState('brassSectionals');
 
   if (!state) return null;
 
+  /**
+   * @param {string} key
+   * @param {() => Promise<unknown>} fn
+   */
   const act = async (key, fn) => {
     setBusy(key);
     setError(null);
     try {
       await fn();
     } catch (err) {
-      setError(err?.message || 'Action failed.');
+      setError((err instanceof Error && err.message) || 'Action failed.');
     } finally {
       setBusy(null);
     }
@@ -208,7 +263,7 @@ export default function CorpsConditionPanel({ podium }) {
   const assistant = podium.data?.assistant || null;
   const PLAN_TYPES = [
     {
-      id: 'rehearsal',
+      id: /** @type {const} */ ('rehearsal'),
       tab: 'Rehearsal',
       plan: state.planTemplate || [],
       maxBlocks: caps.rehearsal,
@@ -218,7 +273,7 @@ export default function CorpsConditionPanel({ podium }) {
         'No rehearsal-day plan — days you miss are lost entirely. Set one and the assistant rehearses it at 85% yield while you’re away.',
     },
     {
-      id: 'show',
+      id: /** @type {const} */ ('show'),
       tab: 'Show day',
       plan: state.showDayPlan || [],
       maxBlocks: caps.showDay,
@@ -227,7 +282,7 @@ export default function CorpsConditionPanel({ podium }) {
       empty: `No show-day plan — unplayed show days fall back to your rehearsal plan. Set a lighter routine here (${caps.showDay} blocks) for performance days.`,
     },
     {
-      id: 'springTraining',
+      id: /** @type {const} */ ('springTraining'),
       tab: 'Spring training',
       plan: state.springTrainingPlan || [],
       maxBlocks: caps.springTraining,
@@ -237,6 +292,7 @@ export default function CorpsConditionPanel({ podium }) {
     },
   ];
   const activePlanType = PLAN_TYPES.find((p) => p.id === planType) || PLAN_TYPES[0];
+  /** @type {string[]} */
   const template = activePlanType.plan;
   // Each day-type plan may hold only as many blocks as that day actually runs
   // (§6.1) — 12 rehearsal, 8 show, 20 spring training. The server enforces the
@@ -246,10 +302,17 @@ export default function CorpsConditionPanel({ podium }) {
   const budget = state.budget || { balance: 0, committed: 0, earned: 0, spent: 0 };
   const commitmentCap = podium.data?.commitmentCap || 2500;
 
+  /** @param {string} id */
   const blockLabel = (id) => BLOCKS.find((x) => x.id === id)?.label || id;
+  /** @param {string} id */
   const addBlock = (id) =>
     setTemplateDraft((prev) => (prev.length < maxTemplateBlocks ? [...prev, id] : prev));
+  /** @param {number} index */
   const removeBlock = (index) => setTemplateDraft((prev) => prev.filter((_, i) => i !== index));
+  /**
+   * @param {number} index
+   * @param {number} dir
+   */
   const moveBlock = (index, dir) =>
     setTemplateDraft((prev) => {
       const target = index + dir;
@@ -622,16 +685,23 @@ export default function CorpsConditionPanel({ podium }) {
                   <div
                     className={`${ROUTE_COLS} px-3 py-1 border-t border-line-subtle text-[10px] tabular-nums`}
                   >
-                    <span className="text-muted">D{leg.day}</span>
+                    <span className={leg.isToday ? 'text-white font-bold' : 'text-muted'}>
+                      D{leg.day}
+                    </span>
                     <span
                       className={`truncate ${leg.isMajor ? 'text-brand font-bold' : 'text-secondary'}`}
                       title={name ? `${name} — ${leg.city}` : leg.city}
                     >
+                      {leg.isToday && (
+                        <span className="mr-1.5 rounded-none bg-interactive/15 px-1 py-px text-[8px] font-bold uppercase tracking-wider text-interactive">
+                          Tonight
+                        </span>
+                      )}
                       {name ? `${name} · ${leg.city}` : leg.city}
                     </span>
                     <span className="text-right text-muted">
                       {leg.miles != null && leg.miles > 0
-                        ? `${TIER_LABELS[leg.tier] || leg.tier} · ${leg.miles} mi`
+                        ? `${(leg.tier && TIER_LABELS[leg.tier]) || leg.tier} · ${leg.miles} mi`
                         : ''}
                     </span>
                     <span className="text-right text-orange-400">
@@ -658,7 +728,9 @@ export default function CorpsConditionPanel({ podium }) {
                       )}
                     </span>
                   </div>
-                  {leg.airfareEligible ? (
+                  {leg.airfareEligible && leg.isToday ? (
+                    <TodayAirfareNote leg={leg} />
+                  ) : leg.airfareEligible ? (
                     <AirfareRow
                       leg={leg}
                       budgetBalance={budget.balance || 0}
