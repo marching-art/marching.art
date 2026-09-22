@@ -33,6 +33,7 @@ const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
 const { getShowtimeWeather, SHOWTIME_HOUR, FORECAST_HORIZON_DAYS } = require("../helpers/weather");
 const { cleanLocation } = require("../helpers/newsArticleShared");
+const { championshipVenueFor } = require("../helpers/championshipVenues");
 const { competitionDayToIsoDate } = require("../helpers/gameDay");
 
 const DAY_MS = 86400000;
@@ -114,7 +115,16 @@ async function enrichScheduleWeatherLogic(db, deps = {}) {
   const out = [];
   for (const comp of competitions) {
     const entry = { ...comp };
-    const location = cleanLocation(comp.location);
+    // A championship round's venue is a fixed game fact (Indianapolis for the
+    // World rounds, Marion for Open & A): resolve it through the shared table
+    // and repair the row when an off-season copied an archive year's site, so
+    // the weather is fetched for — and the card shows — the real venue.
+    const fixedVenue = championshipVenueFor(comp);
+    if (fixedVenue && comp.location !== fixedVenue) {
+      entry.location = fixedVenue;
+      updated += 1;
+    }
+    const location = fixedVenue || cleanLocation(comp.location);
     const date = competitionIsoDate(comp, season);
 
     if (location && date) {
