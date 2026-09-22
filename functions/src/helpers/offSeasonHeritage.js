@@ -18,6 +18,13 @@
  * The historical corps are the STAGE cast, not the competitors — the directors'
  * corps are ranked separately in the recap. The Step 4 highlight will connect a
  * director's pick to a corps in this order when the brand is present.
+ *
+ * On championship days the stage cast is NOT what a director sees as the
+ * running order: the real-field producer (scheduled/scheduleRunningOrder.js)
+ * builds `fantasySchedule` from the auto-enrolled classes, and the client never
+ * falls back to this lineup for a championship show. The synthesized cast
+ * still supplies the show's clock (gates/start/scores) before the field is
+ * materialized and the caption-pick spotlight ("your picks perform tonight").
  */
 
 const { logger } = require("firebase-functions/v2");
@@ -239,7 +246,8 @@ async function enrichOffSeasonSchedule(db, schedule, { startDate, pool, dataDocI
       // builds the registered field's timed running order, so system shows show
       // only their attendee roster while director-hosted shows (dateless, so
       // dated from season-start + day) get the full timed schedule. Championship
-      // shows keep their null date (auto-enrolled; the producer skips them).
+      // shows keep their null date (auto-enrolled; the producer dates them from
+      // season-start + day, and the registration index keys them with the null).
       // Display-only — scoring matches shows by name, not date.
       if (ok || !show.isChampionship) show.date = offSeasonDate.toISOString();
     }

@@ -10,6 +10,8 @@ const assert = require("node:assert/strict");
 const {
   showRegistrationEventKey,
   registrationEntryKey,
+  classIdOf,
+  championshipCompetitionsOf,
   collectRegistrationsFromProfile,
   buildEventDocs,
   collectPodiumRegistrations,
@@ -116,6 +118,102 @@ describe("collectRegistrationsFromProfile", () => {
       }),
       []
     );
+  });
+});
+
+describe("classIdOf", () => {
+  test("accepts registry ids, aliases and display names", () => {
+    assert.equal(classIdOf("openClass"), "openClass");
+    assert.equal(classIdOf("open"), "openClass");
+    assert.equal(classIdOf("Open Class"), "openClass");
+    assert.equal(classIdOf("A Class"), "aClass");
+    assert.equal(classIdOf("World Class"), "worldClass");
+    assert.equal(classIdOf("SoundSport"), "soundSport");
+    assert.equal(classIdOf("Drum Corps"), null);
+    assert.equal(classIdOf(null), null);
+  });
+});
+
+describe("championshipCompetitionsOf", () => {
+  const competitions = [
+    { name: "Show A", day: 18, week: 3, type: "regular", allowedClasses: ["worldClass"] },
+    {
+      name: "Open and A Class Prelims",
+      day: 45,
+      type: "championship",
+      mandatory: true,
+      allowedClasses: ["openClass", "aClass", "openClass"],
+      date: null,
+    },
+    { name: "Legacy Finals", day: 49, mandatory: true, allowedClasses: ["World Class", "Open Class"] },
+    { name: "", day: 47, type: "championship" },
+    { name: "No day", type: "championship" },
+  ];
+
+  test("keeps the championship rounds with key parts and canonical, deduped classes", () => {
+    const rounds = championshipCompetitionsOf(competitions);
+    assert.deepEqual(rounds, [
+      { name: "Open and A Class Prelims", day: 45, week: 7, date: null, classes: ["openClass", "aClass"] },
+      { name: "Legacy Finals", day: 49, week: 7, date: null, classes: ["worldClass", "openClass"] },
+    ]);
+  });
+
+  test("tolerates an empty schedule", () => {
+    assert.deepEqual(championshipCompetitionsOf(undefined), []);
+  });
+});
+
+describe("collectRegistrationsFromProfile — championship rounds", () => {
+  const championships = championshipCompetitionsOf([
+    { name: "Open and A Class Prelims", day: 45, type: "championship", allowedClasses: ["openClass", "aClass"] },
+    { name: "marching.art World Championship Prelims", day: 47, type: "championship", allowedClasses: ["worldClass", "openClass", "aClass"] },
+    { name: "SoundSport International Music & Food Festival", day: 49, type: "championship", allowedClasses: ["soundSport"] },
+  ]);
+  const profile = {
+    username: "dana",
+    corps: {
+      worldClass: { corpsName: "Dana World", selectedShows: { week3: [{ eventName: "Show A", date: "2026-06-18", day: 18 }] } },
+      aClass: { corpsName: "Dana A", selectedShows: {} },
+      soundSport: { corpsName: "Dana SS" },
+      bogusClass: { corpsName: "Nope" },
+    },
+  };
+
+  test("pairs each corps with every round its class is auto-enrolled in, marked auto", () => {
+    const pairs = collectRegistrationsFromProfile("dana-uid", profile, { championships });
+    const byEvent = (name, cls) =>
+      pairs.find((p) => p.eventName === name && p.entry.corpsClass === cls);
+
+    // World: its picked show + the World Prelims; never the Open/A night or the festival.
+    assert.ok(byEvent("Show A", "worldClass"));
+    assert.ok(byEvent("marching.art World Championship Prelims", "worldClass"));
+    assert.equal(byEvent("Open and A Class Prelims", "worldClass"), undefined);
+    assert.equal(byEvent("SoundSport International Music & Food Festival", "worldClass"), undefined);
+    // A Class: both Prelims nights.
+    assert.ok(byEvent("Open and A Class Prelims", "aClass"));
+    assert.ok(byEvent("marching.art World Championship Prelims", "aClass"));
+    // SoundSport: the festival only.
+    assert.ok(byEvent("SoundSport International Music & Food Festival", "soundSport"));
+    assert.equal(byEvent("marching.art World Championship Prelims", "soundSport"), undefined);
+    // Unknown class keys never reach the index.
+    assert.ok(!pairs.some((p) => p.entry.corpsClass === "bogusClass"));
+    assert.equal(pairs.length, 5);
+
+    const auto = byEvent("Open and A Class Prelims", "aClass");
+    assert.equal(auto.week, 7);
+    assert.equal(auto.date, null);
+    assert.equal(auto.key, showRegistrationEventKey(7, "Open and A Class Prelims", null));
+    assert.equal(auto.entryKey, registrationEntryKey("dana-uid", "aClass"));
+    assert.equal(auto.entry.auto, true);
+    assert.equal(auto.entry.corpsName, "Dana A");
+    assert.equal(auto.entry.username, "dana");
+    // Picked shows stay unmarked.
+    assert.equal(byEvent("Show A", "worldClass").entry.auto, undefined);
+  });
+
+  test("without championships the output is unchanged", () => {
+    assert.equal(collectRegistrationsFromProfile("dana-uid", profile).length, 1);
+    assert.equal(collectRegistrationsFromProfile("dana-uid", profile, {}).length, 1);
   });
 });
 

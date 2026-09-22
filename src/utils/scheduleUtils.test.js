@@ -7,6 +7,7 @@ import {
   getMyPerformanceSlots,
   pickMyNextPerformance,
   nightAssignmentLabel,
+  advancementLabel,
 } from './scheduleUtils';
 
 // Regression: "Drums Across Nebraska" starts Wed 2026-07-01 8:46 PM CDT, which
@@ -216,6 +217,89 @@ describe('personal performance status (the "my corps right now" element)', () =>
 
   it('returns null when the director has no corps in any field', () => {
     expect(pickMyNextPerformance([show], 'nobody', new Date('2026-06-18T20:00:00Z'))).toBe(null);
+  });
+});
+
+describe('transformCompetitionToShow — championship rounds', () => {
+  // The heritage engine synthesizes a DCI stage cast for championship days;
+  // it is never the fantasy running order (community report, day 45).
+  const heritageCast = [
+    { order: 1, corps: 'Blue Devils', performsAt: '2026-07-16T00:30:00.000Z' },
+    { order: 2, corps: 'Bluecoats', performsAt: '2026-07-16T00:47:00.000Z' },
+  ];
+  const prelims = {
+    name: 'Open and A Class Prelims',
+    day: 45,
+    type: 'championship',
+    mandatory: true,
+    allowedClasses: ['openClass', 'aClass'],
+    startsAt: '2026-07-16T00:30:00.000Z',
+    scoresAt: '2026-07-17T01:00:00.000Z',
+    timezone: 'America/Indiana/Indianapolis',
+    lineup: heritageCast,
+  };
+
+  it('never falls back to the heritage DCI cast for a championship round', () => {
+    const show = transformCompetitionToShow(prelims);
+    expect(show.isChampionship).toBe(true);
+    expect(show.lineup).toBeNull();
+    // The clock still comes from the heritage enrichment.
+    expect(show.startsAt).toBe(prelims.startsAt);
+    expect(show.advancement).toBeNull();
+  });
+
+  it('shows the auto-enrolled fantasy field once materialized, with its cut stamp', () => {
+    const finals = /** @type {import('./scheduleUtils').RawCompetition} */ ({
+      ...prelims,
+      name: 'Open and A Class Finals',
+      day: 46,
+      fantasySchedule: {
+        lineup: [
+          {
+            order: 1,
+            uid: 'a1',
+            corpsClass: 'aClass',
+            corps: 'A One',
+            performsAt: '2026-07-17T00:30:00.000Z',
+          },
+        ],
+        overflow: [],
+        fieldSize: 1,
+        advancement: { fromDay: 45, rule: 'Top 8 Open Class · Top 4 A Class', status: 'final' },
+      },
+    });
+    const show = transformCompetitionToShow(finals);
+    expect(show.lineup?.map((e) => e.corps)).toEqual(['A One']);
+    expect(show.advancement).toEqual({
+      fromDay: 45,
+      rule: 'Top 8 Open Class · Top 4 A Class',
+      status: 'final',
+    });
+  });
+
+  it('a regular show still falls back to the scraped/heritage lineup', () => {
+    const regular = { ...prelims, name: 'DCI Anytown', day: 12, type: 'regular', mandatory: false };
+    expect(transformCompetitionToShow(regular).lineup).toBe(heritageCast);
+  });
+});
+
+describe('advancementLabel', () => {
+  it('is null without a cut', () => {
+    expect(advancementLabel(null)).toBeNull();
+    expect(advancementLabel(undefined)).toBeNull();
+    expect(advancementLabel({ fromDay: 48, rule: '', status: 'final' })).toBeNull();
+  });
+
+  it('says the field is set once the prior night has scored', () => {
+    expect(advancementLabel({ fromDay: 48, rule: 'Top 12 from Semifinals', status: 'final' })).toBe(
+      'Top 12 from Semifinals · field set by Day 48 scores'
+    );
+  });
+
+  it('says the whole field marches until the cut is decided', () => {
+    expect(
+      advancementLabel({ fromDay: 45, rule: 'Top 8 Open Class · Top 4 A Class', status: 'pending' })
+    ).toBe('Top 8 Open Class · Top 4 A Class · full field until Day 45 scores decide the cut');
   });
 });
 

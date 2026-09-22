@@ -267,6 +267,7 @@ describe('buildPicksSpotlight', () => {
   const now = new Date('2026-06-11T00:50:00.000Z');
   const todayComp = {
     name: 'Real Field Classic',
+    day: 10,
     date: `${formatDayKey(now)}T00:00:00.000Z`,
     timezone: 'America/Chicago',
     lineup: [

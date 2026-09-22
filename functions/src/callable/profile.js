@@ -7,7 +7,10 @@ const { FieldValue } = require("firebase-admin/firestore");
 const { getAuth } = require("firebase-admin/auth");
 const { assertAuth, assertWriteBudget } = require("../helpers/callableGuards");
 const { detachMemberFromLeague } = require("../helpers/leagueLifecycle");
-const { collectRegistrationsFromProfile } = require("../helpers/showRegistrations");
+const {
+  collectRegistrationsFromProfile,
+  loadChampionshipCompetitions,
+} = require("../helpers/showRegistrations");
 const { eraseDirectorFromResults } = require("../helpers/accountErasure");
 const { releaseAllStaffNamesFor } = require("./podiumStaffModeration");
 
@@ -457,9 +460,16 @@ exports.deleteAccount = onCall({ cors: true, timeoutSeconds: 300, cpu: 1 }, asyn
         const seasonDoc = await db.doc("game-settings/season").get();
         const seasonUid = seasonDoc.exists ? seasonDoc.data().seasonUid : null;
         if (seasonUid) {
+          // The auto-enrolled championship rounds are index docs too (keyed
+          // from the schedule), so the deleted corps leaves those fields as well.
+          const championships = await loadChampionshipCompetitions(db, seasonUid);
           // eventKey -> set of this user's registration entry keys on that event.
           const entryKeysByEvent = new Map();
-          for (const { key, entryKey } of collectRegistrationsFromProfile(userId, profileDoc.data())) {
+          for (const { key, entryKey } of collectRegistrationsFromProfile(
+            userId,
+            profileDoc.data(),
+            { championships }
+          )) {
             if (!entryKeysByEvent.has(key)) entryKeysByEvent.set(key, new Set());
             entryKeysByEvent.get(key).add(entryKey);
           }

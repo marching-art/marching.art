@@ -92,10 +92,20 @@ historical "stage cast" padding. Consequences we accept and design for:
 - **Thin/empty shows are shown honestly.** A show with two registrants renders as
   "2 corps competing tonight," not a padded card. We do **not** borrow historical
   corps to fill regular shows.
-- **The heritage engine stays** for what it's uniquely good at: synthesizing the
-  Championship-week running orders (days 45–49) from the season pool
-  (`buildChampionshipLineup`). We keep that path; we just stop using historical
-  corps as filler in regular shows.
+- **Championship week is the real field too.** The rounds are auto-enrolled by
+  class, never picked, so the nightly index rebuild folds them in from the
+  schedule (`showRegistrations.collectRegistrationsFromProfile`'s
+  `championships` option: every Open/A corps on Prelims + Finals, every
+  World/Open/A corps on the three World Championship rounds, every SoundSport
+  corps on the festival). The producer builds each round from that doc (the
+  standings stand in until the rebuild has run), and narrows an advancement
+  round (46/48/49) to the prior night's cut through the scorer's own
+  `buildChampionshipConfig`, stamping `fantasySchedule.advancement`
+  `{fromDay, rule, status: "pending" | "final"}` so the running order can say
+  whether the field is settled. The heritage engine's synthesized DCI cast
+  (`buildChampionshipLineup`) still supplies those days' clock and the
+  caption-pick spotlight, but the client never shows it as a championship
+  round's running order — a thin field renders honestly, like any regular show.
 
 ---
 

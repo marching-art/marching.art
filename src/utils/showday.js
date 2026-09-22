@@ -25,34 +25,16 @@ import { CAPTION_LABELS, normalizeCorpsName } from './pickHighlights';
 /**
  * @typedef {import('./scheduleUtils').LineupEntry} LineupEntry
  * @typedef {import('./scheduleUtils').PerformerSlot} PerformerSlot
- */
-
-/**
+ * @typedef {import('./scheduleUtils').EncoreEntry} EncoreEntry
+ *
  * One field's materialized schedule (competition.fantasySchedule /
- * .podiumSchedule), as written by scheduled/scheduleRunningOrder.js.
- * @typedef {Object} FieldSchedule
- * @property {string} [startsAt]
- * @property {string} [scoresAt]
- * @property {string} [gatesAt]
- * @property {string} [timezone]
- * @property {LineupEntry[]} [lineup]
- * @property {Array<{uid?: string|null, corps?: string}>} [overflow]
- * @property {{day: number, nights: number[], status: 'provisional'|'preview'|'final'}|null} [night]
- *   - On a two-night event, which night this field is and how settled the split is.
- */
-
-/**
- * The slice of a raw `schedules/{seasonUid}` competition this module reads.
- * @typedef {Object} RawCompetition
- * @property {number} [day]
- * @property {string} [name]
- * @property {string|Date} [date]
- * @property {string|null} [timezone]
- * @property {LineupEntry[]|null} [lineup]
- * @property {{uid?: string, corps?: string, reason?: string}|null} [encore]
- * @property {{uid?: string, corps?: string, reason?: string}|null} [podiumEncore]
- * @property {FieldSchedule|null} [fantasySchedule]
- * @property {FieldSchedule|null} [podiumSchedule]
+ * .podiumSchedule), as written by scheduled/scheduleRunningOrder.js — carries
+ * `night` (two-night split) and `advancement` (championship cut) stamps.
+ * @typedef {import('./scheduleUtils').FieldSchedule} FieldSchedule
+ *
+ * The raw `schedules/{seasonUid}` competition shape (one definition, in
+ * scheduleUtils, shared with the transform).
+ * @typedef {import('./scheduleUtils').RawCompetition} RawCompetition
  */
 
 /**
@@ -69,10 +51,11 @@ import { CAPTION_LABELS, normalizeCorpsName } from './pickHighlights';
  * @property {string|null} [scoresAt]
  * @property {string|null} [gatesAt]
  * @property {boolean} [isChampionship]
+ * @property {{fromDay: number, rule: string, status: 'pending'|'final'}|null} [advancement]
  * @property {LineupEntry[]|null} [lineup]
  * @property {Array<{uid?: string|null, corps?: string}>|null} [overflow]
- * @property {{uid?: string, corps?: string, reason?: string}|null} [encore]
- * @property {{uid?: string, corps?: string, reason?: string}|null} [podiumEncore]
+ * @property {EncoreEntry|null} [encore]
+ * @property {EncoreEntry|null} [podiumEncore]
  * @property {{summary?: string, tempF?: number}|null} [weather]
  * @property {FieldSchedule|null} [fantasySchedule]
  * @property {FieldSchedule|null} [podiumSchedule]

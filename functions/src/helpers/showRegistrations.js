@@ -18,6 +18,15 @@
  *    show page pays the legacy scan at most once.
  * The collection is server-only: no firestore.rules match exists for it, so
  * clients cannot read or write it directly.
+ *
+ * Championship week (days 45-49) is auto-enrolled, never self-selected, so the
+ * rounds a corps' class marches are folded into the same index from the
+ * season schedule (`collectRegistrationsFromProfile`'s `championships` option):
+ * every Open/A corps is on the Prelims + Finals docs, every World/Open/A corps
+ * on the three World Championship docs, every SoundSport corps on the
+ * festival. The running-order producer then narrows an advancement round to
+ * the prior night's cut. Without this the fantasy running order on those
+ * nights was the heritage engine's historical DCI cast, not the directors.
  */
 
 const podiumStore = require("./podium/store");
@@ -39,26 +48,128 @@ function registrationEntryKey(uid, corpsClass) {
 }
 
 /**
+ * Canonical class id for a schedule `allowedClasses` value. Championship
+ * entries are written with registry ids ("openClass"); older/admin-authored
+ * rows may carry the display form ("Open Class", "SoundSport"), so that is
+ * folded too. Null for anything the registry doesn't know.
+ * @param {*} value
+ * @returns {string|null}
+ */
+function classIdOf(value) {
+  if (typeof value !== "string" || !value) return null;
+  const direct = getClass(value);
+  if (direct) return direct.id;
+  const words = value.trim().split(/\s+/);
+  const camel = words
+    .map((w, i) => (i === 0 ? w.charAt(0).toLowerCase() + w.slice(1) : w))
+    .join("");
+  const folded = getClass(camel);
+  return folded ? folded.id : null;
+}
+
+/**
+ * @typedef {Object} ChampionshipRound
+ * @property {string} name - The event name, as the schedule stores it.
+ * @property {number} day
+ * @property {number} week
+ * @property {*} date - The schedule's date for the entry (null for the
+ *   generated rounds), part of the index key.
+ * @property {string[]} classes - Canonical class ids auto-enrolled that day.
+ */
+
+/**
+ * The championship-week rounds of a season schedule (`type: "championship"`
+ * or `mandatory`), reduced to what the index needs: key parts + the classes
+ * auto-enrolled that night. Pure.
+ * @param {Array<Object>} competitions - schedules/{seasonUid}.competitions
+ * @returns {ChampionshipRound[]}
+ */
+function championshipCompetitionsOf(competitions) {
+  const out = [];
+  for (const comp of competitions || []) {
+    if (!comp || typeof comp.name !== "string" || !comp.name) continue;
+    if (!Number.isFinite(comp.day)) continue;
+    if (comp.type !== "championship" && comp.mandatory !== true) continue;
+    const classes = (comp.allowedClasses || comp.eligibleClasses || [])
+      .map(classIdOf)
+      .filter((id, i, arr) => id && arr.indexOf(id) === i);
+    out.push({
+      name: comp.name,
+      day: comp.day,
+      week: comp.week || Math.ceil(comp.day / 7),
+      date: comp.date ?? null,
+      classes,
+    });
+  }
+  return out;
+}
+
+/**
+ * The active season's championship rounds, from its schedule doc — one read.
+ * Best-effort: a missing schedule or a read failure yields [] (the index then
+ * simply carries no championship docs until the next rebuild).
+ * @param {FirebaseFirestore.Firestore} db
+ * @param {string} seasonUid
+ * @returns {Promise<ChampionshipRound[]>}
+ */
+async function loadChampionshipCompetitions(db, seasonUid) {
+  if (!seasonUid) return [];
+  try {
+    const snap = await db.doc(`schedules/${seasonUid}`).get();
+    return championshipCompetitionsOf(snap.exists ? snap.data().competitions : []);
+  } catch {
+    return [];
+  }
+}
+
+/**
  * Extract every (event, registration entry) pair from one profile document.
  * Mirrors the legacy scan's matching semantics: every class's selectedShows,
  * matched later by eventName + date within a week.
  *
+ * With `championships` (the season's rounds, from `championshipCompetitionsOf`
+ * / `loadChampionshipCompetitions`), each corps is also paired with every
+ * championship round its class is auto-enrolled in — those rounds are never
+ * in `selectedShows` (the scorer enrolls by class, and the selection UI hides
+ * them), so this is the only way they reach the index. Such entries carry
+ * `auto: true`. The advancement cut (who actually marches Finals / Semis)
+ * is applied by the reader, not here: the index answers "who is eligible
+ * tonight", the prior night's recap answers "who survived".
+ *
+ * @param {string} uid
+ * @param {Object} profile
+ * @param {{championships?: ChampionshipRound[]}} [options]
  * @returns {Array<{key: string, week: number, eventName: string,
  *   date: *, entryKey: string, entry: Object}>}
  */
-function collectRegistrationsFromProfile(uid, profile) {
+function collectRegistrationsFromProfile(uid, profile, { championships = [] } = {}) {
   const out = [];
   const corps = profile?.corps || {};
   for (const corpsClass of Object.keys(corps)) {
     // Unknown class keys never reach the public "who's attending" index
     // (same registry check as the scorer).
-    if (!getClass(corpsClass)) continue;
+    const registered = getClass(corpsClass);
+    if (!registered) continue;
     const corpsData = corps[corpsClass] || {};
+    const declined = corpsData.declinedEncores || {};
+    const entryKey = registrationEntryKey(uid, corpsClass);
+    const entryFor = (key) => ({
+      uid,
+      corpsClass,
+      corpsName: corpsData.corpsName || "Unnamed Corps",
+      username: profile.username || null,
+      // Home coordinates for the encore (nearest-to-venue). Prefer a value
+      // cached on the corps; otherwise derive from its free-text location so
+      // the index self-heals for corps registered before the cache existed.
+      homeGeo: corpsData.homeGeo || homeGeoFor(corpsData.location) || null,
+      // Director banked their encore for a later show (per-event opt-out).
+      encoreDeclined: declined[key] === true,
+    });
+
     const selectedShows = corpsData.selectedShows || {};
     for (const weekKey of Object.keys(selectedShows)) {
       const week = parseInt(String(weekKey).replace(/^week/, ""), 10);
       if (!Number.isFinite(week)) continue;
-      const declined = corpsData.declinedEncores || {};
       for (const show of selectedShows[weekKey] || []) {
         if (!show || typeof show.eventName !== "string" || !show.eventName) continue;
         const key = showRegistrationEventKey(week, show.eventName, show.date);
@@ -67,21 +178,24 @@ function collectRegistrationsFromProfile(uid, profile) {
           week,
           eventName: show.eventName,
           date: show.date ?? null,
-          entryKey: registrationEntryKey(uid, corpsClass),
-          entry: {
-            uid,
-            corpsClass,
-            corpsName: corpsData.corpsName || "Unnamed Corps",
-            username: profile.username || null,
-            // Home coordinates for the encore (nearest-to-venue). Prefer a value
-            // cached on the corps; otherwise derive from its free-text location so
-            // the index self-heals for corps registered before the cache existed.
-            homeGeo: corpsData.homeGeo || homeGeoFor(corpsData.location) || null,
-            // Director banked their encore for a later show (per-event opt-out).
-            encoreDeclined: declined[key] === true,
-          },
+          entryKey,
+          entry: entryFor(key),
         });
       }
+    }
+
+    // Auto-enrolled championship rounds for this corps' class.
+    for (const round of championships || []) {
+      if (!Array.isArray(round.classes) || !round.classes.includes(registered.id)) continue;
+      const key = showRegistrationEventKey(round.week, round.name, round.date);
+      out.push({
+        key,
+        week: round.week,
+        eventName: round.name,
+        date: round.date ?? null,
+        entryKey,
+        entry: { ...entryFor(key), auto: true },
+      });
     }
   }
   return out;
@@ -213,6 +327,9 @@ const PODIUM_REGISTRATION_FIELDS = Object.freeze([
 module.exports = {
   showRegistrationEventKey,
   registrationEntryKey,
+  classIdOf,
+  championshipCompetitionsOf,
+  loadChampionshipCompetitions,
   collectRegistrationsFromProfile,
   buildEventDocs,
   collectPodiumRegistrations,

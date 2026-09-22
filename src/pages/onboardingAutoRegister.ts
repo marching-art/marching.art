@@ -3,7 +3,7 @@
 // corps for the first few, so the season starts scoring on night one.
 
 import { selectUserShows } from '../api/functions';
-import type { Competition } from '../store/scheduleStore';
+import type { ScheduleShow } from '../store/scheduleStore';
 
 /** How many of the week's shows a new corps is signed up for automatically. */
 export const AUTO_REGISTER_SHOW_LIMIT = 4;
@@ -17,7 +17,7 @@ export async function autoRegisterForShows({
   season: { schedule?: unknown; seasonUid?: string } | null | undefined;
   corpsClass: string;
   currentWeek: number;
-  getWeekShows: (week: number, options?: { skipChampionship?: boolean }) => Competition[];
+  getWeekShows: (week: number, options?: { skipChampionship?: boolean }) => ScheduleShow[];
 }): Promise<void> {
   if (!season?.schedule || !season?.seasonUid) return;
 
