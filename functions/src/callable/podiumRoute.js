@@ -324,8 +324,17 @@ exports.getPodiumRegistrationPreview = onCall({ cors: true }, async (request) =>
       // bare keep/drop, so a rising tenured rate never reads as a surprise raise.
       contract: s.contract,
       locked: s.locked,
+      // A lapsed lock can be re-signed here at nextSalary for 1-N seasons; a
+      // still-locked staffer let go owes this buyout from the commitment.
+      renewable: s.renewable,
+      buyout: s.buyout,
       retiring: s.retiring,
     })),
+    // Contract terms the re-sign picker and buyout copy are built from.
+    staffContractTerms: {
+      maxContractSeasons: store.balance.staff.career.maxContractSeasons,
+      buyoutPremium: store.balance.staff.career.buyoutPremium,
+    },
     // The season-start assessment (§5.7/§5.13): the corps' complete evaluation
     // against last season's field — class, status, peer standing, activity —
     // published by the archival sweep, shown BEFORE the director decides. Null
@@ -484,6 +493,19 @@ exports.getPodiumState = onCall({ cors: true }, async (request) => {
     divisionLabel: divisions.DIVISION_LABELS[division],
     commitmentCap,
     staffOutlook,
+    // The career ladder the staff panel reads its milestones from: promotion
+    // thresholds, the retirement season and how far out to warn of it, the
+    // contract length cap and the buyout premium on an early release.
+    staffCareer: {
+      maxSeasons: store.balance.staff.career.maxSeasons,
+      retirementNoticeSeasons: store.balance.staff.career.retirementNoticeSeasons,
+      promotionSeasons: store.balance.staff.career.promotionSeasons,
+      maxContractSeasons: store.balance.staff.career.maxContractSeasons,
+      buyoutPremium: store.balance.staff.career.buyoutPremium,
+      tiers: Object.fromEntries(
+        Object.entries(store.balance.staff.tiers).map(([tier, t]) => [tier, { boost: t.boost }])
+      ),
+    },
     easternNight: store.easternNightFor(uid, seasonData.seasonUid, easternAssignments),
     easternNightFinal: Boolean(easternAssignments && easternAssignments[uid]),
     autoDays: store.autoDaysFor(uid, seasonData.seasonUid, { division, easternAssignments }),

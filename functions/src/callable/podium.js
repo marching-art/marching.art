@@ -28,6 +28,7 @@ const divisions = require("../helpers/podium/divisions");
 const {
   validateCommitment,
   validateStaffPriority,
+  validateStaffContracts,
   validateChallenge,
   validateAuditions,
   validateShowPicks,
@@ -210,6 +211,7 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
   const auditionShares = validateAuditions(request.data?.auditions);
   const freshStart = request.data?.freshStart === true;
   const staffPriority = validateStaffPriority(request.data?.staffPriority);
+  const staffContracts = validateStaffContracts(request.data?.staffContracts);
 
   const seasonUid = seasonData.seasonUid;
   // Career continuity (Phase 5): carry reputation across seasons, applying
@@ -340,8 +342,20 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
       stale.staff,
       budgetCommitment,
       store.balance,
-      staffPriority
+      staffPriority,
+      staffContracts
     );
+    // A contract binds both ways: letting a still-locked staffer go owes the
+    // buyout, and it comes out of the commitment before anyone's salary. The
+    // preview shows the same figure, so this only trips a stale or tampered
+    // submit — never a director who saw the total.
+    if (staffPlan.buyoutTotal > budgetCommitment) {
+      throw new HttpsError(
+        "failed-precondition",
+        `Releasing contracted staff owes ${staffPlan.buyoutTotal} CC in buyouts — ` +
+          `commit at least that much, or keep them on.`
+      );
+    }
   }
   const trimmedName = corpsName.trim();
   const normalizedName = trimmedName.toLowerCase();
@@ -446,12 +460,26 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
     };
     const carriedStaff = {};
     const keptSet = new Set(staffPlan ? staffPlan.kept : []);
+    const planBySpecialty = new Map(staffPlan ? staffPlan.staff.map((s) => [s.specialty, s]) : []);
+    // Buyouts first (obligations), then salaries — the same order the plan
+    // used to prove the kept set fits, so every debit below succeeds.
+    for (const s of planBySpecialty.values()) {
+      if (s.lapseReason === "released" && s.buyout > 0) {
+        store.debitBudget(draft, s.buyout, `staffBuyout:${s.specialty}`, 0);
+      }
+    }
     for (const member of retainedStaff) {
       if (!keptSet.has(member.specialty)) continue; // lapsed: unaffordable or released
+      const plan = planBySpecialty.get(member.specialty);
+      // Re-sign a lapsed lock at the floated rate the plan priced them at.
+      const signed =
+        plan && plan.renewSeasons
+          ? staffMarket.renewContract(member, plan.renewSeasons, store.balance) || member
+          : member;
       // projectRetention already proved the kept set fits the committed
       // budget, so this debit always succeeds — the return value is ignored.
-      store.debitBudget(draft, member.salaryPerSeason, `staff:${member.specialty}`, 0);
-      carriedStaff[member.specialty] = member;
+      store.debitBudget(draft, signed.salaryPerSeason, `staff:${signed.specialty}`, 0);
+      carriedStaff[signed.specialty] = signed;
     }
     transaction.set(sRef, {
       ...stored,
@@ -555,7 +583,18 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
     lapsedStaff: staffPlan
       ? staffPlan.staff
         .filter((s) => !s.kept)
-        .map((s) => ({ specialty: s.specialty, reason: s.lapseReason }))
+        .map((s) => ({
+          specialty: s.specialty,
+          reason: s.lapseReason,
+          // The contract premium paid to let a still-locked staffer go.
+          buyout: s.lapseReason === "released" ? s.buyout : 0,
+        }))
+      : [],
+    // Lapsed locks re-signed at this registration, with the new lock length.
+    renewedStaff: staffPlan
+      ? staffPlan.staff
+        .filter((s) => s.renewSeasons)
+        .map((s) => ({ specialty: s.specialty, seasons: s.renewSeasons, salary: s.nextSalary }))
       : [],
   };
 });

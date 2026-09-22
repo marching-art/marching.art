@@ -27,10 +27,107 @@ describe("staff careers — tenure math", () => {
     assert.equal(staffMarket.tierForCareer("apprentice", 22, balance), "legend");
     // ...and a higher entry tier is never demoted by the floor.
     assert.equal(staffMarket.tierForCareer("journeyman", 0, balance), "journeyman");
-    // Year-25 legend costs multiples of the base (320 -> 800 at 6%/season).
-    const yr25 = staffMarket.salaryFor("legend", 25, balance);
-    assert.ok(yr25 >= 700 && yr25 <= 900, `year-25 legend salary ${yr25}`);
-    assert.ok(staffMarket.salaryFor("legend", 29, balance) > yr25, "salary climbs to the end");
+    // A legend costs multiples of the base (200 -> 464 at 6%/season by 22)...
+    const yr22 = staffMarket.salaryFor("legend", 22, balance);
+    assert.equal(yr22, Math.round(200 * (1 + 0.06 * 22)));
+    // ...and the premium holds from the legend threshold on: the price of a
+    // career is a ceiling, never a treadmill to retirement.
+    assert.equal(staffMarket.salaryFor("legend", 25, balance), yr22);
+    assert.equal(staffMarket.salaryFor("legend", 29, balance), yr22);
+  });
+
+  test("tier bases are proportional to boost, so loyalty is not punished per point", () => {
+    const perPoint = (tier) => balance.staff.tiers[tier].salary / balance.staff.tiers[tier].boost;
+    const base = perPoint("apprentice");
+    for (const tier of ["journeyman", "veteran", "master", "legend"]) {
+      assert.ok(Math.abs(perPoint(tier) - base) < 1e-9, `${tier} costs ${perPoint(tier)}/pt vs ${base}`);
+    }
+    // Across a whole career the cost per boost point rises only by the
+    // (capped) tenure premium — well under 3x, never the 4x+ of a runaway curve.
+    const rookie = staffMarket.salaryFor("apprentice", 0, balance) / balance.staff.tiers.apprentice.boost;
+    const legend = staffMarket.salaryFor("legend", 29, balance) / balance.staff.tiers.legend.boost;
+    assert.ok(legend / rookie < 3, `career cost-per-point ratio ${legend / rookie}`);
+  });
+
+  test("earned-tier promotion raises are bounded, not cliffs", () => {
+    // The season BEFORE each promotion vs. the promotion season itself. The
+    // apprentice -> journeyman step doubles boost and price alike (40 -> 80
+    // base, still the cheapest point on the curve); the earned tiers above it
+    // must never jump more than 60% in one season.
+    for (const [tier, at] of Object.entries(balance.staff.career.promotionSeasons)) {
+      if (tier === "journeyman") continue;
+      const before = staffMarket.salaryFor(staffMarket.tierForCareer("apprentice", at - 1, balance), at - 1, balance);
+      const after = staffMarket.salaryFor(tier, at, balance);
+      assert.ok(after / before <= 1.6, `${tier} raise ${before} -> ${after} is ${after / before}x`);
+    }
+  });
+
+  test("nextPromotion names the next rung and how far off it is", () => {
+    const hire = staffMarket.mintStaff(
+      { id: "x", specialty: "B", tier: "apprentice", seasons: 1, day: 0 },
+      balance
+    );
+    assert.deepEqual(staffMarket.nextPromotion(hire, balance), { tier: "journeyman", atSeason: 3, seasonsAway: 3 });
+    const vet = ageN(hire, 9);
+    assert.deepEqual(staffMarket.nextPromotion(vet, balance), { tier: "master", atSeason: 15, seasonsAway: 6 });
+    // A journeyman hire skips the journeyman rung.
+    const jm = staffMarket.mintStaff({ id: "y", specialty: "B", tier: "journeyman", seasons: 1, day: 0 }, balance);
+    assert.equal(staffMarket.nextPromotion(jm, balance).tier, "veteran");
+    assert.equal(staffMarket.nextPromotion(ageN(hire, 22), balance), null, "a legend has nowhere left to climb");
+  });
+
+  test("seasonsUntilRetirement counts down to the final season", () => {
+    const rookie = { careerSeasons: 0 };
+    assert.equal(staffMarket.seasonsUntilRetirement(rookie, balance), balance.staff.career.maxSeasons - 1);
+    assert.equal(staffMarket.seasonsUntilRetirement({ careerSeasons: 29 }, balance), 0, "final season");
+    assert.equal(staffMarket.seasonsUntilRetirement({ careerSeasons: 27 }, balance), 2);
+  });
+});
+
+describe("staff careers — contracts bind both ways", () => {
+  const signed = () =>
+    staffMarket.mintStaff({ id: "x", specialty: "B", tier: "journeyman", seasons: 3, day: 0 }, balance);
+
+  test("an in-season release buys out only the seasons beyond this one", () => {
+    const m = signed(); // 3 seasons, this one already paid
+    const premium = balance.staff.career.buyoutPremium;
+    assert.equal(staffMarket.buyoutFor(m, balance), Math.round(m.salaryPerSeason * premium * 2));
+    const y2 = staffMarket.ageStaff(m, balance); // remaining 2 -> one beyond this season
+    assert.equal(staffMarket.buyoutFor(y2, balance), Math.round(y2.salaryPerSeason * premium));
+    const y3 = staffMarket.ageStaff(y2, balance); // final locked season: nothing beyond it
+    assert.equal(staffMarket.buyoutFor(y3, balance), 0);
+  });
+
+  test("a boundary release owes every remaining locked season", () => {
+    const y2 = staffMarket.ageStaff(signed(), balance); // remaining 2, both unexpired at the boundary
+    const premium = balance.staff.career.buyoutPremium;
+    assert.equal(
+      staffMarket.buyoutFor(y2, balance, { atBoundary: true }),
+      Math.round(y2.salaryPerSeason * premium * 2)
+    );
+  });
+
+  test("a lapsed lock has no buyout and a 1-season hire never does", () => {
+    const one = staffMarket.mintStaff({ id: "x", specialty: "B", tier: "apprentice", seasons: 1, day: 0 }, balance);
+    assert.equal(staffMarket.buyoutFor(one, balance), 0);
+    assert.equal(staffMarket.buyoutFor(ageN(one, 4), balance, { atBoundary: true }), 0);
+  });
+
+  test("renewContract re-signs a lapsed lock at the current rate, never mid-lock", () => {
+    const lapsed = ageN(signed(), 3); // lock ran out, salary floated
+    assert.equal(lapsed.contract.remaining, 0);
+    const renewed = staffMarket.renewContract(lapsed, 2, balance);
+    assert.deepEqual(renewed.contract, { seasons: 2, remaining: 2 });
+    assert.equal(renewed.salaryPerSeason, lapsed.salaryPerSeason, "frozen at today's floated rate");
+    // The new lock holds through the promotion raise underneath it.
+    const held = staffMarket.ageStaff(renewed, balance);
+    assert.equal(held.salaryPerSeason, renewed.salaryPerSeason);
+    assert.equal(held.contract.remaining, 1);
+    // Still locked -> not renewable (a signed price can't roll forward forever).
+    assert.equal(staffMarket.renewContract(staffMarket.ageStaff(signed(), balance), 3, balance), null);
+    // Out-of-range lengths are refused.
+    assert.equal(staffMarket.renewContract(lapsed, 0, balance), null);
+    assert.equal(staffMarket.renewContract(lapsed, balance.staff.career.maxContractSeasons + 1, balance), null);
   });
 });
 

@@ -65,7 +65,7 @@ const SECTIONS = [
   {
     n: 11,
     title: 'Staff',
-    body: `Staff are persistent people with careers. Hire from an open market of caption techs, a tour manager, and a program coordinator. Contracts run 1–3 seasons at the salary locked at signing; tenure raises both a person's tier and their price, so a 25-year legend costs a fortune while the total staff boost stays capped — decisions beat payroll, always. You can retrain a person into a new caption (reduced boost while they learn). Careers end in retirement around season 30 — Hall of Fame stuff — and fresh talent keeps entering the market every season.`,
+    body: `Staff are yours for their whole career. Hire caption techs, a tour manager, and a program coordinator at Apprentice or Journeyman — every role is always available, nobody is poached, and nobody goes back into a pool. Keep someone season after season and they climb to Veteran, Master and Legend on tenure alone; their pay rises with them, in proportion to what they add, and tops out at Legend. A contract of 1–3 seasons locks their pay at the signing rate and binds you to it too: release them early and you buy out the seasons left. When a contract lapses they simply stay on at the going rate, and you can re-sign them at re-registration to lock it again. The total staff boost stays capped — decisions beat payroll, always. You can retrain a person into a new caption (reduced boost while they learn). Careers end in retirement after 30 seasons — you get three seasons' notice and the seat reopens.`,
   },
   {
     n: 12,

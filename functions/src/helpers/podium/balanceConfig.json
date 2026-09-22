@@ -428,32 +428,27 @@
         "tourStaminaReductionPct": 15
       },
       "veteran": {
-        "salary": 140,
+        "salary": 120,
         "boost": 0.09,
         "tourStaminaReductionPct": 20
       },
       "master": {
-        "salary": 220,
+        "salary": 160,
         "boost": 0.12,
         "tourStaminaReductionPct": 25
       },
       "legend": {
-        "salary": 320,
+        "salary": 200,
         "boost": 0.15,
         "tourStaminaReductionPct": 30
       }
     },
     "maxTotalBoost": 0.15,
-    "marketPerSpecialty": {
-      "apprentice": 2,
-      "journeyman": 2,
-      "veteran": 1
-    },
-    "masterChance": 0.5,
-    "legendChance": 0.18,
     "career": {
       "maxSeasons": 30,
+      "retirementNoticeSeasons": 3,
       "tenureSalaryPerSeason": 0.06,
+      "tenureSalaryCapSeasons": 22,
       "promotionSeasons": {
         "journeyman": 3,
         "veteran": 8,

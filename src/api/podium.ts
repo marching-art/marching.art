@@ -17,6 +17,10 @@ export interface PodiumRegistration {
   // A staffer omitted from the list is voluntarily released; when absent, the
   // roster is kept priciest-first and a shortfall sheds the cheapest.
   staffPriority?: string[];
+  // Carried staff whose salary lock has lapsed, re-signed here for 1..N more
+  // seasons at their floated rate ({ specialty: seasons }). Ignored for staff
+  // who are still locked, retiring, or not kept.
+  staffContracts?: Record<string, number>;
   // Bank the old lineage and found a brand-new corps at tier 1 (§5.13). Omit to
   // continue the existing corps (identity + reputation carried).
   freshStart?: boolean;
@@ -89,6 +93,34 @@ export interface PodiumStaffOutlook {
   acknowledged: boolean; // director has dismissed this exact payroll figure
 }
 
+// The staff career ladder (server balance), so the staff panel can show each
+// staffer's next promotion, their retirement season and what an early release
+// of a contracted staffer costs — without a client copy of the config.
+export interface PodiumStaffCareer {
+  maxSeasons: number; // a career retires after this many seasons
+  retirementNoticeSeasons: number; // warn when this close to retirement
+  promotionSeasons: Record<string, number>; // tier -> seasons of tenure
+  maxContractSeasons: number;
+  buyoutPremium: number; // fraction of salary owed per unexpired locked season
+  tiers: Record<string, { boost: number }>;
+}
+
+// A staffer as stored on the corps state (server-authored; see
+// functions/src/helpers/podium/staffMarket.js mintStaff / ageStaff).
+export interface PodiumStaffMember {
+  id: string;
+  specialty: string;
+  hiredTier: string;
+  tier: string;
+  careerSeasons: number;
+  boost: number;
+  salaryPerSeason: number;
+  contract: { seasons: number; remaining: number } | null;
+  resume: PodiumStaffResumeRow[];
+  hiredDay: number;
+  retrain?: { seasonUid: string; day: number };
+}
+
 /** Base per-plan-type block caps (not stamina-adjusted). */
 export interface PodiumBlockCaps {
   rehearsal: number;
@@ -140,12 +172,22 @@ export interface PodiumStateResponse {
   routePreview?: PodiumRouteLeg[];
   currentLocation?: PodiumCurrentLocation;
   staffOutlook?: PodiumStaffOutlook;
+  staffCareer?: PodiumStaffCareer;
   state?: Record<string, unknown>;
 }
 
 export interface PodiumLapsedStaff {
   specialty: string;
   reason: 'unaffordable' | 'released' | 'retired';
+  // The contract premium paid to let a still-locked staffer go (0 otherwise).
+  buyout?: number;
+}
+
+// A lapsed lock re-signed at registration.
+export interface PodiumRenewedStaff {
+  specialty: string;
+  seasons: number;
+  salary: number;
 }
 
 // End-of-season financial settlement (design §14.2.1). A corps' operating
@@ -289,6 +331,7 @@ export const registerPodiumCorps = createCallable<
     lastSeasonReport: PodiumSeasonReport | null;
     retainedStaff: string[];
     lapsedStaff: PodiumLapsedStaff[];
+    renewedStaff: PodiumRenewedStaff[];
   }
 >('registerPodiumCorps');
 
@@ -310,6 +353,10 @@ export interface PodiumStaffProjection {
   // or the staffer retires.
   contract: { seasons: number; remaining: number } | null;
   locked: boolean;
+  // A lapsed lock can be re-signed at nextSalary for 1..maxContractSeasons.
+  renewable: boolean;
+  // The premium owed if this still-locked staffer is let go at registration.
+  buyout: number;
   retiring: boolean;
 }
 
@@ -333,6 +380,7 @@ export const getPodiumRegistrationPreview = createCallable<
     // exactly as the server will charge it (design §5.3).
     homeRelocationMilesPerCoin: number;
     staff: PodiumStaffProjection[];
+    staffContractTerms: { maxContractSeasons: number; buyoutPremium: number };
     // The season-start assessment for the carried-over corps (null first-timer).
     assessment: PodiumAssessment | null;
     // The carried corps identity, so the screen continues it rather than
@@ -698,9 +746,17 @@ export const hirePodiumStaff = createCallable<
   }
 >('hirePodiumStaff');
 
+// Releasing a staffer still under contract buys out the seasons beyond this
+// one from the Corps Budget; `buyout` is what was charged (0 on a lapsed lock).
 export const releasePodiumStaff = createCallable<
   { specialty: string },
-  { success: boolean; released: string; staff: Record<string, unknown> }
+  {
+    success: boolean;
+    released: string;
+    buyout: number;
+    staff: Record<string, unknown>;
+    budget: Record<string, unknown>;
+  }
 >('releasePodiumStaff');
 
 // Dismiss the in-season payroll warning for the current projected figure; it
