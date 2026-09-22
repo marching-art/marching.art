@@ -8,7 +8,6 @@ import {
   ChevronRight,
   ChevronLeft,
   Loader2,
-  AlertTriangle,
   TrendingUp,
   Minus,
   Plus,
@@ -20,12 +19,11 @@ import {
   CAPTION_LABELS,
   CHALLENGE_PRESETS,
   AUDITION_PRESETS,
-  SPECIALTY_LABELS,
-  TIER_LABELS,
 } from './podiumConstants';
 import { HOSTABLE_VENUES, homeRelocationFee } from '../../utils/venues';
 import PodiumSeasonAssessment from './PodiumSeasonAssessment';
 import PodiumRegistrationDone from './PodiumRegistrationDone';
+import PodiumStaffRetention from './PodiumStaffRetention';
 
 // Cap the rendered city dropdown so a bare focus doesn't paint all ~500 cities
 // (mirrors the Host-a-Show picker). A real search narrows well below this.
@@ -64,6 +62,9 @@ export default function PodiumRegistration({ podium }) {
   const [preview, setPreview] = useState(null);
   // Specialties the director chooses to keep; unchecked = voluntarily released.
   const [keptStaff, setKeptStaff] = useState(null); // Set, initialized from preview
+  // Lapsed salary locks the director re-signs here: { specialty: seasons }.
+  // A staffer left out keeps floating season to season.
+  const [renewals, setRenewals] = useState({});
 
   const loadPreview = podium.loadRegistrationPreview;
   const refreshPreview = useCallback(async () => {
@@ -74,6 +75,7 @@ export default function PodiumRegistration({ podium }) {
       setPreview(data);
       const active = (data.staff || []).filter((s) => !s.retiring);
       setKeptStaff(new Set(active.map((s) => s.specialty)));
+      setRenewals({});
       // Pre-fund from the data-driven estimate (last season's operating spend
       // + this season's aged payroll) when the director can afford it, so a
       // returning corps starts at a realistic budget; fall back to covering
@@ -181,8 +183,19 @@ export default function PodiumRegistration({ podium }) {
       .filter((s) => keptStaff.has(s.specialty))
       .reduce((sum, s) => sum + (s.nextSalary || 0), 0);
   }, [activeStaff, keptStaff]);
-  const shortfall = Math.max(0, keptPayroll - budgetCommitment);
+  // A contract binds both ways: letting a still-locked staffer go owes the
+  // buyout, charged from the commitment before payroll (server does the same).
+  const buyoutTotal = useMemo(() => {
+    if (!keptStaff) return 0;
+    return activeStaff
+      .filter((s) => !keptStaff.has(s.specialty))
+      .reduce((sum, s) => sum + (s.buyout || 0), 0);
+  }, [activeStaff, keptStaff]);
+  const staffCommitment = keptPayroll + buyoutTotal;
+  const shortfall = Math.max(0, staffCommitment - budgetCommitment);
   const overBudget = hasCarried && shortfall > 0;
+  const maxContractSeasons = preview?.staffContractTerms?.maxContractSeasons || 3;
+  const contractLengths = Array.from({ length: maxContractSeasons }, (_, i) => i + 1);
 
   // The move fee is a wallet debit alongside the season commitment, netted
   // against last season's refund server-side. Block a move the wallet can't
@@ -200,6 +213,16 @@ export default function PodiumRegistration({ podium }) {
       const next = new Set(prev);
       if (next.has(specialty)) next.delete(specialty);
       else next.add(specialty);
+      return next;
+    });
+  };
+
+  // Pick a re-sign length for a lapsed lock, or clear it (0) to keep floating.
+  const setRenewal = (specialty, seasons) => {
+    setRenewals((prev) => {
+      const next = { ...prev };
+      if (seasons > 0) next[specialty] = seasons;
+      else delete next[specialty];
       return next;
     });
   };
@@ -227,6 +250,13 @@ export default function PodiumRegistration({ podium }) {
         auditions,
         budgetCommitment: budgetCommitment > 0 ? budgetCommitment : undefined,
         staffPriority,
+        // Re-sign only kept staff whose lock has lapsed; the server ignores the rest.
+        staffContracts:
+          hasCarried && keptStaff
+            ? Object.fromEntries(
+                Object.entries(renewals).filter(([specialty]) => keptStaff.has(specialty))
+              )
+            : undefined,
         // Start-new banks the old lineage and founds a fresh corps at tier 1.
         freshStart: decision === 'startNew' ? true : undefined,
       });
@@ -634,105 +664,26 @@ export default function PodiumRegistration({ podium }) {
 
           {/* Carried-staff payroll vs. the commitment (design §5.6). Staff only
               lapse at the season boundary, so THIS is where a director decides
-              who to keep when the CC won't cover the whole aged payroll —
-              rather than discovering a silent lapse afterward. */}
+              who to keep, who to re-sign, and who to buy out — rather than
+              discovering a silent lapse afterward. */}
           {hasCarried && keptStaff && (
-            <div className="pt-3 border-t border-line space-y-2">
-              <div className="flex items-baseline justify-between">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-muted">
-                  Staff payroll — who marches next season
-                </label>
-                <span
-                  className={`text-[11px] font-bold tabular-nums ${overBudget ? 'text-red-400' : 'text-green-400'}`}
-                >
-                  {keptPayroll} / {budgetCommitment} CC
-                </span>
-              </div>
-              <p className="text-[10px] text-muted">
-                Tenure raised your staff&apos;s salaries — except where a multi-season contract
-                still holds one at its signed price. Uncheck anyone you&apos;re letting go — their
-                seat reopens and their tenure ends. Whatever you keep must fit your commitment.
-              </p>
-
-              {activeStaff.map((s) => {
-                const kept = keptStaff.has(s.specialty);
-                const promoted = s.nextTier && s.nextTier !== s.tier;
-                // A multi-season contract holds this staffer's salary at the
-                // price it was signed at, so re-registering them costs the same
-                // as last season — no matter how far tenure has raised the
-                // underlying rate. Surface it so the lock reads as a lock.
-                const locked = s.locked && s.contract && s.contract.remaining > 0;
-                return (
-                  <label
-                    key={s.specialty}
-                    className={`flex items-center gap-2 px-2 py-1.5 border rounded-none cursor-pointer press-feedback ${
-                      kept
-                        ? 'border-line bg-surface-sunken'
-                        : 'border-[#2a1a1a] bg-[#160f0f] opacity-70'
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={kept}
-                      onChange={() => toggleKeep(s.specialty)}
-                      className="accent-interactive"
-                    />
-                    <span className="flex-1 text-[11px] font-bold text-white">
-                      {SPECIALTY_LABELS[s.specialty] || s.specialty}
-                      <span className="ml-2 text-[9px] font-normal text-muted">
-                        {TIER_LABELS[s.nextTier] || TIER_LABELS[s.tier]}
-                        {promoted && (
-                          <span className="text-brand"> · promoted from {TIER_LABELS[s.tier]}</span>
-                        )}
-                      </span>
-                      {locked && (
-                        <span className="block text-[9px] font-normal text-interactive">
-                          Under contract · {s.contract.remaining} of {s.contract.seasons} season
-                          {s.contract.seasons > 1 ? 's' : ''} — price locked
-                        </span>
-                      )}
-                    </span>
-                    <span className="text-[11px] tabular-nums text-right shrink-0">
-                      <span className={locked ? 'text-interactive' : 'text-secondary'}>
-                        {s.nextSalary} CC
-                      </span>
-                      {locked ? (
-                        <span className="block text-[9px] text-muted">locked</span>
-                      ) : (
-                        s.nextSalary > s.salary && (
-                          <span className="text-muted"> (was {s.salary})</span>
-                        )
-                      )}
-                    </span>
-                  </label>
-                );
-              })}
-
-              {retiringStaff.map((s) => (
-                <div
-                  key={s.specialty}
-                  className="flex items-center gap-2 px-2 py-1.5 border border-line-subtle rounded-none opacity-50"
-                >
-                  <span className="flex-1 text-[11px] text-muted">
-                    {SPECIALTY_LABELS[s.specialty] || s.specialty}
-                  </span>
-                  <span className="text-[9px] uppercase tracking-wider text-muted">
-                    Retiring · 30-season career
-                  </span>
-                </div>
-              ))}
-
-              {overBudget && (
-                <div className="flex items-start gap-2 text-[11px] text-red-400 pt-1">
-                  <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                  <span>
-                    You&apos;re <span className="font-bold tabular-nums">{shortfall}</span> CC
-                    short. Commit more (up to {maxCommit}) or release a staffer to{' '}
-                    {decision === 'continue' ? 'continue the corps' : 'found the corps'}.
-                  </span>
-                </div>
-              )}
-            </div>
+            <PodiumStaffRetention
+              activeStaff={activeStaff}
+              retiringStaff={retiringStaff}
+              keptStaff={keptStaff}
+              toggleKeep={toggleKeep}
+              renewals={renewals}
+              setRenewal={setRenewal}
+              contractLengths={contractLengths}
+              maxContractSeasons={maxContractSeasons}
+              staffCommitment={staffCommitment}
+              budgetCommitment={budgetCommitment}
+              buyoutTotal={buyoutTotal}
+              shortfall={shortfall}
+              overBudget={overBudget}
+              maxCommit={maxCommit}
+              verb={decision === 'continue' ? 'continue the corps' : 'found the corps'}
+            />
           )}
         </div>
       )}
@@ -761,7 +712,7 @@ export default function PodiumRegistration({ podium }) {
             disabled={submitting || cannotSubmit}
             title={
               overBudget
-                ? 'Your staff payroll exceeds your commitment.'
+                ? 'Your staff payroll and buyouts exceed your commitment.'
                 : moveUnaffordable
                   ? "Your wallet can't cover the home-relocation fee."
                   : undefined

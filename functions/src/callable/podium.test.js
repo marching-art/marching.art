@@ -13,6 +13,7 @@ const {
   validateShowPicks,
   validateCommitment,
   validateStaffPriority,
+  validateStaffContracts,
   maxBlocksForPlanType,
 } = require("./podiumValidation");
 const store = require("../helpers/podium/store");
@@ -218,6 +219,25 @@ describe("validateStaffPriority", () => {
   test("rejects a non-array", () => {
     assert.throws(() => validateStaffPriority("B"));
     assert.throws(() => validateStaffPriority({ B: 1 }));
+  });
+});
+
+describe("validateStaffContracts", () => {
+  test("absent stays undefined (no re-signs)", () => {
+    assert.equal(validateStaffContracts(undefined), undefined);
+    assert.equal(validateStaffContracts(null), undefined);
+  });
+
+  test("keeps real specialties with an in-range integer length; drops the rest", () => {
+    const max = store.balance.staff.career.maxContractSeasons;
+    assert.deepEqual(validateStaffContracts({ B: 2, tourManager: max }), { B: 2, tourManager: max });
+    assert.deepEqual(validateStaffContracts({ B: 0, CG: max + 1, MA: 1.5, P: "2", bogus: 2 }), {});
+    assert.deepEqual(validateStaffContracts({}), {});
+  });
+
+  test("rejects a non-object", () => {
+    assert.throws(() => validateStaffContracts(["B"]));
+    assert.throws(() => validateStaffContracts("B"));
   });
 });
 

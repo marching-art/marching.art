@@ -15,8 +15,10 @@
  *   - Renaming keeps reputation (the career persists); founding fresh
  *     (freshStart) banks the old career into retiredCareers and restarts at
  *     tier 1.
- *   - Staff contracts are per-season and simply lapse (the loyalty-grace
- *     evolution is recorded in the design doc).
+ *   - Staff never enter a pool: each staffer is an instance owned by the
+ *     corps and carries over at re-registration (staffMarket.ageStaff). A
+ *     contract locks the salary, not the employment — when it lapses the
+ *     staffer stays at the floated rate and can be re-signed there.
  */
 
 const { logger } = require("firebase-functions/v2");

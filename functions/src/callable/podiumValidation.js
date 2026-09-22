@@ -59,6 +59,31 @@ function validateStaffPriority(value) {
   return order;
 }
 
+/**
+ * Validate an optional staff re-sign map: { specialty: seasons } for carried
+ * staff whose salary lock has lapsed and whom the director wants to re-sign
+ * at re-registration (design §5.6). Filtered to real specialties with an
+ * integer length of 1..maxContractSeasons; anything else is dropped rather
+ * than rejected (a stale renewal for a staffer who turns out to be locked or
+ * retiring is simply ignored by projectRetention). Returns undefined when
+ * absent, {} when nothing valid remains.
+ */
+function validateStaffContracts(value) {
+  if (value == null) return undefined;
+  if (typeof value !== "object" || Array.isArray(value)) {
+    throw new HttpsError("invalid-argument", "staffContracts must be a map of specialty to seasons.");
+  }
+  const max = store.balance.staff.career.maxContractSeasons;
+  /** @type {Record<string, number>} */
+  const contracts = {};
+  for (const [specialty, seasons] of Object.entries(value)) {
+    if (!staffMarket.SPECIALTIES.includes(specialty)) continue;
+    if (!Number.isInteger(seasons) || seasons < 1 || seasons > max) continue;
+    contracts[specialty] = seasons;
+  }
+  return contracts;
+}
+
 /** Validate a challenge map: all 8 captions, integers 1-8. Returns normalized copy. */
 function validateChallenge(challenge) {
   if (!challenge || typeof challenge !== "object") {
@@ -215,6 +240,7 @@ function maxBlocksForPlanType(planType) {
 module.exports = {
   validateCommitment,
   validateStaffPriority,
+  validateStaffContracts,
   validateChallenge,
   validateAuditions,
   validateShowPicks,

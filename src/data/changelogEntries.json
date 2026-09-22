@@ -12,6 +12,19 @@
     ]
   },
   {
+    "id": "2026-09-22-podium-staff-stay-resign-buyout",
+    "date": "2026-09-22",
+    "title": "Podium: your staff are yours for their whole career — re-sign lapsed contracts, and pay is fairer as they rise",
+    "category": "feature",
+    "summary": "A contract has only ever locked a staffer's pay, not their employment: when it runs out they stay with your corps at the going rate. Now you can re-sign them at re-registration to lock that rate again for up to three seasons, and a contract binds you too — releasing someone mid-contract buys out the seasons left. Salaries at Veteran, Master and Legend have been brought in line with what each tier adds, and a career's pay tops out at Legend instead of climbing to retirement.",
+    "highlights": [
+      "Re-registration: every kept staffer whose contract has lapsed shows a re-sign picker (1–3 seasons at next season's rate). Payroll plus any buyouts must fit your commitment, and the confirmation names who was re-signed.",
+      "Staff panel: each card says where the contract stands, the next tier they'll reach and when, and — from three seasons out — when their career retires. Releasing a contracted staffer asks first and shows the buyout.",
+      "Balance: Veteran, Master and Legend base pay is now proportional to their rehearsal boost (120 / 160 / 200 CC), so a loyal staffer never costs more per point than a fresh hire beyond a bounded experience premium. Tenure raises stop at 22 seasons. No one currently employed changes price.",
+      "The Podium guide now says all of this plainly: nobody enters a pool, nobody is poached."
+    ]
+  },
+  {
     "id": "2026-09-18-eastern-classic-fantasy-nights",
     "date": "2026-09-18",
     "title": "Eastern Classic: the schedule shows the night your fantasy corps actually marches",

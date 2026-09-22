@@ -596,17 +596,34 @@ replaces ownership with **employment** — and an employment market never maxes 
   Veteran → Master → Legend are reached SOLELY by keeping a staffer season over season (promotion
   at 3 / 8 / 15 / 22 seasons). A Legend is proof you developed and held someone for ~22 seasons,
   never something bought off the shelf. Each retained season ages the instance: their tier and
-  boost rise, and their salary escalates with tenure.
-- **Contracts lock salary; retention is the default.** Contract length (1–3 seasons) locks the
-  salary against the raises tenure brings; once the lock lapses the salary floats to the current
-  tenured rate. A staffer is retained automatically each season the Corps Budget can pay them; an
-  unaffordable season lapses the contract (released, never a debt). **Success inflates your
-  payroll**: your homegrown Master ages into a pricier Legend — a natural dynasty tax and a second
-  structural beatability mechanism (§5.13) that produces the era-and-rebuild cycles real corps
-  have. You can RELEASE a staffer to free a seat, or RETRAIN one into a new specialty (tenure kept,
-  reduced boost for the rest of that season).
-- **Retirement cycles the pool.** A 30-season career retires and the seat reopens — the
-  decade-scale economy is built into staff _mortality_, so there is no terminal maxed-staff state.
+  boost rise, and their salary escalates with tenure. **Tier bases are proportional to boost**
+  (40 / 80 / 120 / 160 / 200 for +3 / 6 / 9 / 12 / 15%), and the 6%-per-season tenure premium
+  stops growing at the Legend threshold (22), so a career's price is a ceiling (~464 CC), not a
+  treadmill to retirement, and loyalty never costs more per boost point than churning rookies
+  by more than the bounded experience premium.
+- **Staff never enter a pool.** A staffer is owned by the corps for their whole career: they
+  carry over at every re-registration and leave only when released, unaffordable, or retired.
+  The between-seasons screen previews the exact plan (`staffMarket.projectRetention`) and the
+  register callable applies the same one, so what the director sees is what happens.
+- **Contracts lock salary — both ways — and lapsed ones can be re-signed.** Contract length
+  (1–3 seasons) locks the salary against the raises tenure and promotion bring; once the lock
+  lapses the salary floats to the current tenured rate and the staffer **stays on**. At the next
+  re-registration a lapsed lock can be **re-signed** for another 1–3 seasons at that floated rate
+  (`registerPodiumCorps.staffContracts` → `staffMarket.renewContract`); a still-locked contract
+  is never renewable, so a signed price can't be rolled forward forever. Releasing a still-locked
+  staffer — in season or at the boundary — owes a **buyout** (`buyoutPremium` × salary ×
+  unexpired seasons, `staffMarket.buyoutFor`) from the Corps Budget; at re-registration buyouts
+  are charged before payroll. A staffer is retained automatically each season the Corps Budget
+  can pay them; an unaffordable season lapses the contract (released, never a debt, never a
+  buyout). **Success inflates your payroll**: your homegrown Master ages into a pricier Legend —
+  a natural dynasty tax and a second structural beatability mechanism (§5.13) that produces the
+  era-and-rebuild cycles real corps have. You can RELEASE a staffer to free a seat, or RETRAIN
+  one into a new specialty (tenure kept, reduced boost for the rest of that season).
+- **Retirement cycles the seat.** A 30-season career retires and the seat reopens — the
+  decade-scale economy is built into staff _mortality_, so there is no terminal maxed-staff
+  state. The staff panel warns from `retirementNoticeSeasons` (3) out and names each staffer's
+  next rung on the ladder (`getPodiumState.staffCareer`), so neither a promotion raise nor a
+  retirement is a surprise.
 - **Power stays small.** Total staff yield bonus is hard-capped (~+15% across a corps' blocks);
   a full-Legend staff over a solid-Journeyman staff is worth roughly 0.5–1.0 finals points —
   deliberately below the ±2 decision-quality swing, preserving the §5.13 beatability math.
@@ -955,9 +972,12 @@ dormant, and every dormant season applies a minimum decay:
   seasons ≈ a full tier, three ≈ nearly two, and a long absence (6+) winds a former champion
   most of the way back to Community Corps. The trophy case, records, and history never decay —
   identity is permanent, power is not.
-- **Staff scatter.** All staff contracts survive one dormant season (loyalty grace). Each
-  additional dormant season, contracts lapse — highest tier first; good staff get poached, which
-  is exactly how it goes.
+- **Staff wait.** Staff are instances on the corps' own state, never a shared pool, so nothing
+  poaches them while a corps is dormant: the roster is still there on return and ages exactly one
+  season at re-registration (the missed seasons neither age nor promote them). The only
+  between-seasons pressure is the same one every returning corps faces — the fresh commitment
+  must cover the aged payroll, or the director picks who stays (§5.6). The earlier "loyalty
+  grace / poaching" idea was dropped with the v1.9 labor-market design.
 - **Division re-entry, published rule.** After one dormant season a corps seeds normally from its
   decayed seeding score. After two or more it re-enters the bottom active division and climbs —
   the real return-through-Open-Class path — with the §5.7 petition-up always available.

@@ -179,6 +179,60 @@ describe("projectRetention — the CC-vs-payroll funding preview", () => {
     assert.deepEqual(b.contract, { seasons: 3, remaining: 2 });
   });
 
+  test("a released staffer under contract owes a buyout, charged before payroll", () => {
+    // Brass signed 3 seasons and played one; guard is on a lapsed 1-season lock.
+    const brass = mintStaff({ id: "b_x", specialty: "B", tier: "journeyman", seasons: 3, day: 0 }, balance);
+    const roster = { B: brass, CG: carried("CG", 2) };
+    const brassNext = ageStaff(brass, balance);
+    const premium = balance.staff.career.buyoutPremium;
+    const buyout = Math.round(brassNext.salaryPerSeason * premium * brassNext.contract.remaining);
+    const guardNext = nextSalaryOf(roster.CG);
+
+    // Letting brass go with exactly guard's salary in the budget: the buyout
+    // comes first, so the guard is now UNAFFORDABLE — the total the director
+    // must commit is salary + buyout, and the preview shows both.
+    const tight = projectRetention(roster, guardNext, balance, ["CG"]);
+    assert.equal(tight.buyoutTotal, buyout);
+    assert.equal(tight.staff.find((s) => s.specialty === "B").buyout, buyout);
+    assert.equal(tight.staff.find((s) => s.specialty === "B").lapseReason, "released");
+    assert.deepEqual(tight.kept, []);
+    assert.equal(tight.staff.find((s) => s.specialty === "CG").lapseReason, "unaffordable");
+    const funded = projectRetention(roster, guardNext + buyout, balance, ["CG"]);
+    assert.deepEqual(funded.kept, ["CG"]);
+
+    // An UNAFFORDABLE lapse of the same locked staffer is never a debt.
+    const broke = projectRetention(roster, 0, balance, ["B", "CG"]);
+    assert.equal(broke.buyoutTotal, 0);
+    assert.equal(broke.staff.find((s) => s.specialty === "B").lapseReason, "unaffordable");
+  });
+
+  test("a lapsed lock is renewable; a requested re-sign is recorded on a kept staffer", () => {
+    const roster = { B: carried("B", 4), CG: carried("CG", 1) };
+    const plan = projectRetention(roster, 99999, balance, ["B", "CG"], { B: 3, CG: 99 });
+    const b = plan.staff.find((s) => s.specialty === "B");
+    const cg = plan.staff.find((s) => s.specialty === "CG");
+    assert.equal(b.renewable, true);
+    assert.equal(b.renewSeasons, 3);
+    assert.deepEqual(plan.renewed, ["B"]);
+    // Out-of-range lengths are ignored, not applied.
+    assert.equal(cg.renewable, true);
+    assert.equal(cg.renewSeasons, null);
+    // Renewal freezes the floated rate — it never changes the payroll.
+    assert.equal(plan.payroll, nextSalaryOf(roster.B) + nextSalaryOf(roster.CG));
+  });
+
+  test("a still-locked staffer is not renewable and a released one is never re-signed", () => {
+    const signed = mintStaff({ id: "b_x", specialty: "B", tier: "apprentice", seasons: 3, day: 0 }, balance);
+    const roster = { B: signed, CG: carried("CG", 3) };
+    const plan = projectRetention(roster, 99999, balance, ["B"], { B: 2, CG: 2 });
+    assert.equal(plan.staff.find((s) => s.specialty === "B").renewable, false);
+    assert.equal(plan.staff.find((s) => s.specialty === "B").renewSeasons, null);
+    const cg = plan.staff.find((s) => s.specialty === "CG");
+    assert.equal(cg.lapseReason, "released");
+    assert.equal(cg.renewSeasons, null);
+    assert.deepEqual(plan.renewed, []);
+  });
+
   test("a lapsed lock projects as unlocked and floats to the tenured rate", () => {
     // A journeyman carried past its (1-season) lock: the salary floats and no
     // lock is reported, so the UI shows the true rising cost.
