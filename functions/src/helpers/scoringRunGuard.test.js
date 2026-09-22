@@ -11,6 +11,8 @@ const {
   claimScoringRun,
   markScoringRunCompleted,
   markScoringRunFailed,
+  recordStageFailure,
+  recordSchedulerFailure,
   STALE_LEASE_MS,
 } = require("./scoringRunGuard");
 
@@ -175,5 +177,77 @@ describe("markScoringRunCompleted / markScoringRunFailed", () => {
     };
     // Must resolve — the original scoring error has to propagate, not this one.
     await markScoringRunFailed(db, "s2026", 5, new Error("original"));
+  });
+});
+
+// Failure markers: the isolated stages and the season scheduler write these
+// so a failure that never held a lease still reaches the 4:30 AM watchdog.
+describe("failure markers", () => {
+  // 2026-07-05T06:05Z is 02:05 ET, so the Eastern date key is 2026-07-05.
+  function makeMarkerDb(expectedCollection) {
+    const sets = [];
+    return {
+      sets,
+      db: {
+        collection(name) {
+          assert.equal(name, expectedCollection);
+          return {
+            doc: (id) => ({
+              id,
+              async set(data, options) {
+                sets.push({ id, data, options });
+              },
+            }),
+          };
+        },
+      },
+    };
+  }
+
+  test("recordStageFailure writes a failed, dated scoring_runs marker keyed by stage", async () => {
+    const { db, sets } = makeMarkerDb("scoring_runs");
+    await recordStageFailure(db, "discord-stage", new Error("webhook 502"), { now: NOW });
+
+    assert.equal(sets.length, 1);
+    assert.equal(sets[0].id, "stage_discord-stage_2026-07-05");
+    assert.deepEqual(sets[0].options, { merge: true });
+    const { attempts, ...rest } = sets[0].data;
+    assert.deepEqual(rest, {
+      kind: "announce",
+      stage: "discord-stage",
+      status: "failed",
+      startedAt: NOW,
+      failedAt: NOW,
+      lastError: "webhook 502",
+    });
+    // attempts is a FieldValue.increment so a retried night merges into one doc.
+    assert.ok(attempts && typeof attempts === "object");
+  });
+
+  test("recordStageFailure honors kind 'scoring' for stages that carry results", async () => {
+    const { db, sets } = makeMarkerDb("scoring_runs");
+    await recordStageFailure(db, "podium-nightly", "plain string error", { kind: "scoring", now: NOW });
+
+    assert.equal(sets[0].data.kind, "scoring");
+    assert.equal(sets[0].data.lastError, "plain string error");
+  });
+
+  test("recordSchedulerFailure writes a dated season_rollovers marker with the season", async () => {
+    const { db, sets } = makeMarkerDb("season_rollovers");
+    await recordSchedulerFailure(db, new Error("rankings missing"), { seasonUid: "live_2025-26", now: NOW });
+
+    assert.equal(sets[0].id, "scheduler_2026-07-05");
+    assert.equal(sets[0].data.kind, "scheduler");
+    assert.equal(sets[0].data.seasonUid, "live_2025-26");
+    assert.equal(sets[0].data.status, "failed");
+    assert.equal(sets[0].data.lastError, "rankings missing");
+  });
+
+  test("markers never throw — a marker write failure must not replace the real error", async () => {
+    const db = {
+      collection: () => ({ doc: () => ({ id: "x", set: async () => { throw new Error("db down"); } }) }),
+    };
+    await assert.doesNotReject(() => recordStageFailure(db, "showcase-stage", new Error("boom"), { now: NOW }));
+    await assert.doesNotReject(() => recordSchedulerFailure(db, new Error("boom"), { now: NOW }));
   });
 });

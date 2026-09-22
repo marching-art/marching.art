@@ -70,6 +70,7 @@ const { FieldValue } = require("firebase-admin/firestore");
 const { getDb } = require("../config");
 const { planDrop, showCalendarDay, CHAMPIONSHIP_WEEK_START_DAY } = require("../helpers/dropPlanner");
 const { isDropSchedulingEnabled } = require("../helpers/features");
+const { recordStageFailure } = require("../helpers/scoringRunGuard");
 const {
   discordScoresWebhookUrl,
   discordAnnouncementsWebhookUrl,
@@ -691,8 +692,13 @@ exports.podiumNightly = onSchedule({
   } catch (error) {
     // Same isolation contract as the legacy callers: a Podium failure is
     // logged and swallowed, never propagated into scheduler retries of the
-    // fantasy pipeline (which no longer shares this job anyway).
+    // fantasy pipeline (which no longer shares this job anyway). The failure
+    // marker is what the 4:30 AM watchdog sees when the stage died before
+    // claiming its {seasonUid}_podium_day{N} lease (a season read, the feature
+    // flag, the season-index bump); kind "scoring" because a missed Podium
+    // night means directors have no results, not just a missed post.
     logger.error(`[podium-nightly] failed: ${error.message}`);
+    await recordStageFailure(db, "podium-nightly", error, { kind: "scoring" });
   }
 
   // Tonight's Podium results (#scores channel) — the Podium half of the score
@@ -709,6 +715,7 @@ exports.podiumNightly = onSchedule({
     }
   } catch (error) {
     logger.error(`[podium-drop] stage failed (Podium unaffected): ${error.message}`);
+    await recordStageFailure(db, "podium-drop", error);
   }
 
   // Fan Favorite ballot announcements (#announcements channel), off the state
@@ -727,6 +734,7 @@ exports.podiumNightly = onSchedule({
     }
   } catch (error) {
     logger.error(`[fan-favorite] stage failed (Podium unaffected): ${error.message}`);
+    await recordStageFailure(db, "fan-favorite", error);
   }
 
   // The Podium Report reaches #news as a syndicated news article

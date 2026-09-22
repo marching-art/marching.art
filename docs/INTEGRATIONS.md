@@ -23,7 +23,7 @@ embed helpers.
 | **#news**           | `DISCORD_NEWS_WEBHOOK_URL`           | published articles (except press releases), the weekly Podium Report                                                                                |
 | **#press-releases** | `DISCORD_PRESS_RELEASES_WEBHOOK_URL` | director-authored press releases (article category `press`) — **never** newsroom copy                                                               |
 | **#events**         | `DISCORD_EVENTS_WEBHOOK_URL`         | director-hosted shows — **never** the generated season schedule                                                                                     |
-| **#operations**     | `DISCORD_OPS_WEBHOOK_URL`            | admin-only: scoring-watchdog and scrape-canary alerts                                                                                               |
+| **#operations**     | `DISCORD_OPS_WEBHOOK_URL`            | admin-only: scoring-watchdog, season-scheduler and scrape-canary alerts                                                                             |
 
 Two rules hold across every channel:
 
@@ -398,7 +398,9 @@ admin email — a fine audit trail, a slow page. The webhook post is the fast
 path.
 
 - **Code:** `functions/src/helpers/opsAlerts.js`, called from
-  `scheduled/scoringWatchdog.js` and `scheduled/scrapeCanary.js`.
+  `scheduled/scoringWatchdog.js`, `scheduled/scrapeCanary.js` and (a
+  critical page the moment a season rollover throws)
+  `scheduled/seasonScheduler.js`.
 - **Additive, never sole:** the log line and the email still go out. An
   alerting channel that can itself be down must not be the only place an
   incident is reported. `postOpsAlert` never throws.

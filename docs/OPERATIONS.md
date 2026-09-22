@@ -102,9 +102,22 @@ Then re-run the **Deploy Functions** workflow (workflow_dispatch) with the
 ref set to that tag — workflow_dispatch accepts tags — and the same deploy
 target. A bad deploy near the 1:30–2:00 AM ET scoring window should be
 rolled back first and diagnosed second; the scoring watchdog (4:30 AM ET,
-`scoringWatchdog`) emails admins if the night still failed, and the
-`scoring_runs` lease/ledger design makes a re-run after rollback safe
-(coin/XP/caption awards are idempotent per day).
+`scoringWatchdog`) emails admins and pages #operations if the night still
+failed, and the `scoring_runs` lease/ledger design makes a re-run after
+rollback safe (coin/XP/caption awards are idempotent per day).
+
+The watchdog reads three things: `scoring_runs` (the fantasy/Podium day
+leases plus `stage_{stage}_{date}` markers that the isolated Discord, Eastern
+Classic, Showcase, Podium and Fan Favorite stages write when they die before
+holding a lease), last night's `scrape_runs` doc in live season, and
+`season_rollovers` — a rollover lease that failed or stalled, or the
+`scheduler_{date}` marker the 3 AM `seasonScheduler` writes when it throws
+(it also pages #operations directly and is retried twice by Cloud Scheduler).
+A **failed rollover lease is not retried**: once the new season doc has
+landed the scheduler reads the season as active, so the old season's payouts
+and profile archival have to be re-run by hand (there is no admin button
+yet — see NEXT.md). The watchdog keeps reporting it every morning until the
+lease reads `completed`.
 
 ## Hosting rollback
 

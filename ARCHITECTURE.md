@@ -139,7 +139,10 @@ fantasy_standings/{seasonUid}[/classes/{class}]
 drop_plans/{showDateET}           # Tonight's score-drop plan: drop/scrape instants, zones, mode,
                                   #   attempt counts. Public; the client's countdown target
 scoring_runs/{leaseId}            # Run leases + award ledger that make nightly scoring
-                                  #   retry-idempotent (helpers/scoringRunGuard.js, awardLedger.js)
+                                  #   retry-idempotent (helpers/scoringRunGuard.js, awardLedger.js);
+                                  #   stage_{stage}_{date} = an isolated stage's failure marker
+season_rollovers/{seasonUid}      # Season close-out lease (payouts + archival, once per season);
+                                  #   scheduler_{date} = the 3 AM scheduler's failure marker
 rate_{bucket}/{uid}               # Per-uid callable write budgets. Server-only: no rules match
 admin-stats/{economy,retention,scrapeCanary}
                                   # Admin dashboards (see docs/GAMIFICATION.md "Instrumentation")
@@ -209,10 +212,10 @@ the domain logic lives in `helpers/` so it can be shared and unit-tested.
 | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
 | `dailyProcessors.js` / `nightlyStages.js`        | The nightly scoring run, split into isolated stages behind one run lease                                      |
 | `dropDispatcher.js`                              | The timezone-aware score-drop dispatcher + `podiumNightly` (see [`docs/SCORE_DROPS.md`](docs/SCORE_DROPS.md)) |
-| `scoringWatchdog.js`                             | 4:30 AM ET check that the night actually scored; emails admins if not                                         |
+| `scoringWatchdog.js`                             | 4:30 AM ET check that the night scored, no isolated stage or season rollover failed; emails + pages if not    |
 | `liveScraper.js`                                 | Live DCI score scraping (legacy 1:30 AM path when `dropScheduling` is off)                                    |
 | `scrapeCanary.js`                                | Afternoon dci.org markup-drift audit, so a redesign surfaces before scoring night                             |
-| `seasonScheduler.js`                             | Season rollover                                                                                               |
+| `seasonScheduler.js`                             | 3 AM ET season rollover; a failure is marked in `season_rollovers`, paged to #operations, and retried         |
 | `leagueAutomation.js`                            | League matchup generation, rivalries, season-activity refresh, recap backstop                                 |
 | `lifetimeLeaderboard.js`                         | Nightly lifetime leaderboards, season rankings, show-registration index                                       |
 | `economyStats.js`                                | Weekly CorpsCoin mint-vs-sink rollup → `admin-stats/economy`                                                  |
