@@ -302,9 +302,7 @@ export default function StaffNamesModeration() {
       </form>
 
       {pending && (
-        <div
-          role="dialog"
-          aria-modal="true"
+        <section
           aria-label="Confirm staff name moderation"
           className="border border-line bg-surface-sunken p-3 space-y-2"
         >
@@ -359,7 +357,7 @@ export default function StaffNamesModeration() {
               Cancel
             </button>
           </div>
-        </div>
+        </section>
       )}
     </div>
   );
