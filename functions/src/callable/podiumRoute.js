@@ -13,6 +13,7 @@ const jointHelper = require("../helpers/podium/joint");
 const career = require("../helpers/podium/career");
 const divisions = require("../helpers/podium/divisions");
 const staffMarket = require("../helpers/podium/staffMarket");
+const staffNames = require("../helpers/podium/staffNames");
 const assessment = require("../helpers/podium/assessment");
 const { podiumContext } = require("./podium");
 const { getPodiumRehearsalWindow } = require("../helpers/gameDay");
@@ -315,6 +316,7 @@ exports.getPodiumRegistrationPreview = onCall({ cors: true }, async (request) =>
     staff: projection.staff.map((s) => ({
       specialty: s.specialty,
       id: s.id,
+      name: s.name,
       tier: s.tier,
       nextTier: s.nextTier,
       salary: s.salary,
@@ -454,8 +456,23 @@ exports.getPodiumState = onCall({ cors: true }, async (request) => {
   // Resolved independently of the route so the origin still shows when there
   // are no upcoming shows left to route.
   const currentLocation = buildCurrentLocation(state, uid, competitionDay, easternAssignments);
-  const careerSnapshot = await career.careerRef(db, uid).get();
+  const [careerSnapshot, profileSnapshot] = await Promise.all([
+    career.careerRef(db, uid).get(),
+    store.profileRef(db, uid).get(),
+  ]);
   const careerData = careerSnapshot.exists ? careerSnapshot.data() : null;
+  // Whether this director may name their staff (admins can revoke it for
+  // abuse). The panel hides the name controls and says why when it's off.
+  const namingPrivilege = staffNames.namingPrivilege(
+    profileSnapshot.exists ? profileSnapshot.data() : null
+  );
+  const staffNaming = {
+    allowed: !namingPrivilege.revoked,
+    reason: namingPrivilege.revoked ? namingPrivilege.reason : null,
+    strikes: namingPrivilege.strikes,
+    minLength: staffNames.NAME_MIN,
+    maxLength: staffNames.NAME_MAX,
+  };
   const division = divisions.normalizeDivision(state.division);
   const commitmentCap =
     (store.balance.budget.commitmentCapByDivision || {})[division] ||
@@ -493,6 +510,7 @@ exports.getPodiumState = onCall({ cors: true }, async (request) => {
     divisionLabel: divisions.DIVISION_LABELS[division],
     commitmentCap,
     staffOutlook,
+    staffNaming,
     // The career ladder the staff panel reads its milestones from: promotion
     // thresholds, the retirement season and how far out to warn of it, the
     // contract length cap and the buyout premium on an early release.

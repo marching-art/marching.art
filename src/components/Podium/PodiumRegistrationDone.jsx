@@ -80,7 +80,7 @@ export default function PodiumRegistrationDone({ done }) {
                 {lapsed
                   .map(
                     (/** @type {any} */ s) =>
-                      `${SPECIALTY[s.specialty] || s.specialty} (${reasonWord[s.reason] || s.reason}${s.buyout > 0 ? `, ${fmt(s.buyout)} CC buyout` : ''})`
+                      `${s.name ? `${s.name}, ` : ''}${SPECIALTY[s.specialty] || s.specialty} (${reasonWord[s.reason] || s.reason}${s.buyout > 0 ? `, ${fmt(s.buyout)} CC buyout` : ''}${s.name ? ', name released' : ''})`
                   )
                   .join(', ')}
               </span>

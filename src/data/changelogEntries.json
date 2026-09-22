@@ -1,5 +1,17 @@
 [
   {
+    "id": "2026-09-22-podium-staff-names",
+    "date": "2026-09-22",
+    "title": "Name your Podium staff",
+    "category": "feature",
+    "summary": "Podium directors can now give each staff member a name — when you hire them, or any time after from the pencil on their card. Names are unique across every corps in the game, so if the one you want is taken you'll see which corps has it.",
+    "highlights": [
+      "A name stays with the staffer through retrains and season to season while you keep them, and shows on the re-registration roster.",
+      "When a staffer leaves — released, unfunded at re-registration, or retired at the end of their career — their name is freed for any corps to use.",
+      "Names must be appropriate: admins can remove one, and repeat offenders lose the ability to name staff."
+    ]
+  },
+  {
     "id": "2026-09-22-setup-wizard-registration-close",
     "date": "2026-09-22",
     "title": "Season setup: show registration now says when it closes",

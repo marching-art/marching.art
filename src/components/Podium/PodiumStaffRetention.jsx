@@ -98,6 +98,7 @@ export default function PodiumStaffRetention({
               className="accent-interactive"
             />
             <span className="flex-1 text-[11px] font-bold text-white">
+              {s.name ? `${s.name} · ` : ''}
               {SPECIALTY[s.specialty] || s.specialty}
               <span className="ml-2 text-[9px] font-normal text-muted">
                 {(s.nextTier && TIER[s.nextTier]) || TIER[s.tier]}
@@ -179,10 +180,11 @@ export default function PodiumStaffRetention({
           className="flex items-center gap-2 px-2 py-1.5 border border-line-subtle rounded-none opacity-50"
         >
           <span className="flex-1 text-[11px] text-muted">
+            {s.name ? `${s.name} · ` : ''}
             {SPECIALTY[s.specialty] || s.specialty}
           </span>
           <span className="text-[9px] uppercase tracking-wider text-muted">
-            Retiring · 30-season career
+            Retiring · 30-season career{s.name ? ' · name released' : ''}
           </span>
         </div>
       ))}

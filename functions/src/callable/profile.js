@@ -9,6 +9,7 @@ const { assertAuth, assertWriteBudget } = require("../helpers/callableGuards");
 const { detachMemberFromLeague } = require("../helpers/leagueLifecycle");
 const { collectRegistrationsFromProfile } = require("../helpers/showRegistrations");
 const { eraseDirectorFromResults } = require("../helpers/accountErasure");
+const { releaseAllStaffNamesFor } = require("./podiumStaffModeration");
 
 /**
  * Apply a list of write operations across as many Firestore batches as needed,
@@ -530,6 +531,10 @@ exports.deleteAccount = onCall({ cors: true, timeoutSeconds: 300, cpu: 1 }, asyn
     } catch (resultsError) {
       logger.warn(`Results anonymization failed for ${userId}:`, resultsError);
     }
+
+    // Any Podium staff names this director's staff held go back to the game.
+    const releasedNames = await releaseAllStaffNamesFor(db, userId);
+    if (releasedNames > 0) logger.info(`Released ${releasedNames} staff name(s) for ${userId}`);
 
     // Delete the user from Firebase Auth
     await getAuth().deleteUser(userId);
