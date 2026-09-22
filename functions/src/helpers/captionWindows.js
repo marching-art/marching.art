@@ -82,6 +82,20 @@ const CHAMPIONSHIP_CLASS_DAYS = {
 const SEASON_FINAL_DAY = 49;
 
 /**
+ * The next Championship Week day (after `day`) on which `corpsClass`
+ * competes, or null when the class is done for the season.
+ * @param {string} corpsClass
+ * @param {number} day
+ * @returns {number|null}
+ */
+function nextClassChampionshipDay(corpsClass, day) {
+  for (let d = day + 1; d <= SEASON_FINAL_DAY; d++) {
+    if ((CHAMPIONSHIP_CLASS_DAYS[d] || []).includes(corpsClass)) return d;
+  }
+  return null;
+}
+
+/**
  * Break a Date into its Eastern-Time wall-clock parts.
  * @param {Date} date
  * @returns {Record<string, string>} parts keyed by type ('year', 'month', 'day', 'hour', ...)
@@ -168,6 +182,7 @@ function nextScoresProcessingAfter(after) {
  *   allotmentEndsAt: Date|null,
  *   reopensAt: Date|null,
  *   pendingScoresDay: number|null,
+ *   classResumesDay: number|null,
  * }|null} null when the season has no start date. `periodKey` identifies the
  *   allotment window the counter resets on: the week number for weekly limits,
  *   the competition day during Championship Week (per-day reset). Callers store
@@ -211,6 +226,7 @@ function getCaptionChangeWindow(seasonData, now = new Date(), corpsClass = null)
     allotmentEndsAt: null,
     reopensAt: null,
     pendingScoresDay: null,
+    classResumesDay: null,
   };
 
   if (day > SEASON_FINAL_DAY) {
@@ -239,12 +255,17 @@ function getCaptionChangeWindow(seasonData, now = new Date(), corpsClass = null)
     const competingClasses = CHAMPIONSHIP_CLASS_DAYS[day] || [];
     const classClosed = corpsClass != null && !competingClasses.includes(corpsClass);
     if (classClosed) {
+      // Sitting out today is either "not started yet" (World/SoundSport on
+      // Days 45-46) or "done for the season" (Open/A on Days 48-49).
+      const resumesDay = nextClassChampionshipDay(corpsClass, day);
       return {
         ...base,
         phase: "championship",
         status: "closed",
         tradeLimit: 0,
         periodKey: day,
+        reopensAt: resumesDay ? reopenAfter(resumesDay) : null,
+        classResumesDay: resumesDay,
       };
     }
 
@@ -319,6 +340,7 @@ async function isDayScoresProcessed(db, seasonData, day) {
 module.exports = {
   getCaptionChangeWindow,
   isDayScoresProcessed,
+  nextClassChampionshipDay,
   WEEKLY_TRADE_LIMIT,
   CHAMPIONSHIP_TRADE_LIMIT,
   UNLIMITED_THROUGH_DAY,

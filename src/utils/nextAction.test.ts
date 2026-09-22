@@ -207,6 +207,25 @@ describe('resolveNextAction — lineup locked', () => {
     expect(action?.detail).toContain('finished competing');
   });
 
+  it('says when a class that has not started Championship Week competes next', () => {
+    const action = resolveNextAction(
+      baseInput({
+        corps: shortLineup,
+        currentDay: 45,
+        // Days 45-46 are Open/A only — SoundSport resumes Day 47.
+        captionWindow: {
+          phase: 'championship',
+          status: 'closed',
+          classResumesDay: 47,
+          reopensAt: new Date('2026-08-06T06:00:00Z'),
+        },
+      })
+    );
+    expect(action?.id).toBe('lineup_locked');
+    expect(action?.detail).toContain('Day 47');
+    expect(action?.detail).not.toContain('finished competing');
+  });
+
   it('treats an unhydrated season (null window) as editable', () => {
     // The server is the real gate and surfaces its own message on save;
     // blocking the button here would strand a director who can actually edit.

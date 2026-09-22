@@ -59,7 +59,9 @@ export const CHAMPIONSHIP_START_DAY = 45;
 /**
  * Which classes still compete — and may therefore change captions — on each
  * Championship Week day (mirrors functions/src/helpers/captionWindows.js).
- * A class absent from its day's list is done for the season and locked out.
+ * A class absent from its day's list is locked out that day — either not
+ * started yet (World/SoundSport, Days 45-46) or done for the season (Open/A,
+ * Days 48-49); see nextClassChampionshipDay.
  *   - Days 45-46: Open Class & A Class.
  *   - Day 47:     all classes.
  *   - Days 48-49: World Class & SoundSport (Finals).
@@ -75,6 +77,21 @@ export const CHAMPIONSHIP_CLASS_DAYS = {
 
 /** Final competition day of a season. */
 export const SEASON_FINAL_DAY = 49;
+
+/**
+ * The next Championship Week day (after `day`) on which `corpsClass`
+ * competes, or null when the class is done for the season. Mirrors
+ * functions/src/helpers/captionWindows.js.
+ * @param {string} corpsClass
+ * @param {number} day
+ * @returns {number|null}
+ */
+export function nextClassChampionshipDay(corpsClass, day) {
+  for (let d = day + 1; d <= SEASON_FINAL_DAY; d++) {
+    if ((CHAMPIONSHIP_CLASS_DAYS[d] || []).includes(corpsClass)) return d;
+  }
+  return null;
+}
 
 /**
  * Break a Date into its Eastern-Time wall-clock parts.
@@ -270,6 +287,7 @@ export function getShowRegistrationCloseEstimate(eventDate, seasonData) {
  *   reopensAt: Date|null,
  *   resetsAt: Date|null,
  *   nextLimit: number|null,
+ *   classResumesDay: number|null,
  * }|null} null when the season has no start date. While open, `locksAt` is
  *   tonight's overnight lock and `allotmentEndsAt` is when the current
  *   allotment expires unused (the Saturday close / end of Day 14 / tonight in
@@ -304,6 +322,7 @@ export function getCaptionChangeInfo(seasonData, now = new Date(), corpsClass = 
     reopensAt: null,
     resetsAt: null,
     nextLimit: null,
+    classResumesDay: /** @type {number|null} */ (null),
   };
 
   if (day > SEASON_FINAL_DAY) {
@@ -330,12 +349,20 @@ export function getCaptionChangeInfo(seasonData, now = new Date(), corpsClass = 
     const competingClasses = CHAMPIONSHIP_CLASS_DAYS[day] || [];
     const classClosed = corpsClass != null && !competingClasses.includes(corpsClass);
     if (classClosed) {
+      // Sitting out today is either "not started yet" (World/SoundSport on
+      // Days 45-46) or "done for the season" (Open/A on Days 48-49).
+      const resumesDay = nextClassChampionshipDay(corpsClass, day);
+      const opensAt = resumesDay ? reopenAfter(resumesDay) : null;
       return {
         ...base,
         phase: 'championship',
         status: 'closed',
         tradeLimit: 0,
         periodKey: day,
+        reopensAt: opensAt,
+        resetsAt: opensAt,
+        nextLimit: resumesDay ? CHAMPIONSHIP_TRADE_LIMIT : null,
+        classResumesDay: resumesDay,
       };
     }
 

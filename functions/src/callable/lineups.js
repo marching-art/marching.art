@@ -188,8 +188,14 @@ exports.saveLineup = onCall({ cors: true }, async (request) => {
                 "The season has ended — caption changes are closed until the next season begins.");
             }
             if (window.phase === "championship" && window.status === "closed") {
-              // This class has finished competing for the season (Finals-week
-              // bracket): Open/A wrap after Day 47, World/SoundSport after 49.
+              // This class sits out today in the Finals-week bracket: World/
+              // SoundSport haven't started (Days 45-46), or Open/A are done
+              // for the season (Days 48-49).
+              if (window.classResumesDay) {
+                throw new HttpsError("failed-precondition",
+                  `This class doesn't compete until Day ${window.classResumesDay} of Championship Week — ` +
+                  `its championship changes open on Day ${window.classResumesDay} at 2:00 AM ET.`);
+              }
               throw new HttpsError("failed-precondition",
                 "This class has finished competing for the season — its caption changes are closed.");
             }
