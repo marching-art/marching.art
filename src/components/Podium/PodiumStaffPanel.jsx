@@ -15,20 +15,125 @@
 // career ladder, and (close to the end) when the career retires. Releasing a
 // staffer still under contract buys out the seasons left on it, so the release
 // control asks first.
+//
+// NAMES: a director may give any staffer a name — at hire (the optional name
+// field on the vacant card) or later from the card's pencil. Names are
+// unique across every corps in the game; a taken name says which corps has
+// it. The name travels with the staffer through retrains and seasons and is
+// released the moment they leave. Admins can remove a name and, for repeat
+// abuse, turn naming off for a director — the panel then says so.
 
 import React, { useEffect, useState } from 'react';
-import { Users, Loader2, UserMinus, GraduationCap, X } from 'lucide-react';
+import { Users, Loader2, UserMinus, GraduationCap, X, Pencil, Check } from 'lucide-react';
 import {
   getPodiumStaffMarket,
   hirePodiumStaff,
   releasePodiumStaff,
   retrainPodiumStaff,
+  namePodiumStaff,
 } from '../../api/podium';
 import { SPECIALTY_LABELS, TIER_LABELS } from './podiumConstants';
 
 /** @typedef {import('../../api/podium').PodiumStaffMember} PodiumStaffMember */
 /** @typedef {import('../../api/podium').PodiumStaffCareer} PodiumStaffCareer */
 /** @typedef {import('../../api/podium').PodiumStaffCatalogOption} PodiumStaffCatalogOption */
+/** @typedef {import('../../api/podium').PodiumStaffNaming} PodiumStaffNaming */
+
+/** @type {PodiumStaffNaming} */
+const DEFAULT_NAMING = { allowed: true, reason: null, strikes: 0, minLength: 2, maxLength: 32 };
+
+/**
+ * Inline name editor for one staffer: the current name (or "unnamed"), a
+ * text field, save/cancel. The server owns validation and uniqueness; the
+ * error it returns (including "taken — belongs to the X staff") is shown
+ * right under the field.
+ *
+ * @param {{
+ *   member: PodiumStaffMember,
+ *   naming: PodiumStaffNaming,
+ *   busy: boolean,
+ *   onSave: (name: string) => Promise<void>,
+ *   onCancel: () => void,
+ * }} props
+ */
+function StaffNameEditor({ member, naming, busy, onSave, onCancel }) {
+  const [value, setValue] = useState(member.name || '');
+  const [error, setError] = useState(/** @type {string | null} */ (null));
+  const trimmed = value.trim();
+  const unchanged = trimmed === (member.name || '');
+  const tooShort = trimmed.length > 0 && trimmed.length < naming.minLength;
+
+  const submit = async () => {
+    if (busy || unchanged || tooShort) return;
+    setError(null);
+    try {
+      await onSave(trimmed);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not save that name.');
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-1 pt-1 border-t border-line-muted">
+      <label className="text-[9px] uppercase font-bold text-muted">
+        {member.name ? 'Rename' : 'Name this staffer'}
+      </label>
+      <div className="flex items-center gap-1">
+        <input
+          type="text"
+          value={value}
+          maxLength={naming.maxLength}
+          autoFocus
+          disabled={busy}
+          placeholder="e.g. Dana Whitfield"
+          aria-label="Staff member name"
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              submit();
+            } else if (e.key === 'Escape') {
+              e.preventDefault();
+              onCancel();
+            }
+          }}
+          className="flex-1 min-w-0 bg-surface-card border border-line rounded-none px-1.5 py-0.5 text-[11px] text-white placeholder:text-muted/60 focus:border-interactive focus:outline-none"
+        />
+        <button
+          type="button"
+          disabled={busy || unchanged || tooShort}
+          onClick={submit}
+          aria-label="Save name"
+          title={
+            trimmed.length === 0 && member.name
+              ? 'Clear the name (they go back to their role)'
+              : 'Save name'
+          }
+          className="text-[9px] px-1.5 py-0.5 rounded-none border border-interactive/60 text-interactive hover:bg-interactive/10 disabled:opacity-40 press-feedback"
+        >
+          {busy ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+        </button>
+        <button
+          type="button"
+          disabled={busy}
+          onClick={onCancel}
+          aria-label="Cancel naming"
+          className="text-[9px] px-1.5 py-0.5 rounded-none border border-line text-muted hover:text-white press-feedback"
+        >
+          <X className="w-3 h-3" />
+        </button>
+      </div>
+      <span className="text-[9px] text-muted">
+        {tooShort
+          ? `At least ${naming.minLength} characters.`
+          : trimmed.length === 0 && member.name
+            ? 'Save with an empty name to clear it.'
+            : `Unique across every corps in the game · ${naming.minLength}-${naming.maxLength} characters.`}
+      </span>
+      {error && <span className="text-[9px] text-red-400">{error}</span>}
+    </div>
+  );
+}
 
 /** Specialty-id -> label and tier-id -> label, as string maps for keyed lookups. */
 const SPECIALTY = /** @type {Record<string, string>} */ (SPECIALTY_LABELS);
@@ -43,8 +148,9 @@ const TIER_STYLES = {
   legend: 'text-brand',
 };
 
-// Experience levels, least → most experienced. The label IS the staffer's
-// identity in the grid — no names.
+// Experience levels, least → most experienced. The tier label is the
+// staffer's standing in the grid; the director-given name (if any) sits
+// above it.
 const TIER_ORDER = ['apprentice', 'journeyman', 'veteran', 'master', 'legend'];
 
 // Fallbacks while the state payload is loading; the server's balance wins.
@@ -141,12 +247,17 @@ export default function PodiumStaffPanel({ podium }) {
   const state = podium.data?.state;
   /** @type {PodiumStaffCareer} */
   const career = podium.data?.staffCareer || DEFAULT_CAREER;
+  /** @type {PodiumStaffNaming} */
+  const naming = podium.data?.staffNaming || DEFAULT_NAMING;
   const [catalog, setCatalog] = useState(/** @type {PodiumStaffCatalogOption[] | null} */ (null));
   const [busy, setBusy] = useState(/** @type {string | null} */ (null));
   const [error, setError] = useState(/** @type {string | null} */ (null));
   const [contractSeasons, setContractSeasons] = useState(1);
   const [retraining, setRetraining] = useState(/** @type {string | null} */ (null)); // staffId
   const [releasing, setReleasing] = useState(/** @type {string | null} */ (null)); // specialty
+  const [namingId, setNaming] = useState(/** @type {string | null} */ (null)); // staffId being named
+  // Optional name typed on a vacant card, keyed by specialty — sent with the hire.
+  const [hireNames, setHireNames] = useState(/** @type {Record<string, string>} */ ({}));
   const [notice, setNotice] = useState(/** @type {string | null} */ (null));
 
   useEffect(() => {
@@ -203,11 +314,42 @@ export default function PodiumStaffPanel({ podium }) {
       const result = await releasePodiumStaff({ specialty });
       setReleasing(null);
       const paid = result.data.buyout || 0;
+      const who = member.name
+        ? `${member.name} (${SPECIALTY[specialty] || specialty})`
+        : SPECIALTY[specialty] || specialty;
       setNotice(
-        `${SPECIALTY[specialty] || specialty} released${paid > 0 ? ` — ${paid} CC contract buyout paid` : ''}. ` +
-          `Their ${(member.careerSeasons || 0) + 1}-season tenure with you ends here.`
+        `${who} released${paid > 0 ? ` — ${paid} CC contract buyout paid` : ''}. ` +
+          `Their ${(member.careerSeasons || 0) + 1}-season tenure with you ends here` +
+          (member.name
+            ? `, and the name "${member.name}" is free for any corps to use again.`
+            : '.')
       );
     });
+
+  /**
+   * Save a staffer's name (empty clears it). Runs through `act` for the busy
+   * flag and reload, but re-throws so the editor can show the server's
+   * reason inline (a taken name says which corps has it).
+   * @param {PodiumStaffMember} member @param {string} name
+   */
+  const saveName = async (member, name) => {
+    const key = `name_${member.id}`;
+    setBusy(key);
+    setError(null);
+    setNotice(null);
+    try {
+      const result = await namePodiumStaff({ staffId: member.id, name });
+      setNaming(null);
+      setNotice(
+        result.data.name
+          ? `${SPECIALTY[member.specialty] || member.specialty} is now ${result.data.name}.`
+          : `${result.data.previousName || 'Their name'} cleared — the name is free again.`
+      );
+      await podium.reload();
+    } finally {
+      setBusy(null);
+    }
+  };
 
   return (
     <div className="bg-surface-card border border-line rounded-none p-4 space-y-3">
@@ -248,6 +390,13 @@ export default function PodiumStaffPanel({ podium }) {
         </span>
       </div>
 
+      {!naming.allowed && (
+        <div className="text-[10px] text-warning border border-warning/40 bg-warning/10 rounded-none px-2 py-1">
+          Staff naming is disabled on your account
+          {naming.reason ? ` (${naming.reason})` : ''}. Your staff keep working under their roles.
+        </div>
+      )}
+
       {!catalog && !error && (
         <div className="text-[9px] uppercase tracking-wider text-muted flex items-center gap-1.5">
           <Loader2 className="w-3 h-3 animate-spin" /> Loading catalog…
@@ -276,6 +425,7 @@ export default function PodiumStaffPanel({ podium }) {
             const buyout = buyoutNow(member, career);
             const best = bestPlacement(member);
             const confirming = releasing === specialty;
+            const editingName = namingId === member.id;
             return (
               <div
                 key={specialty}
@@ -292,6 +442,50 @@ export default function PodiumStaffPanel({ podium }) {
                   </span>
                 </div>
 
+                {/* The staffer's name (director-given, unique game-wide) or
+                    an invitation to give one; the pencil opens the editor. */}
+                <div className="flex items-center justify-between gap-2 min-w-0">
+                  <span
+                    className={`text-[11px] font-bold truncate ${member.name ? 'text-white' : 'text-muted italic font-normal'}`}
+                    title={member.name || undefined}
+                  >
+                    {member.name || 'Unnamed'}
+                  </span>
+                  {naming.allowed && (
+                    <button
+                      type="button"
+                      disabled={busy !== null}
+                      onClick={() => {
+                        setReleasing(null);
+                        setRetraining(null);
+                        setNaming((v) => (v === member.id ? null : member.id));
+                      }}
+                      title={member.name ? 'Rename this staffer' : 'Name this staffer'}
+                      aria-label={
+                        member.name
+                          ? `Rename ${member.name}`
+                          : `Name your ${SPECIALTY[specialty] || specialty}`
+                      }
+                      className={`press-feedback shrink-0 ${
+                        editingName ? 'text-interactive' : 'text-muted hover:text-white'
+                      }`}
+                    >
+                      <Pencil className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+
+                {editingName && (
+                  <StaffNameEditor
+                    key={member.id}
+                    member={member}
+                    naming={naming}
+                    busy={busy === `name_${member.id}`}
+                    onSave={(name) => saveName(member, name)}
+                    onCancel={() => setNaming(null)}
+                  />
+                )}
+
                 <div
                   className="flex items-center justify-between gap-2 text-[10px] tabular-nums text-muted"
                   title={resumeSummary(member)}
@@ -306,6 +500,7 @@ export default function PodiumStaffPanel({ podium }) {
                       disabled={busy !== null}
                       onClick={() => {
                         setReleasing(null);
+                        setNaming(null);
                         setRetraining((v) => (v === member.id ? null : member.id));
                       }}
                       title="Retrain into a new specialty (reduced boost this season)"
@@ -322,6 +517,7 @@ export default function PodiumStaffPanel({ podium }) {
                       disabled={busy !== null}
                       onClick={() => {
                         setRetraining(null);
+                        setNaming(null);
                         setReleasing((v) => (v === specialty ? null : specialty));
                       }}
                       title={
@@ -379,6 +575,9 @@ export default function PodiumStaffPanel({ podium }) {
                       {buyout > 0
                         ? `Release now and buy out the rest of their contract for ${buyout} CC from your Corps Budget? No refund on this season's salary.`
                         : "Release now? This season's salary is spent, and their tenure with you ends."}
+                      {member.name
+                        ? ` The name "${member.name}" is released for anyone to use.`
+                        : ''}
                     </span>
                     <span className="flex items-center gap-1">
                       <button
@@ -447,6 +646,21 @@ export default function PodiumStaffPanel({ podium }) {
               </div>
               {options.length > 0 ? (
                 <div className="flex flex-col gap-1">
+                  {naming.allowed && (
+                    <input
+                      type="text"
+                      value={hireNames[specialty] || ''}
+                      maxLength={naming.maxLength}
+                      disabled={busy !== null}
+                      placeholder="Name (optional)"
+                      aria-label={`Name for your new ${SPECIALTY[specialty] || specialty}`}
+                      title="Give this hire a name — unique across every corps in the game. Leave blank to name them later."
+                      onChange={(e) =>
+                        setHireNames((prev) => ({ ...prev, [specialty]: e.target.value }))
+                      }
+                      className="w-full bg-surface-card border border-line rounded-none px-1.5 py-0.5 text-[10px] text-white placeholder:text-muted/60 focus:border-interactive focus:outline-none"
+                    />
+                  )}
                   {options.map((option) => {
                     const key = `hire_${specialty}_${option.tier}`;
                     return (
@@ -454,13 +668,20 @@ export default function PodiumStaffPanel({ podium }) {
                         key={option.tier}
                         disabled={busy !== null}
                         onClick={() =>
-                          act(key, () =>
-                            hirePodiumStaff({
+                          act(key, async () => {
+                            const name = (hireNames[specialty] || '').trim();
+                            await hirePodiumStaff({
                               specialty,
                               tier: option.tier,
                               seasons: contractSeasons,
-                            })
-                          )
+                              ...(name && naming.allowed ? { name } : {}),
+                            });
+                            setHireNames((prev) => {
+                              const next = { ...prev };
+                              delete next[specialty];
+                              return next;
+                            });
+                          })
                         }
                         title={`${TIER[option.tier]} ${SPECIALTY[specialty]} · +${Math.round(option.boost * 100)}% rehearsal yield · ${option.salary}/season`}
                         className="flex items-center justify-between gap-2 text-[10px] px-2 py-1 rounded-none border border-line text-secondary hover:border-interactive hover:text-white tabular-nums press-feedback"

@@ -23,6 +23,7 @@ const engine = require("../helpers/podium/engine");
 const store = require("../helpers/podium/store");
 const venues = require("../helpers/podium/venues");
 const staffMarket = require("../helpers/podium/staffMarket");
+const staffNames = require("../helpers/podium/staffNames");
 const career = require("../helpers/podium/career");
 const divisions = require("../helpers/podium/divisions");
 const {
@@ -363,14 +364,25 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
   // season across the whole game.
   const nameRef = db.doc(`corpsnames/${seasonUid}_${normalizedName}`);
   const sRef = store.stateRef(db, uid);
+  // Staff NAME claims on last season's roster: a kept staffer's claim follows
+  // the corps into the new season (it may have been renamed); every staffer
+  // who lapses, is released, retires, or is dropped by a fresh start gives
+  // their name back to the game. Planned here, read + applied in the txn.
+  const staleStaffMembers =
+    staleStateSnapshot.exists && staleStateSnapshot.data().seasonUid !== seasonUid
+      ? Object.values(staleStateSnapshot.data().staff || {})
+      : [];
+  const staffNamePlan = staffNames.planRelease(db, staleStaffMembers);
 
   const txnResult = await db.runTransaction(async (transaction) => {
-    const [existingState, existingName, profileSnapshot, careerTxnSnapshot] = await Promise.all([
-      transaction.get(sRef),
-      transaction.get(nameRef),
-      transaction.get(store.profileRef(db, uid)),
-      transaction.get(career.careerRef(db, uid)),
-    ]);
+    const [existingState, existingName, profileSnapshot, careerTxnSnapshot, ...staffNameSnapshots] =
+      await Promise.all([
+        transaction.get(sRef),
+        transaction.get(nameRef),
+        transaction.get(store.profileRef(db, uid)),
+        transaction.get(career.careerRef(db, uid)),
+        ...staffNamePlan.map((entry) => transaction.get(entry.ref)),
+      ]);
     if (existingState.exists && existingState.data().seasonUid === seasonUid) {
       throw new HttpsError("already-exists", "You already field a Podium corps this season.");
     }
@@ -481,6 +493,14 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
       store.debitBudget(draft, signed.salaryPerSeason, `staff:${signed.specialty}`, 0);
       carriedStaff[signed.specialty] = signed;
     }
+    // Settle the name registry against who actually carried over.
+    const carriedIds = new Set(Object.values(carriedStaff).map((m) => m.id));
+    const keptPlan = staffNamePlan.filter((entry) => carriedIds.has(entry.member.id));
+    const keptSnapshots = staffNameSnapshots.filter((_, i) => carriedIds.has(staffNamePlan[i].member.id));
+    const gonePlan = staffNamePlan.filter((entry) => !carriedIds.has(entry.member.id));
+    const goneSnapshots = staffNameSnapshots.filter((_, i) => !carriedIds.has(staffNamePlan[i].member.id));
+    staffNames.applyCarry(transaction, keptPlan, keptSnapshots, { corpsName: trimmedName });
+    staffNames.applyRelease(transaction, gonePlan, goneSnapshots);
     transaction.set(sRef, {
       ...stored,
       seasonUid,
@@ -585,6 +605,7 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
         .filter((s) => !s.kept)
         .map((s) => ({
           specialty: s.specialty,
+          name: s.name,
           reason: s.lapseReason,
           // The contract premium paid to let a still-locked staffer go.
           buyout: s.lapseReason === "released" ? s.buyout : 0,

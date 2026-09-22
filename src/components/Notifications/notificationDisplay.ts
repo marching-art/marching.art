@@ -78,6 +78,10 @@ const DISPLAY_BY_TYPE: Record<AppNotificationType, NotificationDisplay> = {
   // Declines/takedowns are status warnings, not rewards.
   article_rejected: { Icon: Ban, color: 'text-warning', bg: 'bg-warning/20' },
   press_release_removed: { Icon: Ban, color: 'text-warning', bg: 'bg-warning/20' },
+  // Podium staff-name moderation: a removal is a warning, a restore is a
+  // status change back to good standing.
+  staff_name_removed: { Icon: Ban, color: 'text-warning', bg: 'bg-warning/20' },
+  staff_naming_restored: { Icon: BadgeCheck, color: 'text-teal-400', bg: 'bg-teal-500/20' },
 
   // Reward moments — gold is the payoff color (docs/DESIGN_SYSTEM.md: brand/gold
   // = "you won", currency, achievement unlocks, level-ups). Used only here, so

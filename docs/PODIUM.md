@@ -619,6 +619,16 @@ replaces ownership with **employment** — and an employment market never maxes 
   a natural dynasty tax and a second structural beatability mechanism (§5.13) that produces the
   era-and-rebuild cycles real corps have. You can RELEASE a staffer to free a seat, or RETRAIN
   one into a new specialty (tenure kept, reduced boost for the rest of that season).
+- **Names are the director's, and unique game-wide.** A staffer may be given a name at hire or
+  any time after (`namePodiumStaff`); the display form is the director's, the canonical key
+  (case, accents, punctuation and spacing folded) is claimed in the `podium-staff-names` registry
+  inside the same transaction as the roster write (`helpers/podium/staffNames.js`), so no two
+  staffers in the game ever share one and a taken name says which corps has it. The name follows
+  the staffer through retrains and seasons and is released the moment the career ends with that
+  corps (in-season release, a lapsed/released/retired contract at re-registration, a fresh-start
+  registration, account deletion). Admins review the registry and can clear a name (a strike —
+  three revoke naming automatically) or revoke/restore naming outright
+  (`podiumStaffModeration.js`, Admin → Content); the director is notified in-app.
 - **Retirement cycles the seat.** A 30-season career retires and the seat reopens — the
   decade-scale economy is built into staff _mortality_, so there is no terminal maxed-staff
   state. The staff panel warns from `retirementNoticeSeasons` (3) out and names each staffer's

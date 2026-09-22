@@ -333,6 +333,56 @@ export const setAccountRestriction = createCallable<
 >('setAccountRestriction');
 
 // =============================================================================
+// PODIUM STAFF NAME MODERATION
+// =============================================================================
+
+/** One claimed Podium staff name, as the game-wide registry stores it. */
+export interface PodiumStaffNameRow {
+  key: string; // canonical form (lower-case, accents/punctuation folded)
+  name: string | null; // what the director typed
+  uid: string | null;
+  staffId: string | null;
+  specialty: string | null;
+  corpsName: string | null;
+  claimedAt: string | null; // ISO
+}
+
+/**
+ * Page the registry of staff names directors have claimed (admin-only).
+ * `search` matches the canonical prefix; without it the newest claims come
+ * first. Pass the returned `nextCursor` back to fetch the next page.
+ */
+export const listPodiumStaffNames = createCallable<
+  { limit?: number; search?: string; cursor?: string | null },
+  { success: boolean; names: PodiumStaffNameRow[]; nextCursor: string | null }
+>('listPodiumStaffNames');
+
+export type PodiumStaffNameModerationAction = 'clear' | 'revoke' | 'restore';
+
+/**
+ * Act on a director's staff names (admin-only): `clear` removes one name and
+ * records a strike (three strikes revoke naming automatically); `revoke`
+ * clears every name they hold and disables naming; `restore` re-enables it.
+ * The director is notified in-app either way.
+ */
+export const moderatePodiumStaffName = createCallable<
+  {
+    uid: string;
+    action: PodiumStaffNameModerationAction;
+    staffId?: string;
+    key?: string;
+    reason?: string;
+  },
+  {
+    success: boolean;
+    uid: string;
+    action: PodiumStaffNameModerationAction;
+    cleared: Array<{ staffId: string | null; specialty: string | null; name: string | null }>;
+    staffNaming: { revoked: boolean; strikes: number; reason: string | null };
+  }
+>('moderatePodiumStaffName');
+
+// =============================================================================
 // FANTASY RECAPS
 // =============================================================================
 

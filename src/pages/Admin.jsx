@@ -16,6 +16,7 @@ import {
   AlertTriangle,
   Inbox,
   MessageSquare,
+  UserRoundPen,
 } from 'lucide-react';
 import { adminHelpers } from '../api';
 import { getSeasonSettings, getAdminOverviewStats } from '../api/admin';
@@ -31,6 +32,7 @@ import {
   ArticleManagement,
   SubmissionsManagement,
   CommentsModeration,
+  StaffNamesModeration,
   CorpsValuesEditor,
 } from '../components/Admin';
 import LoadingScreen from '../components/LoadingScreen';
@@ -328,6 +330,14 @@ const ContentTab = () => (
       <SectionHeader title="Comments Moderation" icon={MessageSquare} />
       <div className="p-4">
         <CommentsModeration />
+      </div>
+    </div>
+
+    {/* Podium staff names — the game-wide registry + strike/revoke controls */}
+    <div className="bg-surface-card border border-line overflow-hidden">
+      <SectionHeader title="Podium Staff Names" icon={UserRoundPen} />
+      <div className="p-4">
+        <StaffNamesModeration />
       </div>
     </div>
 

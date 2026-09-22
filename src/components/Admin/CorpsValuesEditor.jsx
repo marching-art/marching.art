@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // src/components/Admin/CorpsValuesEditor.jsx
 // Admin editor for the per-season corps point values stored at dci-data/{dataDocId}.
 // Lets an admin pick any season doc, edit/add/delete corps entries, change point
@@ -15,17 +14,27 @@ import {
 } from '../../api/admin';
 import toast from 'react-hot-toast';
 
+/**
+ * A row under edit: the numeric fields may be '' while the admin is typing
+ * (cleared input) — validation on save turns them back into numbers.
+ * @typedef {{ corpsName: string, sourceYear: number | '', points: number | '' }} EditableRow
+ */
+
+/** @param {unknown} err @param {string} fallback */
+const messageOf = (err, fallback) => (err instanceof Error && err.message) || fallback;
+
+/** @returns {EditableRow} */
 const emptyRow = () => ({ corpsName: '', sourceYear: new Date().getFullYear(), points: 0 });
 
 const CorpsValuesEditor = () => {
-  const [seasonDocIds, setSeasonDocIds] = useState([]);
+  const [seasonDocIds, setSeasonDocIds] = useState(/** @type {string[]} */ ([]));
   const [selectedDocId, setSelectedDocId] = useState('');
-  const [rows, setRows] = useState([]);
+  const [rows, setRows] = useState(/** @type {EditableRow[]} */ ([]));
   const [originalJson, setOriginalJson] = useState('[]');
   const [loadingList, setLoadingList] = useState(true);
   const [loadingDoc, setLoadingDoc] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState(/** @type {string | null} */ (null));
   const [showNewSeasonModal, setShowNewSeasonModal] = useState(false);
   const [newSeasonId, setNewSeasonId] = useState('');
   const [creatingSeason, setCreatingSeason] = useState(false);
@@ -51,7 +60,7 @@ const CorpsValuesEditor = () => {
       }
     } catch (err) {
       console.error(err);
-      setError(err.message);
+      setError(messageOf(err, 'Failed to load season docs'));
     } finally {
       setLoadingList(false);
     }
@@ -69,12 +78,13 @@ const CorpsValuesEditor = () => {
       setError(null);
       try {
         const values = await getCorpsValues(selectedDocId);
+        /** @type {EditableRow[]} */
         const sorted = [...values].sort((a, b) => (b.points || 0) - (a.points || 0));
         setRows(sorted);
         setOriginalJson(JSON.stringify(sorted));
       } catch (err) {
         console.error(err);
-        setError(err.message);
+        setError(messageOf(err, 'Failed to load corps values'));
       } finally {
         setLoadingDoc(false);
       }
@@ -82,6 +92,7 @@ const CorpsValuesEditor = () => {
     loadDoc();
   }, [selectedDocId]);
 
+  /** @param {number} idx @param {keyof EditableRow} field @param {string} value */
   const updateRow = (idx, field, value) => {
     setRows((prev) =>
       prev.map((r, i) => {
@@ -97,10 +108,11 @@ const CorpsValuesEditor = () => {
 
   const addRow = () => setRows((prev) => [...prev, emptyRow()]);
 
+  /** @param {number} idx */
   const deleteRow = (idx) => setRows((prev) => prev.filter((_, i) => i !== idx));
 
   const discardChanges = () => {
-    setRows(JSON.parse(originalJson));
+    setRows(/** @type {EditableRow[]} */ (JSON.parse(originalJson)));
   };
 
   const handleSave = async () => {
@@ -142,7 +154,7 @@ const CorpsValuesEditor = () => {
       toast.success(`Saved ${normalized.length} corps to ${selectedDocId}`);
     } catch (err) {
       console.error(err);
-      toast.error(err.message || 'Failed to save');
+      toast.error(messageOf(err, 'Failed to save'));
     } finally {
       setSaving(false);
     }
@@ -167,7 +179,7 @@ const CorpsValuesEditor = () => {
       setSelectedDocId(id);
     } catch (err) {
       console.error(err);
-      toast.error(err.message || 'Failed to create season');
+      toast.error(messageOf(err, 'Failed to create season'));
     } finally {
       setCreatingSeason(false);
     }

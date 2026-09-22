@@ -95,8 +95,13 @@ const {
   hirePodiumStaff,
   releasePodiumStaff,
   retrainPodiumStaff,
+  namePodiumStaff,
   acknowledgePodiumStaffOutlook,
 } = require("./src/callable/podiumStaff");
+const {
+  listPodiumStaffNames,
+  moderatePodiumStaffName,
+} = require("./src/callable/podiumStaffModeration");
 const {
   getJointOverlaps,
   proposeJointRehearsal,
@@ -434,7 +439,10 @@ module.exports = {
   hirePodiumStaff,
   releasePodiumStaff,
   retrainPodiumStaff,
+  namePodiumStaff,
   acknowledgePodiumStaffOutlook,
+  listPodiumStaffNames,
+  moderatePodiumStaffName,
   hostEvent,
   getHostingHistory,
   getPodiumState,

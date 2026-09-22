@@ -276,7 +276,7 @@ function ageStaff(member, cfg, completed) {
  *                               specialty; ignored for staff who are not
  *                               renewable (still locked, retiring, released).
  * @returns {{
- *   staff: Array<{specialty:string, id:string|null, tier:string,
+ *   staff: Array<{specialty:string, id:string|null, name:string|null, tier:string,
  *                 nextTier:string|null, salary:number, nextSalary:number,
  *                 contract:{seasons:number, remaining:number}|null, locked:boolean,
  *                 renewable:boolean, renewSeasons:number|null, buyout:number,
@@ -301,6 +301,7 @@ function projectRetention(roster, budget, cfg, keepOrder, renewals) {
       return {
         specialty: member.specialty,
         id: member.id || null,
+        name: member.name || null,
         tier: member.tier,
         salary: member.salaryPerSeason || 0,
         retiring: next === null,

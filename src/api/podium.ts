@@ -119,6 +119,20 @@ export interface PodiumStaffMember {
   resume: PodiumStaffResumeRow[];
   hiredDay: number;
   retrain?: { seasonUid: string; day: number };
+  // The director-given name (unique across the whole game) and its canonical
+  // registry key; absent while the staffer goes by their role.
+  name?: string | null;
+  nameKey?: string | null;
+}
+
+// Whether this director may name their staff — admins revoke it for abuse
+// (server: helpers/podium/staffNames.js namingPrivilege).
+export interface PodiumStaffNaming {
+  allowed: boolean;
+  reason: string | null; // why naming is off, when it is
+  strikes: number; // admin removals on record
+  minLength: number;
+  maxLength: number;
 }
 
 /** Base per-plan-type block caps (not stamina-adjusted). */
@@ -173,11 +187,13 @@ export interface PodiumStateResponse {
   currentLocation?: PodiumCurrentLocation;
   staffOutlook?: PodiumStaffOutlook;
   staffCareer?: PodiumStaffCareer;
+  staffNaming?: PodiumStaffNaming;
   state?: Record<string, unknown>;
 }
 
 export interface PodiumLapsedStaff {
   specialty: string;
+  name?: string | null;
   reason: 'unaffordable' | 'released' | 'retired';
   // The contract premium paid to let a still-locked staffer go (0 otherwise).
   buyout?: number;
@@ -342,6 +358,7 @@ export const registerPodiumCorps = createCallable<
 export interface PodiumStaffProjection {
   specialty: string;
   id: string | null;
+  name: string | null;
   tier: string;
   nextTier: string | null;
   salary: number;
@@ -736,8 +753,10 @@ export const getPodiumStaffMarket = createCallable<
   { success: boolean; catalog: PodiumStaffCatalogOption[] }
 >('getPodiumStaffMarket');
 
+// `name` (optional) names the hire in the same write; it must be unique
+// game-wide or the call fails with the corps that already has it.
 export const hirePodiumStaff = createCallable<
-  { specialty: string; tier: string; seasons?: number },
+  { specialty: string; tier: string; seasons?: number; name?: string },
   {
     success: boolean;
     hired: string;
@@ -753,6 +772,7 @@ export const releasePodiumStaff = createCallable<
   {
     success: boolean;
     released: string;
+    releasedName: string | null;
     buyout: number;
     staff: Record<string, unknown>;
     budget: Record<string, unknown>;
@@ -770,3 +790,17 @@ export const retrainPodiumStaff = createCallable<
   { staffId: string; toSpecialty: string },
   { success: boolean; retrained: string; toSpecialty: string; staff: Record<string, unknown> }
 >('retrainPodiumStaff');
+
+// Name, rename, or (empty name) un-name a staffer you employ. Names are unique
+// across every corps in the game; a taken name fails with `already-exists`
+// and a message naming the corps that has it.
+export const namePodiumStaff = createCallable<
+  { staffId: string; name: string },
+  {
+    success: boolean;
+    staffId: string;
+    name: string | null;
+    previousName: string | null;
+    staff: Record<string, unknown>;
+  }
+>('namePodiumStaff');

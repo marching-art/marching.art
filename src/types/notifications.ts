@@ -34,6 +34,8 @@ import type { LeagueNotificationType } from './league';
  *   - functions/src/callable/dailyOps.js (helpers/rewardMoments.js) →
  *     achievement_unlocked, level_up, class_unlocked
  *   - functions/src/scheduled/supporterReconcile.js → supporter_update
+ *   - functions/src/callable/podiumStaffModeration.js → staff_name_removed,
+ *     staff_naming_restored
  * Keep this in sync when a new server writer lands; unknown types still render
  * (see notificationDisplay.ts) but lose their specific icon.
  */
@@ -54,7 +56,9 @@ export type ServerNotificationType =
   | 'achievement_unlocked' // An achievement was earned
   | 'level_up' // The director reached a new XP level
   | 'class_unlocked' // A corps class unlocked by XP or seasons (deep-links to registration)
-  | 'supporter_update'; // Supporter status changed (activated / lapsed)
+  | 'supporter_update' // Supporter status changed (activated / lapsed)
+  | 'staff_name_removed' // An admin removed a Podium staff name (or disabled naming)
+  | 'staff_naming_restored'; // An admin re-enabled Podium staff naming
 
 /** Every notification `type` the inbox knows how to style. */
 export type AppNotificationType = LeagueNotificationType | ServerNotificationType;
