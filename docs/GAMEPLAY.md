@@ -110,7 +110,16 @@ releases (see [`SCORE_DROPS.md`](SCORE_DROPS.md) for the full system):
 
 Each night a corps competed, its captions are scored from the underlying DCI
 data (real, in Live Season; historical, in Off-Season) and its fantasy total
-updates. The nightly "score drop" is the game's core daily beat — you set a
+updates. Live Season captions are exactly what DCI published. Off-Season
+captions carry a tiny, deterministic flutter on top of the archived result —
+the archive is public, so without it every lineup's exact score would be known
+before the season started. Each caption moves by at most one 0.05 grid step,
+so a corps' 100-point total typically shifts by a few hundredths and never by
+more than a quarter point; it is the same for every director who drafted that
+caption that night, and it re-rolls each off-season. Because it is shared per
+caption, it can only re-order lineups that were already within a caption swap
+of each other — the "best possible" lineup and its runner-up — never lineups a
+few tenths apart (`OFF_SEASON_FLUTTER` in `functions/src/helpers/scoringMath.js`). The nightly "score drop" is the game's core daily beat — you set a
 lineup, register for shows, and check the drop for results and rank changes.
 
 ## Caption-change windows
@@ -212,7 +221,8 @@ actually earned, used exactly as published:
 
 Only a corps with no result anywhere in the season falls back to a projection,
 and the nightly run logs a warning when that happens. Days 45–46 (Open & A
-Class) use the normal scoring rules.
+Class) use the normal scoring rules. In the Off-Season the carried sheet still
+gets the flutter described above; in the Live Season it is used verbatim.
 
 The exact championship placement, event branding, and advancement logic live in
 `functions/src/helpers/scheduleGeneration.js` — see [`SCHEDULE_SYSTEM.md`](SCHEDULE_SYSTEM.md).

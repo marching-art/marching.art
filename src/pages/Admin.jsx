@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // src/pages/Admin.jsx
 // =============================================================================
 // ADMIN PANEL - SYSTEM OPS TERMINAL
@@ -51,6 +50,7 @@ import LiveScoresTab from '../components/Admin/LiveScoresTab';
 // TELEMETRY STRIP
 // =============================================================================
 
+/** @param {{ seasonData: Record<string, any> | null }} props */
 const OverviewTab = ({ seasonData }) => (
   <div className="space-y-4">
     {/* Current Season */}
@@ -107,7 +107,7 @@ const PodiumLaunchCard = () => {
       await setDoc(doc(db, 'game-settings', 'features'), { podiumClass: next }, { merge: true });
       toast.success(next ? 'The Podium Division is LIVE.' : 'The Podium Division is disabled.');
     } catch (error) {
-      toast.error(error.message || 'Failed to update the feature flag');
+      toast.error(error instanceof Error ? error.message : 'Failed to update the feature flag');
     } finally {
       setSaving(false);
     }
@@ -154,7 +154,7 @@ const PodiumLaunchCard = () => {
 // to podium-metrics/{seasonUid}/days/{calendarDay} (admin-read only).
 const PodiumFunnelCard = () => {
   const seasonUid = useSeasonStore((state) => state.seasonUid);
-  const [rows, setRows] = useState(null);
+  const [rows, setRows] = useState(/** @type {Array<Record<string, any>> | null} */ (null));
 
   useEffect(() => {
     if (!seasonUid) return undefined;
@@ -180,6 +180,7 @@ const PodiumFunnelCard = () => {
 
   if (!rows || rows.length === 0) return null;
 
+  /** @param {number | null | undefined} v */
   const pct = (v) => (v == null ? '—' : `${Math.round(v * 100)}%`);
   return (
     <div className="bg-surface-card border border-line overflow-hidden">
@@ -226,9 +227,18 @@ const PodiumFunnelCard = () => {
   );
 };
 
+/**
+ * @param {{
+ *   callAdminFunction: (functionName: string, data?: Record<string, unknown>) => Promise<unknown>,
+ * }} props
+ */
 const SeasonOpsTab = ({ callAdminFunction }) => {
-  const [loading, setLoading] = useState(null);
+  const [loading, setLoading] = useState(/** @type {string | null} */ (null));
 
+  /**
+   * @param {string} type
+   * @param {string} functionName
+   */
   const handleAction = async (type, functionName) => {
     if (!window.confirm(`Execute ${type}? This may affect user data.`)) return;
     setLoading(functionName);
@@ -240,7 +250,8 @@ const SeasonOpsTab = ({ callAdminFunction }) => {
       // while resetting the fantasy side). Regenerating it in place is a
       // deliberate, separately confirmed act.
       if (
-        error?.message?.includes('already the active season') &&
+        error instanceof Error &&
+        error.message.includes('already the active season') &&
         window.confirm(
           `${type}: this season is already the active one. Regenerate it IN PLACE anyway ` +
             '(schedule and pool rebuilt, no Podium re-registration)? This cannot be undone.'
@@ -351,14 +362,15 @@ const ContentTab = () => (
 // =============================================================================
 
 const Admin = () => {
-  const { user } = useAuth();
+  const user = useAuth()?.user;
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   // The active tab lives in the URL (?tab=content) so admin emails can deep
   // link straight to the relevant panel instead of always landing on Overview.
   const [searchParams, setSearchParams] = useSearchParams();
   const urlTab = searchParams.get('tab');
-  const activeTab = ADMIN_TAB_IDS.has(urlTab) ? urlTab : 'overview';
+  const activeTab = urlTab && ADMIN_TAB_IDS.has(urlTab) ? urlTab : 'overview';
+  /** @param {string} tab */
   const setActiveTab = (tab) => {
     setSearchParams(
       (prev) => {
@@ -375,7 +387,7 @@ const Admin = () => {
       { replace: true }
     );
   };
-  const [seasonData, setSeasonData] = useState(null);
+  const [seasonData, setSeasonData] = useState(/** @type {Record<string, any> | null} */ (null));
   const [stats, setStats] = useState({ totalUsers: 0, activeUsers: 0, totalCorps: 0 });
 
   useEffect(() => {
@@ -398,13 +410,17 @@ const Admin = () => {
       // Use collectionGroup to query all profile documents directly
       setStats(await getAdminOverviewStats());
     } catch (error) {
-      if (!error.message?.includes('permission')) {
+      if (!(error instanceof Error && error.message.includes('permission'))) {
         console.error('Error loading admin data:', error);
         toast.error('Failed to load admin data');
       }
     }
   };
 
+  /**
+   * @param {string} functionName
+   * @param {Record<string, unknown>} [data]
+   */
   const callAdminFunction = async (functionName, data = {}) => {
     try {
       // Generic admin job runner: the function name is chosen at runtime, so
@@ -412,11 +428,12 @@ const Admin = () => {
       const functions = getFunctions();
       const callable = httpsCallable(functions, functionName);
       const result = await callable(data);
-      toast.success(result.data.message || 'Operation completed');
+      const payload = /** @type {{ message?: string } | null | undefined} */ (result.data);
+      toast.success(payload?.message || 'Operation completed');
       await loadAdminData();
-      return result.data;
+      return payload;
     } catch (error) {
-      toast.error(error.message || `Failed to execute ${functionName}`);
+      toast.error(error instanceof Error ? error.message : `Failed to execute ${functionName}`);
       throw error;
     }
   };
