@@ -3,6 +3,12 @@
 //
 // The one rule everything here serves: a real score is used exactly as
 // published, and a projection has to look like it could have been one.
+//
+// One deliberate exception, and it is not made here: an OFF-SEASON replay
+// adds a tiny, deterministic flutter to every caption (flutterCaptionScore)
+// so a season played on already-published results cannot be solved to the
+// decimal in advance. The strategy layer in scoring.js applies it, off-season
+// only; a live season scores exactly what DCI published.
 
 const { getDb } = require("../config");
 const { logger } = require("firebase-functions/v2");
@@ -82,6 +88,22 @@ const BAND_BELOW_WORST = 1.5;
 // times this much between consecutive shows (mean absolute move 0.57), so
 // this is a tie-breaker, not an attempt to model night-to-night variance.
 const JITTER = 0.05;
+
+// Off-season flutter, per caption, applied on top of whatever the night's base
+// score is (real, carried or projected). Uniform in [-FLUTTER, +FLUTTER] and
+// zero-mean, so no caption is systematically helped or hurt.
+//
+// Sized to matter between lineups that were computed to be the best: the
+// flutter is the same for everyone who drafted a caption, so two lineups
+// differ in flutter only on the captions they don't share, and it can only
+// re-order them when their real totals were already within that difference.
+// One grid step (SCORE_STEP) per caption is exactly that scale — the #1 and
+// #2 spreadsheet lineups, a caption swap apart, genuinely can trade places,
+// while lineups a few tenths apart never do. The 100-point total (GE1/GE2 in
+// full, six captions halved) can move at most 5 × FLUTTER = ±0.25 and
+// typically about ±0.05. Any smaller and the archive — which is public — is
+// an answer key; the season would be a spreadsheet exercise, not a draft.
+const OFF_SEASON_FLUTTER = 0.05;
 
 // 99.8% of the real caption scores in the corpus land on a 0.05 grid.
 const SCORE_STEP = 0.05;
@@ -453,6 +475,55 @@ function seededUnitValue(seed) {
 }
 
 /**
+ * The score a corps carries into a championship night it has no result for:
+ * its most recent real caption score, taken verbatim.
+ *
+ * Years are tried in order, so the live season looks at the current season
+ * first and only falls back to the corps' source year when it has no
+ * current-year result at all (a corps that didn't tour).
+ *
+ * @param {string} corpsName
+ * @param {string} caption
+ * @param {number} scoredDay
+ * @param {Array<string|number>} years - Most authoritative first.
+ * @param {Object} historicalData
+ * @returns {number|null} The carried score, or null if there is nothing to carry.
+ */
+function carryForwardScore(corpsName, caption, scoredDay, years, historicalData) {
+  for (const year of years) {
+    const recent = getCachedRecentScore(
+      corpsName, String(year), caption, scoredDay, historicalData
+    );
+    if (recent !== null) return recent;
+  }
+  return null;
+}
+
+/**
+ * Add the off-season flutter to a caption score.
+ *
+ * Deterministic: the same seed always gives the same offset. Seed it with the
+ * season, the night, and the caption pick (corps, year, caption) so that every
+ * director who drafted the same caption scores it identically on the same
+ * night, a reprocess of the night reproduces it exactly, and the next
+ * off-season replaying the same year lands on different decimals.
+ *
+ * A non-positive score means "no data" (see isValidCaptionScore) and is
+ * returned untouched: flutter must never turn an unscored caption into a
+ * score. The result stays inside (0, CAPTION_MAX].
+ *
+ * @param {number} score - The night's base caption score.
+ * @param {string} seed - Stable seed; "" applies no flutter.
+ * @returns {number} The fluttered score, rounded to 3 decimals.
+ */
+function flutterCaptionScore(score, seed) {
+  if (!seed || !Number.isFinite(score) || score <= 0) return score;
+  const offset = (seededUnitValue(`flutter|${seed}`) - 0.5) * 2 * OFF_SEASON_FLUTTER;
+  const bounded = Math.min(CAPTION_MAX, Math.max(SCORE_STEP, score + offset));
+  return parseFloat(bounded.toFixed(3));
+}
+
+/**
  * Project a caption score for a day the corps has no real result for.
  *
  * The contract this exists to enforce:
@@ -566,6 +637,9 @@ function projectCaptionScore(rawDataPoints, targetDay, seed = "") {
 module.exports = {
   clearRegressionCache,
   getCachedRegressionScore,
+  flutterCaptionScore,
+  carryForwardScore,
+  OFF_SEASON_FLUTTER,
   fetchHistoricalData,
   simpleLinearRegression,
   getRealisticCaptionScore,

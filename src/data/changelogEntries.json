@@ -1,5 +1,17 @@
 [
   {
+    "id": "2026-09-22-off-season-judging-variance",
+    "date": "2026-09-22",
+    "title": "Off-season scores now carry a touch of judging variance",
+    "category": "balance",
+    "summary": "An off-season replays seasons whose results are already public, so until now a lineup's exact score on every night could be worked out in advance. Each caption now lands a hair off the archived number, differently each night and each off-season, so the drop still has something to reveal.",
+    "highlights": [
+      "The variance is small: a corps' total typically shifts by a few hundredths of a point, and the same caption scores identically for every director who drafted it that night — so only lineups that were already neck and neck can trade places.",
+      "Live DCI seasons are unchanged: every caption is exactly what DCI published.",
+      "Championship week in the off-season gets the same treatment, so the title is decided on the night rather than on a spreadsheet."
+    ]
+  },
+  {
     "id": "2026-09-22-podium-staff-stay-resign-buyout",
     "date": "2026-09-22",
     "title": "Podium: your staff are yours for their whole career — re-sign lapsed contracts, and pay is fairer as they rise",

@@ -17,10 +17,11 @@ const {
   fetchHistoricalData,
   simpleLinearRegression,
   getRealisticCaptionScore,
+  flutterCaptionScore,
+  carryForwardScore,
   getScoreForDay,
   countDataPointsForCorps,
   countRealScoresForDay,
-  getCachedRecentScore,
   projectCaptionScore,
   normalizeCorpsName,
   isValidCaptionScore,
@@ -81,31 +82,6 @@ const LINEUP_CAPTIONS = ["GE1", "GE2", "VP", "VA", "CG", "B", "MA", "P"];
 // normal projection rules — the same argument applies to them, but the rule
 // as specified covers World Championship week.
 const CHAMPIONSHIP_CARRY_FORWARD_DAYS = new Set([47, 48, 49]);
-
-/**
- * The score a corps carries into a championship night it has no result for:
- * its most recent real caption score, taken verbatim.
- *
- * Years are tried in order, so the live season looks at the current season
- * first and only falls back to the corps' source year when it has no
- * current-year result at all (a corps that didn't tour).
- *
- * @param {string} corpsName
- * @param {string} caption
- * @param {number} scoredDay
- * @param {Array<string|number>} years - Most authoritative first.
- * @param {Object} historicalData
- * @returns {number|null} The carried score, or null if there is nothing to carry.
- */
-function carryForwardScore(corpsName, caption, scoredDay, years, historicalData) {
-  for (const year of years) {
-    const recent = getCachedRecentScore(
-      corpsName, String(year), caption, scoredDay, historicalData
-    );
-    if (recent !== null) return recent;
-  }
-  return null;
-}
 
 /**
  * True only when a lineup has a non-empty selection for every scoring caption.
@@ -874,16 +850,28 @@ async function runScoringDay(db, scoredDay, seasonData, strategy, { force = fals
   return { status: "processed", scoredDay };
 }
 
-/** Off-season strategy: regression on each corps' source year. */
+/**
+ * Off-season strategy: regression on each corps' source year.
+ *
+ * Every caption an off-season night produces — real, carried, or projected —
+ * then gets the off-season flutter (scoringMath.flutterCaptionScore): the
+ * archive is public, so without it every lineup's exact score is known before
+ * the season starts and the peak lineup is a lookup, not a draft. It is small
+ * (one grid step per caption, zero-mean) and deterministic per (season,
+ * night, caption pick): fair between directors, stable on reprocess, and
+ * different from one off-season to the next. Never applied to a live season.
+ */
 const OFF_SEASON_STRATEGY = {
   historical: (seasonData) => fetchHistoricalData(seasonData.dataDocId),
   // The actual calendar date for this off-season day (no spring training).
   recapDate: (seasonData, scoredDay) =>
     new Date(seasonData.schedule.startDate.toDate().getTime() + (scoredDay - 1) * 24 * 60 * 60 * 1000),
-  baseScore: ({ scoredDay, historicalData, sources = null }) => {
+  baseScore: ({ seasonData = null, scoredDay, historicalData, sources = null }) => {
     const carryForwardNight = CHAMPIONSHIP_CARRY_FORWARD_DAYS.has(scoredDay);
+    const seasonKey = String(seasonData?.seasonUid || seasonData?.name || "off-season");
 
-    return (corpsName, sourceYear, caption) => {
+    // The night's base score before flutter: real, carried, else projected.
+    const unfluttered = (corpsName, sourceYear, caption) => {
       if (carryForwardNight) {
         const actual = getScoreForDay(scoredDay, corpsName, sourceYear, caption, historicalData);
         if (actual !== null) {
@@ -909,6 +897,11 @@ const OFF_SEASON_STRATEGY = {
       // OPTIMIZATION #1: Use cached regression score to avoid recomputing.
       return getCachedRegressionScore(corpsName, sourceYear, caption, scoredDay, historicalData);
     };
+
+    return (corpsName, sourceYear, caption) => flutterCaptionScore(
+      unfluttered(corpsName, sourceYear, caption),
+      `${seasonKey}|${scoredDay}|${corpsName}|${sourceYear}|${caption}`
+    );
   },
 };
 
@@ -1029,6 +1022,10 @@ function liveSeasonYear(seasonData) {
  * (omitting the offset once shifted every live recap date 21 days early);
  * base scores prefer tonight's actual scraped score, then current-year
  * regression (>= 3 data points), then prior-year regression.
+ *
+ * No flutter here, ever: a live night is the real DCI result, used exactly
+ * as published. The off-season replays an archive anyone can read; a live
+ * season has no such answer key.
  */
 const LIVE_SEASON_STRATEGY = {
   // Corps source years (prior year) + the season's live year for scraped data.

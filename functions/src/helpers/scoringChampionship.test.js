@@ -8,6 +8,11 @@
 //
 // These tests drive the real off-season and live-season base-score strategies,
 // so they exercise the decision the nightly run actually makes.
+//
+// The off-season adds its tiny deterministic flutter on top of every caption
+// (see OFF_SEASON_FLUTTER), so an off-season assertion checks that the night
+// resolved to the carried sheet WITHIN the flutter — a projection would land
+// a whole point or more away — while the live season must match exactly.
 
 const { test, describe } = require("node:test");
 const assert = require("node:assert/strict");
@@ -17,7 +22,7 @@ const {
   LIVE_SEASON_STRATEGY,
   CHAMPIONSHIP_CARRY_FORWARD_DAYS,
 } = require("./scoring");
-const { clearRegressionCache } = require("./scoringMath");
+const { clearRegressionCache, OFF_SEASON_FLUTTER } = require("./scoringMath");
 
 const PRELIMS = 47;
 const SEMIFINALS = 48;
@@ -50,8 +55,18 @@ const CHAMPIONSHIP_WEEK = {
   ],
 };
 
-const offSeason = (scoredDay, historicalData, sources) =>
-  OFF_SEASON_STRATEGY.baseScore({ scoredDay, historicalData, sources });
+const offSeason = (scoredDay, historicalData, sources, seasonUid = "offseason-2026-a") =>
+  OFF_SEASON_STRATEGY.baseScore({
+    seasonData: { seasonUid }, scoredDay, historicalData, sources,
+  });
+
+/** Asserts an off-season caption is `real` plus at most the flutter. */
+function assertFluttered(actual, real, message) {
+  assert.ok(
+    Math.abs(actual - real) <= OFF_SEASON_FLUTTER + 1e-9,
+    `${message || "expected the real sheet"}: ${actual} is not within ±${OFF_SEASON_FLUTTER} of ${real}`
+  );
+}
 
 const liveSeason = (scoredDay, historicalData, sources, seasonYear = 2025) =>
   LIVE_SEASON_STRATEGY.baseScore({
@@ -68,31 +83,37 @@ describe("off-season championship scoring", () => {
   test("a corps that marched the night keeps its own result", () => {
     clearRegressionCache();
     const score = offSeason(FINALS, CHAMPIONSHIP_WEEK)("Blue Devils", "2025", "GE1");
-    assert.equal(score, 19.65);
+    assertFluttered(score, 19.65);
   });
 
   // The case as specified: 17th place on Finals night scores its Semifinals
-  // sheet, unmodified — not rounded to the projection grid, not jittered.
+  // sheet — not the projection grid, not a later night — plus the flutter.
   test("a corps that missed the Finals cut carries its Semifinals score", () => {
     clearRegressionCache();
     const score = offSeason(FINALS, CHAMPIONSHIP_WEEK)("Colts", "2025", "GE1");
-    assert.equal(score, 17.625);
+    assertFluttered(score, 17.625);
   });
 
   test("a corps eliminated at Prelims carries it through Semifinals AND Finals", () => {
     clearRegressionCache();
-    assert.equal(offSeason(SEMIFINALS, CHAMPIONSHIP_WEEK)("Genesis", "2025", "GE1"), 15.275);
+    assertFluttered(offSeason(SEMIFINALS, CHAMPIONSHIP_WEEK)("Genesis", "2025", "GE1"), 15.275);
     clearRegressionCache();
-    assert.equal(offSeason(FINALS, CHAMPIONSHIP_WEEK)("Genesis", "2025", "GE1"), 15.275);
+    assertFluttered(offSeason(FINALS, CHAMPIONSHIP_WEEK)("Genesis", "2025", "GE1"), 15.275);
   });
 
-  test("the carried score is never nudged, whatever its precision", () => {
+  test("the carried score is not re-gridded, whatever its precision, and the night reproduces", () => {
     const odd = { 2025: [
       event(PRELIMS, "Prelims", [row("Colts", 17.637)]),
     ] };
+    clearRegressionCache();
+    const first = offSeason(FINALS, odd)("Colts", "2025", "GE1");
+    assertFluttered(first, 17.637);
+    // Not snapped to the 0.05 projection grid on its way through.
+    assert.notEqual(first, 17.65);
+    assert.notEqual(first, 17.6);
     for (let i = 0; i < 10; i++) {
       clearRegressionCache();
-      assert.equal(offSeason(FINALS, odd)("Colts", "2025", "GE1"), 17.637);
+      assert.equal(offSeason(FINALS, odd)("Colts", "2025", "GE1"), first);
     }
   });
 
@@ -104,7 +125,25 @@ describe("off-season championship scoring", () => {
       event(PRELIMS, "Prelims", [row("Blue Devils", 19.1)]),
       event(FINALS, "Finals", [row("Blue Devils", 19.65)]),
     ] };
-    assert.equal(offSeason(SEMIFINALS, noSemis)("Blue Devils", "2025", "GE1"), 19.1);
+    assertFluttered(offSeason(SEMIFINALS, noSemis)("Blue Devils", "2025", "GE1"), 19.1);
+  });
+
+  test("the flutter is the same for every director on the night, and differs by night and season", () => {
+    clearRegressionCache();
+    const tonight = offSeason(FINALS, CHAMPIONSHIP_WEEK)("Genesis", "2025", "GE1");
+    clearRegressionCache();
+    assert.equal(offSeason(FINALS, CHAMPIONSHIP_WEEK)("Genesis", "2025", "GE1"), tonight);
+
+    // Genesis carries the same 15.275 Prelims sheet on both nights; only the
+    // flutter can tell them apart.
+    clearRegressionCache();
+    const lastNight = offSeason(SEMIFINALS, CHAMPIONSHIP_WEEK)("Genesis", "2025", "GE1");
+    assert.notEqual(lastNight, tonight);
+
+    clearRegressionCache();
+    const nextSeason = offSeason(FINALS, CHAMPIONSHIP_WEEK, null, "offseason-2026-b")("Genesis", "2025", "GE1");
+    assertFluttered(nextSeason, 15.275);
+    assert.notEqual(nextSeason, tonight);
   });
 
   test("an ordinary competition day still projects", () => {
