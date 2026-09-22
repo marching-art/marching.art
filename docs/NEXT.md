@@ -336,6 +336,16 @@ ops step below)_
 
 ## Recently shipped (context, newest first — prune when stale)
 
+- 2026-09-22 (dependencies): Dependabot sweep — #1567–#1572 consolidated
+  into one branch. Root lockfile regenerated once for the combined
+  production + dev groups and jsdom 27 → 30 (major); `functions`,
+  `functions-scraper`, `firestore-tests` took Dependabot's lockfiles after
+  `npm ci` verified clean. jsdom 30 resolves `rem` to px in computed style,
+  so `Spinner.test.tsx` now asserts the inline `height` instead. Audit
+  ratchet unchanged at all zeros. `@ts-nocheck` ratchet: 43 → 42
+  (`ShowSelectionStep.jsx`), which surfaced the setup wizard never passing
+  `eventDate` to `ShowRegistrationModal` — its registration-close notice
+  now shows there too. Changelog entry added.
 - 2026-09-22 (Championship Week class lockout wording — player report):
   on Days 45-46 World Class and SoundSport sit out (only Open/A compete),
   but the lineup modal badged them "Class Season Complete" / "This class has

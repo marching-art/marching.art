@@ -231,7 +231,8 @@ describe('Skeleton', () => {
 
     it('applies height as string', () => {
       const { container } = render(<Skeleton height="2rem" />);
-      expect(container.firstChild).toHaveStyle({ height: '2rem' });
+      // jsdom resolves rem to px in computed style, so check the inline value.
+      expect((container.firstChild as HTMLElement).style.height).toBe('2rem');
     });
   });
 
