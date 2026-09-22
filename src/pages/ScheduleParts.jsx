@@ -528,10 +528,10 @@ const ChampionshipEventCard = ({
     ? date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
     : `Day ${event.day}`;
   // `scheduled` is this round's row in the season schedule (see
-  // championshipShowFor): the venue the season actually stamped and the
-  // show-time weather the backend produced for the night, both absent from
-  // the hard-coded event constants. The constants remain the fallback.
-  const location = scheduled?.location || event.location;
+  // championshipShowFor), which carries the show-time weather the backend
+  // produced for the night. The venue is NOT read from it: Championship Week
+  // sites are fixed game facts (the constants), and an off-season row can
+  // carry the archive year's site until the producer repairs it.
   const weather = scheduled?.weather || null;
 
   // Find which of user's corps are eligible for this event
@@ -580,7 +580,7 @@ const ChampionshipEventCard = ({
               </span>
               <span className="flex items-center gap-1 truncate">
                 <MapPin className="w-3 h-3 text-purple-400" />
-                <span className="truncate">{location}</span>
+                <span className="truncate">{event.location}</span>
               </span>
               <WeatherChip weather={weather} />
             </div>
