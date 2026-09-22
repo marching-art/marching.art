@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // =============================================================================
 // LEAGUE INVITE MODAL
 // =============================================================================
@@ -13,18 +12,36 @@ import { getLeaguesByCreator } from '../../api/leagues';
 import { inviteDirectorToLeague } from '../../api/functions';
 import toast from 'react-hot-toast';
 
+/**
+ * One of the inviter's leagues, decorated with why it may not be pickable.
+ * @typedef {Object} InviteLeagueRow
+ * @property {string} id
+ * @property {string} name
+ * @property {string[]} members
+ * @property {number} maxMembers
+ * @property {boolean} alreadyMember - The invitee is already in this league.
+ * @property {boolean} isFull
+ */
+
+/**
+ * @param {Object} props
+ * @param {string} props.inviterUid - The commissioner sending the invite.
+ * @param {string} props.inviteeUid
+ * @param {string} [props.inviteeName]
+ * @param {() => void} props.onClose
+ */
 const LeagueInviteModal = ({ inviterUid, inviteeUid, inviteeName, onClose }) => {
   useEscapeKey(onClose);
   const dialogRef = useRef(null);
   // Trap keyboard focus inside the dialog (WCAG 2.4.3); restores on close
   useFocusTrap(dialogRef);
 
-  const [leagues, setLeagues] = useState([]);
+  const [leagues, setLeagues] = useState(/** @type {InviteLeagueRow[]} */ ([]));
   const [loadingLeagues, setLoadingLeagues] = useState(true);
   const [selectedLeagueId, setSelectedLeagueId] = useState('');
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState(/** @type {string | null} */ (null));
 
   useEffect(() => {
     let cancelled = false;
@@ -34,12 +51,13 @@ const LeagueInviteModal = ({ inviterUid, inviteeUid, inviteeName, onClose }) => 
       try {
         const createdLeagues = await getLeaguesByCreator(inviterUid);
         if (cancelled) return;
+        /** @type {InviteLeagueRow[]} */
         const rows = createdLeagues
           .map((d) => ({
-            id: d.id,
-            name: d.name || 'Unnamed League',
-            members: d.members || [],
-            maxMembers: d.maxMembers || 20,
+            id: String(d.id),
+            name: String(d.name || 'Unnamed League'),
+            members: Array.isArray(d.members) ? d.members.map(String) : [],
+            maxMembers: Number(d.maxMembers) || 20,
           }))
           .map((l) => ({
             ...l,
@@ -50,7 +68,9 @@ const LeagueInviteModal = ({ inviterUid, inviteeUid, inviteeName, onClose }) => 
         const firstAvailable = rows.find((l) => !l.alreadyMember && !l.isFull);
         setSelectedLeagueId(firstAvailable?.id || '');
       } catch (err) {
-        if (!cancelled) setError(err.message || 'Failed to load your leagues');
+        if (!cancelled) {
+          setError((err instanceof Error && err.message) || 'Failed to load your leagues');
+        }
       } finally {
         if (!cancelled) setLoadingLeagues(false);
       }
@@ -66,6 +86,7 @@ const LeagueInviteModal = ({ inviterUid, inviteeUid, inviteeName, onClose }) => 
     [leagues]
   );
 
+  /** @param {React.FormEvent<HTMLFormElement>} e */
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!selectedLeagueId) return;
@@ -79,7 +100,7 @@ const LeagueInviteModal = ({ inviterUid, inviteeUid, inviteeName, onClose }) => 
       toast.success(`Invitation sent to ${inviteeName || 'director'}`);
       onClose();
     } catch (err) {
-      const msg = err?.message || 'Failed to send invitation';
+      const msg = (err instanceof Error && err.message) || 'Failed to send invitation';
       toast.error(msg);
       setError(msg);
     } finally {

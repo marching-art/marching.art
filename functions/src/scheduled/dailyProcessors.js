@@ -4,6 +4,7 @@ const { getDb } = require("../config");
 const { processAndArchiveOffSeasonScoresLogic, processAndScoreLiveSeasonDayLogic } = require("../helpers/scoring");
 const { getCompletedCalendarDay } = require("../helpers/gameDay");
 const { isDropSchedulingEnabled } = require("../helpers/features");
+const { recordStageFailure } = require("../helpers/scoringRunGuard");
 const {
   runDiscordStage,
   runEasternClassicStage,
@@ -32,6 +33,12 @@ async function dropDispatcherOwnsTonight(db, jobName) {
   return enabled;
 }
 
+// Every isolated stage below swallows its error (a side channel must never
+// fail or retry the scoring pipeline) but first records a failure marker
+// (scoringRunGuard.recordStageFailure) so a stage that died BEFORE claiming
+// its own lease still shows up in the 4:30 AM watchdog instead of vanishing
+// into the log stream.
+
 /**
  * Announce the Eastern Classic two-night lineups to the Discord
  * #announcements channel. Isolated like every other stage; no-op while
@@ -51,6 +58,7 @@ async function runEasternClassicStageIsolated(db) {
     }
   } catch (error) {
     logger.error(`[eastern-classic] stage failed (scoring unaffected): ${error.message}`);
+    await recordStageFailure(db, "eastern-classic", error);
   }
 }
 
@@ -70,6 +78,7 @@ async function runDiscordStageIsolated(db) {
     }
   } catch (error) {
     logger.error(`[discord-stage] failed (fantasy scoring unaffected): ${error.message}`);
+    await recordStageFailure(db, "discord-stage", error);
   }
 }
 
@@ -89,6 +98,7 @@ async function runShowcaseStageIsolated(db) {
     }
   } catch (error) {
     logger.error(`[showcase-stage] failed (scoring unaffected): ${error.message}`);
+    await recordStageFailure(db, "showcase-stage", error);
   }
 }
 

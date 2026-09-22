@@ -7,17 +7,23 @@
 const { test, describe } = require("node:test");
 const assert = require("node:assert/strict");
 
-const { findUnhealthyScoringRuns, watchdogSeverity, LOOKBACK_MS } = require("./scoringWatchdog");
+const {
+  findUnhealthyScoringRuns,
+  findUnhealthyRolloverRuns,
+  watchdogSeverity,
+  LOOKBACK_MS,
+} = require("./scoringWatchdog");
 const { STALE_LEASE_MS } = require("../helpers/scoringRunGuard");
 
 const NOW = new Date("2026-07-22T08:30:00Z");
 
-// Fake Firestore: scoring_runs docs as { id, ...data }. Applies the single
-// startedAt range filter the watchdog issues, like production would.
-function makeDb(docs) {
+// Fake Firestore: lease docs as { id, ...data } under one collection
+// (scoring_runs by default; season_rollovers for the rollover check). Applies
+// the single startedAt range filter the watchdog issues, like production would.
+function makeDb(docs, collectionName = "scoring_runs") {
   return {
     collection(name) {
-      assert.equal(name, "scoring_runs");
+      assert.equal(name, collectionName);
       return {
         where(field, op, value) {
           assert.equal(field, "startedAt");
@@ -116,6 +122,82 @@ describe("findUnhealthyScoringRuns", () => {
     assert.equal(unhealthy.find((r) => r.id === "s2026_day5").kind, "scoring");
     assert.equal(unhealthy.find((r) => r.id === "s2026_discord_day5").kind, "announce");
   });
+
+  test("surfaces an isolated stage's failure marker with its stage tag", async () => {
+    // Written by scoringRunGuard.recordStageFailure when a stage died before
+    // it held a lease of its own — previously invisible to the watchdog.
+    const db = makeDb([
+      {
+        id: "stage_podium-nightly_2026-07-22", status: "failed", kind: "scoring",
+        stage: "podium-nightly", startedAt: minutesAgo(690), lastError: "season index exploded",
+        attempts: 1,
+      },
+      {
+        id: "stage_discord-stage_2026-07-22", status: "failed", kind: "announce",
+        stage: "discord-stage", startedAt: minutesAgo(150), lastError: "webhook 502",
+      },
+    ]);
+    const unhealthy = await findUnhealthyScoringRuns(db, NOW);
+
+    assert.equal(unhealthy.length, 2);
+    const podium = unhealthy.find((r) => r.stage === "podium-nightly");
+    assert.equal(podium.kind, "scoring");
+    assert.equal(podium.status, "failed");
+    assert.equal(podium.lastError, "season index exploded");
+    assert.equal(unhealthy.find((r) => r.stage === "discord-stage").kind, "announce");
+    // Plain leases carry no stage key at all (the alert text keys off it).
+    assert.ok(!("stage" in (await findUnhealthyScoringRuns(makeDb([
+      { id: "s2026_day5", status: "failed", startedAt: minutesAgo(150) },
+    ]), NOW))[0]));
+  });
+});
+
+describe("findUnhealthyRolloverRuns", () => {
+  test("returns nothing when the rollover completed and no scheduler marker exists", async () => {
+    const db = makeDb([
+      { id: "live_2025-26", status: "completed", kind: "rollover", startedAt: minutesAgo(90) },
+    ], "season_rollovers");
+    assert.deepEqual(await findUnhealthyRolloverRuns(db, NOW), []);
+  });
+
+  test("flags a failed rollover lease (never retried by the scheduler) as kind rollover", async () => {
+    const db = makeDb([
+      // Written before the kind field existed on rollover leases.
+      {
+        id: "live_2025-26", status: "failed", seasonUid: "live_2025-26",
+        startedAt: minutesAgo(90), lastError: "prize pool payout failed",
+      },
+    ], "season_rollovers");
+    const unhealthy = await findUnhealthyRolloverRuns(db, NOW);
+
+    assert.equal(unhealthy.length, 1);
+    assert.equal(unhealthy[0].id, "live_2025-26");
+    assert.equal(unhealthy[0].kind, "rollover");
+    assert.equal(unhealthy[0].status, "failed");
+    assert.equal(unhealthy[0].lastError, "prize pool payout failed");
+  });
+
+  test("flags the 3 AM scheduler's failure marker and a stalled rollover claim", async () => {
+    const db = makeDb([
+      {
+        id: "scheduler_2026-07-22", status: "failed", kind: "scheduler",
+        startedAt: minutesAgo(90), lastError: "Final rankings for 2025 not found", attempts: 3,
+      },
+      {
+        id: "off_2026_5", status: "running", kind: "rollover",
+        startedAt: new Date(NOW.getTime() - STALE_LEASE_MS - 1000),
+      },
+      // Older than the lookback: an already-reported incident stays quiet.
+      { id: "off_2026_3", status: "failed", startedAt: new Date(NOW.getTime() - LOOKBACK_MS - 1000) },
+    ], "season_rollovers");
+    const unhealthy = await findUnhealthyRolloverRuns(db, NOW);
+
+    assert.deepEqual(unhealthy.map((r) => [r.id, r.status, r.kind]), [
+      ["scheduler_2026-07-22", "failed", "scheduler"],
+      ["off_2026_5", "stale-running", "rollover"],
+    ]);
+    assert.equal(unhealthy[0].attempts, 3);
+  });
 });
 
 describe("watchdogSeverity", () => {
@@ -135,6 +217,16 @@ describe("watchdogSeverity", () => {
       unscoredProblem: null,
     });
     assert.equal(severity, "warning");
+  });
+
+  test("any season rollover / scheduler problem is critical", () => {
+    const severity = watchdogSeverity({
+      unhealthy: [],
+      scrapeProblem: null,
+      unscoredProblem: null,
+      rolloverProblems: [{ id: "scheduler_2026-07-22", status: "failed", kind: "scheduler" }],
+    });
+    assert.equal(severity, "critical");
   });
 
   test("a pre-kind doc counts as scoring (backward compat) — critical", () => {

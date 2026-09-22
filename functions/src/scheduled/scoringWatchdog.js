@@ -7,7 +7,11 @@
 // This job runs after the scoring window and shouts if anything went wrong.
 // During live season it also checks last night's `scrape_runs/{date}` doc
 // (scheduled/liveScraper.js): a failed or missing 1:30 AM scrape means the
-// 2 AM scorer ran on a night with no DCI scores.
+// 2 AM scorer ran on a night with no DCI scores. The same scan covers the
+// isolated stages' failure markers (`scoring_runs/stage_*`, written by
+// scoringRunGuard.recordStageFailure when a stage dies before it holds a
+// lease) and, under `season_rollovers`, both the 3 AM season scheduler's
+// marker and a rollover lease that failed or stalled mid-payout.
 //
 // Alerting is three-way: a loud, stably-tagged logger.error
 // ("[scoring-watchdog]") so a Cloud Logging alert can match on that tag; an
@@ -21,7 +25,11 @@
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
-const { STALE_LEASE_MS } = require("../helpers/scoringRunGuard");
+const {
+  STALE_LEASE_MS,
+  RUNS_COLLECTION,
+  ROLLOVERS_COLLECTION,
+} = require("../helpers/scoringRunGuard");
 const { brevoApiKey } = require("../helpers/emailService");
 const { discordOpsWebhookUrl } = require("../helpers/discord");
 const { postOpsAlert } = require("../helpers/opsAlerts");
@@ -38,53 +46,59 @@ function toDate(value) {
 }
 
 /**
- * Query scoring_runs for recent unhealthy runs: status "failed", or status
- * "running" whose claim is older than the stale-lease threshold (a crashed
- * run that never reached its failed/completed marker).
+ * @typedef {Object} UnhealthyRun
+ * @property {string} id
+ * @property {string} status - "failed" | "stale-running" | "check-error"
+ * @property {string} kind - The lease/marker kind ("scoring", "announce",
+ *   "rollover", "scheduler"); see helpers/scoringRunGuard.js.
+ * @property {string} [stage] - Set on stage failure markers.
+ * @property {string} [seasonUid]
+ * @property {number} [scoredDay]
+ * @property {number} [attempts]
+ * @property {string} [lastError]
+ */
+
+/**
+ * Query a lease collection for recent unhealthy runs: status "failed", or
+ * status "running" whose claim is older than the stale-lease threshold (a
+ * crashed run that never reached its failed/completed marker).
  *
  * Single range filter on startedAt (auto single-field index; the
  * failed/stale-running split is done in memory over the tiny result set, so
  * no composite index is needed).
  *
- * Each entry carries the lease's `kind` ("scoring" for the fantasy pipeline,
- * "announce" for Discord-post leases; see helpers/scoringRunGuard.js). Docs
- * written before the field existed have no kind and are treated as "scoring".
+ * Each entry carries the lease's `kind`. Docs written before the field
+ * existed have no kind and are treated as `defaultKind`.
  *
  * @param {FirebaseFirestore.Firestore} db
- * @param {Date} [now] - Injectable clock for tests.
- * @returns {Promise<Array<{id: string, status: string, kind: string,
- *   seasonUid?: string, scoredDay?: number, attempts?: number, lastError?: string}>>}
+ * @param {string} collection - RUNS_COLLECTION or ROLLOVERS_COLLECTION.
+ * @param {string} defaultKind
+ * @param {Date} now
+ * @returns {Promise<UnhealthyRun[]>}
  */
-async function findUnhealthyScoringRuns(db, now = new Date()) {
+async function findUnhealthyRuns(db, collection, defaultKind, now) {
   const cutoff = new Date(now.getTime() - LOOKBACK_MS);
-  const snapshot = await db.collection("scoring_runs")
+  const snapshot = await db.collection(collection)
     .where("startedAt", ">=", cutoff)
     .get();
 
   const unhealthy = [];
   for (const doc of snapshot.docs) {
     const run = doc.data();
+    const common = {
+      id: doc.id,
+      kind: run.kind || defaultKind,
+      ...(run.stage ? { stage: run.stage } : {}),
+      seasonUid: run.seasonUid,
+      scoredDay: run.scoredDay,
+      attempts: run.attempts,
+    };
     if (run.status === "failed") {
-      unhealthy.push({
-        id: doc.id,
-        status: "failed",
-        kind: run.kind || "scoring",
-        seasonUid: run.seasonUid,
-        scoredDay: run.scoredDay,
-        attempts: run.attempts,
-        lastError: run.lastError,
-      });
+      unhealthy.push({ ...common, status: "failed", lastError: run.lastError });
     } else if (run.status === "running") {
       const startedAt = toDate(run.startedAt);
       if (startedAt && now.getTime() - startedAt.getTime() >= STALE_LEASE_MS) {
-        unhealthy.push({
-          id: doc.id,
-          status: "stale-running",
-          kind: run.kind || "scoring",
-          seasonUid: run.seasonUid,
-          scoredDay: run.scoredDay,
-          attempts: run.attempts,
-        });
+        unhealthy.push({ ...common, status: "stale-running" });
       }
     }
   }
@@ -92,22 +106,56 @@ async function findUnhealthyScoringRuns(db, now = new Date()) {
 }
 
 /**
+ * Recent unhealthy `scoring_runs` docs: the fantasy/Podium day leases, the
+ * announce-kind side-channel leases, and the isolated stages' failure
+ * markers (`stage_*`, kind per the stage — "scoring" for Podium, "announce"
+ * for Discord posts).
+ *
+ * @param {FirebaseFirestore.Firestore} db
+ * @param {Date} [now] - Injectable clock for tests.
+ * @returns {Promise<UnhealthyRun[]>}
+ */
+async function findUnhealthyScoringRuns(db, now = new Date()) {
+  return findUnhealthyRuns(db, RUNS_COLLECTION, "scoring", now);
+}
+
+/**
+ * Recent unhealthy `season_rollovers` docs: a rollover lease
+ * (`{oldSeasonUid}`, kind "rollover") that failed or stalled mid-payout —
+ * which the scheduler's own retry can never re-run once the new season doc
+ * has landed — and the 3 AM scheduler's failure marker
+ * (`scheduler_{date}`, kind "scheduler", scheduled/seasonScheduler.js).
+ * Either one is a critical incident: directors see a season that never
+ * turned over, or a season that did without last season's payouts.
+ *
+ * @param {FirebaseFirestore.Firestore} db
+ * @param {Date} [now] - Injectable clock for tests.
+ * @returns {Promise<UnhealthyRun[]>}
+ */
+async function findUnhealthyRolloverRuns(db, now = new Date()) {
+  return findUnhealthyRuns(db, ROLLOVERS_COLLECTION, "rollover", now);
+}
+
+/**
  * Overall alert severity for a watchdog run. Critical only when the fantasy
- * pipeline itself is implicated: a failed/stale "scoring"-kind run, a failed
- * scrape night, or an unscored dispatcher night. Unhealthy non-scoring leases
- * (kind "announce" — Discord posts, archival sweeps) alone are a warning:
- * players' scores are fine, only a side channel misfired.
+ * pipeline itself is implicated — a failed/stale "scoring"-kind run, a failed
+ * scrape night, or an unscored dispatcher night — or when a season rollover /
+ * the season scheduler failed. Unhealthy non-scoring leases (kind "announce"
+ * — Discord posts, archival sweeps) alone are a warning: players' scores are
+ * fine, only a side channel misfired.
  *
  * @param {Object} params
  * @param {Array<{kind?: string, [key: string]: *}>} params.unhealthy
  * @param {object|null} params.scrapeProblem
  * @param {object|null} params.unscoredProblem
+ * @param {Array<{kind?: string, [key: string]: *}>} [params.rolloverProblems]
  * @returns {"critical"|"warning"}
  */
-function watchdogSeverity({ unhealthy, scrapeProblem, unscoredProblem }) {
+function watchdogSeverity({ unhealthy, scrapeProblem, unscoredProblem, rolloverProblems = [] }) {
   const scoringImplicated =
     Boolean(scrapeProblem) ||
     Boolean(unscoredProblem) ||
+    rolloverProblems.length > 0 ||
     unhealthy.some((r) => (r.kind || "scoring") === "scoring");
   return scoringImplicated ? "critical" : "warning";
 }
@@ -258,7 +306,18 @@ exports.scoringWatchdog = onSchedule({
     unscoredProblem = { date: "unknown", status: "check-error", lastError: error.message };
   }
 
-  if (unhealthy.length === 0 && !scrapeProblem && !unscoredProblem) {
+  // And for the season boundary: a rollover lease or the 3 AM scheduler.
+  let rolloverProblems = [];
+  try {
+    rolloverProblems = await findUnhealthyRolloverRuns(db);
+  } catch (error) {
+    logger.error(`[scoring-watchdog] Could not check season rollovers: ${error.message}`);
+    rolloverProblems = [{
+      id: ROLLOVERS_COLLECTION, status: "check-error", kind: "rollover", lastError: error.message,
+    }];
+  }
+
+  if (unhealthy.length === 0 && !scrapeProblem && !unscoredProblem && rolloverProblems.length === 0) {
     logger.info("[scoring-watchdog] All recent scoring runs healthy.");
     return;
   }
@@ -267,9 +326,17 @@ exports.scoringWatchdog = onSchedule({
   // announce-kind leases (Discord posts etc.) only warrant a warning line.
   const unhealthyScoring = unhealthy.filter((r) => (r.kind || "scoring") === "scoring");
   const unhealthyAnnounce = unhealthy.filter((r) => (r.kind || "scoring") !== "scoring");
-  const describeRun = (r) => `${r.id} (${r.status}${r.lastError ? `: ${r.lastError}` : ""})`;
+  const describeRun = (r) =>
+    `${r.id} (${r.status}${r.stage ? `, stage ${r.stage}` : ""}${r.lastError ? `: ${r.lastError}` : ""})`;
 
   const problems = [];
+  if (rolloverProblems.length > 0) {
+    problems.push(
+      `${rolloverProblems.length} unhealthy season rollover run(s) (season_rollovers) in the ` +
+      `last 2 days — a failed rollover lease is NOT retried by the scheduler and needs a ` +
+      `manual re-run: ${rolloverProblems.map(describeRun).join("; ")}`,
+    );
+  }
   if (unhealthyScoring.length > 0) {
     problems.push(
       `${unhealthyScoring.length} unhealthy scoring run(s) in the last 2 days: ` +
@@ -302,13 +369,13 @@ exports.scoringWatchdog = onSchedule({
     );
   }
 
-  const severity = watchdogSeverity({ unhealthy, scrapeProblem, unscoredProblem });
+  const severity = watchdogSeverity({ unhealthy, scrapeProblem, unscoredProblem, rolloverProblems });
 
   // Loud and stably tagged so a log-based alert can match on the literal
   // string "[scoring-watchdog]".
   logger.error(
     `[scoring-watchdog] ${problems.join(" | ")}`,
-    { runs: unhealthy, scrape: scrapeProblem, unscored: unscoredProblem, severity },
+    { runs: unhealthy, scrape: scrapeProblem, unscored: unscoredProblem, rollovers: rolloverProblems, severity },
   );
 
   // Also email the admins (same pattern as the news-generation failure path in
@@ -344,6 +411,7 @@ exports.scoringWatchdog = onSchedule({
 
 // Exported for unit tests.
 exports.findUnhealthyScoringRuns = findUnhealthyScoringRuns;
+exports.findUnhealthyRolloverRuns = findUnhealthyRolloverRuns;
 exports.watchdogSeverity = watchdogSeverity;
 exports.findScrapeRunProblem = findScrapeRunProblem;
 exports.findUnscoredNightProblem = findUnscoredNightProblem;

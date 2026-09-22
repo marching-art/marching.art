@@ -25,6 +25,7 @@
  */
 
 const { logger } = require("firebase-functions/v2");
+const { FieldValue } = require("firebase-admin/firestore");
 
 const RUNS_COLLECTION = "scoring_runs";
 // Season rollover (archiveAndResetProfiles + league champion payout) shares
@@ -159,6 +160,82 @@ async function markSeasonRolloverFailed(db, seasonUid, error) {
   }
 }
 
+/**
+ * Failure markers for work that has NO lease of its own to mark.
+ *
+ * The isolated nightly stages (dailyProcessors.js, dropDispatcher.js
+ * podiumNightly) and the 3 AM season scheduler swallow or surface their errors
+ * through `logger.error` only. A stage that throws BEFORE it claims its lease
+ * (the season read, a feature flag, a config fetch) therefore leaves no
+ * failed/stale doc for the 4:30 AM watchdog to find, and the night reads as
+ * healthy. These markers close that gap: one doc per (stage, day) shaped like
+ * a failed lease (`status: "failed"`, `startedAt`, `lastError`), in the same
+ * collection the watchdog already scans, so no new query is needed.
+ *
+ * Always merge + increment so a scheduler retry of the same night updates the
+ * one marker instead of leaving three. Never throws — the marker write must
+ * not become a second failure inside a catch block.
+ */
+
+/** YYYY-MM-DD in Eastern time — the game's calendar day, same as scrape_runs. */
+function easternDateKey(now) {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York" }).format(now);
+}
+
+/** @param {FirebaseFirestore.DocumentReference} ref */
+async function writeFailureMarker(ref, fields, error, now) {
+  try {
+    await ref.set(
+      {
+        ...fields,
+        status: "failed",
+        startedAt: now,
+        failedAt: now,
+        lastError: String(error?.message || error),
+        attempts: FieldValue.increment(1),
+      },
+      { merge: true },
+    );
+  } catch (writeError) {
+    logger.error(`Failed to write failure marker ${ref.id}:`, writeError);
+  }
+}
+
+/**
+ * Record that an isolated nightly stage failed tonight, so the watchdog
+ * reports it. Writes `scoring_runs/stage_{stage}_{YYYY-MM-DD}`.
+ *
+ * @param {FirebaseFirestore.Firestore} db
+ * @param {string} stage - Stable stage tag, e.g. "discord-stage", "podium-nightly".
+ * @param {unknown} error
+ * @param {Object} [options]
+ * @param {"scoring"|"announce"} [options.kind] - "announce" (default) is a
+ *   side-channel miss the watchdog reports as a warning; pass "scoring" for a
+ *   stage whose failure means players are missing results (Podium).
+ * @param {Date} [options.now]
+ */
+async function recordStageFailure(db, stage, error, { kind = "announce", now = new Date() } = {}) {
+  const ref = db.collection(RUNS_COLLECTION).doc(`stage_${stage}_${easternDateKey(now)}`);
+  await writeFailureMarker(ref, { kind, stage }, error, now);
+}
+
+/**
+ * Record that the daily season scheduler (scheduled/seasonScheduler.js)
+ * threw. Writes `season_rollovers/scheduler_{YYYY-MM-DD}` — the collection
+ * the watchdog scans for rollover health — with kind "scheduler".
+ *
+ * @param {FirebaseFirestore.Firestore} db
+ * @param {unknown} error
+ * @param {Object} [options]
+ * @param {string|null} [options.seasonUid] - The season the scheduler was
+ *   acting on (or null when bootstrapping / malformed).
+ * @param {Date} [options.now]
+ */
+async function recordSchedulerFailure(db, error, { seasonUid = null, now = new Date() } = {}) {
+  const ref = db.collection(ROLLOVERS_COLLECTION).doc(`scheduler_${easternDateKey(now)}`);
+  await writeFailureMarker(ref, { kind: "scheduler", seasonUid: seasonUid || null }, error, now);
+}
+
 module.exports = {
   claimScoringRun,
   markScoringRunCompleted,
@@ -166,5 +243,9 @@ module.exports = {
   claimSeasonRollover,
   markSeasonRolloverCompleted,
   markSeasonRolloverFailed,
+  recordStageFailure,
+  recordSchedulerFailure,
+  RUNS_COLLECTION,
+  ROLLOVERS_COLLECTION,
   STALE_LEASE_MS,
 };
