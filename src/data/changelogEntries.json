@@ -1,5 +1,16 @@
 [
   {
+    "id": "2026-09-22-championship-week-class-wait",
+    "date": "2026-09-22",
+    "title": "World Class and SoundSport no longer show \"season complete\" early in Championship Week",
+    "category": "fix",
+    "summary": "On the first two days of Championship Week only Open Class and A Class compete, so World Class and SoundSport lineups are locked. The lineup screen wrongly said those classes had finished their season. It now says which day your class competes next and when your championship changes open.",
+    "highlights": [
+      "World Class and SoundSport: the lock badge reads \"Class Competes Day 47\" with the time changes reopen, and you still get 2 changes per day on each of your championship days.",
+      "Open Class and A Class still show \"Class Season Complete\" once their championship run is over."
+    ]
+  },
+  {
     "id": "2026-09-22-off-season-judging-variance",
     "date": "2026-09-22",
     "title": "Off-season scores now carry a touch of judging variance",

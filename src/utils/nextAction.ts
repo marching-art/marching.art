@@ -110,6 +110,8 @@ export interface CaptionWindowState {
   phase: 'unlimited' | 'weekly' | 'blackout' | 'championship' | 'complete';
   status: 'open' | 'locked' | 'closed';
   reopensAt?: Date | null;
+  /** Championship Week day this class next competes when it sits out today. */
+  classResumesDay?: number | null;
 }
 
 /** The per-class corps record, narrowed to what the resolver reads. */
@@ -186,6 +188,11 @@ function describeLineupLock(window: CaptionWindowState | null): string | null {
       : 'Caption changes are closed on Days 43-44.';
   }
   if (window.phase === 'championship' && window.status === 'closed') {
+    if (window.classResumesDay) {
+      return reopens
+        ? `This class competes again on Day ${window.classResumesDay} — championship changes open ${reopens}.`
+        : `This class competes again on Day ${window.classResumesDay} — championship changes open then.`;
+    }
     return 'This class has finished competing for the season — its caption changes are closed.';
   }
   return reopens

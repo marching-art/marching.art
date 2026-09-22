@@ -470,14 +470,19 @@ const TradesRemainingIndicator = ({ tradesRemaining, isInitialSetup, changeInfo 
 
   if (changeInfo.status === 'closed') {
     const isBlackout = changeInfo.phase === 'blackout';
-    // Championship + closed means this class has finished competing for the
-    // season (Open/A wrap after Day 47, World/SoundSport after Day 49).
-    const isClassDone = changeInfo.phase === 'championship';
+    // Championship + closed means this class sits out today: either it hasn't
+    // started yet (World/SoundSport, Days 45-46 → classResumesDay set) or it
+    // has finished for the season (Open/A, Days 48-49).
+    const isClassWaiting = changeInfo.phase === 'championship' && !!changeInfo.classResumesDay;
+    const isClassDone = changeInfo.phase === 'championship' && !changeInfo.classResumesDay;
     let title;
     let label;
     if (isBlackout) {
       title = `No caption changes on Days 43-44. Championship changes (${changeInfo.nextLimit}) open ${formatEtDayTime(changeInfo.reopensAt)}`;
       label = 'Changes Closed (Days 43-44)';
+    } else if (isClassWaiting) {
+      title = `This class doesn't compete until Day ${changeInfo.classResumesDay} of Championship Week. Its ${changeInfo.nextLimit} championship changes per day open ${formatEtDayTime(changeInfo.reopensAt)}`;
+      label = `Class Competes Day ${changeInfo.classResumesDay}`;
     } else if (isClassDone) {
       title = 'This class has finished competing for the season — its caption changes are closed.';
       label = 'Class Season Complete';
@@ -492,7 +497,7 @@ const TradesRemainingIndicator = ({ tradesRemaining, isInitialSetup, changeInfo 
       >
         <Lock className="w-3 h-3 text-red-400" />
         <span className="text-[10px] font-bold text-red-400 uppercase tracking-wider">{label}</span>
-        {isBlackout && (
+        {(isBlackout || isClassWaiting) && changeInfo.reopensAt && (
           <span className="text-[9px] text-red-400/70 normal-case whitespace-nowrap">
             reopen {formatEtShort(changeInfo.reopensAt)}
           </span>
