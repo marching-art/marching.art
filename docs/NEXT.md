@@ -336,6 +336,16 @@ ops step below)_
 
 ## Recently shipped (context, newest first — prune when stale)
 
+- 2026-09-22 (dependencies): Dependabot sweep — #1567–#1572 consolidated
+  into one branch. Root lockfile regenerated once for the combined
+  production + dev groups and jsdom 27 → 30 (major); `functions`,
+  `functions-scraper`, `firestore-tests` took Dependabot's lockfiles after
+  `npm ci` verified clean. jsdom 30 resolves `rem` to px in computed style,
+  so `Spinner.test.tsx` now asserts the inline `height` instead. Audit
+  ratchet unchanged at all zeros. `@ts-nocheck` ratchet: 44 → 43
+  (`ShowSelectionStep.jsx`), which surfaced the setup wizard never passing
+  `eventDate` to `ShowRegistrationModal` — its registration-close notice
+  now shows there too. Changelog entry added.
 - 2026-09-22 (Podium staff careers — community question): staff never
   enter a pool; a contract locks pay, not employment. Re-sign a lapsed lock
   at re-registration (`staffContracts`, 1–3 seasons at the floated rate; a

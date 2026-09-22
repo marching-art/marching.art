@@ -1,5 +1,12 @@
 [
   {
+    "id": "2026-09-22-setup-wizard-registration-close",
+    "date": "2026-09-22",
+    "title": "Season setup: show registration now says when it closes",
+    "category": "fix",
+    "summary": "Registering for a show from the season setup wizard now tells you when that night's registration closes, the same notice the Schedule page has always shown."
+  },
+  {
     "id": "2026-09-22-off-season-judging-variance",
     "date": "2026-09-22",
     "title": "Off-season scores now carry a touch of judging variance",

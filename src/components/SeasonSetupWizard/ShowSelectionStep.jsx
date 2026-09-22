@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Step 4 of the season setup wizard: weekly show selection. Extracted from
 // SeasonSetupWizard.jsx — owns its modal state and schedule derivations.
 
@@ -13,13 +12,35 @@ import { isEventPast } from '../../utils/scheduleUtils';
 import { formatEventName } from '../../utils/season';
 import { competitionDayToDate } from '../../utils/competitionCalendar';
 
+/**
+ * @typedef {{
+ *   eventName: string,
+ *   day: number,
+ *   week: number,
+ *   date?: string,
+ *   location?: string,
+ *   type?: string,
+ * }} WizardShow
+ */
+
 // Class config for badges
+/** @type {Record<string, { name: string, color: string, bgColor: string }>} */
 const CLASS_CONFIG = {
   openClass: { name: 'Open', color: 'text-purple-400', bgColor: 'bg-purple-400/10' },
   aClass: { name: 'A Class', color: 'text-interactive', bgColor: 'bg-interactive/10' },
   soundSport: { name: 'SS', color: 'text-green-500', bgColor: 'bg-green-500/10' },
 };
 
+/**
+ * @param {{
+ *   seasonData: any,
+ *   currentWeek: number,
+ *   user: { uid?: string } | null | undefined,
+ *   localUserProfile: any,
+ *   setLocalUserProfile: (profile: any) => void,
+ *   setStep: (step: number) => void,
+ * }} props
+ */
 const ShowSelectionStep = ({
   seasonData,
   currentWeek,
@@ -31,22 +52,25 @@ const ShowSelectionStep = ({
   const getWeekShows = useScheduleStore((state) => state.getWeekShows);
   const scheduleLoading = useScheduleStore((state) => state.loading);
   const [showModal, setShowModal] = useState(false);
-  const [selectedShow, setSelectedShow] = useState(null);
+  const [selectedShow, setSelectedShow] = useState(/** @type {WizardShow | null} */ (null));
 
-  const availableShows = getWeekShows(currentWeek);
+  // Firestore competition docs are untyped records; narrow to the fields used here.
+  const availableShows = /** @type {WizardShow[]} */ (
+    /** @type {unknown} */ (getWeekShows(currentWeek))
+  );
 
   // Actual calendar date for a competition day — spring-training aware. Shared
   // with Schedule.jsx and the scores views via utils/competitionCalendar so the
   // wizard can never drift back to dating shows ~3 weeks early (which made
   // still-upcoming shows read as past and blocked the registration gate).
   const getActualDate = useCallback(
-    (dayNumber) => competitionDayToDate(seasonData?.schedule, dayNumber),
+    (/** @type {number} */ dayNumber) => competitionDayToDate(seasonData?.schedule, dayNumber),
     [seasonData]
   );
 
   // Format date for display
   const formatDate = useCallback(
-    (dayNumber) => {
+    (/** @type {number} */ dayNumber) => {
       const date = getActualDate(dayNumber);
       if (!date) return `Day ${dayNumber}`;
       return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
@@ -56,7 +80,9 @@ const ShowSelectionStep = ({
 
   // Group shows by day
   const showsByDay = useMemo(() => {
-    if (!availableShows || availableShows.length === 0) return {};
+    if (!availableShows || availableShows.length === 0)
+      return /** @type {Record<number, WizardShow[]>} */ ({});
+    /** @type {Record<number, WizardShow[]>} */
     const grouped = {};
     availableShows
       .filter((show) => show.type !== 'championship')
@@ -84,13 +110,15 @@ const ShowSelectionStep = ({
 
   // Check if a corps is registered for a show
   const isCorpsRegisteredForShow = useCallback(
-    (show) => {
+    (/** @type {WizardShow} */ show) => {
       if (!localUserProfile?.corps) return false;
       return Object.values(localUserProfile.corps).some((corps) => {
         if (!corps) return false;
         const weekKey = `week${show.week}`;
         const selectedShows = corps.selectedShows?.[weekKey] || [];
-        return selectedShows.some((s) => s.eventName === show.eventName && s.date === show.date);
+        return selectedShows.some(
+          (/** @type {WizardShow} */ s) => s.eventName === show.eventName && s.date === show.date
+        );
       });
     },
     [localUserProfile]
@@ -98,14 +126,16 @@ const ShowSelectionStep = ({
 
   // Get registered corps for a show (sorted by class hierarchy: World → Open → A → SS)
   const getRegisteredCorpsForShow = useCallback(
-    (show) => {
+    (/** @type {WizardShow} */ show) => {
       if (!localUserProfile?.corps) return [];
       return Object.entries(localUserProfile.corps)
         .filter(([_corpsClass, corpsData]) => {
           if (!corpsData) return false;
           const weekKey = `week${show.week}`;
           const selectedShows = corpsData.selectedShows?.[weekKey] || [];
-          return selectedShows.some((s) => s.eventName === show.eventName && s.date === show.date);
+          return selectedShows.some(
+            (/** @type {WizardShow} */ s) => s.eventName === show.eventName && s.date === show.date
+          );
         })
         .map(([corpsClass]) => corpsClass)
         .sort(compareCorpsClasses);
@@ -127,7 +157,7 @@ const ShowSelectionStep = ({
   }, [localUserProfile, currentWeek]);
 
   // Handle show click to open modal
-  const handleShowClick = useCallback((show) => {
+  const handleShowClick = useCallback((/** @type {WizardShow} */ show) => {
     setSelectedShow(show);
     setShowModal(true);
   }, []);
@@ -376,6 +406,7 @@ const ShowSelectionStep = ({
           show={selectedShow}
           userProfile={localUserProfile}
           formattedDate={formatDate(selectedShow.day)}
+          eventDate={getActualDate(selectedShow.day)}
           onClose={() => setShowModal(false)}
           onSuccess={handleModalSuccess}
         />
