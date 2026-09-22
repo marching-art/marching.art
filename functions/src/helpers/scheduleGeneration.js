@@ -7,6 +7,7 @@ const { getDb } = require("../config");
 const { enrichEventsWithDetails } = require("./eventDetails");
 const { loadAllHistoricalYears } = require("./historicalScores");
 const { standardizeLocation, isUnknownLocation } = require("./locationFormat");
+const { WORLD_VENUE } = require("./championshipVenues");
 const {
   applyEnrichment,
   SPRING_TRAINING_DAYS,
@@ -318,14 +319,17 @@ async function generateOffSeasonSchedule(seasonLength, startDay) {
     }];
   }
 
-  // Update Day 47-49 to include championship metadata (create fallbacks if missing)
+  // Update Day 47-49 to include championship metadata (create fallbacks if
+  // missing). The venue is pinned: the archive show these rows copy carries
+  // the historical year's site, but the marching.art World Championship is
+  // always in Indianapolis (helpers/championshipVenues.js).
   const day47 = schedule.find((d) => d.offSeasonDay === 47);
   if (day47) {
     const prelimsShow = day47.shows[0] || {
       eventName: "marching.art World Championship Prelims",
-      location: "Indianapolis, IN",
       date: null,
     };
+    prelimsShow.location = WORLD_VENUE;
     prelimsShow.isChampionship = true;
     prelimsShow.eligibleClasses = ["worldClass", "openClass", "aClass"];
     prelimsShow.mandatory = true;
@@ -336,9 +340,9 @@ async function generateOffSeasonSchedule(seasonLength, startDay) {
   if (day48) {
     const semisShow = day48.shows[0] || {
       eventName: "marching.art World Championship Semifinals",
-      location: "Indianapolis, IN",
       date: null,
     };
+    semisShow.location = WORLD_VENUE;
     semisShow.isChampionship = true;
     semisShow.eligibleClasses = ["worldClass", "openClass", "aClass"];
     semisShow.advancementRules = { all: 25 }; // Top 25 from Day 47
@@ -351,9 +355,9 @@ async function generateOffSeasonSchedule(seasonLength, startDay) {
     // Day 49 has two shows: World Finals and SoundSport Festival
     const worldFinalsShow = day49.shows[0] || {
       eventName: "marching.art World Championship Finals",
-      location: "Indianapolis, IN",
       date: null,
     };
+    worldFinalsShow.location = WORLD_VENUE;
     worldFinalsShow.isChampionship = true;
     worldFinalsShow.eligibleClasses = ["worldClass", "openClass", "aClass"];
     worldFinalsShow.advancementRules = { all: 12 }; // Top 12 from Day 48
@@ -361,7 +365,7 @@ async function generateOffSeasonSchedule(seasonLength, startDay) {
 
     const soundSportShow = {
       eventName: "SoundSport International Music & Food Festival",
-      location: "Indianapolis, IN",
+      location: WORLD_VENUE,
       date: null,
       isChampionship: true,
       eligibleClasses: ["soundSport"],

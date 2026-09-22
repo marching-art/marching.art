@@ -136,6 +136,39 @@ describe("enrichScheduleWeatherLogic", () => {
     assert.equal(db.writes.length, 1); // one merge write
   });
 
+  test("pins a championship round to its fixed venue and fetches weather there", async () => {
+    // An off-season copies the World rounds from an archive year, dragging that
+    // year's venue along; the game's World Championship is always Indianapolis.
+    const db = fakeDb({
+      "game-settings/season": SEASON,
+      "schedules/s1": {
+        competitions: [
+          {
+            id: "finals",
+            day: 14,
+            type: "championship",
+            name: "marching.art World Championship Finals",
+            location: "Madison, WI",
+            date: "2003-08-09",
+          },
+        ],
+      },
+    });
+    const seen = [];
+    const spy = async (args) => {
+      seen.push(args);
+      return weatherOk();
+    };
+    const res = await enrichScheduleWeatherLogic(db, { getShowtimeWeather: spy, now: NOW });
+    assert.equal(seen[0].location, "Indianapolis, IN");
+    assert.equal(seen[0].date, "2026-06-14");
+    const row = db.store.get("schedules/s1").competitions[0];
+    assert.equal(row.location, "Indianapolis, IN");
+    assert.equal(row.weather.summary, "clear skies, 61°F");
+    assert.ok(res.updated >= 1);
+    assert.equal(db.writes.length, 1);
+  });
+
   test("makes no write when nothing changed (idempotent second pass)", async () => {
     const db = fakeDb({
       "game-settings/season": SEASON,
