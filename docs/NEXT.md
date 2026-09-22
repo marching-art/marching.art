@@ -342,10 +342,19 @@ ops step below)_
   `functions-scraper`, `firestore-tests` took Dependabot's lockfiles after
   `npm ci` verified clean. jsdom 30 resolves `rem` to px in computed style,
   so `Spinner.test.tsx` now asserts the inline `height` instead. Audit
-  ratchet unchanged at all zeros. `@ts-nocheck` ratchet: 44 → 43
+  ratchet unchanged at all zeros. `@ts-nocheck` ratchet: 43 → 42
   (`ShowSelectionStep.jsx`), which surfaced the setup wizard never passing
   `eventDate` to `ShowRegistrationModal` — its registration-close notice
   now shows there too. Changelog entry added.
+- 2026-09-22 (Championship Week class lockout wording — player report):
+  on Days 45-46 World Class and SoundSport sit out (only Open/A compete),
+  but the lineup modal badged them "Class Season Complete" / "This class has
+  finished competing". The caption window now carries `classResumesDay`
+  (`nextClassChampionshipDay`, mirrored in `captionWindows.js` and
+  `seasonClock.js`) plus `reopensAt`, so a class that hasn't started reads
+  "Class Competes Day 47 · reopen …" and saveLineup names the day; a class
+  that is actually done (Open/A, Days 48-49) keeps the season-complete copy.
+  Rules unchanged. `@ts-nocheck` 44 → 43 (`Schedule/HostEventCard.jsx`).
 - 2026-09-22 (Podium staff careers — community question): staff never
   enter a pool; a contract locks pay, not employment. Re-sign a lapsed lock
   at re-registration (`staffContracts`, 1–3 seasons at the floated rate; a

@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // HostEventCard — director-hosted events (Phase 6.2 client, design §5.10).
 // ALL-class feature: any director with a fielded corps can rent a venue and
 // put a show on the season schedule through open enrollment. CorpsCoin
@@ -22,9 +21,20 @@ import { VENUE_TIERS, HOSTING_RULES } from '../Podium/podiumConstants';
 // ~390 cities. A real search narrows well below this.
 const VENUE_RESULTS_LIMIT = 40;
 
+/** @typedef {(typeof HOSTABLE_VENUES)[number]} HostableVenue */
+/** @typedef {(typeof VENUE_TIERS)[number]} VenueTier */
+/** @typedef {import('../../api/podium').HostedEventRecord} HostedEventRecord */
+
 // `events` and `onReload` come from the parent (Schedule) via the shared
 // useHostedEvents hook, so this card and the schedule's hosted-show badges read
 // one fetch of hosted-events/{seasonUid}/events rather than two.
+/**
+ * @param {{
+ *   seasonUid: string|null|undefined,
+ *   events?: HostedEventRecord[]|null,
+ *   onReload?: () => unknown,
+ * }} props
+ */
 export default function HostEventCard({ seasonUid, events = null, onReload }) {
   const enabled = usePodiumEnabled();
   const profile = useProfileStore((state) => state.profile);
@@ -35,14 +45,14 @@ export default function HostEventCard({ seasonUid, events = null, onReload }) {
   const [eventName, setEventName] = useState('');
   // The location picker keeps the confirmed venue separate from the search box
   // text, so submit only ever sends a KNOWN, un-taken city.
-  const [selectedVenue, setSelectedVenue] = useState(null);
+  const [selectedVenue, setSelectedVenue] = useState(/** @type {HostableVenue|null} */ (null));
   const [venueQuery, setVenueQuery] = useState('');
   const [venueListOpen, setVenueListOpen] = useState(false);
   const [day, setDay] = useState('');
   const [venueTier, setVenueTier] = useState('highSchool');
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(null);
+  const [error, setError] = useState(/** @type {string|null} */ (null));
+  const [success, setSuccess] = useState(/** @type {string|null} */ (null));
 
   // Cities already on the season schedule (scraped shows + other hosted events)
   // can't be booked again — resolve each competition's location to a venueId.
@@ -55,7 +65,9 @@ export default function HostEventCard({ seasonUid, events = null, onReload }) {
     const matches = q
       ? HOSTABLE_VENUES.filter((v) => v.label.toLowerCase().includes(q))
       : HOSTABLE_VENUES;
+    /** @type {HostableVenue[]} */
     const available = [];
+    /** @type {HostableVenue[]} */
     const taken = [];
     for (const v of matches) {
       (takenVenueIds.has(v.venueId) ? taken : available).push(v);
@@ -72,9 +84,13 @@ export default function HostEventCard({ seasonUid, events = null, onReload }) {
   // callable; mirrored here so the form self-disables once you've hosted).
   const myEventsThisSeason = (events || []).filter((e) => e.hostUid === currentUid).length;
   const seasonLimitReached = myEventsThisSeason >= HOSTING_RULES.maxEventsPerSeasonPerHost;
-  const hostingByTier = profile?.hosting?.byTier || {};
+  /** @type {Record<string, {successful?: number}>} */
+  const hostingByTier =
+    /** @type {{hosting?: {byTier?: Record<string, {successful?: number}>}}|null} */ (profile)
+      ?.hosting?.byTier || {};
   // Venue ladder: bigger stadiums are earned by running successful smaller
   // shows (server-enforced; this mirrors the gate for display).
+  /** @param {VenueTier} t */
   const tierLocked = (t) => {
     if (!t.unlock) return false;
     return (hostingByTier[t.unlock.tier]?.successful || 0) < t.unlock.successful;
@@ -82,12 +98,14 @@ export default function HostEventCard({ seasonUid, events = null, onReload }) {
   const tier = VENUE_TIERS.find((t) => t.id === venueTier) || VENUE_TIERS[0];
   const minDay = Math.max(1, (currentDay || 1) + HOSTING_RULES.minDaysAhead);
 
+  /** @param {HostableVenue} venue */
   const pickVenue = (venue) => {
     setSelectedVenue(venue);
     setVenueQuery(venue.label);
     setVenueListOpen(false);
   };
 
+  /** @param {React.FormEvent<HTMLFormElement>} e */
   const submit = async (e) => {
     e.preventDefault();
     if (!selectedVenue) {
@@ -115,7 +133,7 @@ export default function HostEventCard({ seasonUid, events = null, onReload }) {
       setDay('');
       if (onReload) await onReload(); // refetch so the new event appears here + on the schedule
     } catch (err) {
-      setError(err?.message || 'Hosting failed.');
+      setError(/** @type {{message?: string}} */ (err)?.message || 'Hosting failed.');
     } finally {
       setBusy(false);
     }
@@ -157,7 +175,11 @@ export default function HostEventCard({ seasonUid, events = null, onReload }) {
       {/* Venue tier picker */}
       <div className="grid grid-cols-3 gap-1.5">
         {VENUE_TIERS.map((t) => {
+          const { unlock } = t;
           const locked = tierLocked(t);
+          const unlockLabel = unlock
+            ? VENUE_TIERS.find((x) => x.id === unlock.tier)?.label
+            : undefined;
           const progress = t.unlock
             ? `${hostingByTier[t.unlock.tier]?.successful || 0}/${t.unlock.successful}`
             : null;
@@ -168,10 +190,8 @@ export default function HostEventCard({ seasonUid, events = null, onReload }) {
               disabled={locked}
               onClick={() => setVenueTier(t.id)}
               title={
-                locked
-                  ? `Unlocks after ${t.unlock.successful} successful ${
-                      VENUE_TIERS.find((x) => x.id === t.unlock.tier)?.label
-                    } events (${progress})`
+                locked && unlock
+                  ? `Unlocks after ${unlock.successful} successful ${unlockLabel} events (${progress})`
                   : `Success = ${t.successAttendance}+ corps attending`
               }
               className={`text-left px-2 py-1.5 rounded-none border press-feedback ${
@@ -188,7 +208,7 @@ export default function HostEventCard({ seasonUid, events = null, onReload }) {
               </div>
               <div className="text-[9px] text-muted tabular-nums">
                 {locked
-                  ? `${progress} successful ${VENUE_TIERS.find((x) => x.id === t.unlock.tier)?.label.split(' ')[0]} shows`
+                  ? `${progress} successful ${unlockLabel?.split(' ')[0]} shows`
                   : `${t.rentalCC} CC · cap ${t.capacity} · ${t.payoutPerCorpsCC}/corps`}
               </div>
             </button>

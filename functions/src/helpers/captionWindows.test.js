@@ -144,6 +144,10 @@ test("championship per-day bracket gates which classes may change", () => {
   assert.equal(day45World.status, "closed");
   assert.equal(day45World.tradeLimit, 0);
   assert.equal(winClass("2026-08-04T18:00:00Z", "soundSport").status, "closed");
+  // Not started yet (not finished): resumes Day 47, opening 2 AM ET.
+  const day45Sound = winClass("2026-08-04T18:00:00Z", "soundSport");
+  assert.equal(day45Sound.classResumesDay, 47);
+  assert.equal(day45Sound.reopensAt.toISOString(), "2026-08-06T06:00:00.000Z");
 
   // Day 47: all classes compete.
   assert.equal(winClass("2026-08-06T18:00:00Z", "worldClass").status, "open");
@@ -155,6 +159,7 @@ test("championship per-day bracket gates which classes may change", () => {
   assert.equal(winClass("2026-08-07T18:00:00Z", "soundSport").status, "open");
   assert.equal(winClass("2026-08-07T18:00:00Z", "openClass").status, "closed");
   assert.equal(winClass("2026-08-08T18:00:00Z", "aClass").status, "closed");
+  assert.equal(winClass("2026-08-08T18:00:00Z", "aClass").classResumesDay, null);
   assert.equal(winClass("2026-08-08T18:00:00Z", "worldClass").status, "open");
 
   // Class-agnostic call (no corpsClass) reports the general open window.

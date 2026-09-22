@@ -15,6 +15,7 @@ import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { useCorpsValues } from '../../hooks/useCorpsValues';
 import { useProfileStore } from '../../store/profileStore';
 import { useSeasonDeadlines } from '../../hooks/useSeasonClock';
+import { formatEtShort } from '../../utils/seasonClock';
 import { useSeasonStore } from '../../store/seasonStore';
 import { POINT_CAPS } from '../../utils/classRegistry';
 import { generateQuickFillLineup } from './quickFillLineup';
@@ -271,7 +272,10 @@ export function useCaptionSelectionModal({
       if (changeInfo?.status === 'locked')
         return 'Your corps is done for the night — changes reopen at 2 AM ET.';
       if (changeInfo?.phase === 'blackout') return 'Changes are closed on Days 43-44.';
-      if (changeInfo?.phase === 'championship') return 'This class has finished competing.';
+      if (changeInfo?.phase === 'championship')
+        return changeInfo.classResumesDay
+          ? `This class competes again on Day ${changeInfo.classResumesDay} — changes open ${formatEtShort(changeInfo.reopensAt)}.`
+          : 'This class has finished competing.';
       return 'The season has ended — changes are closed.';
     }
     if (!isComplete) return `Pick all 8 captions — ${selectionCount}/8 chosen.`;
@@ -422,6 +426,10 @@ export function useCaptionSelectionModal({
       } else if (changeInfo.phase === 'blackout') {
         setSaveError(
           'Caption changes are closed on Days 43-44. Championship changes open on Day 45 at 2:00 AM ET.'
+        );
+      } else if (changeInfo.phase === 'championship' && changeInfo.classResumesDay) {
+        setSaveError(
+          `This class doesn't compete until Day ${changeInfo.classResumesDay} of Championship Week — its changes open ${formatEtShort(changeInfo.reopensAt)}.`
         );
       } else if (changeInfo.phase === 'championship') {
         setSaveError(

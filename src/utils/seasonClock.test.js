@@ -182,6 +182,12 @@ describe('getCaptionChangeInfo', () => {
     expect(infoClass('2026-08-04T18:00:00Z', 'openClass').status).toBe('open');
     expect(infoClass('2026-08-04T18:00:00Z', 'worldClass').status).toBe('closed');
     expect(infoClass('2026-08-04T18:00:00Z', 'worldClass').tradeLimit).toBe(0);
+    // World/SoundSport haven't started yet — not "season complete": they
+    // resume on Day 47, whose changes open at 2 AM ET.
+    const waiting = infoClass('2026-08-04T18:00:00Z', 'soundSport');
+    expect(waiting.classResumesDay).toBe(47);
+    expect(waiting.reopensAt.toISOString()).toBe('2026-08-06T06:00:00.000Z');
+    expect(waiting.nextLimit).toBe(2);
 
     // Day 47: all classes compete.
     expect(infoClass('2026-08-06T18:00:00Z', 'worldClass').status).toBe('open');
@@ -192,6 +198,9 @@ describe('getCaptionChangeInfo', () => {
     expect(infoClass('2026-08-07T18:00:00Z', 'soundSport').status).toBe('open');
     expect(infoClass('2026-08-07T18:00:00Z', 'openClass').status).toBe('closed');
     expect(infoClass('2026-08-08T18:00:00Z', 'aClass').status).toBe('closed');
+    // Open/A are done for the season — nothing to resume.
+    expect(infoClass('2026-08-07T18:00:00Z', 'openClass').classResumesDay).toBe(null);
+    expect(infoClass('2026-08-07T18:00:00Z', 'openClass').reopensAt).toBe(null);
 
     // Class-agnostic call reports the general open window.
     expect(info('2026-08-07T18:00:00Z').status).toBe('open');
