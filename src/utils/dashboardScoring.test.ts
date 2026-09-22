@@ -156,6 +156,28 @@ describe('getNextSelectedShow', () => {
     });
   });
 
+  it('counts auto-enrolled Championship Week rounds alongside the picks', () => {
+    const rounds = [
+      { day: 45, eventName: 'Open and A Class Prelims', location: 'Marion, IN' },
+      {
+        day: 47,
+        eventName: 'marching.art World Championship Prelims',
+        location: 'Indianapolis, IN',
+      },
+    ];
+    // Nothing picked past day 18, but the class marches Prelims on day 45.
+    expect(getNextSelectedShow(selectedShows, 40, rounds)).toEqual({
+      day: 45,
+      eventName: 'Open and A Class Prelims',
+      location: 'Marion, IN',
+    });
+    expect(getNextSelectedShow(selectedShows, 46, rounds)?.day).toBe(47);
+    expect(getNextSelectedShow(null, 40, rounds)?.day).toBe(45);
+    expect(getNextSelectedShow(null, 40, [])).toBeNull();
+    // A pick still wins when it is sooner.
+    expect(getNextSelectedShow(selectedShows, 13, rounds)?.day).toBe(14);
+  });
+
   it("treats a show on the current day as still upcoming (it hasn't scored yet)", () => {
     expect(getNextSelectedShow(selectedShows, 14)).toEqual({
       day: 14,

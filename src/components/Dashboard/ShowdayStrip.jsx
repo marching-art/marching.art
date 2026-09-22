@@ -88,7 +88,8 @@ const PHASE_LABELS = {
  * @param {Object} props
  * @param {('fantasy'|'podium')} props.division - Which field the active corps competes on.
  * @param {RawCompetition[]} props.competitions - Raw enriched competitions (scheduleStore).
- * @param {Record<string, Array<Object>>} [props.selectedShows] - Fantasy: corps.selectedShows.
+ * @param {Record<string, Array<Object>>} [props.selectedShows] - Fantasy: corps.selectedShows
+ *   (the Championship Week rounds the class is enrolled in are added from the schedule).
  * @param {{selectedShows?: Record<number, {eventName?: string}|null>|null, autoDays?: number[]|null}|null} [props.podiumPicks]
  *   Podium: self-picked shows by day + auto-enrolled major days (usePodium state).
  * @param {Record<string, string>} [props.lineup] - Fantasy: caption -> "CorpsName|Year".
@@ -117,8 +118,8 @@ const ShowdayStrip = ({
     () =>
       division === 'podium'
         ? joinPodiumShows(competitions, podiumPicks)
-        : joinFantasyShows(competitions, selectedShows),
-    [division, competitions, podiumPicks, selectedShows]
+        : joinFantasyShows(competitions, selectedShows, { corpsClass, myUid }),
+    [division, competitions, podiumPicks, selectedShows, corpsClass, myUid]
   );
 
   const model = useMemo(
