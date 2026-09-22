@@ -81,12 +81,18 @@ export interface NextSelectedShow {
  */
 export function getNextSelectedShow(
   selectedShows: Record<string, SelectedShow[]> | null | undefined,
-  currentDay: number | null | undefined
+  currentDay: number | null | undefined,
+  autoShows: SelectedShow[] | null | undefined = null
 ): NextSelectedShow | null {
-  if (!selectedShows) return null;
+  if (!selectedShows && !autoShows?.length) return null;
 
   const upcoming: NextSelectedShow[] = [];
-  for (const weekShows of Object.values(selectedShows)) {
+  // Auto-enrolled shows (the Championship Week rounds the corps' class marches,
+  // from showday.championshipRoundsFor) ride alongside the picked ones: they
+  // are never in selectedShows, and without them the final week read as
+  // "no upcoming show selected".
+  const sources = [...Object.values(selectedShows || {}), autoShows || []];
+  for (const weekShows of sources) {
     if (!Array.isArray(weekShows)) continue;
     for (const show of weekShows) {
       const day = show?.day;
