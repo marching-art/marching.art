@@ -184,6 +184,19 @@ describe("deleteAccount show-registration cleanup", () => {
     const docs = new Map([
       [profilePath("u1"), profile],
       ["game-settings/season", { seasonUid }],
+      // The season's championship rounds are index docs too (auto-enrolled by
+      // class): the World corps is on the World Prelims doc, the SoundSport
+      // corps on the festival's, and neither on the Open & A night.
+      [
+        `schedules/${seasonUid}`,
+        {
+          competitions: [
+            { name: "Open and A Class Prelims", day: 45, type: "championship", allowedClasses: ["openClass", "aClass"] },
+            { name: "marching.art World Championship Prelims", day: 47, type: "championship", allowedClasses: ["worldClass", "openClass", "aClass"] },
+            { name: "SoundSport International Music & Food Festival", day: 49, type: "championship", allowedClasses: ["soundSport"] },
+          ],
+        },
+      ],
     ]);
     const { db, batchOps } = makeFakeDb(docs);
     setDbForTesting(db);
@@ -194,12 +207,19 @@ describe("deleteAccount show-registration cleanup", () => {
 
     const anytownKey = showRegistrationEventKey(2, "DCI Anytown", "2026-07-10");
     const elsewhereKey = showRegistrationEventKey(2, "DCI Elsewhere", "2026-07-12");
+    const worldPrelimsKey = showRegistrationEventKey(7, "marching.art World Championship Prelims", null);
+    const festivalKey = showRegistrationEventKey(7, "SoundSport International Music & Food Festival", null);
+    const openAKey = showRegistrationEventKey(7, "Open and A Class Prelims", null);
 
     const indexWrites = batchOps.filter(
       (op) => op.type === "set" && op.path.includes("/show_registrations/")
     );
-    // One merge-set per distinct event the user was on.
-    assert.equal(indexWrites.length, 2);
+    // One merge-set per distinct event the user was on: two picked shows plus
+    // the two championship rounds the corps' classes are auto-enrolled in.
+    assert.equal(indexWrites.length, 4);
+    assert.ok(indexWrites.find((w) => w.path === eventPath(seasonUid, worldPrelimsKey)));
+    assert.ok(indexWrites.find((w) => w.path === eventPath(seasonUid, festivalKey)));
+    assert.ok(!indexWrites.find((w) => w.path === eventPath(seasonUid, openAKey)));
 
     const anytown = indexWrites.find((w) => w.path === eventPath(seasonUid, anytownKey));
     assert.ok(anytown, "expected a cleanup write for the shared event");

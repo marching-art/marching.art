@@ -8,21 +8,25 @@ import {
   getShowsForDay,
   getShowCountsByWeek,
 } from '../utils/scheduleUtils';
+import type { RawCompetition, TransformedShow } from '../utils/scheduleUtils';
 
 /**
- * A single competition entry from the `schedules/{seasonUid}` document. The raw
- * Firestore shape carries many fields; the schedule utilities consume it
- * structurally, so it is modeled here as an open record.
+ * A single competition entry from the `schedules/{seasonUid}` document — the
+ * slice the schedule utilities read (typed there, in `RawCompetition`); the
+ * raw Firestore shape carries more fields, which pass through untouched.
  */
-export type Competition = Record<string, unknown>;
+export type Competition = RawCompetition;
+
+/** A competition transformed for the UI (`transformCompetitionToShow`). */
+export type ScheduleShow = TransformedShow;
 
 interface ScheduleState {
   // Raw competitions array from Firestore
   competitions: Competition[];
 
   // Pre-computed derived data
-  showsByWeek: Record<number, Competition[]>;
-  showsByDay: Competition[][];
+  showsByWeek: Record<number, ScheduleShow[]>;
+  showsByDay: Array<{ offSeasonDay: number; week: number; shows: ScheduleShow[] }>;
   showCountsByWeek: Record<number, number>;
 
   // Loading/error state
@@ -37,8 +41,8 @@ interface ScheduleState {
 
   initScheduleListener: (seasonUid: string | null | undefined) => void;
   cleanup: () => void;
-  getWeekShows: (weekNumber: number, options?: { skipChampionship?: boolean }) => Competition[];
-  getDayShows: (dayNumber: number) => Competition[];
+  getWeekShows: (weekNumber: number, options?: { skipChampionship?: boolean }) => ScheduleShow[];
+  getDayShows: (dayNumber: number) => ScheduleShow[];
   getWeekShowCount: (weekNumber: number) => number;
   getWeeksWithShows: () => number[];
   hasScheduleData: () => boolean;
@@ -117,12 +121,10 @@ export const useScheduleStore = create<ScheduleState>()((set, get) => ({
           const data = docSnapshot.data();
           const competitions: Competition[] = data.competitions || [];
 
-          // Pre-compute derived data. The schedule utilities are untyped JS
-          // (loose `@returns {Object}`/`{Array}` JSDoc), so assert their known
-          // shapes at this boundary.
-          const showsByWeek = groupShowsByWeek(competitions) as Record<number, Competition[]>;
-          const showsByDay = groupShowsByDay(competitions) as Competition[][];
-          const showCountsByWeek = getShowCountsByWeek(competitions) as Record<number, number>;
+          // Pre-compute derived data (the schedule utilities are typed JSDoc).
+          const showsByWeek = groupShowsByWeek(competitions);
+          const showsByDay = groupShowsByDay(competitions);
+          const showCountsByWeek = getShowCountsByWeek(competitions);
 
           set({
             competitions,
@@ -174,9 +176,7 @@ export const useScheduleStore = create<ScheduleState>()((set, get) => ({
    */
   getWeekShows: (weekNumber, options = {}) => {
     const { competitions } = get();
-    // getShowsForWeek reads options.skipChampionship (falsy when absent), so a
-    // partial options object is safe; its JSDoc types the field as required.
-    return getShowsForWeek(competitions, weekNumber, options as { skipChampionship: boolean });
+    return getShowsForWeek(competitions, weekNumber, options);
   },
 
   /**

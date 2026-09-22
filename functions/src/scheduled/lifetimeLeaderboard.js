@@ -10,6 +10,7 @@ const { sumSeasonScore, computeSeasonRankings } = require("../helpers/seasonRank
 const {
   collectRegistrationsFromProfile,
   buildEventDocs,
+  loadChampionshipCompetitions,
 } = require("../helpers/showRegistrations");
 
 /**
@@ -109,10 +110,15 @@ async function updateLifetimeLeaderboardLogic({ forceLifetime = false } = {}) {
     const registrationPairs = [];
 
     if (activeSeasonId) {
+      // The championship rounds are auto-enrolled by class, never picked, so
+      // the index learns them from the schedule (one read) rather than from
+      // selectedShows — that is what puts the directors' corps, not the
+      // heritage DCI cast, in the championship-week running orders.
+      const championships = await loadChampionshipCompetitions(db, activeSeasonId);
       const activeProfiles = await fetchProfiles(db, ["corps", "username"], activeSeasonId);
       for (const { userId, data } of activeProfiles) {
         seasonRankEntries.push({ uid: userId, totalScore: sumSeasonScore(data) });
-        registrationPairs.push(...collectRegistrationsFromProfile(userId, data));
+        registrationPairs.push(...collectRegistrationsFromProfile(userId, data, { championships }));
       }
     }
 

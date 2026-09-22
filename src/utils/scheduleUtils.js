@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 /**
  * Schedule Utilities
  *
@@ -9,8 +8,98 @@
 import { getShowRegistrationDeadline } from './seasonClock';
 
 /**
+ * @typedef {Object} LineupEntry
+ * @property {number} order
+ * @property {string|null} [uid]
+ * @property {string} [corpsClass]
+ * @property {string} corps
+ * @property {string|null} [hometown]
+ * @property {string} [performsAt]
+ * @property {string} [performanceTime]
+ */
+
+/**
+ * @typedef {Object} EncoreEntry
+ * @property {string|null} [uid]
+ * @property {string} [corpsClass]
+ * @property {string} [corps]
+ * @property {string} [reason]
+ * @property {number|null} [miles]
+ */
+
+/**
+ * One field's materialized running order (competition.fantasySchedule /
+ * competition.podiumSchedule), written by scheduled/scheduleRunningOrder.js.
+ * @typedef {Object} FieldSchedule
+ * @property {string|null} [startsAt]
+ * @property {string|null} [scoresAt]
+ * @property {string|null} [gatesAt]
+ * @property {string|null} [timezone]
+ * @property {LineupEntry[]} [lineup]
+ * @property {Array<{uid?: string|null, corpsClass?: string, corps?: string}>} [overflow]
+ * @property {number} [fieldSize]
+ * @property {NightAssignment|null} [night]
+ * @property {Advancement|null} [advancement]
+ */
+
+/**
+ * The slice of a raw `schedules/{seasonUid}` competition this module reads.
+ * @typedef {Object} RawCompetition
+ * @property {string} [id]
+ * @property {string} name
+ * @property {number} day
+ * @property {number} [week]
+ * @property {string} [location]
+ * @property {*} [date]
+ * @property {string} [type]
+ * @property {string[]} [allowedClasses]
+ * @property {boolean} [mandatory]
+ * @property {string|null} [eventTier]
+ * @property {string|null} [hostUid]
+ * @property {{nights?: number[]}|null} [multiNight]
+ * @property {string|null} [startsAt]
+ * @property {string|null} [scoresAt]
+ * @property {string|null} [gatesAt]
+ * @property {string|null} [timezone]
+ * @property {string|null} [venue]
+ * @property {LineupEntry[]|null} [lineup]
+ * @property {FieldSchedule|null} [fantasySchedule]
+ * @property {FieldSchedule|null} [podiumSchedule]
+ * @property {EncoreEntry|null} [encore]
+ * @property {EncoreEntry|null} [podiumEncore]
+ * @property {Object|null} [sponsor]
+ * @property {{summary?: string, tempF?: number, code?: number, hour?: number}|null} [weather]
+ */
+
+/**
+ * A show with enriched timing and a running order — the shape the live
+ * helpers below read (a transformed show, a raw competition, or a projected
+ * podium view all satisfy it).
+ * @typedef {Object} TimedShow
+ * @property {string|null} [startsAt]
+ * @property {string|null} [scoresAt]
+ * @property {string|null} [timezone]
+ * @property {LineupEntry[]|null} [lineup]
+ */
+
+/**
+ * @typedef {Object} NightAssignment
+ * @property {number} day
+ * @property {number[]} nights
+ * @property {'provisional'|'preview'|'final'} status
+ *
+ * The advancement stamp a championship round's fantasy field carries
+ * (scheduled/scheduleRunningOrder.js): which night's scores decide the field,
+ * the cutoff copy, and whether that cut is decided yet.
+ * @typedef {Object} Advancement
+ * @property {number} fromDay
+ * @property {string} rule
+ * @property {'pending'|'final'} status
+ */
+
+/**
  * Transform a competition object from Firestore to a show object for UI
- * @param {Object} competition - Raw competition from Firestore
+ * @param {RawCompetition} competition - Raw competition from Firestore
  * @returns the transformed show object (shape inferred for consumers)
  */
 export function transformCompetitionToShow(competition) {
@@ -18,11 +107,14 @@ export function transformCompetitionToShow(competition) {
   // materialized, is the primary schedule a director sees — their own corps in a
   // timed order that ends at the night's score drop. It takes precedence over the
   // legacy heritage/scraped enrichment (which is the historical cast); those
-  // remain the fallback for shows not yet materialized (early season, or the
-  // pool-driven championship days). The podium running order rides alongside for
-  // the Fantasy/Podium toggle.
+  // remain the fallback for regular shows not yet materialized (early season).
+  // A championship round never falls back: its heritage lineup is a synthesized
+  // DCI stage cast, not the auto-enrolled directors, so until the real field is
+  // materialized it honestly shows no running order. The podium running order
+  // rides alongside for the Fantasy/Podium toggle.
   const fs = competition.fantasySchedule || null;
   const ps = competition.podiumSchedule || null;
+  const isChampionship = competition.type === 'championship';
   return {
     eventName: competition.name,
     location: competition.location || '',
@@ -30,7 +122,7 @@ export function transformCompetitionToShow(competition) {
     day: competition.day,
     week: competition.week || Math.ceil(competition.day / 7),
     type: competition.type,
-    isChampionship: competition.type === 'championship',
+    isChampionship,
     allowedClasses: competition.allowedClasses || [],
     mandatory: competition.mandatory || false,
     // Major-event metadata (hard-coded marching.art majors): eventTier marks
@@ -48,13 +140,16 @@ export function transformCompetitionToShow(competition) {
     gatesAt: fs?.gatesAt ?? competition.gatesAt ?? null,
     timezone: fs?.timezone ?? competition.timezone ?? null,
     venue: competition.venue || null,
-    lineup: fs?.lineup ?? competition.lineup ?? null,
+    lineup: fs?.lineup ?? (isChampionship ? null : (competition.lineup ?? null)),
     // Real-field extras (present only once materialized): the "also competing"
     // overflow list, the field size, and both schedules for the toggle.
     fantasySchedule: fs,
     podiumSchedule: ps,
     overflow: fs?.overflow ?? null,
     fieldSize: fs?.fieldSize ?? null,
+    // Championship advancement round: which night's scores set this field and
+    // whether that cut is decided yet (null on a regular show / Prelims).
+    advancement: fs?.advancement ?? null,
     // The cosmetic encore corps for this show ({ uid, corpsClass, corps, reason }).
     // Each side carries its own: `encore` is the fantasy field's, `podiumEncore`
     // the podium field's (DualRunningOrder swaps it in on the Podium tab).
@@ -71,9 +166,24 @@ export function transformCompetitionToShow(competition) {
 }
 
 /**
+ * "Top 12 from Semifinals · field set by Day 48 scores" — the one-line
+ * explanation of why an advancement round's field is (or will be) a cut of
+ * the class, not everyone. Null for Prelims, the SoundSport festival and
+ * every regular show.
+ * @param {Advancement|null|undefined} advancement
+ * @returns {string|null}
+ */
+export function advancementLabel(advancement) {
+  if (!advancement || !advancement.rule || !Number.isFinite(advancement.fromDay)) return null;
+  return advancement.status === 'final'
+    ? `${advancement.rule} · field set by Day ${advancement.fromDay} scores`
+    : `${advancement.rule} · full field until Day ${advancement.fromDay} scores decide the cut`;
+}
+
+/**
  * "Night 1 of 2 · lineups announced Day 39" — the one-line explanation of why
  * a two-night field is half the registrants. Null for ordinary shows.
- * @param {{day: number, nights: number[], status: string}|null|undefined} night
+ * @param {NightAssignment|null|undefined} night
  * @returns {string|null}
  */
 export function nightAssignmentLabel(night) {
@@ -94,9 +204,12 @@ export function nightAssignmentLabel(night) {
 // on the enriched `startsAt`/`scoresAt` instants — no guessing from wall-clock.
 const DEFAULT_SHOW_DURATION_MS = 3 * 60 * 60 * 1000;
 
+/** A transformed show, as `transformCompetitionToShow` returns it.
+ * @typedef {ReturnType<typeof transformCompetitionToShow>} TransformedShow */
+
 /**
  * Get a show's real start time as a Date, or null if not enriched.
- * @param {Object} show
+ * @param {TimedShow} show
  * @returns {Date|null}
  */
 export function showStartsAtDate(show) {
@@ -106,7 +219,7 @@ export function showStartsAtDate(show) {
 /**
  * Get the instant a show's competition window ends (scores announced, or start +
  * estimated duration).
- * @param {Object} show
+ * @param {TimedShow} show
  * @returns {Date|null}
  */
 export function showEndsAtDate(show) {
@@ -119,7 +232,7 @@ export function showEndsAtDate(show) {
 /**
  * Is this show performing right now (between real start and scores-announced)?
  * Returns false for shows without enriched timing so callers can fall back.
- * @param {Object} show
+ * @param {TimedShow} show
  * @param {Date} [now]
  * @returns {boolean}
  */
@@ -134,9 +247,9 @@ export function isShowLive(show, now = new Date()) {
  * From a show's running order, determine who is performing now and who is up next.
  * Uses each lineup entry's `performsAt` instant; each corps is assumed to hold the
  * field until the next corps' time (last corps uses the show end).
- * @param {Object} show
+ * @param {TimedShow} show
  * @param {Date} [now]
- * @returns {{current: Object|null, next: Object|null}}
+ * @returns {{current: LineupEntry|null, next: LineupEntry|null}}
  */
 export function getRunningOrderStatus(show, now = new Date()) {
   const lineup = Array.isArray(show?.lineup) ? show.lineup : [];
@@ -144,12 +257,14 @@ export function getRunningOrderStatus(show, now = new Date()) {
 
   const timed = lineup
     .filter((p) => p.performsAt)
-    .map((p) => ({ ...p, _at: new Date(p.performsAt) }))
-    .sort((a, b) => a._at - b._at);
+    .map((p) => ({ ...p, _at: new Date(/** @type {string} */ (p.performsAt)) }))
+    .sort((a, b) => a._at.getTime() - b._at.getTime());
   if (timed.length === 0) return { current: null, next: null };
 
   const endMs = showEndsAtDate(show)?.getTime() ?? Infinity;
+  /** @type {LineupEntry|null} */
   let current = null;
+  /** @type {LineupEntry|null} */
   let next = null;
   for (let i = 0; i < timed.length; i++) {
     const startMs = timed[i]._at.getTime();
@@ -168,19 +283,9 @@ export function getRunningOrderStatus(show, now = new Date()) {
 }
 
 /**
- * @typedef {Object} LineupEntry
- * @property {number} order
- * @property {string|null} [uid]
- * @property {string} [corpsClass]
- * @property {string} corps
- * @property {string} [performsAt]
- * @property {string} [performanceTime]
- */
-
-/**
  * @typedef {Object} PerformerSlot
  * @property {LineupEntry} entry
- * @property {Object} show
+ * @property {TimedShow} show
  * @property {('onNow'|'upcoming'|'done'|'unknown')} state
  * @property {number|null} minutesUntil
  */
@@ -191,8 +296,8 @@ export function getRunningOrderStatus(show, now = new Date()) {
  * performed. A corps holds the field from its `performsAt` until the next
  * performer's time (the last uses the show end). Pure — inject `now` for tests.
  *
- * @param {Object} show - enriched show with a `lineup` (and startsAt/scoresAt).
- * @param {Object} entry - a lineup entry (must carry `performsAt`).
+ * @param {TimedShow} show - enriched show with a `lineup` (and startsAt/scoresAt).
+ * @param {LineupEntry} entry - a lineup entry (must carry `performsAt`).
  * @param {Date} [now]
  * @returns {{state:('onNow'|'upcoming'|'done'|'unknown'), minutesUntil:(number|null)}}
  */
@@ -200,7 +305,7 @@ export function getPerformanceStatus(show, entry, now = new Date()) {
   if (!entry || !entry.performsAt) return { state: 'unknown', minutesUntil: null };
   const timed = (Array.isArray(show?.lineup) ? show.lineup : [])
     .filter((p) => p.performsAt)
-    .map((p) => ({ ...p, _at: new Date(p.performsAt).getTime() }))
+    .map((p) => ({ ...p, _at: new Date(/** @type {string} */ (p.performsAt)).getTime() }))
     .sort((a, b) => a._at - b._at);
   const at = new Date(entry.performsAt).getTime();
   if (Number.isNaN(at)) return { state: 'unknown', minutesUntil: null };
@@ -220,7 +325,7 @@ export function getPerformanceStatus(show, entry, now = new Date()) {
  * order (matched by uid), each with its live status. Powers the "your corps
  * takes the field" element.
  *
- * @param {Object} show - enriched show (lineup entries carry `uid`).
+ * @param {TimedShow} show - enriched show (lineup entries carry `uid`).
  * @param {string} myUid
  * @param {Date} [now]
  * @returns {Array<PerformerSlot>}
@@ -241,7 +346,7 @@ const MY_SLOT_STATE_RANK = { onNow: 0, upcoming: 1, done: 2, unknown: 3 };
 /**
  * Across many shows, pick the director's single most relevant own-corps slot:
  * one on the field now, else the soonest upcoming. Returns null if none.
- * @param {Array<Object>} shows - enriched shows.
+ * @param {Array<TimedShow>} shows - enriched shows.
  * @param {string} myUid
  * @param {Date} [now]
  * @returns {PerformerSlot|null}
@@ -261,11 +366,10 @@ export function pickMyNextPerformance(shows, myUid, now = new Date()) {
 
 /**
  * Filter and transform competitions for a specific week
- * @param {Array} competitions - Raw competitions array from Firestore
+ * @param {RawCompetition[]} competitions - Raw competitions array from Firestore
  * @param {number} weekNumber - Week to filter (1-7)
- * @param {Object} options - Filter options
- * @param {boolean} options.skipChampionship - Skip championship shows
- * @returns {Array} Filtered and transformed shows
+ * @param {{skipChampionship?: boolean}} [options] - Filter options
+ * @returns {TransformedShow[]} Filtered and transformed shows
  */
 export function getShowsForWeek(competitions, weekNumber, options = {}) {
   const { skipChampionship = false } = options;
@@ -283,10 +387,11 @@ export function getShowsForWeek(competitions, weekNumber, options = {}) {
 
 /**
  * Group competitions by week
- * @param {Array} competitions - Raw competitions array
- * @returns {Object} Object with week numbers as keys, arrays of shows as values
+ * @param {RawCompetition[]} competitions - Raw competitions array
+ * @returns {Record<number, TransformedShow[]>} Object with week numbers as keys, arrays of shows as values
  */
 export function groupShowsByWeek(competitions) {
+  /** @type {Record<number, TransformedShow[]>} */
   const grouped = {};
 
   competitions.forEach((comp) => {
@@ -296,8 +401,8 @@ export function groupShowsByWeek(competitions) {
   });
 
   // Sort shows within each week by day
-  Object.keys(grouped).forEach((week) => {
-    grouped[week].sort((a, b) => a.day - b.day);
+  Object.values(grouped).forEach((shows) => {
+    shows.sort((a, b) => a.day - b.day);
   });
 
   return grouped;
@@ -305,10 +410,11 @@ export function groupShowsByWeek(competitions) {
 
 /**
  * Group competitions by day (for Schedule page day-based view)
- * @param {Array} competitions - Raw competitions array
- * @returns {Array} Array of day objects with shows
+ * @param {RawCompetition[]} competitions - Raw competitions array
+ * @returns {Array<{offSeasonDay: number, week: number, shows: TransformedShow[]}>} Array of day objects with shows
  */
 export function groupShowsByDay(competitions) {
+  /** @type {Record<number, {offSeasonDay: number, week: number, shows: TransformedShow[]}>} */
   const dayMap = {};
 
   competitions.forEach((comp) => {
@@ -328,9 +434,9 @@ export function groupShowsByDay(competitions) {
 
 /**
  * Get shows for a specific day
- * @param {Array} competitions - Raw competitions array
+ * @param {RawCompetition[]} competitions - Raw competitions array
  * @param {number} dayNumber - Day number (1-49)
- * @returns {Array} Shows for that day
+ * @returns {TransformedShow[]} Shows for that day
  */
 export function getShowsForDay(competitions, dayNumber) {
   return competitions.filter((comp) => comp.day === dayNumber).map(transformCompetitionToShow);
@@ -338,10 +444,11 @@ export function getShowsForDay(competitions, dayNumber) {
 
 /**
  * Count shows per week (for week pills display)
- * @param {Array} competitions - Raw competitions array
- * @returns {Object} Object with week numbers as keys, counts as values
+ * @param {RawCompetition[]} competitions - Raw competitions array
+ * @returns {Record<number, number>} Object with week numbers as keys, counts as values
  */
 export function getShowCountsByWeek(competitions) {
+  /** @type {Record<number, number>} */
   const counts = {};
 
   competitions.forEach((comp) => {
@@ -382,7 +489,7 @@ export function formatDayKey(date, timeZone) {
  * instant of an (often evening) local showtime, so it must be read in the
  * show's own timezone — reading it with UTC getters rolls evening shows onto
  * the next calendar day.
- * @param {Object} comp - Competition or transformed show ({ date, startsAt, timezone }).
+ * @param {{name?: string, date?: *, startsAt?: string|null, timezone?: string|null}} comp - Competition or transformed show ({ date, startsAt, timezone }).
  * @returns {string|null}
  */
 export function showCalendarDay(comp) {
@@ -392,7 +499,7 @@ export function showCalendarDay(comp) {
   }
   if (comp.startsAt) {
     const d = new Date(comp.startsAt);
-    if (!Number.isNaN(d.getTime())) return formatDayKey(d, comp.timezone);
+    if (!Number.isNaN(d.getTime())) return formatDayKey(d, comp.timezone ?? undefined);
   }
   return null;
 }

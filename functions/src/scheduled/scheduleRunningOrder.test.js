@@ -1,8 +1,9 @@
 // Tests for the running-order producer logic. No network, no real Firestore: db
 // is an in-memory fake seeded through the same path/key helpers the producer
 // reads, and the real (pure) builder runs. Exercises the window gate,
-// championship skip, worst-to-best ordering from standings, and
-// write-only-when-changed.
+// worst-to-best ordering from standings, and write-only-when-changed. The
+// championship-week field (auto-enrolled classes, the prior night's cut) is
+// covered in scheduleRunningOrderChampionship.test.js.
 
 const { test, describe } = require("node:test");
 const assert = require("node:assert/strict");
@@ -14,70 +15,7 @@ const {
 } = require("./scheduleRunningOrder");
 const { paths } = require("../helpers/paths");
 const { showRegistrationEventKey } = require("../helpers/showRegistrations");
-
-function fakeDb(seed = {}) {
-  const store = new Map(Object.entries(seed));
-  const writes = [];
-  return {
-    store,
-    writes,
-    doc(path) {
-      return {
-        async get() {
-          return { exists: store.has(path), data: () => store.get(path) };
-        },
-        async set(value, options) {
-          writes.push({ path, value, options });
-          const prev = options && options.merge ? store.get(path) || {} : {};
-          store.set(path, { ...prev, ...value });
-        },
-      };
-    },
-  };
-}
-
-const NOW = new Date("2026-06-15T12:00:00Z").getTime();
-const SEASON = {
-  seasonUid: "s1",
-  status: "off-season",
-  schedule: { startDate: new Date("2026-06-01T00:00:00Z") },
-};
-
-// A regular upcoming show, 3 days out (day 18 → week 3).
-const SHOW_A = { id: "a", name: "Show A", day: 18, week: 3, location: "Allentown, PA", date: "2026-06-18" };
-const regKeyA = showRegistrationEventKey(SHOW_A.week, SHOW_A.name, SHOW_A.date);
-
-function seedWith(extraComps = []) {
-  return {
-    "game-settings/season": SEASON,
-    "schedules/s1": {
-      competitions: [
-        SHOW_A,
-        { id: "past", name: "Old Show", day: 8, week: 2, location: "Dubuque, IA", date: "2026-06-08" },
-        { id: "far", name: "Far Show", day: 60, week: 9, location: "Denver, CO", date: "2026-07-30" },
-        { id: "champ", name: "World Championship Finals", type: "championship", day: 49, week: 7, date: "2026-06-19" },
-        ...extraComps,
-      ],
-    },
-    "fantasy_standings/s1/classes/worldClass": {
-      entries: [
-        { uid: "u1", corpsClass: "worldClass", corpsName: "Cadets", totalScore: 60, scores: [{ score: 60 }] },
-        { uid: "u2", corpsClass: "worldClass", corpsName: "Bluecoats", totalScore: 92, scores: [{ score: 92 }] },
-        { uid: "u3", corpsClass: "worldClass", corpsName: "Crossmen", totalScore: 78, scores: [{ score: 78 }] },
-      ],
-    },
-    [paths.showRegistrationEvent("s1", regKeyA)]: {
-      week: SHOW_A.week,
-      eventName: SHOW_A.name,
-      date: SHOW_A.date,
-      registrations: {
-        u1_worldClass: { uid: "u1", corpsClass: "worldClass", corpsName: "Cadets" },
-        u2_worldClass: { uid: "u2", corpsClass: "worldClass", corpsName: "Bluecoats" },
-        u3_worldClass: { uid: "u3", corpsClass: "worldClass", corpsName: "Crossmen" },
-      },
-    },
-  };
-}
+const { fakeDb, NOW, seedWith, regKeyA } = require("./scheduleRunningOrder.fixtures");
 
 describe("isChampionship / competitionDate", () => {
   test("championship events are recognized by type or mandatory", () => {
@@ -95,10 +33,11 @@ describe("enrichScheduleRunningOrdersLogic", () => {
     const db = fakeDb(seedWith());
     const res = await enrichScheduleRunningOrdersLogic(db, { now: NOW });
 
-    // Show A and the far show are both upcoming (whole-season window); only Show A
-    // has a field, so only it is written. Past + championship are skipped.
-    assert.equal(res.built, 2, "Show A + far are processed; past & champ skipped");
-    assert.equal(res.updated, 1, "only Show A has a field to write");
+    // Show A, the far show and the championship round are all upcoming
+    // (whole-season window); Show A has a registered field and the round is
+    // auto-enrolled from the standings, so both are written. Past is skipped.
+    assert.equal(res.built, 3, "Show A + far + champ are processed; past skipped");
+    assert.equal(res.updated, 2, "Show A and the championship round have fields");
     assert.equal(db.writes.length, 1);
 
     const comps = db.store.get("schedules/s1").competitions;
@@ -113,7 +52,16 @@ describe("enrichScheduleRunningOrdersLogic", () => {
     // No field / skipped comps carry no fantasySchedule (empty writes are guarded).
     assert.equal(byId.past.fantasySchedule, undefined);
     assert.equal(byId.far.fantasySchedule, undefined);
-    assert.equal(byId.champ.fantasySchedule, undefined);
+
+    // The championship round: no index doc yet, so the standings stand in —
+    // every World Class corps the season knows, still worst-to-best. No
+    // day-48 recap → the Finals cut is pending and the whole field marches.
+    assert.deepEqual(byId.champ.fantasySchedule.lineup.map((e) => e.corps), ["Cadets", "Crossmen", "Bluecoats"]);
+    assert.deepEqual(byId.champ.fantasySchedule.advancement, {
+      fromDay: 48,
+      rule: "Top 12 from Semifinals",
+      status: "pending",
+    });
   });
 
   test("second pass is idempotent — no write when nothing changed", async () => {
@@ -130,8 +78,8 @@ describe("enrichScheduleRunningOrdersLogic", () => {
     delete seed[paths.showRegistrationEvent("s1", regKeyA)];
     const db = fakeDb(seed);
     const res = await enrichScheduleRunningOrdersLogic(db, { now: NOW });
-    assert.equal(res.built, 2); // Show A + far both processed, both empty
-    assert.equal(res.updated, 0); // nothing written — the roster covers "who's in"
+    assert.equal(res.built, 3); // Show A + far + champ processed; A and far empty
+    assert.equal(res.updated, 1); // only the auto-enrolled championship field is written
     const a = db.store.get("schedules/s1").competitions.find((c) => c.id === "a");
     assert.equal(a.fantasySchedule, undefined);
   });
@@ -234,7 +182,7 @@ describe("enrichScheduleRunningOrdersLogic", () => {
     ]);
   });
 
-  test("builds the podium field for a championship round while fantasy keeps heritage", async () => {
+  test("builds both the fantasy and podium fields for a championship round", async () => {
     const db = fakeDb(seedWith());
     const podiumEntries = [
       { uid: "w", state: { seasonUid: "s1", corpsName: "World Podium", division: "worldClass", lastTotal: 90, selectedShows: {} } },
@@ -246,7 +194,7 @@ describe("enrichScheduleRunningOrdersLogic", () => {
       loadPodiumEntries: async () => podiumEntries,
     });
     const champ = db.store.get("schedules/s1").competitions.find((c) => c.id === "champ");
-    assert.equal(champ.fantasySchedule, undefined, "fantasy championship stays synthesized");
+    assert.equal(champ.fantasySchedule.fieldSize, 3, "the fantasy field is the directors' corps");
     assert.ok(champ.podiumSchedule, "podium championship field is real");
     // Day 49 is World Finals: every division reaches the World rounds.
     assert.deepEqual(champ.podiumSchedule.lineup.map((e) => e.corps), ["A Podium", "World Podium"]);

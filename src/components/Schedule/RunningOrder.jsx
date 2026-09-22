@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Clock, Star } from 'lucide-react';
-import { getRunningOrderStatus, nightAssignmentLabel } from '../../utils/scheduleUtils';
+import {
+  getRunningOrderStatus,
+  nightAssignmentLabel,
+  advancementLabel,
+} from '../../utils/scheduleUtils';
 import { normalizeCorpsName as normalize, highlightLabel } from '../../utils/pickHighlights';
 
 /**
@@ -21,6 +25,11 @@ import { normalizeCorpsName as normalize, highlightLabel } from '../../utils/pic
  * @property {string|null} [scoresAt]
  * @property {NightAssignment|null} [night] - Set on one night of a two-night
  *   event: which night this field is, and how settled the split is.
+ * @property {Advancement|null} [advancement] - Set on a championship
+ *   advancement round (Open & A Finals, World Semis, World Finals): which
+ *   night's scores set this field, and whether that cut is decided yet.
+ *
+ * @typedef {import('../../utils/scheduleUtils').Advancement} Advancement
  *
  * @typedef {Object} NightAssignment
  * @property {number} day - The competition day this running order is for.
@@ -75,6 +84,9 @@ const RunningOrder = ({ show, highlights, highlightCorps, myUid, compact = false
   // One registration covers both nights of a two-night event; this field is
   // the corps assigned to THIS night, so say so (and how settled that is).
   const nightLabel = nightAssignmentLabel(show?.night);
+  // A championship advancement round is a cut of the class, decided by the
+  // prior night's scores — say which, and whether the field is settled yet.
+  const cutLabel = advancementLabel(show?.advancement);
 
   const status = getRunningOrderStatus(show, now);
   const current = /** @type {LineupEntry|null} */ (status.current);
@@ -99,6 +111,14 @@ const RunningOrder = ({ show, highlights, highlightCorps, myUid, compact = false
           data-testid="running-order-night"
         >
           {nightLabel}
+        </div>
+      )}
+      {cutLabel && (
+        <div
+          className="px-4 py-1.5 border-b border-line bg-brand/5 text-[10px] text-secondary"
+          data-testid="running-order-advancement"
+        >
+          {cutLabel}
         </div>
       )}
 

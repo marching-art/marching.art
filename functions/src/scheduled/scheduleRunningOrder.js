@@ -14,12 +14,19 @@
 // writes nothing. Runs a few times a day; the evening pass refreshes today's
 // field a couple hours before the ~9 p.m. drop.
 //
-// Championship days (45-49) are intentionally skipped on the FANTASY side — they
-// keep the pool-driven heritage synthesis (offSeasonHeritage.buildChampionshipLineup).
-// The Podium side is built for every upcoming show, championship rounds
-// included: its field is the real roster (self-picks plus the auto-attended
-// majors and championship rounds), never a synthesized pool. Everything is
-// best-effort: a show we can't build (no registrations, no date) is left as-is.
+// Championship week (days 45-49) is built on BOTH sides from the real field.
+// Fantasy: the auto-enrolled classes come from the registration index (the
+// nightly rebuild folds the rounds in from the schedule; until it has, the
+// standings already read for the slotting metric stand in), and an advancement
+// round (46/48/49) is narrowed to the prior night's cut by the SAME function
+// that decides who the scorer enrolls (scoringAwards.buildChampionshipConfig),
+// with `fantasySchedule.advancement` saying whether that cut is decided yet.
+// The heritage engine's synthesized DCI cast (offSeasonHeritage
+// .buildChampionshipLineup) is no longer what a director sees on those nights.
+// The Podium side is built for every upcoming show the same way: its field is
+// the real roster (self-picks plus the auto-attended majors and championship
+// rounds), never a synthesized pool. Everything is best-effort: a show we
+// can't build (no registrations, no date) is left as-is.
 
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { logger } = require("firebase-functions/v2");
@@ -30,10 +37,13 @@ const { MODEL_VERSION } = require("../helpers/scheduleModel");
 const { buildShowRunningOrder } = require("../helpers/showRunningOrder");
 const {
   showRegistrationEventKey,
+  classIdOf,
   collectPodiumRegistrations,
   loadPodiumAdvancing,
   PODIUM_REGISTRATION_FIELDS,
 } = require("../helpers/showRegistrations");
+const { buildChampionshipConfig } = require("../helpers/scoringAwards");
+const { CUTS: FANTASY_CUTS } = require("../helpers/championshipCuts");
 const { zonedWallTimeToUtc } = require("../helpers/eventDetails");
 const { isPodiumEnabled } = require("../helpers/features");
 const { homeGeoFor } = require("../helpers/corpsGeo");
@@ -69,9 +79,142 @@ function competitionDate(comp, seasonStartDate) {
   return null;
 }
 
-/** True for the auto-enrolled championship events (they keep heritage synthesis). */
+/** True for the auto-enrolled championship events (days 45-49). */
 function isChampionship(comp) {
   return comp.type === "championship" || comp.mandatory === true;
+}
+
+/** Canonical class ids a championship round auto-enrolls (schedule metadata). */
+function championshipClassesOf(comp) {
+  return (comp.allowedClasses || comp.eligibleClasses || [])
+    .map(classIdOf)
+    .filter((id, i, arr) => id && arr.indexOf(id) === i);
+}
+
+/**
+ * @typedef {Object} FantasyAdvancing
+ * @property {number} fromDay - The night whose scores decide this round.
+ * @property {string} rule - Display copy for the cutoff ("Top 25 from Prelims").
+ * @property {Record<string, {participants: Set<string>|null, classFilter: string[]}>} byEvent
+ *   The scorer's own config for the day, keyed by event name; `participants`
+ *   is the `${uid}_${corpsClass}` survivor set once the prior night has
+ *   scored, null while the cut is still pending (the whole eligible field).
+ */
+
+/**
+ * The fantasy cut entering an advancement round (46/48/49), from the prior
+ * round's fantasy recap — or null on a day that decides nothing. Delegates to
+ * `buildChampionshipConfig`, the one function that decides who the scorer
+ * enrolls, so the running order can never name a corps the scorer then leaves
+ * out. One doc read at most; a read failure degrades to "pending" (the whole
+ * eligible field marches) rather than emptying the field.
+ * @param {FirebaseFirestore.Firestore} db
+ * @param {string} seasonUid
+ * @param {number} day
+ * @returns {Promise<FantasyAdvancing|null>}
+ */
+async function loadFantasyAdvancing(db, seasonUid, day) {
+  const cut = FANTASY_CUTS[day];
+  if (!cut) return null;
+  let recap = null;
+  try {
+    const snap = await db.doc(`fantasy_recaps/${seasonUid}/days/${cut.from}`).get();
+    recap = snap.exists ? snap.data() : null;
+  } catch {
+    recap = null;
+  }
+  // `allRecaps` is empty on purpose: its only use is the season-standings
+  // fallback for a MISSING prior night, and before that night has scored the
+  // honest field is everyone eligible, not a projection of who might make it.
+  const config = buildChampionshipConfig(day, new Map(recap ? [[cut.from, recap]] : []), []) || {};
+  /** @type {FantasyAdvancing["byEvent"]} */
+  const byEvent = {};
+  for (const [eventName, value] of Object.entries(config)) {
+    byEvent[eventName] = {
+      participants: Array.isArray(value.participants)
+        ? new Set(value.participants.map((p) => `${p.uid}_${p.corpsClass}`))
+        : null,
+      classFilter: Array.isArray(value.classFilter) ? value.classFilter : [],
+    };
+  }
+  return { fromDay: cut.from, rule: cut.rule, byEvent };
+}
+
+/**
+ * Narrow a championship round's eligible field to the corps actually marching
+ * it. Always filters to the round's classes; on an advancement day also to the
+ * prior night's survivors once that cut is decided. Returns the field plus the
+ * `advancement` stamp for the schedule doc (null on a night with no cut —
+ * Prelims, and the SoundSport festival, which is never cut).
+ *
+ * The scorer's config is matched by event name first; a renamed round falls
+ * back to the entry whose class filter covers the round's classes, so a
+ * branding change never silently drops the cut.
+ *
+ * @param {Object} comp - The schedule entry.
+ * @param {Array<{uid:string|null, corpsClass:string}>} registrations
+ * @param {FantasyAdvancing|null} advancing
+ * @returns {{registrations: Array<Object>,
+ *   advancement: {fromDay:number, rule:string, status:("pending"|"final")}|null}}
+ */
+function applyChampionshipCut(comp, registrations, advancing) {
+  const classes = championshipClassesOf(comp);
+  let field = classes.length
+    ? registrations.filter((r) => classes.includes(classIdOf(r.corpsClass) || r.corpsClass))
+    : registrations;
+  if (!advancing) return { registrations: field, advancement: null };
+
+  const entry =
+    advancing.byEvent[comp.name] ||
+    Object.values(advancing.byEvent).find(
+      (v) => classes.length > 0 && classes.every((c) => v.classFilter.includes(c))
+    ) ||
+    null;
+  if (!entry) return { registrations: field, advancement: null };
+
+  // A festival stage (SoundSport only) rides the same config but is never cut.
+  const cutRound = entry.classFilter.some((c) => c !== "soundSport");
+  if (!cutRound) return { registrations: field, advancement: null };
+
+  field = field.filter((r) => entry.classFilter.includes(r.corpsClass));
+  if (entry.participants) {
+    field = field.filter((r) => entry.participants.has(`${r.uid}_${r.corpsClass}`));
+  }
+  return {
+    registrations: field,
+    advancement: {
+      fromDay: advancing.fromDay,
+      rule: advancing.rule,
+      status: entry.participants ? "final" : "pending",
+    },
+  };
+}
+
+/**
+ * The eligible fantasy field for a championship round when the registration
+ * index has no doc for it yet (the nightly rebuild hasn't run since the
+ * rounds were folded in): every corps the season standings know in the
+ * round's classes. Zero extra reads — the standings are already loaded for
+ * the slotting metric. SoundSport isn't ranked, so the festival waits for the
+ * index. Standings rows carry no home geo, so no proximity encore from here.
+ * @param {Object} comp
+ * @param {Map<string, Object>} metric - `${uid}_${class}` → standings entry.
+ * @returns {Array<{uid:string, corpsClass:string, corpsName:string, homeGeo:null, encoreDeclined:boolean}>}
+ */
+function championshipFieldFromStandings(comp, metric) {
+  const classes = championshipClassesOf(comp);
+  const out = [];
+  for (const entry of metric.values()) {
+    if (!entry || !entry.uid || !classes.includes(entry.corpsClass)) continue;
+    out.push({
+      uid: entry.uid,
+      corpsClass: entry.corpsClass,
+      corpsName: entry.corpsName || entry.corps || "Unnamed Corps",
+      homeGeo: null,
+      encoreDeclined: false,
+    });
+  }
+  return out;
 }
 
 /**
@@ -105,7 +248,8 @@ function scheduleSignature(sched) {
   if (!sched) return "";
   const ids = sched.lineup.map((e) => `${e.uid || "?"}:${e.order}`).join(",");
   const night = sched.night ? `${sched.night.day}:${sched.night.status}` : "";
-  return `${sched.fieldSize}|${sched.intervalMin}|${sched.scoresAt}|${sched.overflow.length}|${night}|${ids}`;
+  const adv = sched.advancement ? `${sched.advancement.fromDay}:${sched.advancement.status}` : "";
+  return `${sched.fieldSize}|${sched.intervalMin}|${sched.scoresAt}|${sched.overflow.length}|${night}|${adv}|${ids}`;
 }
 
 /** Shape a builder result into the stored schedule object (sans updatedAt). */
@@ -246,6 +390,15 @@ async function enrichScheduleRunningOrdersLogic(db, deps = {}) {
     }
     return advancingByDay.get(day);
   };
+  // The fantasy side's cut, from the prior night's fantasy recap — same
+  // laziness, one read per advancement day the walk reaches.
+  const fantasyAdvancingByDay = new Map();
+  const fantasyAdvancingFor = async (day) => {
+    if (!fantasyAdvancingByDay.has(day)) {
+      fantasyAdvancingByDay.set(day, await loadFantasyAdvancing(db, seasonId, day));
+    }
+    return fantasyAdvancingByDay.get(day);
+  };
 
   let updated = 0;
   let built = 0;
@@ -297,8 +450,12 @@ async function enrichScheduleRunningOrdersLogic(db, deps = {}) {
         // One venue geocode, shared by both sides' proximity encore.
         const venueGeo = homeGeoFor(comp.location);
         // --- Fantasy running order (from the registration index) ---
-        // Championship rounds keep their heritage synthesis on this side.
-        if (!isChampionship(comp)) {
+        // Championship rounds are auto-enrolled by class: the index carries
+        // them once the nightly rebuild has folded the schedule in; until then
+        // the standings stand in, and an advancement round is narrowed to the
+        // prior night's cut below.
+        {
+          const championship = isChampionship(comp);
           const regSnap = await db.doc(paths.showRegistrationEvent(seasonId, eventKey)).get();
           let registrations = regSnap.exists
             ? Object.values(regSnap.data().registrations || {}).map((r) => ({
@@ -308,7 +465,19 @@ async function enrichScheduleRunningOrdersLogic(db, deps = {}) {
                 homeGeo: r.homeGeo || null,
                 encoreDeclined: r.encoreDeclined === true,
               }))
-            : [];
+            : championship
+              ? championshipFieldFromStandings(comp, metric)
+              : [];
+          let advancement = null;
+          if (championship && Number.isFinite(comp.day)) {
+            const cut = applyChampionshipCut(
+              comp,
+              registrations,
+              await fantasyAdvancingFor(comp.day)
+            );
+            registrations = cut.registrations;
+            advancement = cut.advancement;
+          }
           // Each corps marches ONE night of a two-night event: seat only this
           // night's assignment (published snake, else the provisional one) —
           // the whole field on both nights is the bug this replaces.
@@ -339,6 +508,7 @@ async function enrichScheduleRunningOrdersLogic(db, deps = {}) {
             })
           );
           if (night) fantasy.night = night;
+          if (advancement) fantasy.advancement = advancement;
           // Write when there's a field, or to CLEAR a schedule whose field emptied.
           // An always-empty far-out show writes nothing (no churn).
           if (
@@ -448,6 +618,9 @@ exports.competitionDate = competitionDate;
 exports.resolveScoresDropAt = resolveScoresDropAt;
 exports.scheduleSignature = scheduleSignature;
 exports.isChampionship = isChampionship;
+exports.loadFantasyAdvancing = loadFantasyAdvancing;
+exports.applyChampionshipCut = applyChampionshipCut;
+exports.championshipFieldFromStandings = championshipFieldFromStandings;
 
 exports.scheduledScheduleRunningOrder = onSchedule(
   {
