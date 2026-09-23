@@ -9,6 +9,7 @@ import {
   nightAssignmentLabel,
   advancementLabel,
   championshipShowFor,
+  championshipModalShow,
 } from './scheduleUtils';
 
 // Regression: "Drums Across Nebraska" starts Wed 2026-07-01 8:46 PM CDT, which
@@ -403,5 +404,67 @@ describe('championshipShowFor — Championship Week card ↔ schedule row', () =
     expect(championshipShowFor(shows, { day: 47, eventName: 'Prelims' })).toBeNull();
     expect(championshipShowFor(/** @type {any} */ (null), { day: 45, eventName: 'x' })).toBeNull();
     expect(championshipShowFor(shows, /** @type {any} */ (null))).toBeNull();
+  });
+});
+
+describe('championshipModalShow — tapping a Championship Week card', () => {
+  const event = {
+    day: 49,
+    eventName: 'marching.art World Championship Finals',
+    location: 'Indianapolis, IN',
+    eligibleClasses: ['worldClass', 'openClass', 'aClass'],
+    isChampionship: true,
+    description: 'Top 12 from Semifinals compete for title',
+  };
+
+  it('opens the schedule row when the season has one, keeping the real field', () => {
+    const lineup = [{ order: 1, corps: 'Blue Stars', uid: 'u1' }];
+    const scheduled = {
+      eventName: 'DCI World Championship Finals',
+      location: 'Lucas Oil Stadium (2019)',
+      day: 49,
+      week: 7,
+      type: 'championship',
+      isChampionship: true,
+      allowedClasses: ['World Class', 'Open Class', 'A Class'],
+      lineup,
+      advancement: { fromDay: 48, rule: 'Top 12 from Semifinals', status: 'final' },
+      weather: { summary: 'clear skies, 71°F', tempF: 71, code: 0 },
+    };
+    const show = championshipModalShow(event, scheduled);
+    expect(show.lineup).toBe(lineup);
+    expect(show.advancement).toBe(scheduled.advancement);
+    expect(show.weather).toBe(scheduled.weather);
+    // The row's name is what the store and deep links key on.
+    expect(show.eventName).toBe('DCI World Championship Finals');
+    // The venue is the card's fixed site, never an archive year's stadium.
+    expect(show.location).toBe('Indianapolis, IN');
+    expect(show.isChampionship).toBe(true);
+    expect(show.allowedClasses).toEqual(['World Class', 'Open Class', 'A Class']);
+  });
+
+  it('synthesizes a championship show from the constants when no row exists yet', () => {
+    const show = championshipModalShow(event, null);
+    expect(show.eventName).toBe(event.eventName);
+    expect(show.location).toBe('Indianapolis, IN');
+    expect(show.day).toBe(49);
+    expect(show.week).toBe(7);
+    expect(show.isChampionship).toBe(true);
+    expect(show.type).toBe('championship');
+    expect(show.allowedClasses).toEqual(['worldClass', 'openClass', 'aClass']);
+    expect(show.lineup).toBeNull();
+    expect(show.date).toBeNull();
+  });
+
+  it('never leaves a row un-flagged, so the modal cannot offer manual registration', () => {
+    const show = championshipModalShow(event, {
+      eventName: 'World Championship Finals',
+      day: 49,
+      allowedClasses: [],
+    });
+    expect(show.isChampionship).toBe(true);
+    expect(show.type).toBe('championship');
+    expect(show.week).toBe(7);
+    expect(show.allowedClasses).toEqual(event.eligibleClasses);
   });
 });

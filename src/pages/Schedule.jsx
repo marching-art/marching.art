@@ -78,7 +78,7 @@ const Schedule = () => {
   // (once scored) the attendee roster — to badge and describe hosted shows.
   const { events: hostedEvents, reload: reloadHosted } = useHostedEvents(seasonUid);
   const hostedByKey = useMemo(() => {
-    /** @type {Record<string, Record<string, any>>} */
+    /** @type {Record<string, Partial<HostedEventRecord>>} */
     const map = {};
     for (const event of hostedEvents || []) {
       if (event && event.eventName != null && event.day != null) {
