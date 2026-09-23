@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Presentational sections for the Schedule page: week pills, show cards and
 // day-grouped show lists, and the Championship Week display. Extracted
 // verbatim from Schedule.jsx.
@@ -6,18 +5,77 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, MapPin, Check, ChevronRight, Trophy, Landmark, Users } from 'lucide-react';
-import { isEventPast, championshipShowFor } from '../utils/scheduleUtils';
+import { isEventPast, championshipShowFor, championshipModalShow } from '../utils/scheduleUtils';
 import { formatEventName } from '../utils/season';
 import { CLASS_CONFIG, CHAMPIONSHIP_EVENTS } from './scheduleConstants';
 import {
   isPodiumAutoAnchor,
+  multiNightNights,
   podiumAttendsShow,
   podiumAutoAttendsDay,
 } from '../utils/podiumAttendance';
 
+/** @typedef {import('../store/scheduleStore').ScheduleShow} ScheduleShow */
+/** @typedef {import('../api/podium').HostedEventRecord} HostedEventRecord */
+/** @typedef {import('../utils/podiumAttendance').PodiumAttendance} PodiumAttendance */
+/** @typedef {(typeof CHAMPIONSHIP_EVENTS)[number]} ChampionshipEvent */
+/** @typedef {keyof typeof CLASS_CONFIG} CorpsClassKey */
+/** @typedef {{ name: string, color: string, bgColor: string }} ClassBadgeConfig */
+/** @typedef {{ summary?: string, tempF?: number, code?: number, hour?: number } | null | undefined} WeatherLike */
+/**
+ * The director's profile as the schedule cards read it (`profileStore`'s
+ * ProfileDoc keeps `corps` as unknown values; the cards read each fantasy
+ * corps' name and its per-week show picks, matched by event name).
+ * @typedef {import('../store/profileStore').ProfileDoc} ScheduleProfile
+ * @typedef {{ corpsName?: string, name?: string, selectedShows?: Record<string, Array<{ eventName?: string }>> }} ScheduleCorps
+ */
+/** @typedef {(dayNumber: number) => Date | null} DayToDate */
+/** @typedef {(dayNumber: number) => string} DayFormatter */
+/** @typedef {(show: ScheduleShow) => void} RegisterHandler */
+/**
+ * Hosted-event records keyed `${day}|${eventName}` (the hook hands them over
+ * untyped; the cards read the HostedEventRecord fields they need).
+ * @typedef {Record<string, Partial<HostedEventRecord> | null | undefined> | null | undefined} HostedByKey
+ */
+/** A schedule row as the day rows read it: scores ride on legacy rows only. */
+/** @typedef {ScheduleShow & { scores?: Array<{ score?: number | null }> | null }} ScoredShow */
+
+/**
+ * The badge styling for a corps class, or null for a class the page doesn't
+ * style (a legacy or unexpected key).
+ * @param {string} corpsClass
+ * @returns {ClassBadgeConfig | null}
+ */
+const classConfigFor = (corpsClass) =>
+  Object.prototype.hasOwnProperty.call(CLASS_CONFIG, corpsClass)
+    ? CLASS_CONFIG[/** @type {CorpsClassKey} */ (corpsClass)]
+    : null;
+
+/**
+ * The director's fantasy corps as `[corpsClass, corps]` pairs, skipping empty
+ * slots — the one place the profile's untyped corps map is narrowed.
+ * @param {ScheduleProfile | null | undefined} userProfile
+ * @returns {Array<[string, ScheduleCorps]>}
+ */
+const fantasyCorpsEntries = (userProfile) =>
+  Object.entries(userProfile?.corps || {}).flatMap(([corpsClass, corps]) =>
+    corps && typeof corps === 'object'
+      ? [/** @type {[string, ScheduleCorps]} */ ([corpsClass, corps])]
+      : []
+  );
+
+/**
+ * Whether a past show's scores have landed — drives the "Scored" chip and the
+ * scores link on a completed card.
+ * @param {ScoredShow} show
+ */
+const showIsScored = (show) =>
+  Array.isArray(show.scores) && show.scores.some((s) => s?.score != null);
+
 // An emoji for a WMO weather code (the backend stores show-time conditions on
 // each competition as { summary, tempF, code }). Falls back to a thermometer so
 // a code we don't map still renders a chip rather than nothing.
+/** @param {unknown} code */
 const weatherEmoji = (code) => {
   const c = Number(code);
   if (c === 0) return '☀️';
@@ -40,6 +98,7 @@ const weatherEmoji = (code) => {
 // producer dates every show — regular, major, championship — from the season
 // calendar, so this is the venue's forecast for the night the show is actually
 // played this season).
+/** @param {{ weather: WeatherLike }} props */
 const WeatherChip = ({ weather }) => {
   if (!weather?.summary) return null;
   const hour = typeof weather.hour === 'number' ? weather.hour : 20;
@@ -61,9 +120,18 @@ const WeatherChip = ({ weather }) => {
 // WEEK PILLS COMPONENT
 // =============================================================================
 
+/**
+ * @param {{
+ *   weeks: number[],
+ *   currentWeek: number | null | undefined,
+ *   selectedWeek: number | null | undefined,
+ *   onSelect: (week: number) => void,
+ *   getShowCount: (week: number) => number,
+ * }} props
+ */
 const WeekPills = ({ weeks, currentWeek, selectedWeek, onSelect, getShowCount }) => {
-  const containerRef = useRef(null);
-  const currentWeekRef = useRef(null);
+  const containerRef = useRef(/** @type {HTMLDivElement | null} */ (null));
+  const currentWeekRef = useRef(/** @type {HTMLButtonElement | null} */ (null));
 
   // Auto-scroll to current week on mount
   useEffect(() => {
@@ -132,19 +200,23 @@ const WeekPills = ({ weeks, currentWeek, selectedWeek, onSelect, getShowCount })
 // shared utils/podiumAttendance helpers, so this page, the registration modal
 // and the tour map agree on which entries the Podium corps is on the bill for.
 
+/**
+ * @param {{
+ *   show: ScheduleShow,
+ *   userProfile: ScheduleProfile | null | undefined,
+ *   podiumAttendance: PodiumAttendance | null | undefined,
+ * }} props
+ */
 const RegistrationBadges = ({ show, userProfile, podiumAttendance }) => {
-  const registeredCorps = userProfile?.corps
-    ? Object.entries(userProfile.corps)
-        .filter(([_corpsClass, corpsData]) => {
-          if (!corpsData) return false;
-          const weekKey = `week${show.week}`;
-          const selectedShows = corpsData.selectedShows?.[weekKey] || [];
-          // Match by eventName only - dates can have type mismatches (Timestamp vs string)
-          // This matches the scoring.js logic which also only checks eventName
-          return selectedShows.some((s) => s.eventName === show.eventName);
-        })
-        .map(([corpsClass]) => corpsClass)
-    : [];
+  const registeredCorps = fantasyCorpsEntries(userProfile)
+    .filter(([_corpsClass, corpsData]) => {
+      const weekKey = `week${show.week}`;
+      const selectedShows = corpsData.selectedShows?.[weekKey] || [];
+      // Match by eventName only - dates can have type mismatches (Timestamp vs string)
+      // This matches the scoring.js logic which also only checks eventName
+      return selectedShows.some((s) => s.eventName === show.eventName);
+    })
+    .map(([corpsClass]) => corpsClass);
 
   const podiumAttending = podiumAttendsShow(podiumAttendance, show);
 
@@ -153,7 +225,11 @@ const RegistrationBadges = ({ show, userProfile, podiumAttendance }) => {
   return (
     <div className="flex items-center gap-1 flex-wrap">
       {registeredCorps.map((corpsClass) => {
-        const config = CLASS_CONFIG[corpsClass] || { name: corpsClass, color: 'text-muted' };
+        const config = classConfigFor(corpsClass) || {
+          name: corpsClass,
+          color: 'text-muted',
+          bgColor: 'bg-charcoal-500/10',
+        };
         return (
           <span
             key={corpsClass}
@@ -180,6 +256,19 @@ const RegistrationBadges = ({ show, userProfile, podiumAttendance }) => {
 // SHOW CARD COMPONENT
 // =============================================================================
 
+/**
+ * @param {{
+ *   show: ScheduleShow,
+ *   userProfile: ScheduleProfile | null | undefined,
+ *   formattedDate: string,
+ *   isPast: boolean,
+ *   onRegister: RegisterHandler,
+ *   isCompleted: boolean,
+ *   seasonUid: string | null | undefined,
+ *   podiumAttendance: PodiumAttendance | null | undefined,
+ *   hostedEvent: Partial<HostedEventRecord> | null | undefined,
+ * }} props
+ */
 const ShowCard = ({
   show,
   userProfile,
@@ -193,9 +282,7 @@ const ShowCard = ({
 }) => {
   const isRegistered = useMemo(() => {
     if (podiumAttendsShow(podiumAttendance, show)) return true;
-    if (!userProfile?.corps) return false;
-    return Object.values(userProfile.corps).some((corps) => {
-      if (!corps) return false;
+    return fantasyCorpsEntries(userProfile).some(([, corps]) => {
       const weekKey = `week${show.week}`;
       const selectedShows = corps.selectedShows?.[weekKey] || [];
       // Match by eventName only - dates can have type mismatches (Timestamp vs string)
@@ -294,10 +381,10 @@ const ShowCard = ({
                   ))}
               </div>
             )}
-            {show.multiNight?.nights?.length > 1 && (
+            {multiNightNights(show).length > 1 && (
               <div className="mt-1 text-[10px] text-secondary">
                 Two-night event — one registration covers both nights; you perform on your assigned
-                night (lineups announced Day {show.multiNight.nights[0] - 2})
+                night (lineups announced Day {multiNightNights(show)[0] - 2})
               </div>
             )}
             {show.sponsor?.corpsName && (
@@ -362,6 +449,7 @@ const ShowCard = ({
 // DAY INDICATOR COMPONENT
 // =============================================================================
 
+/** @param {{ date: Date | null | undefined, dayNumber?: number | null, isMajorDay?: boolean }} props */
 const DayIndicator = ({ date, dayNumber, isMajorDay = false }) => {
   if (!date) return null;
 
@@ -407,6 +495,19 @@ const DayIndicator = ({ date, dayNumber, isMajorDay = false }) => {
 // DAY ROW COMPONENT
 // =============================================================================
 
+/**
+ * @param {{
+ *   day: number,
+ *   shows: ScheduleShow[],
+ *   userProfile: ScheduleProfile | null | undefined,
+ *   formatDate: DayFormatter,
+ *   getActualDate: DayToDate,
+ *   onRegister: RegisterHandler,
+ *   seasonUid: string | null | undefined,
+ *   podiumAttendance: PodiumAttendance | null | undefined,
+ *   hostedByKey: HostedByKey,
+ * }} props
+ */
 const DayRow = ({
   day,
   shows,
@@ -437,7 +538,7 @@ const DayRow = ({
             formattedDate={formatDate(show.day)}
             isPast={isPast}
             onRegister={onRegister}
-            isCompleted={isPast && show.scores?.some((s) => s.score != null)}
+            isCompleted={isPast && showIsScored(show)}
             seasonUid={seasonUid}
             podiumAttendance={podiumAttendance}
             hostedEvent={hostedByKey?.[`${show.day}|${show.eventName}`] || null}
@@ -452,6 +553,18 @@ const DayRow = ({
 // SHOWS LIST COMPONENT
 // =============================================================================
 
+/**
+ * @param {{
+ *   shows: ScheduleShow[],
+ *   userProfile: ScheduleProfile | null | undefined,
+ *   formatDate: DayFormatter,
+ *   getActualDate: DayToDate,
+ *   onRegister: RegisterHandler,
+ *   seasonUid: string | null | undefined,
+ *   podiumAttendance: PodiumAttendance | null | undefined,
+ *   hostedByKey: HostedByKey,
+ * }} props
+ */
 const ShowsList = ({
   shows,
   userProfile,
@@ -464,9 +577,9 @@ const ShowsList = ({
 }) => {
   // Group shows by day
   const showsByDay = useMemo(() => {
-    if (!shows || shows.length === 0) return {};
+    const grouped = /** @type {Record<number, ScheduleShow[]>} */ ({});
+    if (!shows || shows.length === 0) return grouped;
 
-    const grouped = {};
     shows.forEach((show) => {
       const day = show.day;
       if (!grouped[day]) grouped[day] = [];
@@ -514,6 +627,17 @@ const ShowsList = ({
 // CHAMPIONSHIP WEEK DISPLAY COMPONENT
 // =============================================================================
 
+/**
+ * @param {{
+ *   event: ChampionshipEvent,
+ *   scheduled: ScheduleShow | null,
+ *   userProfile: ScheduleProfile | null | undefined,
+ *   getActualDate: DayToDate,
+ *   seasonUid: string | null | undefined,
+ *   podiumAttendance: PodiumAttendance | null | undefined,
+ *   onRegister: RegisterHandler,
+ * }} props
+ */
 const ChampionshipEventCard = ({
   event,
   scheduled,
@@ -521,9 +645,23 @@ const ChampionshipEventCard = ({
   getActualDate,
   seasonUid: _seasonUid,
   podiumAttendance,
+  onRegister,
 }) => {
   const date = getActualDate(event.day);
   const isPast = isEventPast(date);
+  // Tapping the card opens the same registration/running-order modal a
+  // regular-season card does (auto-enrollment panel, eligible classes, Podium
+  // attendance, the real field once the season has stamped it). The show it
+  // hands over prefers the schedule row (`scheduled`) and falls back to the
+  // constants, so the card opens before the round is materialized too.
+  const modalShow = useMemo(
+    () => /** @type {ScheduleShow} */ (championshipModalShow(event, scheduled)),
+    [event, scheduled]
+  );
+  const canOpen = !isPast && typeof onRegister === 'function';
+  const open = () => {
+    if (canOpen) onRegister(modalShow);
+  };
   const formattedDate = date
     ? date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
     : `Day ${event.day}`;
@@ -536,16 +674,12 @@ const ChampionshipEventCard = ({
 
   // Find which of user's corps are eligible for this event
   const eligibleCorps = useMemo(() => {
-    if (!userProfile?.corps) return [];
-    return Object.entries(userProfile.corps)
-      .filter(([corpsClass, corpsData]) => {
-        if (!corpsData?.corpsName) return false;
-        return event.eligibleClasses.includes(corpsClass);
-      })
-      .map(([corpsClass, corpsData]) => ({
-        corpsClass,
-        corpsName: corpsData.corpsName,
-      }));
+    const eligible = /** @type {readonly string[]} */ (event.eligibleClasses);
+    return fantasyCorpsEntries(userProfile).flatMap(([corpsClass, corpsData]) =>
+      corpsData.corpsName && eligible.includes(corpsClass)
+        ? [{ corpsClass, corpsName: corpsData.corpsName }]
+        : []
+    );
   }, [userProfile, event.eligibleClasses]);
 
   // The Podium corps auto-attends its division's championship days (from
@@ -557,14 +691,25 @@ const ChampionshipEventCard = ({
 
   return (
     <div
+      onClick={open}
+      onKeyDown={(e) => {
+        if (canOpen && (e.key === 'Enter' || e.key === ' ')) {
+          e.preventDefault();
+          open();
+        }
+      }}
+      role={canOpen ? 'button' : undefined}
+      tabIndex={canOpen ? 0 : undefined}
+      aria-label={canOpen ? `Open details for ${formatEventName(event.eventName)}` : undefined}
       className={`
-        bg-surface-card border border-line rounded-none overflow-hidden flex flex-col h-full
+        bg-surface-card border border-brand/40 rounded-none overflow-hidden flex flex-col h-full
         ${isPast ? 'opacity-60' : ''}
+        ${canOpen ? 'hover:border-brand/70 cursor-pointer active:bg-surface-raised' : ''}
         ${hasEligibleCorps && !isPast ? 'border-l-2 border-l-interactive' : ''}
       `}
     >
       {/* Card Header */}
-      <div className="flex-1 px-4 py-3 border-b border-line">
+      <div className="flex-1 px-4 py-3 border-b border-line bg-brand/10">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 mb-1">
@@ -611,7 +756,7 @@ const ChampionshipEventCard = ({
           {hasEligibleCorps ? (
             <div className="flex items-center gap-1 flex-wrap">
               {eligibleCorps.map(({ corpsClass }) => {
-                const config = CLASS_CONFIG[corpsClass] || {
+                const config = classConfigFor(corpsClass) || {
                   name: corpsClass,
                   color: 'text-muted',
                   bgColor: 'bg-charcoal-500/10',
@@ -642,7 +787,7 @@ const ChampionshipEventCard = ({
           {/* Eligible Classes Info */}
           <div className="flex items-center gap-1">
             {event.eligibleClasses.map((cls) => {
-              const config = CLASS_CONFIG[cls];
+              const config = classConfigFor(cls);
               if (!config) return null;
               return (
                 <span
@@ -660,6 +805,18 @@ const ChampionshipEventCard = ({
   );
 };
 
+/**
+ * @param {{
+ *   userProfile: ScheduleProfile | null | undefined,
+ *   getActualDate: DayToDate,
+ *   seasonUid: string | null | undefined,
+ *   regularShows: ScheduleShow[],
+ *   formatDate: DayFormatter,
+ *   onRegister: RegisterHandler,
+ *   podiumAttendance: PodiumAttendance | null | undefined,
+ *   hostedByKey: HostedByKey,
+ * }} props
+ */
 const ChampionshipWeekDisplay = ({
   userProfile,
   getActualDate,
@@ -675,7 +832,8 @@ const ChampionshipWeekDisplay = ({
   // included) so it can show the venue and show-time weather the backend
   // stamped for that night — the constants alone know neither.
   const eventsByDay = useMemo(() => {
-    const grouped = {};
+    const grouped =
+      /** @type {Record<number, Array<{ event: ChampionshipEvent, scheduled: ScheduleShow | null }>>} */ ({});
     CHAMPIONSHIP_EVENTS.forEach((event) => {
       if (!grouped[event.day]) grouped[event.day] = [];
       grouped[event.day].push({ event, scheduled: championshipShowFor(regularShows, event) });
@@ -685,8 +843,8 @@ const ChampionshipWeekDisplay = ({
 
   // Group regular shows (days 43-44) by day
   const regularShowsByDay = useMemo(() => {
-    if (!regularShows || regularShows.length === 0) return {};
-    const grouped = {};
+    const grouped = /** @type {Record<number, ScheduleShow[]>} */ ({});
+    if (!regularShows || regularShows.length === 0) return grouped;
     regularShows.forEach((show) => {
       // Only include days 43-44 (regular season days in week 7)
       if (show.day >= 43 && show.day <= 44) {
@@ -724,7 +882,7 @@ const ChampionshipWeekDisplay = ({
                       formattedDate={formatDate(show.day)}
                       isPast={isPast}
                       onRegister={onRegister}
-                      isCompleted={isPast && show.scores?.some((s) => s.score != null)}
+                      isCompleted={isPast && showIsScored(show)}
                       seasonUid={seasonUid}
                       podiumAttendance={podiumAttendance}
                       hostedEvent={hostedByKey?.[`${show.day}|${show.eventName}`] || null}
@@ -748,7 +906,8 @@ const ChampionshipWeekDisplay = ({
         <p className="text-xs text-muted">
           All championship events have{' '}
           <span className="text-interactive font-bold">automatic enrollment</span> based on your
-          corps class and advancement. No registration required!
+          corps class and advancement. No registration required — tap a round to see who&apos;s in
+          and its running order.
         </p>
       </div>
 
@@ -771,6 +930,7 @@ const ChampionshipWeekDisplay = ({
                   getActualDate={getActualDate}
                   seasonUid={seasonUid}
                   podiumAttendance={podiumAttendance}
+                  onRegister={onRegister}
                 />
               ))}
             </div>

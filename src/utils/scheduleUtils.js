@@ -67,7 +67,7 @@ import { getShowRegistrationDeadline } from './seasonClock';
  * @property {FieldSchedule|null} [podiumSchedule]
  * @property {EncoreEntry|null} [encore]
  * @property {EncoreEntry|null} [podiumEncore]
- * @property {Object|null} [sponsor]
+ * @property {{ corpsName?: string, corpsClass?: string, uid?: string }|null} [sponsor]
  * @property {{summary?: string, tempF?: number, code?: number, hour?: number}|null} [weather]
  */
 
@@ -214,6 +214,69 @@ export function championshipShowFor(shows, event) {
     (show) => namesSoundSport(show.allowedClasses) === wantsSoundSport
   );
   return byClass.length === 1 ? byClass[0] : null;
+}
+
+/**
+ * The show a Championship Week card hands the registration modal when tapped,
+ * so the card opens exactly like a regular-season card. Prefers the season
+ * schedule's row (the real field: lineup, advancement stamp, encore, times)
+ * when `championshipShowFor` found one, and otherwise synthesizes a
+ * championship show from the card's constants so the modal still opens —
+ * auto-enrollment panel, eligible classes, Podium attendance — before the
+ * season has stamped the round. The venue is always the card's (a fixed game
+ * fact), and the row is always flagged `isChampionship` so the modal never
+ * offers manual registration for an auto-enrolled round.
+ *
+ * @param {{day: number, eventName: string, location?: string, eligibleClasses?: string[], description?: string}} event - A CHAMPIONSHIP_EVENTS entry.
+ * @param {Record<string, any>|null|undefined} scheduled - The matching transformed show, if any.
+ * @returns {Record<string, any>} A show object for ShowRegistrationModal.
+ */
+export function championshipModalShow(event, scheduled) {
+  const eligibleClasses = Array.isArray(event.eligibleClasses) ? event.eligibleClasses : [];
+  if (scheduled) {
+    return {
+      ...scheduled,
+      location: event.location || scheduled.location || '',
+      week: scheduled.week || Math.ceil(event.day / 7),
+      type: 'championship',
+      isChampionship: true,
+      eventTier: scheduled.eventTier || 'championship',
+      allowedClasses:
+        Array.isArray(scheduled.allowedClasses) && scheduled.allowedClasses.length > 0
+          ? scheduled.allowedClasses
+          : eligibleClasses,
+    };
+  }
+  return {
+    eventName: event.eventName,
+    location: event.location || '',
+    date: null,
+    day: event.day,
+    week: Math.ceil(event.day / 7),
+    type: 'championship',
+    isChampionship: true,
+    allowedClasses: eligibleClasses,
+    mandatory: true,
+    eventTier: 'championship',
+    hostUid: null,
+    multiNight: null,
+    startsAt: null,
+    scoresAt: null,
+    gatesAt: null,
+    timezone: null,
+    venue: null,
+    lineup: null,
+    fantasySchedule: null,
+    podiumSchedule: null,
+    overflow: null,
+    fieldSize: null,
+    advancement: null,
+    encore: null,
+    podiumEncore: null,
+    sponsor: null,
+    weather: null,
+    description: event.description || '',
+  };
 }
 
 /**
