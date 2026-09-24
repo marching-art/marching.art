@@ -18,6 +18,7 @@ import {
 import { queryKeys } from '../lib/queryClient';
 import { CAPTIONS } from '../components/Dashboard';
 import { processCaptionScores } from '../utils/dashboardScoring';
+import { displayEventName } from '../utils/eventNames';
 import { useRevealedDay } from './useRevealedDay';
 import { formatRecapDate } from './useScoresData';
 
@@ -161,7 +162,11 @@ export function useRecentResults(user, seasonData, activeCorpsClass, currentDay)
 
         if (userResult && results.length < 5) {
           results.push({
-            eventName: show.eventName || show.name || 'Show',
+            eventName:
+              displayEventName({
+                day: recap.offSeasonDay,
+                eventName: show.eventName || show.name,
+              }) || 'Show',
             score: userResult.totalScore,
             placement: userResult.placement,
             // Derive the event date from the season schedule so live-season
@@ -225,7 +230,8 @@ export function usePodiumRecentResults(user, seasonData, currentDay, enabled = t
         const mine = /** @type {any} */ ((show.results || []).find((r) => r.uid === user.uid));
         if (mine && results.length < 5) {
           results.push({
-            eventName: show.eventName || 'Show',
+            eventName:
+              displayEventName({ day: recap.competitionDay, eventName: show.eventName }) || 'Show',
             score: mine.totalScore,
             placement: mine.place ?? mine.placement,
             // Podium recaps key by competitionDay; formatRecapDate expects

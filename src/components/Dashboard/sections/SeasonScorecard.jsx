@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // SeasonScorecard - Sidebar scorecard showing season stats
 // OPTIMIZATION #4: Extracted from Dashboard.jsx to reduce file size and isolate renders
 
@@ -18,13 +17,14 @@ import {
 } from 'lucide-react';
 import { CLASS_LABELS, getSoundSportRating } from './constants';
 import { getConceptTitle, describeConceptStyle } from '../../../utils/showConcept';
-import { formatEventName } from '../../../utils/season';
+import { displayEventName } from '../../../utils/eventNames';
 import JargonTooltip from '../../JargonTooltip';
 
 // Map the canonical corps-class keys to their JargonTooltip definition keys so
 // the class label on the scorecard explains itself to newcomers. `soundSport`
 // (camelCase key) maps to the lowercase `soundsport` definition; the rest match
 // their definition keys directly.
+/** @type {Record<string, import('react').ComponentProps<typeof JargonTooltip>['termKey']>} */
 const CLASS_JARGON_KEYS = {
   worldClass: 'worldClass',
   openClass: 'openClass',
@@ -50,7 +50,34 @@ const BlueRibbonIcon = ({ className = 'w-5 h-5' }) => (
   </svg>
 );
 
+/**
+ * @typedef {Object} SeasonScorecardProps
+ * @property {number|null|undefined} [score]
+ * @property {number|null|undefined} [rank]
+ * @property {number|null|undefined} [rankChange]
+ * @property {string} [corpsName]
+ * @property {string} [corpsClass] - Canonical class key ('worldClass', …).
+ * @property {boolean} [loading]
+ * @property {string|null} [avatarUrl]
+ * @property {() => void} [onDesignUniform]
+ * @property {number} [bestInShowCount]
+ * @property {string|null} [themeClass]
+ * @property {() => void} [onShowConcept]
+ * @property {Record<string, any>|null} [showConcept]
+ * @property {boolean} [canManage]
+ * @property {boolean} [canMove]
+ * @property {() => void} [onMoveCorps]
+ * @property {() => void} [onRetireCorps]
+ * @property {string|null} [lockReason]
+ * @property {{score?: number|null, eventName?: string|null, day?: number|null}|null} [bestRecent]
+ * @property {(() => void)|null} [onSeasonScoreClick]
+ */
+
+/** @type {Record<string, string>} */
+const CLASS_LABEL_BY_KEY = CLASS_LABELS;
+
 const SeasonScorecard = memo(
+  /** @param {SeasonScorecardProps} props */
   ({
     score,
     rank,
@@ -86,12 +113,13 @@ const SeasonScorecard = memo(
     const isSoundSport = corpsClass === 'soundSport';
     const rating = isSoundSport && score ? getSoundSportRating(score) : null;
     const [menuOpen, setMenuOpen] = useState(false);
-    const menuRef = useRef(null);
+    const menuRef = useRef(/** @type {HTMLDivElement|null} */ (null));
 
     useEffect(() => {
       if (!menuOpen) return;
+      /** @param {MouseEvent} e */
       const handleClickOutside = (e) => {
-        if (menuRef.current && !menuRef.current.contains(e.target)) {
+        if (menuRef.current && !menuRef.current.contains(/** @type {Node} */ (e.target))) {
           setMenuOpen(false);
         }
       };
@@ -156,12 +184,12 @@ const SeasonScorecard = memo(
             <div className="flex-1 min-w-0">
               <p className="text-base font-bold text-white truncate">{corpsName || 'My Corps'}</p>
               <p className="text-[10px] uppercase tracking-wider text-muted">
-                {CLASS_JARGON_KEYS[corpsClass] ? (
+                {corpsClass && CLASS_JARGON_KEYS[corpsClass] ? (
                   <JargonTooltip termKey={CLASS_JARGON_KEYS[corpsClass]}>
-                    {CLASS_LABELS[corpsClass] || corpsClass}
+                    {CLASS_LABEL_BY_KEY[corpsClass] || corpsClass}
                   </JargonTooltip>
                 ) : (
-                  CLASS_LABELS[corpsClass] || corpsClass
+                  (corpsClass && CLASS_LABEL_BY_KEY[corpsClass]) || corpsClass
                 )}
               </p>
             </div>
@@ -339,7 +367,7 @@ const SeasonScorecard = memo(
                   <p className="text-2xl font-bold text-white font-data tabular-nums">
                     #{rank || '-'}
                   </p>
-                  {rankChange !== null && rankChange !== 0 && (
+                  {rankChange != null && rankChange !== 0 && (
                     <span
                       className={`text-xs font-bold flex items-center gap-0.5 ${
                         rankChange > 0 ? 'text-green-500' : 'text-red-500'
@@ -361,7 +389,7 @@ const SeasonScorecard = memo(
 
           {/* Best recent result — folded in from the retired QuickStats
               widget. SoundSport shows the medal tier, never the number. */}
-          {bestRecent && bestRecent.score > 0 && (
+          {bestRecent && bestRecent.score != null && bestRecent.score > 0 && (
             <p className="mt-3 text-[10px] text-muted flex items-center gap-1.5">
               <Trophy className="w-3 h-3 text-brand flex-shrink-0" />
               <span className="truncate">
@@ -371,7 +399,7 @@ const SeasonScorecard = memo(
                     ? getSoundSportRating(bestRecent.score).rating
                     : bestRecent.score.toFixed(2)}
                 </span>
-                {bestRecent.eventName ? ` at ${formatEventName(bestRecent.eventName)}` : ''}
+                {bestRecent.eventName ? ` at ${displayEventName(bestRecent)}` : ''}
               </span>
             </p>
           )}

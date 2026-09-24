@@ -1,5 +1,16 @@
 [
   {
+    "id": "2026-09-24-dashboard-fixed-event-names",
+    "date": "2026-09-24",
+    "title": "The dashboard names the majors and Championship Week rounds correctly",
+    "category": "fix",
+    "summary": "The Show Day strip, your next-show line, and your recent results now always use the marching.art names for the Southwestern and Southeastern Championships, the Eastern Classic, and every Championship Week round (days 45–49) — the same names the Schedule page shows.",
+    "highlights": [
+      "Day 47 no longer appears as an old DCI \"Quarterfinals\" on the dashboard: it is the marching.art World Championship Prelims, with Semifinals on day 48 and Finals on day 49.",
+      "Seasons generated from here on store the correct round names from the start, so every surface agrees."
+    ]
+  },
+  {
     "id": "2026-09-24-hall-of-champions-both-divisions",
     "date": "2026-09-24",
     "title": "The Hall of Champions lists every class in both divisions",

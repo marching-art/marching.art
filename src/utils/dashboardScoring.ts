@@ -6,6 +6,7 @@
 // the dashboard renders. Kept free of React/Firestore so they are unit-testable.
 
 import { SEASON_FINAL_DAY } from './seasonProgress';
+import { displayEventName } from './eventNames';
 
 // A single caption -> score map (e.g. { GE1: 19.5, VP: 18.2, ... }).
 export type CaptionScores = Record<string, number | undefined>;
@@ -101,7 +102,7 @@ export function getNextSelectedShow(
       if (currentDay != null && day < currentDay) continue;
       upcoming.push({
         day,
-        eventName: show.eventName || show.name || 'TBD',
+        eventName: displayEventName({ day, eventName: show.eventName || show.name }) || 'TBD',
         location: show.location || '',
       });
     }
@@ -233,7 +234,14 @@ export function processCaptionScores(
       score: null,
       trend: null,
       nextShow: firstShow
-        ? { day: firstShow.offSeasonDay, location: firstShow.eventName || firstShow.name || 'TBD' }
+        ? {
+            day: firstShow.offSeasonDay,
+            location:
+              displayEventName({
+                day: firstShow.offSeasonDay,
+                eventName: firstShow.eventName || firstShow.name,
+              }) || 'TBD',
+          }
         : null,
     };
   }
@@ -246,7 +254,12 @@ export function processCaptionScores(
 
     // First event beyond the effective day is the next upcoming show.
     if ((event.offSeasonDay ?? 0) > effectiveDay && !nextShow && scoreData) {
-      nextShow = { day: event.offSeasonDay, location: event.eventName || event.name || 'TBD' };
+      nextShow = {
+        day: event.offSeasonDay,
+        location:
+          displayEventName({ day: event.offSeasonDay, eventName: event.eventName || event.name }) ||
+          'TBD',
+      };
     }
 
     if ((event.offSeasonDay ?? 0) > effectiveDay) continue;
@@ -257,7 +270,10 @@ export function processCaptionScores(
         scores.push({
           day: event.offSeasonDay as number,
           score: captionScore,
-          eventName: event.eventName || event.name,
+          eventName: displayEventName({
+            day: event.offSeasonDay,
+            eventName: event.eventName || event.name,
+          }),
         });
       }
     }
