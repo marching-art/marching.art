@@ -1622,8 +1622,9 @@ proven the machinery. Total: ~16–20 engineering weeks to beta.
     decayed reputation supports (gradual erosion, not a hard reset to A). Each division crowns its
     own Finals hardware; the Hall of Champions shows the Podium Division with the same classes
     the Fantasy Division has — the World Championship podium (top three of the whole record,
-    `classes.podiumClass`) plus the Open and A Class podiums (`podiumOpenClass` /
-    `podiumAClass`, `helpers/hallOfChampions.js`). The
+    `classes.podiumClass`, decided at the Day 49 Finals) plus the Open and A Class podiums
+    (`podiumOpenClass` / `podiumAClass` — decided at the Day 46 Open & A Class Finals, read from
+    that night's recap; `helpers/hallOfChampions.js`). The
     Eastern Classic night snake is division-seeded from Day-38 standings (published Day 39;
     uid-parity fallback until then). Championship Week is Indianapolis and runs the fantasy
     classes' finals-week bracket EXACTLY, in parallel (scored the Podium way, own results board):

@@ -754,8 +754,11 @@ async function archivePodiumSeason(db, previousSeason) {
   //   podiumClass       the Podium World Championship — the top three of the
   //                     WHOLE record, whatever division each corps climbed
   //                     from (one field, one title; helpers/worldChampionship)
-  //   podiumOpenClass   the Open Class podium — the top three Open corps
-  //   podiumAClass      the A Class podium — the top three A corps
+  //   podiumOpenClass   the Open Class podium — the top three Open corps at
+  //   podiumAClass      the A Class podium — the top three A corps at
+  //                     the Day 46 Open & A Class Finals, where those
+  //                     titles are decided (season-end standing only when
+  //                     that night's recap is missing)
   //
   // (`divisionChampions` above still names each division's best for the
   // season archive; the Hall keys are the public podiums.) Each World
@@ -767,7 +770,20 @@ async function archivePodiumSeason(db, previousSeason) {
     try {
       const metals = ["gold", "silver", "bronze"];
       const eventName = "Podium World Championship Finals";
-      const podiums = hallOfChampions.buildPodiumHallPodiums(record);
+      // The Open and A Class titles are decided at the Day 46 Open & A Class
+      // Finals, not by the season-end record — read that night's sheet.
+      let classFinals = [];
+      try {
+        const classFinalsSnapshot = await store
+          .recapDayRef(db, previousSeason.seasonUid, hallOfChampions.CLASS_FINALS_DAY)
+          .get();
+        classFinals = hallOfChampions.recapDayResults(
+          classFinalsSnapshot.exists ? classFinalsSnapshot.data() : null
+        );
+      } catch (recapError) {
+        logger.warn(`[podium] Day 46 recap read failed; class podiums fall back to the record: ${recapError.message}`);
+      }
+      const podiums = hallOfChampions.buildPodiumHallPodiums(record, { classFinals });
       const worldPodium = podiums[hallOfChampions.PODIUM_HALL_CLASSES.worldClass] || [];
       for (const entry of worldPodium) {
         try {

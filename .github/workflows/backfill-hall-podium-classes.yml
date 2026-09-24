@@ -7,8 +7,11 @@ name: Backfill Hall of Champions Podium Open/A podiums
 # Open, A, SoundSport; Podium: World, Open, A. Seasons archived before this
 # carry only the Podium World Championship podium (classes.podiumClass). This
 # derives classes.podiumOpenClass / classes.podiumAClass for every archived
-# Podium season from its frozen record (podium-recaps/{seasonUid}
-# .finalStandings), exactly as a fresh archival now writes them.
+# Podium season from its Day 46 Open & A Class Finals recap
+# (podium-recaps/{seasonUid}/days/46 — where those titles are decided),
+# falling back to the frozen record (podium-recaps/{seasonUid}.finalStandings)
+# for a division with no Day 46 rows, exactly as a fresh archival now writes
+# them.
 # See functions/src/scripts/backfillHallPodiumClasses.js.
 #
 # HOW TO RUN (no console needed — all from the Actions tab):

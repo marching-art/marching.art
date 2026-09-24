@@ -207,6 +207,23 @@ describe('HallOfChampions — both divisions, each with its classes', () => {
     expect(classTabs().getByRole('tab', { name: 'Sound' })).toBeInTheDocument();
   });
 
+  it('says where each title was decided: Open/A at the Day 46 Class Finals, World at Day 49', async () => {
+    renderPage();
+    await screen.findByRole('tablist', { name: 'Division' });
+    // World Championship: Day 49 Finals.
+    expect(screen.getAllByText(/Day 49/).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/Day 46/)).not.toBeInTheDocument();
+
+    // Podium A Class: crowned at the Day 46 Open & A Class Finals — never the
+    // Day 49 Finals, and never the season's archive date.
+    fireEvent.click(divisionTabs().getByRole('tab', { name: 'Podium' }));
+    fireEvent.click(await classTabs().findByRole('tab', { name: 'A Class' }));
+    await waitFor(() => expect(screen.getAllByText('Amber').length).toBeGreaterThan(0));
+    expect(screen.getAllByText(/Day 46/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Open & A Class Finals/).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/Day 49/)).not.toBeInTheDocument();
+  });
+
   it('hides the Podium division until an archived season has a Podium podium', async () => {
     vi.mocked(getSeasonChampions).mockResolvedValue(
       SEASONS.map((s) => ({

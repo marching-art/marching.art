@@ -22,7 +22,25 @@ const PROFILES = profiles({
   a1: { displayName: "Amber Director" },
 });
 
+const DAY46_ROWS = [
+  { uid: "o2", corpsName: "Opal", division: "openClass", totalScore: 90.5 },
+  { uid: "o1", corpsName: "Onyx", division: "openClass", totalScore: 89.9 },
+  { uid: "a1", corpsName: "Amber", division: "aClass", totalScore: 81.5 },
+];
+
 describe("rebuildPodiumDivisionClasses", () => {
+  test("crowns Open/A from the Day 46 Class Finals when the season has that recap", () => {
+    const { classes: next } = rebuildPodiumDivisionClasses({}, RECORD, PROFILES, DAY46_ROWS);
+    assert.deepEqual(
+      next.podiumOpenClass.map((e) => [e.rank, e.uid, e.score]),
+      [
+        [1, "o2", 90.5],
+        [2, "o1", 89.9],
+      ]
+    );
+    assert.equal(next.podiumOpenClass[1].username, "onyx_dir");
+  });
+
   test("adds the Open/A podiums from the record and leaves every other key alone", () => {
     const classes = {
       worldClass: [{ rank: 1, uid: "f1", corpsName: "Fantasy Champ", score: 97 }],
