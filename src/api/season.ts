@@ -508,9 +508,23 @@ export interface SeasonChampionEntry {
   avatarUrl?: string | null;
   score?: number;
   rank?: number;
+  /**
+   * The class the corps competed in. On a World Championship podium (the
+   * `worldClass` / `podiumClass` keys — one field, whatever class each corps
+   * drafted in) this can be any class, and the Hall says which.
+   */
+  corpsClass?: string;
+  /** A champion's purchased banner message, hung on the rank-1 entry forever. */
+  banner?: { message: string; purchasedAt?: string } | null;
 }
 
-/** An archived season's championship record. */
+/**
+ * An archived season's championship record. `classes` is keyed by Hall class
+ * key — both divisions' classes (Fantasy: worldClass / openClass / aClass /
+ * soundSport; Podium: podiumClass / podiumOpenClass / podiumAClass), see
+ * pages/hallOfChampionsMeta.js. A key is present only when that class crowned
+ * someone that season.
+ */
 export interface SeasonChampions {
   id: string;
   seasonName?: string;

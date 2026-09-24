@@ -282,7 +282,7 @@ const HallOfChampionsEntry = () => {
   useSEO({
     title: 'Hall of Champions — Every marching.art Season Champion',
     description:
-      'The championship record book: World, Open, A Class, SoundSport, and Podium champions from every completed marching.art season, with finals scores and finalists.',
+      "The championship record book: every completed marching.art season's Fantasy Division (World, Open, A Class, SoundSport) and Podium Division (World, Open, A Class) champions, with finals scores and finalists.",
     path: '/hall-of-champions',
   });
 

@@ -28,6 +28,7 @@ const engine = require("./engine");
 const store = require("./store");
 const divisions = require("./divisions");
 const assessment = require("./assessment");
+const hallOfChampions = require("../hallOfChampions");
 
 const SEASONS_DOC = "podium-config/podiumSeasons";
 
@@ -744,41 +745,34 @@ async function archivePodiumSeason(db, previousSeason) {
     { merge: true }
   );
 
-  // Hall of Champions (Phase 6.5): merge the Podium top 3 into the season's
+  // Hall of Champions (Phase 6.5): merge the Podium podiums into the season's
   // champions doc — the same doc the fantasy finals write, same entry shape
-  // (awardFinalsAndSaveChampions), so the Hall renders Podium class-filtered
-  // with zero special-casing. Each medalist also banks a Finals medal in
-  // their profile trophy case (`trophies.championships`, fantasy shape) —
-  // the trophy-case client renders corpsClass podiumClass as the
-  // metal-colored Gem. Isolated: a Hall failure never fails archival.
+  // (awardFinalsAndSaveChampions), so the Hall renders the Podium Division
+  // class-filtered with zero special-casing. The keys mirror the Fantasy
+  // Division's (helpers/hallOfChampions.js):
   //
-  // The World Championship Finals are ONE field (helpers/worldChampionship.js):
-  // every finalist is ranked together whatever division it climbed from, and
-  // the top of that sheet is the World Champion. So the Podium Finals hardware
-  // and the Hall podium are the top three of the WHOLE record — an Open Class
-  // corps that out-scores World Class at Finals is the Podium World Champion.
+  //   podiumClass       the Podium World Championship — the top three of the
+  //                     WHOLE record, whatever division each corps climbed
+  //                     from (one field, one title; helpers/worldChampionship)
+  //   podiumOpenClass   the Open Class podium — the top three Open corps
+  //   podiumAClass      the A Class podium — the top three A corps
+  //
   // (`divisionChampions` above still names each division's best for the
-  // season archive; that is a standings fact, not a title.)
+  // season archive; the Hall keys are the public podiums.) Each World
+  // medalist also banks a Finals medal in their profile trophy case
+  // (`trophies.championships`, fantasy shape) — the trophy-case client
+  // renders corpsClass podiumClass as the metal-colored Gem. Isolated: a
+  // Hall failure never fails archival.
   if (record.length > 0) {
     try {
       const metals = ["gold", "silver", "bronze"];
       const eventName = "Podium World Championship Finals";
-      const hallChampions = [];
-      for (let i = 0; i < Math.min(3, record.length); i++) {
-        const entry = record[i];
-        const medalRank = i + 1;
-        let username = "Unknown";
-        let avatarUrl = null;
+      const podiums = hallOfChampions.buildPodiumHallPodiums(record);
+      const worldPodium = podiums[hallOfChampions.PODIUM_HALL_CLASSES.worldClass] || [];
+      for (const entry of worldPodium) {
         try {
           const profileSnapshot = await store.profileRef(db, entry.uid).get();
           const profile = profileSnapshot.exists ? profileSnapshot.data() : null;
-          if (profile) {
-            username = profile.username || profile.displayName || "Unknown";
-            // Podium corps store their graphic at corps.podiumClass.avatarUrl
-            // (same source the fantasy classes use) so the Hall of Champions
-            // can render the corps logo rather than a bare initial.
-            avatarUrl = (profile.corps && profile.corps.podiumClass && profile.corps.podiumClass.avatarUrl) || null;
-          }
           // Finals medal — idempotent per season (re-sweeps skip the append).
           const existing = (profile && profile.trophies && profile.trophies.championships) || [];
           const alreadyAwarded = existing.some(
@@ -795,12 +789,12 @@ async function archivePodiumSeason(db, previousSeason) {
                     ...existing,
                     {
                       type: "championship",
-                      metal: metals[medalRank - 1],
+                      metal: metals[entry.rank - 1],
                       corpsClass: "podiumClass",
                       seasonName: previousSeason.seasonUid,
                       eventName,
-                      score: entry.lastTotal,
-                      rank: medalRank,
+                      score: entry.score,
+                      rank: entry.rank,
                     },
                   ],
                 },
@@ -809,28 +803,35 @@ async function archivePodiumSeason(db, previousSeason) {
             );
           }
         } catch (profileError) {
-          logger.warn(`[podium] medal/username write failed for ${entry.uid}: ${profileError.message}`);
+          logger.warn(`[podium] medal write failed for ${entry.uid}: ${profileError.message}`);
         }
-        hallChampions.push({
-          rank: medalRank,
-          uid: entry.uid,
-          username,
-          corpsName: entry.corpsName,
-          avatarUrl,
-          score: entry.lastTotal,
-          // The division the corps competed in — on the World podium that can
-          // be any of the three, and the Hall says which.
-          corpsClass: divisions.normalizeDivision(entry.division),
-        });
       }
+      const hallClasses = await hallOfChampions.withDirectorIdentity(podiums, async (uid) => {
+        const profileSnapshot = await store.profileRef(db, uid).get();
+        const profile = profileSnapshot.exists ? profileSnapshot.data() : null;
+        if (!profile) return null;
+        return {
+          username: profile.username || profile.displayName || null,
+          // Podium corps store their graphic at corps.podiumClass.avatarUrl
+          // (same source the fantasy classes use) so the Hall of Champions
+          // can render the corps logo rather than a bare initial.
+          avatarUrl: (profile.corps && profile.corps.podiumClass && profile.corps.podiumClass.avatarUrl) || null,
+        };
+      });
       const championsRef = db.doc(`season_champions/${previousSeason.seasonUid}`);
       const championsSnapshot = await championsRef.get();
       // The fantasy finals normally create this doc at day 49; if Podium is
-      // the only crowned class this season, supply the doc-level fields.
+      // the only crowned division this season, supply the doc-level fields.
       const base = championsSnapshot.exists
         ? {}
         : { seasonName: previousSeason.seasonUid, archivedAt: new Date() };
-      await championsRef.set({ ...base, classes: { podiumClass: hallChampions } }, { merge: true });
+      // A re-sweep rewrites the podium arrays — keep any banner a champion
+      // has already paid to hang on them.
+      const existingClasses = championsSnapshot.exists ? championsSnapshot.data().classes : null;
+      await championsRef.set(
+        { ...base, classes: hallOfChampions.carryBanners(existingClasses, hallClasses) },
+        { merge: true }
+      );
     } catch (error) {
       logger.error(`[podium] Hall of Champions merge failed (archival unaffected): ${error.message}`);
     }

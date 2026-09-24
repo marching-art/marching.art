@@ -53,6 +53,21 @@ describe("parseOgPath", () => {
     });
   });
 
+  test("parses a Podium Division champion card path (both divisions' classes are Hall keys)", () => {
+    assert.deepEqual(parseOgPath("/api/og/champion/scherzo_2026/podiumAClass.png"), {
+      type: "champion",
+      seasonId: "scherzo_2026",
+      classKey: "podiumAClass",
+    });
+    assert.deepEqual(parseSharePath("/share/champion/scherzo_2026/podiumOpenClass"), {
+      type: "champion",
+      seasonId: "scherzo_2026",
+      classKey: "podiumOpenClass",
+    });
+    // A Hall-only key is not a nightly standings key.
+    assert.equal(parseOgPath("/api/og/scores/season42/12/podiumAClass.png"), null);
+  });
+
   test("rejects unknown classes, bad days, and traversal attempts", () => {
     assert.equal(parseOgPath("/api/og/scores/season42/12/notAClass.png"), null);
     assert.equal(parseOgPath("/api/og/scores/season42/0/worldClass.png"), null);
@@ -165,6 +180,24 @@ describe("buildChampionCardSvg", () => {
     assert.ok(!svg.includes("World Class"));
     assert.ok(svg.includes("Crimson Cadence"));
     assert.ok(svg.includes("97.825"));
+  });
+
+  test("a Podium Division card is billed by its division and Hall label", () => {
+    const champions = {
+      seasonName: "Overture 2026",
+      classes: {
+        podiumClass: [{ rank: 1, corpsName: "Crimson", username: "d1", score: 95.1 }],
+        podiumOpenClass: [{ rank: 1, corpsName: "Onyx", username: "d2", score: 94.2 }],
+      },
+    };
+    const world = buildChampionCardSvg({ champions, classKey: "podiumClass" });
+    assert.ok(world.includes("PODIUM DIVISION · HALL OF CHAMPIONS"));
+    assert.ok(world.includes("Podium World Championship"));
+    assert.ok(world.includes("Crimson"));
+    const open = buildChampionCardSvg({ champions, classKey: "podiumOpenClass" });
+    assert.ok(open.includes("Podium Open Class"));
+    assert.ok(open.includes("Onyx"));
+    assert.equal(buildChampionCardSvg({ champions, classKey: "podiumAClass" }), null);
   });
 
   test("returns null for a class with no archived champions", () => {

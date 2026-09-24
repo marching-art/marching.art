@@ -5,6 +5,7 @@ const { getDb } = require("../config");
 const { addCoinHistoryEntryToTransaction } = require("../helpers/economy");
 const { assertAuth, assertWriteBudget } = require("../helpers/callableGuards");
 const { VALID_CLASSES, isProfaneCorpsName } = require("../helpers/corpsHelpers");
+const { isPodiumHallClassKey } = require("../helpers/hallOfChampions");
 const {
   PLAQUE_TIERS,
   HALL_BANNER_PRICE,
@@ -124,10 +125,11 @@ const purchaseHallBanner = onCall({ cors: true }, async (request) => {
     throw new HttpsError("invalid-argument", "A season is required.");
   }
 
-  // Podium champions hang banners too (Phase 6.5). podiumClass is not in
-  // VALID_CLASSES (no fantasy lineup), but its champions live in the same
+  // Podium champions hang banners too (Phase 6.5): the Podium Division's Hall
+  // keys (podiumClass / podiumOpenClass / podiumAClass) are not in
+  // VALID_CLASSES (no fantasy lineup), but their champions live in the same
   // season_champions doc — and the rank-1 ownership check below still gates.
-  if (!VALID_CLASSES.includes(corpsClass) && corpsClass !== "podiumClass") {
+  if (!VALID_CLASSES.includes(corpsClass) && !isPodiumHallClassKey(corpsClass)) {
     throw new HttpsError("invalid-argument", "Invalid corps class.");
   }
   const banner = sanitizeBannerMessage(message);
