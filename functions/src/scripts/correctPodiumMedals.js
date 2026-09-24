@@ -47,6 +47,7 @@ if (!getApps().length) initializeApp();
 const { paths } = require("../helpers/paths");
 const store = require("../helpers/podium/store");
 const { MEDAL_NAMES, rankShowResults } = require("../helpers/podium/showRanking");
+const { isWorldChampionshipRound } = require("../helpers/worldChampionship");
 
 const EMPTY_MEDALS = Object.freeze({ gold: 0, silver: 0, bronze: 0 });
 
@@ -73,7 +74,13 @@ function rerankRecap(recap, medalsCfg) {
     const results = Array.isArray(show.results) ? show.results : [];
     if (results.length === 0) continue;
     const before = results.map((row) => JSON.stringify(row));
-    rankShowResults(results, medalsCfg);
+    // World Championship rounds (47-49) rank as one field, every division
+    // together — the same rule the nightly run applies.
+    const oneField = isWorldChampionshipRound(
+      recap && recap.competitionDay,
+      show.eventName || null
+    );
+    rankShowResults(results, { ...medalsCfg, oneField });
     results.forEach((row, index) => {
       if (JSON.stringify(row) !== before[index]) {
         changed = true;

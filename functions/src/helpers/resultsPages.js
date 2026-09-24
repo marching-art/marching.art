@@ -19,6 +19,9 @@ const { COLORS, FONT_STACK } = require("./designTokens");
 // Championship-week cuts, from the same function that decides who the scorer
 // actually enrolls the next night — never a second implementation of "top 25".
 const { cutForDrop } = require("./championshipCuts");
+// The World Championship nights (days 47-49) are ONE field, no classes: every
+// corps on the sheet is ranked together and carries the round's title.
+const { WORLD_FIELD_KEY, worldChampionshipRound } = require("./worldChampionship");
 
 // Ranked-class display order for the public sheets (mirrors RECAP_CLASS_ORDER
 // in src/pages/ScoresParts.jsx).
@@ -30,16 +33,25 @@ const RESULTS_CLASS_ORDER = ["worldClass", "openClass", "aClass"];
  * GE/VIS/MUS sums for the public box score. SoundSport is collected as a
  * scoreless medal list.
  *
+ * On a World Championship night (days 47-49, read off `options.day` or the
+ * recap's `offSeasonDay`) there are no classes: the whole field is one table
+ * under WORLD_FIELD_KEY, ranked 1 to N, and `worldRound` names the round.
+ *
  * @param {Object} recap fantasy_recaps day doc data ({shows: [...]}).
+ * @param {{day?: number|null}} [options]
  * @returns {{
- *   byClass: Map<string, Array<{uid: string, corpsName: string, displayName: string,
- *     total: number, ge: number|null, vis: number|null, mus: number|null, rank: number}>>,
+ *   byClass: Map<string, Array<{uid: string, corpsClass: string, corpsName: string,
+ *     displayName: string, total: number, ge: number|null, vis: number|null,
+ *     mus: number|null, rank: number}>>,
  *   soundSport: Array<{corpsName: string, displayName: string, medal: string|null}>,
  *   shows: string[],
+ *   worldRound: ?import('./worldChampionship').WorldChampionshipRound,
  * }}
  */
-function aggregateDayResults(recap) {
+function aggregateDayResults(recap, options = {}) {
   const shows = (recap && recap.shows) || [];
+  const day = options.day != null ? options.day : recap && recap.offSeasonDay;
+  const worldRound = worldChampionshipRound(day);
   const totals = new Map();
   const soundSportByUid = new Map();
   const showNames = [];
@@ -87,17 +99,24 @@ function aggregateDayResults(recap) {
   }
 
   const byClass = new Map();
-  for (const corpsClass of RESULTS_CLASS_ORDER) {
-    const entries = [...totals.values()].filter((e) => e.corpsClass === corpsClass);
+  /** @type {Array<[string, Array<any>]>} */
+  const fields = worldRound
+    ? [[WORLD_FIELD_KEY, [...totals.values()]]]
+    : RESULTS_CLASS_ORDER.map((corpsClass) => [
+      corpsClass,
+      [...totals.values()].filter((e) => e.corpsClass === corpsClass),
+    ]);
+  for (const [key, entries] of fields) {
     if (entries.length === 0) continue;
     entries.sort((a, b) => b.total - a.total);
     byClass.set(
-      corpsClass,
+      key,
       entries.map((entry, index) => ({
         rank: index + 1,
         // Carried through so a championship-week cut can be matched back onto
         // the row it belongs to (the cut is decided per uid + class).
         uid: entry.uid,
+        corpsClass: entry.corpsClass,
         corpsName: entry.corpsName,
         displayName: entry.displayName,
         total: entry.total,
@@ -108,7 +127,7 @@ function aggregateDayResults(recap) {
     );
   }
 
-  return { byClass, soundSport: [...soundSportByUid.values()], shows: showNames };
+  return { byClass, soundSport: [...soundSportByUid.values()], shows: showNames, worldRound };
 }
 
 // Shared page chrome. Inline CSS keeps the pages dependency-free and safe
@@ -331,7 +350,7 @@ function cutBannerHtml(cut, day) {
  * @returns {string|null} HTML, or null when the recap has no results at all.
  */
 function buildDayResultsHtml({ seasonUid, seasonName, day, recap, days = [] }) {
-  const { byClass, soundSport, shows } = aggregateDayResults(recap);
+  const { byClass, soundSport, shows, worldRound } = aggregateDayResults(recap, { day });
   if (byClass.size === 0 && soundSport.length === 0) return null;
 
   const displaySeason = seasonName || seasonUid;
@@ -345,13 +364,16 @@ function buildDayResultsHtml({ seasonUid, seasonName, day, recap, days = [] }) {
     (cut ? cut.advancing : []).map((row) => `${row.uid}_${row.corpsClass}`)
   );
 
+  // One table per class — or, on a World Championship night, ONE table for the
+  // whole field, headed by what everyone on it is (World Semifinalists…).
+  const tableKeys = worldRound ? [WORLD_FIELD_KEY] : RESULTS_CLASS_ORDER;
   const sections = [];
-  for (const classKey of RESULTS_CLASS_ORDER) {
+  for (const classKey of tableKeys) {
     const entries = byClass.get(classKey);
     if (!entries) continue;
     const rows = entries
       .map((e) => {
-        const advances = advancing.has(`${e.uid}_${classKey}`);
+        const advances = advancing.has(`${e.uid}_${e.corpsClass}`);
         return `<tr${advances ? ` class="adv"` : ""}>
 <td class="num">${e.rank}</td>
 <td>${escapeHtml(clamp(e.corpsName, 60))}${e.displayName ? ` <span class="dir">· ${escapeHtml(clamp(e.displayName, 40))}</span>` : ""}${advances ? ` <span class="adv-tag">Advances</span>` : ""}</td>
@@ -363,11 +385,20 @@ function buildDayResultsHtml({ seasonUid, seasonName, day, recap, days = [] }) {
       })
       .join("\n");
     const advancingInClass = cut
-      ? entries.filter((e) => advancing.has(`${e.uid}_${classKey}`)).length
+      ? entries.filter((e) => advancing.has(`${e.uid}_${e.corpsClass}`)).length
       : 0;
-    sections.push(`<h2>${escapeHtml(CLASS_LABELS[classKey] || classKey)}${
+    const heading = worldRound
+      ? `${worldRound.participants} (${entries.length})`
+      : CLASS_LABELS[classKey] || classKey;
+    sections.push(`<h2>${escapeHtml(heading)}${
       cut ? ` <span class="adv-count">${advancingInClass} advance</span>` : ""
-    }</h2>
+    }</h2>${
+      worldRound
+        ? `\n<p class="sub">${escapeHtml(worldRound.title)} — one field, every class, ranked together.${
+          worldRound.winner ? ` First place is the ${escapeHtml(worldRound.winner)}.` : ""
+        }</p>`
+        : ""
+    }
 <div class="scroll"><table>
 <thead><tr><th class="num">#</th><th>Corps</th><th class="num">GE</th><th class="num">VIS</th><th class="num">MUS</th><th class="num">Total</th></tr></thead>
 <tbody>
@@ -409,13 +440,18 @@ ${rows}
   const showWord = shows.length === 1 ? "show" : "shows";
   const showList = shows.length > 0 ? clamp(shows.join(" · "), 140) : "";
 
-  // OG card: the top ranked class present that day.
-  const topClass = RESULTS_CLASS_ORDER.find((cls) => byClass.has(cls));
+  // OG card: the top ranked class present that day — or the one World field.
+  const topClass = tableKeys.find((cls) => byClass.has(cls));
   const ogImage = topClass ? `${SITE_URL}/api/og/scores/${seasonUid}/${day}/${topClass}.png` : null;
+  const topLabel = worldRound ? worldRound.title : topClass ? CLASS_LABELS[topClass] : "";
 
   const leader = topClass ? byClass.get(topClass)[0] : null;
   const description = leader
-    ? `Day ${day} fantasy drum corps results for ${displaySeason}: ${clamp(leader.corpsName, 50)} leads ${CLASS_LABELS[topClass]} with ${leader.total.toFixed(3)}. Full GE/Visual/Music standings for every class.`
+    ? worldRound
+      ? `Day ${day} fantasy drum corps results for ${displaySeason}: ${clamp(leader.corpsName, 50)} ${
+        worldRound.winner ? `is the ${worldRound.winner}` : `leads ${worldRound.title}`
+      } with ${leader.total.toFixed(3)}. Every class ranked together — full GE/Visual/Music standings.`
+      : `Day ${day} fantasy drum corps results for ${displaySeason}: ${clamp(leader.corpsName, 50)} leads ${CLASS_LABELS[topClass]} with ${leader.total.toFixed(3)}. Full GE/Visual/Music standings for every class.`
     : `Day ${day} fantasy drum corps results for ${displaySeason} on marching.art.`;
 
   // Structured data for the top class's standings. This is the most structured
@@ -425,7 +461,7 @@ ${rows}
     ? {
       "@context": "https://schema.org",
       "@type": "ItemList",
-      name: `Day ${day} ${CLASS_LABELS[topClass]} standings — ${displaySeason}`,
+      name: `Day ${day} ${topLabel} standings — ${displaySeason}`,
       itemListOrder: "https://schema.org/ItemListOrderDescending",
       numberOfItems: byClass.get(topClass).length,
       itemListElement: byClass.get(topClass).map((entry) => ({
@@ -479,8 +515,11 @@ function buildSeasonIndexHtml({ seasonUid, seasonName, days, champions = null })
       if (entries.length === 0) continue;
       const champ = entries[0];
       const soundSport = classKey === "soundSport";
+      // `classes.worldClass` holds the World Championship podium — the top of
+      // the whole Finals field, whatever class the corps drafted in.
+      const title = classKey === "worldClass" ? "World Champion" : CLASS_LABELS[classKey] || classKey;
       rows.push(`<tr>
-<td>${escapeHtml(CLASS_LABELS[classKey] || classKey)}</td>
+<td>${escapeHtml(title)}</td>
 <td>${escapeHtml(clamp(champ.corpsName || "", 60))}${champ.username ? ` <span class="dir">· ${escapeHtml(clamp(champ.username, 40))}</span>` : ""}</td>
 <td class="num total">${soundSport ? "Best in Show" : fmtScore(typeof champ.score === "number" ? champ.score : null)}</td>
 </tr>`);

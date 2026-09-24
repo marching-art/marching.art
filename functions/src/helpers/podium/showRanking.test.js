@@ -124,6 +124,46 @@ describe("rankShowResults", () => {
     }
   });
 
+  test("a World Championship round ranks the whole show as one field (oneField)", () => {
+    // Semifinals night: World, Open and A on the one sheet. Nobody is "1st in
+    // A Class" — the A Class corps that beat two World Class corps is fourth
+    // of nine, and the medals are the round's podium, not each division's.
+    const results = [
+      row("w1", "worldClass", 90),
+      row("a1", "aClass", 88.5),
+      row("w2", "worldClass", 89),
+      row("o1", "openClass", 89.5),
+      row("w3", "worldClass", 87),
+      row("a2", "aClass", 80),
+      row("o2", "openClass", 86),
+      row("w4", "worldClass", 85),
+      row("a3", "aClass", 79),
+    ];
+    const { results: ranked, medalByUid } = rankShowResults(results, {
+      minFieldSize: MIN,
+      oneField: true,
+    });
+    assert.deepEqual(
+      ranked.map((r) => [r.uid, r.place, r.fieldSize]),
+      [
+        ["w1", 1, 9],
+        ["o1", 2, 9],
+        ["w2", 3, 9],
+        ["a1", 4, 9],
+        ["w3", 5, 9],
+        ["o2", 6, 9],
+        ["w4", 7, 9],
+        ["a2", 8, 9],
+        ["a3", 9, 9],
+      ]
+    );
+    assert.deepEqual(medalByUid, { w1: "gold", o1: "silver", w2: "bronze" });
+    // Default (a regular night) still sections the same rows by division.
+    const perDivision = rankShowResults(results.map((r) => ({ ...r })), { minFieldSize: MIN });
+    const a1 = perDivision.results.find((r) => r.uid === "a1");
+    assert.deepEqual([a1.place, a1.fieldSize, a1.medal], [1, 3, "gold"]);
+  });
+
   test("an unknown division is folded into A Class, the way every reader does", () => {
     const results = [row("x", undefined, 50), row("y", "aClass", 49), row("z", "bogus", 48)];
     const { results: ranked } = rankShowResults(results, { minFieldSize: 3 });

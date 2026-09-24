@@ -56,6 +56,7 @@ if (!getApps().length) initializeApp();
 
 const store = require("../helpers/podium/store");
 const { rankShowResults } = require("../helpers/podium/showRanking");
+const { isWorldChampionshipRound } = require("../helpers/worldChampionship");
 
 /**
  * Classify a season roster against the state docs behind it (pure).
@@ -106,7 +107,15 @@ function stripRecapStrays(recap, allowed, medalsCfg) {
     if (kept.length === results.length) continue;
     results.length = 0;
     results.push(...kept);
-    if (results.length > 0) rankShowResults(results, medalsCfg);
+    if (results.length > 0) {
+      // World Championship rounds (47-49) rank as one field, every division
+      // together — the same rule the nightly run applies.
+      const oneField = isWorldChampionshipRound(
+        recap && recap.competitionDay,
+        show.eventName || null
+      );
+      rankShowResults(results, { ...medalsCfg, oneField });
+    }
   }
   // A legacy flat recap keeps its flat shape.
   if (!Array.isArray(recap.shows) && Array.isArray(recap.results) && shows[0]) {

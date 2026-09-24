@@ -96,7 +96,87 @@ describe("aggregateNightlyStandings", () => {
   });
 });
 
+/** A World Championship night: World, Open and A on the one sheet. */
+function worldNightRecap(day, eventName) {
+  return {
+    offSeasonDay: day,
+    shows: [
+      {
+        eventName,
+        location: "Indianapolis, IN",
+        results: [
+          { uid: "w1", displayName: "chris", corpsClass: "worldClass", corpsName: "Iron Cadence", totalScore: 96.2 },
+          { uid: "o1", displayName: "kai", corpsClass: "openClass", corpsName: "Riverhawks", totalScore: 96.5 },
+          { uid: "w2", displayName: "alex", corpsClass: "worldClass", corpsName: "Aurora Vanguard", totalScore: 95.1 },
+          { uid: "a1", displayName: "sam", corpsClass: "aClass", corpsName: "Steel Sound", totalScore: 90.0 },
+        ],
+      },
+    ],
+  };
+}
+
+describe("aggregateNightlyStandings — World Championship nights", () => {
+  test("ranks the whole field together on days 47-49, under the one World key", () => {
+    for (const [day, eventName] of [
+      [47, "marching.art World Championship Prelims"],
+      [48, "marching.art World Championship Semifinals"],
+      [49, "marching.art World Championship Finals"],
+    ]) {
+      const { byClass, worldRound } = aggregateNightlyStandings(worldNightRecap(day, eventName));
+      assert.equal(worldRound.day, day);
+      assert.deepEqual([...byClass.keys()], ["worldChampionship"]);
+      const field = byClass.get("worldChampionship");
+      // 1 to N across every class — the Open Class corps that scored highest
+      // is first, not first-in-Open.
+      assert.deepEqual(field.map((e) => [e.rank, e.uid, e.of]), [
+        [1, "o1", 4],
+        [2, "w1", 4],
+        [3, "w2", 4],
+        [4, "a1", 4],
+      ]);
+      // The class each corps drafted in rides along for the pushes.
+      assert.equal(field[0].corpsClass, "openClass");
+    }
+  });
+
+  test("an explicit scoredDay wins over the recap's own day", () => {
+    const { byClass } = aggregateNightlyStandings(worldNightRecap(48, "Semis"), { scoredDay: 12 });
+    assert.deepEqual([...byClass.keys()].sort(), ["aClass", "openClass", "worldClass"]);
+  });
+
+  test("the Open & A nights (45/46) stay split by class — two separate competitions", () => {
+    const recap = worldNightRecap(46, "Open and A Class Finals");
+    const { byClass, worldRound } = aggregateNightlyStandings(recap);
+    assert.equal(worldRound, null);
+    assert.ok(byClass.has("openClass"));
+    assert.ok(byClass.has("aClass"));
+  });
+});
+
 describe("buildScoreDropEmbed", () => {
+  test("a World Championship night is one field, billed by its round", () => {
+    const semis = buildScoreDropEmbed({
+      dailyRecap: worldNightRecap(48, "marching.art World Championship Semifinals"),
+      seasonName: "Summer 2026",
+      scoredDay: 48,
+    }).embeds[0];
+    const ranked = semis.fields.filter((f) => !f.name.includes("Best in Show"));
+    assert.equal(ranked.length, 1);
+    assert.equal(ranked[0].name, "World Championship Semifinals — World Semifinalists (4 corps)");
+    assert.match(ranked[0].value, /🥇 \*\*Riverhawks\*\* — 96\.500/);
+    assert.match(ranked[0].value, /🥈 \*\*Iron Cadence\*\*/);
+    assert.match(semis.description, /one field, every class/);
+
+    // Finals night names the World Champion in the headline.
+    const finals = buildScoreDropEmbed({
+      dailyRecap: worldNightRecap(49, "marching.art World Championship Finals"),
+      seasonName: "Summer 2026",
+      scoredDay: 49,
+    }).embeds[0];
+    assert.equal(finals.fields[0].name, "World Championship Finals — World Finalists (4 corps)");
+    assert.match(finals.description, /\*\*Riverhawks\*\* is your World Champion/);
+  });
+
   test("builds one field per ranked class with medal top-3 lines", () => {
     const payload = buildScoreDropEmbed({ dailyRecap: sampleRecap(), seasonName: "Summer 2026", scoredDay: 12 });
 
@@ -135,6 +215,19 @@ describe("buildScoreDropEmbed", () => {
 });
 
 describe("buildScoreDropPushes", () => {
+  test("a World Championship night reports the place in the one field, with the round's title", () => {
+    const pushes = buildScoreDropPushes({
+      dailyRecap: worldNightRecap(49, "marching.art World Championship Finals"),
+      scoredDay: 49,
+    });
+    const byUid = new Map(pushes.map((p) => [p.uid, p]));
+    assert.match(byUid.get("o1").body, /1st of 4 at World Championship Finals\. World Champion!/);
+    assert.match(byUid.get("a1").body, /4th of 4 at World Championship Finals\. World Finalist\./);
+    assert.doesNotMatch(byUid.get("a1").body, /A Class/);
+    // The push still carries the class the corps drafted in.
+    assert.equal(byUid.get("o1").data.corpsClass, "openClass");
+  });
+
   test("sends one push per director, preferring the highest class", () => {
     const pushes = buildScoreDropPushes({ dailyRecap: sampleRecap(), scoredDay: 12 });
     const byUid = new Map(pushes.map((p) => [p.uid, p]));
@@ -166,7 +259,7 @@ describe("buildScoreDropPushes", () => {
 // finals night from the season_champions doc. runDiscordScoreDrop's tests cover
 // that it fires once under its own lease; these pin the embed the crowning
 // actually renders — the per-class podium, medal order, score formatting, and
-// the World Class headline.
+// the World Champion headline.
 describe("buildChampionsPayload", () => {
   const champions = (over = {}) => ({
     seasonId: "s26",
@@ -183,7 +276,7 @@ describe("buildChampionsPayload", () => {
     ...over,
   });
 
-  test("titles and links the post, and headlines the World Class champion", () => {
+  test("titles and links the post, and headlines the World Champion", () => {
     const payload = buildChampionsPayload({
       champions: champions(),
       seasonName: "Summer 2026",
@@ -191,16 +284,18 @@ describe("buildChampionsPayload", () => {
     const embed = payload.embeds[0];
     assert.match(embed.title, /Summer 2026 Champions/);
     assert.match(embed.url, /\/hall-of-champions/);
-    // The World Class titlist is named in the description.
+    // The World Champion is named in the description — the title belongs to
+    // the top of the whole Finals field, never to a class.
     assert.match(embed.description, /Iron Cadence/);
-    assert.match(embed.description, /World Class title/);
+    assert.match(embed.description, /World Champion/);
+    assert.doesNotMatch(embed.description, /World Class/);
   });
 
   test("renders one field per ranked class, in registry tier order", () => {
     const embed = buildChampionsPayload({ champions: champions() }).embeds[0];
     assert.deepEqual(
       embed.fields.map((f) => f.name),
-      ["World Class", "Open Class", "A Class"]
+      ["World Championship", "Open Class", "A Class"]
     );
   });
 
@@ -226,7 +321,7 @@ describe("buildChampionsPayload", () => {
     });
     assert.deepEqual(
       payload.embeds[0].fields.map((f) => f.name),
-      ["World Class"]
+      ["World Championship"]
     );
   });
 
@@ -445,7 +540,7 @@ describe("runDiscordScoreDrop", () => {
     assert.deepEqual(result.champions, { kind: "champions", status: "posted" });
     assert.equal(posts.length, 2);
     assert.match(posts[1].embeds[0].title, /Summer 2026 Champions/);
-    assert.match(posts[1].embeds[0].description, /\*\*Iron Cadence\*\* takes the World Class title/);
+    assert.match(posts[1].embeds[0].description, /\*\*Iron Cadence\*\* is the .* World Champion/);
     assert.match(posts[1].embeds[0].fields[0].value, /🥇 \*\*Iron Cadence\*\* — 98\.400 · alex/);
     assert.equal(db.writes["scoring_runs/s26_discord_champions_day49"].status, "completed");
 

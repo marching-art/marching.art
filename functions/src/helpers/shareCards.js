@@ -10,6 +10,7 @@
 // embedding is needed.
 
 const { CLASS_LABELS, aggregateNightlyStandings } = require("./scoreDrop");
+const { WORLD_FIELD_KEY } = require("./worldChampionship");
 const { UNIFORM_CODE_RE } = require("./uniformValidation");
 
 const SITE_URL = "https://marching.art";
@@ -128,16 +129,21 @@ function buildCardSvg({ kicker, title, subtitle, rows, footer }) {
  * @returns {string | null} SVG, or null when the class has no results that day.
  */
 function buildScoresCardSvg({ recap, day, classKey, seasonName }) {
-  const { byClass, showCount } = aggregateNightlyStandings(recap);
+  const { byClass, showCount, worldRound } = aggregateNightlyStandings(recap, { scoredDay: day });
   const entries = byClass.get(classKey);
   if (!entries || entries.length === 0) return null;
 
   const showWord = showCount === 1 ? "show" : "shows";
-  const classLabel = CLASS_LABELS[classKey] || classKey;
+  // A World Championship night's card is the round, not a class: "Day 48 —
+  // World Semifinalists", the whole field ranked together.
+  const world = classKey === WORLD_FIELD_KEY && worldRound ? worldRound : null;
+  const classLabel = world ? world.participants : CLASS_LABELS[classKey] || classKey;
   return buildCardSvg({
-    kicker: "Fantasy Drum Corps · Nightly Scores",
+    kicker: world ? `Fantasy Drum Corps · ${world.title}` : "Fantasy Drum Corps · Nightly Scores",
     title: `Day ${day} — ${classLabel}`,
-    subtitle: `${seasonName ? `${seasonName} · ` : ""}${showCount} ${showWord} scored · ${entries.length} corps`,
+    subtitle: world
+      ? `${seasonName ? `${seasonName} · ` : ""}one field, every class · ${entries.length} corps`
+      : `${seasonName ? `${seasonName} · ` : ""}${showCount} ${showWord} scored · ${entries.length} corps`,
     rows: entries.slice(0, 5).map((entry) => ({
       rank: entry.rank,
       name: entry.corpsName || "Unknown Corps",
@@ -159,7 +165,10 @@ function buildChampionCardSvg({ champions, classKey }) {
   const entries = (champions && champions.classes && champions.classes[classKey]) || [];
   if (entries.length === 0) return null;
 
-  const classLabel = CLASS_LABELS[classKey] || classKey;
+  // `classes.worldClass` is the World Championship podium (the top of the whole
+  // Finals field, every class together), so its card says so.
+  const classLabel =
+    classKey === "worldClass" ? "World Championship" : CLASS_LABELS[classKey] || classKey;
   const seasonName = champions.seasonName || "Season";
   // SoundSport is participation-focused: it recognizes "Best in Show" and its
   // ratings are never revealed as numeric scores anywhere in the product.

@@ -211,6 +211,17 @@ export const AdvancesTag = ({ toDay }: { toDay?: number | null }) => (
   </span>
 );
 
+// The title a placement on a World Championship sheet carries beside the corps
+// name — "World Champion" at the top of the Finals sheet.
+export const TitleTag = ({ title }: { title: string }) => (
+  <span
+    title={title}
+    className="flex-shrink-0 text-[8px] font-bold uppercase tracking-wider px-1 py-[1px] bg-brand/15 text-brand"
+  >
+    {title}
+  </span>
+);
+
 // Banner over a cut night's sheet: the rule, how many survive it, where the
 // line fell.
 export const CutBanner = ({
