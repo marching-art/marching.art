@@ -13,7 +13,7 @@ import { showStartsAtDate } from '../../utils/scheduleUtils';
 import { formatCompetitionDate } from '../../utils/competitionCalendar';
 import { formatCountdown } from '../../utils/seasonClock';
 import { CORPS_CLASS_LABELS } from '../../utils/corps';
-import { formatEventName } from '../../utils/season';
+import { displayEventName } from '../../utils/eventNames';
 
 /**
  * @typedef {import('../../utils/showday').ShowLike} ShowLike
@@ -256,7 +256,7 @@ const ShowdayStrip = ({
         <Link to={scheduleLink} className="block px-4 py-3 hover:bg-white/[0.03] transition-colors">
           <div className="flex items-baseline justify-between gap-2">
             <span className="text-sm md:text-base text-white font-bold truncate">
-              {formatEventName(show.eventName)}
+              {displayEventName(show)}
             </span>
             {show.isChampionship && (
               <span className="text-[9px] font-bold uppercase tracking-wider text-brand border border-brand/40 px-1.5 py-0.5 flex-shrink-0">

@@ -8,6 +8,25 @@ const { enrichEventsWithDetails } = require("./eventDetails");
 const { loadAllHistoricalYears } = require("./historicalScores");
 const { standardizeLocation, isUnknownLocation } = require("./locationFormat");
 const { WORLD_VENUE } = require("./championshipVenues");
+const { WORLD_CHAMPIONSHIP_ROUNDS } = require("./worldChampionship");
+
+/** The canonical marching.art name of each World Championship night. */
+const WORLD_ROUND_NAMES = Object.freeze({
+  47: WORLD_CHAMPIONSHIP_ROUNDS[47].eventName,
+  48: WORLD_CHAMPIONSHIP_ROUNDS[48].eventName,
+  49: WORLD_CHAMPIONSHIP_ROUNDS[49].eventName,
+});
+
+// How the archive titles the three World rounds, across eras: "DCI World
+// Championship Prelims" (2013+), "DCI World Class World Championship
+// Quarterfinals" (2008–2012), "DCI Division I World Championship
+// Quarterfinals" / "Semi-Finals" (2000–2007).
+const WORLD_PRELIMS_RE = /world\s+championship\s+(prelims|preliminaries|quarter-?finals)/i;
+const WORLD_SEMIS_RE = /world\s+championship\s+semi-?finals/i;
+const WORLD_FINALS_RE = /world\s+championship\s+finals/i;
+// Rounds that are NOT the World field: the lower divisions' brackets share
+// the days and the "World Championship ..." wording.
+const NON_WORLD_ROUND_RE = /division\s+(ii|iii|2|3)\b|open\s+class|\bclass\s+a\b|soundsport/i;
 const {
   applyEnrichment,
   SPRING_TRAINING_DAYS,
@@ -215,13 +234,21 @@ async function generateOffSeasonSchedule(seasonLength, startDay) {
   const usedEventNames = new Set();
   const usedLocations = new Set();
 
-  const placeExclusiveShow = (day, showNamePattern, mandatory) => {
+  // Seed each World Championship night from the archive's own round on that
+  // day, so the row carries a real date. The archive titles the rounds by
+  // era — "DCI World Championship Prelims", "DCI World Class World
+  // Championship Quarterfinals", "DCI Division I World Championship
+  // Semi-Finals" — so the match is a pattern, never the branded name (which
+  // no archive row carries). The row's NAME is never kept: the championship
+  // block below stamps the canonical marching.art name on every round.
+  const placeExclusiveShow = (day, roundPattern, eventName, mandatory) => {
     const dayObject = schedule.find((d) => d.offSeasonDay === day);
     if (!dayObject) return;
 
     const showsForThisDay = showsByDay.get(day) || [];
     const candidates = showsForThisDay.filter((s) => {
-      const nameMatches = s.eventName.toLowerCase().includes(showNamePattern.toLowerCase());
+      const nameMatches =
+        roundPattern.test(s.eventName) && !NON_WORLD_ROUND_RE.test(s.eventName);
       const isUnused = !usedEventNames.has(s.eventName);
       return nameMatches && isUnused;
     });
@@ -229,18 +256,18 @@ async function generateOffSeasonSchedule(seasonLength, startDay) {
     const showToPlace = shuffleArray(candidates)[0];
 
     if (showToPlace) {
-      dayObject.shows = [{ ...showToPlace, mandatory }];
       usedEventNames.add(showToPlace.eventName);
       usedLocations.add(showToPlace.location);
+      dayObject.shows = [{ ...showToPlace, eventName, mandatory }];
     } else {
-      logger.warn(`Could not find an unused show for Day ${day} matching "${showNamePattern}". Day will be empty.`);
-      dayObject.shows = [];
+      logger.warn(`Could not find an unused archive show for Day ${day} matching ${roundPattern}. Using the fixed ${eventName} row.`);
+      dayObject.shows = [{ eventName, date: null, mandatory }];
     }
   };
 
-  placeExclusiveShow(49, "marching.art World Championship Finals", true);
-  placeExclusiveShow(48, "marching.art World Championship Semifinals", true);
-  placeExclusiveShow(47, "marching.art World Championship Prelims", true);
+  placeExclusiveShow(49, WORLD_FINALS_RE, WORLD_ROUND_NAMES[49], true);
+  placeExclusiveShow(48, WORLD_SEMIS_RE, WORLD_ROUND_NAMES[48], true);
+  placeExclusiveShow(47, WORLD_PRELIMS_RE, WORLD_ROUND_NAMES[47], true);
 
   // The marching.art majors are hard-coded like Championship Week: branded
   // events on fixed days at fixed sites, never sourced from the historical
@@ -325,10 +352,8 @@ async function generateOffSeasonSchedule(seasonLength, startDay) {
   // always in Indianapolis (helpers/championshipVenues.js).
   const day47 = schedule.find((d) => d.offSeasonDay === 47);
   if (day47) {
-    const prelimsShow = day47.shows[0] || {
-      eventName: "marching.art World Championship Prelims",
-      date: null,
-    };
+    const prelimsShow = day47.shows[0] || { date: null };
+    prelimsShow.eventName = WORLD_ROUND_NAMES[47];
     prelimsShow.location = WORLD_VENUE;
     prelimsShow.isChampionship = true;
     prelimsShow.eligibleClasses = ["worldClass", "openClass", "aClass"];
@@ -338,10 +363,8 @@ async function generateOffSeasonSchedule(seasonLength, startDay) {
 
   const day48 = schedule.find((d) => d.offSeasonDay === 48);
   if (day48) {
-    const semisShow = day48.shows[0] || {
-      eventName: "marching.art World Championship Semifinals",
-      date: null,
-    };
+    const semisShow = day48.shows[0] || { date: null };
+    semisShow.eventName = WORLD_ROUND_NAMES[48];
     semisShow.location = WORLD_VENUE;
     semisShow.isChampionship = true;
     semisShow.eligibleClasses = ["worldClass", "openClass", "aClass"];
@@ -353,10 +376,8 @@ async function generateOffSeasonSchedule(seasonLength, startDay) {
   const day49 = schedule.find((d) => d.offSeasonDay === 49);
   if (day49) {
     // Day 49 has two shows: World Finals and SoundSport Festival
-    const worldFinalsShow = day49.shows[0] || {
-      eventName: "marching.art World Championship Finals",
-      date: null,
-    };
+    const worldFinalsShow = day49.shows[0] || { date: null };
+    worldFinalsShow.eventName = WORLD_ROUND_NAMES[49];
     worldFinalsShow.location = WORLD_VENUE;
     worldFinalsShow.isChampionship = true;
     worldFinalsShow.eligibleClasses = ["worldClass", "openClass", "aClass"];
