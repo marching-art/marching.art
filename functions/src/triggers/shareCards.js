@@ -44,6 +44,7 @@ const {
 } = require("../helpers/publicProfilePages");
 const { resolveDirectorProfile } = require("./publicProfilePages");
 const { CLASS_LABELS, aggregateNightlyStandings } = require("../helpers/scoreDrop");
+const { HALL_CLASS_LABELS } = require("../helpers/hallOfChampions");
 const { paths } = require("../helpers/paths");
 
 const DEFAULT_OG_IMAGE = `${SITE_URL}/og-image.jpg`;
@@ -261,7 +262,11 @@ exports.getShareHttp = onRequest(
         const entries =
           (champions && champions.classes && champions.classes[route.classKey]) || [];
         if (entries.length > 0) {
-          const classLabel = CLASS_LABELS[route.classKey] || route.classKey;
+          // Both divisions' classes are Hall keys (helpers/hallOfChampions):
+          // the two World keys are billed as championships, the rest as
+          // class titles.
+          const classLabel =
+            HALL_CLASS_LABELS[route.classKey] || CLASS_LABELS[route.classKey] || route.classKey;
           const soundSport = route.classKey === "soundSport";
           const champ = entries[0];
           page = {
@@ -274,7 +279,9 @@ exports.getShareHttp = onRequest(
                 : `${clamp(champ.corpsName || "", 60)} took the ${classLabel} title. `) +
               `Every champion lives forever in the marching.art Hall of Champions.`,
             imageUrl: `${SITE_URL}/api/og/champion/${route.seasonId}/${route.classKey}.png`,
-            redirectPath: "/hall-of-champions",
+            // Land on that season + class in the Hall (both are validated
+            // route segments, so they are safe in a query string).
+            redirectPath: `/hall-of-champions?season=${route.seasonId}&class=${route.classKey}`,
           };
         }
       } else if (route.type === "uniform") {

@@ -296,4 +296,37 @@ describe("purchaseHallBanner", () => {
     assert.equal(history.data.type, "prestige");
     assert.equal(history.data.amount, -HALL_BANNER_PRICE);
   });
+
+  test("a Podium Division class champion (Open / A) hangs a banner on that class's podium", async () => {
+    const docs = new Map([
+      [
+        championsPath("s1"),
+        {
+          seasonName: "live_2026",
+          classes: {
+            podiumClass: [{ rank: 1, uid: "someoneElse", corpsName: "Crimson", score: 95.1 }],
+            podiumAClass: [{ rank: 1, uid: "champ", corpsName: "Amber", score: 88.4 }],
+          },
+        },
+      ],
+      [profilePath("champ"), { corpsCoin: 25000 }],
+    ]);
+    const { db, writes } = makeFakeDb(docs);
+    setDbForTesting(db);
+
+    // Not the World champion — the World key refuses them...
+    await assert.rejects(
+      purchaseHallBanner.run(
+        authedRequest("champ", { seasonId: "s1", corpsClass: "podiumClass", message: "A Class rules" })
+      ),
+      /champion/i
+    );
+    // ...but their own class podium hangs it.
+    const result = await purchaseHallBanner.run(
+      authedRequest("champ", { seasonId: "s1", corpsClass: "podiumAClass", message: "A Class rules" })
+    );
+    assert.equal(result.success, true);
+    const championsWrite = writes.find((w) => w.path === championsPath("s1"));
+    assert.equal(championsWrite.data["classes.podiumAClass"][0].banner.message, "A Class rules");
+  });
 });

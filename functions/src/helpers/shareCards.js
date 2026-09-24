@@ -10,6 +10,7 @@
 // embedding is needed.
 
 const { CLASS_LABELS, aggregateNightlyStandings } = require("./scoreDrop");
+const { HALL_CLASS_LABELS, HALL_DIVISION_OF, isHallClassKey } = require("./hallOfChampions");
 const { WORLD_FIELD_KEY } = require("./worldChampionship");
 const { UNIFORM_CODE_RE } = require("./uniformValidation");
 
@@ -165,16 +166,17 @@ function buildChampionCardSvg({ champions, classKey }) {
   const entries = (champions && champions.classes && champions.classes[classKey]) || [];
   if (entries.length === 0) return null;
 
-  // `classes.worldClass` is the World Championship podium (the top of the whole
-  // Finals field, every class together), so its card says so.
-  const classLabel =
-    classKey === "worldClass" ? "World Championship" : CLASS_LABELS[classKey] || classKey;
+  // Hall keys are billed by helpers/hallOfChampions: the two World keys are
+  // World Championship podiums (the top of the whole Finals field, every
+  // class together), the rest are class titles, in both divisions.
+  const classLabel = HALL_CLASS_LABELS[classKey] || CLASS_LABELS[classKey] || classKey;
   const seasonName = champions.seasonName || "Season";
   // SoundSport is participation-focused: it recognizes "Best in Show" and its
   // ratings are never revealed as numeric scores anywhere in the product.
   const soundSport = classKey === "soundSport";
+  const podium = HALL_DIVISION_OF[classKey] === "podium";
   return buildCardSvg({
-    kicker: "Fantasy Drum Corps · Hall of Champions",
+    kicker: `${podium ? "Podium Division" : "Fantasy Drum Corps"} · Hall of Champions`,
     title: soundSport ? `${seasonName} Best in Show` : `${seasonName} Champions`,
     subtitle: classLabel,
     rows: entries.slice(0, 5).map((entry, index) => ({
@@ -500,6 +502,9 @@ const SEGMENT = /^[A-Za-z0-9_-]+$/;
 
 /** @param {string} value */
 const isValidClassKey = (value) => Object.prototype.hasOwnProperty.call(CLASS_LABELS, value);
+/** Champion cards cover every Hall key — both divisions' classes. */
+/** @param {string} value */
+const isValidChampionKey = (value) => isValidClassKey(value) || isHallClassKey(value);
 
 // Username shape enforced by the updateUsername callable (callable/profile.js).
 const USERNAME_SEGMENT = /^[A-Za-z0-9_]{3,15}$/;
@@ -555,7 +560,7 @@ function parseOgPath(path) {
   if (kind === "champion" && parts.length === 5) {
     const [seasonId, classFile] = parts.slice(3);
     const classKey = classFile.replace(/\.png$/, "");
-    if (!SEGMENT.test(seasonId) || !isValidClassKey(classKey)) return null;
+    if (!SEGMENT.test(seasonId) || !isValidChampionKey(classKey)) return null;
     return { type: "champion", seasonId, classKey };
   }
 
@@ -615,7 +620,7 @@ function parseSharePath(path) {
 
   if (kind === "champion" && parts.length === 4) {
     const [seasonId, classKey] = parts.slice(2);
-    if (!SEGMENT.test(seasonId) || !isValidClassKey(classKey)) return null;
+    if (!SEGMENT.test(seasonId) || !isValidChampionKey(classKey)) return null;
     return { type: "champion", seasonId, classKey };
   }
 

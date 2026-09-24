@@ -1,25 +1,13 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // src/pages/HallOfChampions.jsx
 // Championship record book — data-terminal layout
-// Sidebar (Seasons) + Main Stage (Champion plaque + finalists table)
-import React, { useState, useEffect, useMemo } from 'react';
+// Sidebar (Division → Class switcher + Seasons) + Main Stage (Champion plaque +
+// finalists table). Both divisions are here with their classes — Fantasy:
+// World, Open, A, SoundSport; Podium: World, Open, A — see hallOfChampionsMeta.
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { m } from 'framer-motion';
-import {
-  Trophy,
-  Award,
-  Calendar,
-  Crown,
-  Medal,
-  ChevronRight,
-  ArrowLeft,
-  Hash,
-  Users,
-  Music,
-  Flag,
-  Coins,
-  Share2,
-} from 'lucide-react';
+import { Trophy, Crown, ArrowLeft, Users, Flag, Coins, Share2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { Link, useSearchParams } from 'react-router-dom';
 import { shareLink, championShareUrl } from '../utils/shareSheet';
 import { getSeasonChampions } from '../api/season';
 import { queryClient, queryKeys } from '../lib/queryClient';
@@ -27,138 +15,47 @@ import { purchaseHallBanner } from '../api/functions';
 import { getSoundSportRating, RATING_CONFIG } from '../utils/scoresUtils';
 import { HALL_BANNER_PRICE } from '../utils/prestige';
 import { useAuth } from '../context/AuthContext';
-import { Link } from 'react-router-dom';
 import LoadingScreen from '../components/LoadingScreen';
 import { TeamAvatar } from '../components/ui/TeamAvatar';
 import { Heading } from '../components/ui';
 import { BlueRibbonIcon, BannerModal, NoChampionsPanel } from './HallOfChampionsParts';
-import { RANK_META } from './hallOfChampionsMeta';
+import { SeasonRow, FinalistsTable } from './HallOfChampionsTable';
+import {
+  CLASS_CONFIG,
+  HALL_DIVISIONS,
+  DEFAULT_HALL_CLASS,
+  isHallClassKey,
+  divisionOfClass,
+  isSoundSportClass,
+  parseSeasonName,
+  formatDate,
+  formatScore,
+  formatDelta,
+} from './hallOfChampionsMeta';
 
-// =============================================================================
-// CONSTANTS
-// =============================================================================
-
-const CLASS_CONFIG = {
-  // `classes.worldClass` is the World Championship podium: the top three of the
-  // WHOLE Finals field, whatever class each corps drafted in (one field, one
-  // title — see utils/worldChampionship). It is billed as the championship,
-  // not as a class.
-  worldClass: { name: 'World Championship', short: 'World', icon: Crown },
-  openClass: { name: 'Open Class', short: 'Open', icon: Trophy },
-  aClass: { name: 'A Class', short: 'A Class', icon: Award },
-  // SoundSport is rating-based (not placement-based). Its top-scoring ensemble
-  // at each season's SoundSport International Music & Food Festival earns
-  // "Best in Show" — surfaced here with the blue-ribbon award.
-  soundSport: { name: 'SoundSport', short: 'Sound', icon: Music },
-  // Podium Class champions are written at season rollover by the Podium
-  // career archival (Phase 6.5). The division tab is data-driven: it only
-  // appears once at least one archived season has a Podium podium, so the
-  // Hall needs no feature flag and history survives any flag state.
-  podiumClass: { name: 'Podium Division', short: 'Podium', icon: Medal },
-};
-
-// SoundSport recognizes a "Best in Show" ensemble rather than a champion, so
-// its plaque, table, and season rows swap the champion framing for the
-// blue-ribbon / rating presentation used elsewhere for SoundSport.
-const isSoundSportClass = (classKey) => classKey === 'soundSport';
-
-// =============================================================================
-// HELPERS
-// =============================================================================
-
-const parseSeasonName = (name) => {
-  if (!name) return { type: 'Unknown', year: '' };
-  const parts = name.split('_');
-  if (parts.length < 2) return { type: name, year: '' };
-  const type = parts[0].charAt(0).toUpperCase() + parts[0].slice(1).toLowerCase();
-  const yearParts = parts.slice(1);
-  // "2025-26" — collapse trailing 4-digit year to 2-digit suffix
-  let year = yearParts.join('-');
-  if (yearParts.length === 2 && /^\d{4}$/.test(yearParts[0]) && /^\d{4}$/.test(yearParts[1])) {
-    year = `${yearParts[0]}-${yearParts[1].slice(2)}`;
-  }
-  return { type, year };
-};
-
-const formatDate = (date) => {
-  if (!date) return '—';
-  try {
-    return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
-  } catch {
-    return '—';
-  }
-};
-
-const formatScore = (score) => (typeof score === 'number' ? score.toFixed(3) : '—');
-
-const formatDelta = (delta) => {
-  if (typeof delta !== 'number' || Number.isNaN(delta)) return '—';
-  const sign = delta > 0 ? '+' : '';
-  return `${sign}${delta.toFixed(3)}`;
-};
+/** @typedef {import('../api/season').SeasonChampions} SeasonChampions */
+/** @typedef {import('../api/season').SeasonChampionEntry} SeasonChampionEntry */
+/** @typedef {import('./hallOfChampionsMeta').HallDivisionConfig} HallDivisionConfig */
 
 // =============================================================================
 // SUB-COMPONENTS
 // =============================================================================
 
-const SeasonRow = ({ season, isSelected, classKey, onSelect }) => {
-  const champ = season.classes?.[classKey]?.[0];
-  if (!champ) return null;
-  const { type, year } = parseSeasonName(season.seasonName);
-  const soundSport = isSoundSportClass(classKey);
-  // SoundSport is a ratings-only format — never surface the numeric score here.
-  const rating =
-    soundSport && typeof champ.score === 'number' ? getSoundSportRating(champ.score) : null;
-
-  return (
-    <button
-      onClick={() => onSelect(season)}
-      className={`
-        w-full text-left px-4 py-3 border-b border-line transition-colors
-        ${isSelected ? 'bg-interactive/15 border-l-2 border-l-interactive' : 'border-l-2 border-l-transparent hover:bg-surface-sunken'}
-      `}
-    >
-      <div className="flex items-center justify-between gap-2 mb-1">
-        <span
-          className={`text-[11px] font-bold uppercase tracking-wider ${isSelected ? 'text-white' : 'text-secondary'}`}
-        >
-          {type}
-        </span>
-        <span className="text-[10px] text-muted font-data tabular-nums">{year}</span>
-      </div>
-      <div className="flex items-center gap-2 min-w-0">
-        {soundSport ? (
-          <BlueRibbonIcon className="w-3 h-3 flex-shrink-0" />
-        ) : (
-          <Crown className="w-3 h-3 text-brand flex-shrink-0" />
-        )}
-        <span className="text-xs text-white truncate min-w-0 flex-1">
-          {champ.corpsName || champ.username || '—'}
-        </span>
-        {soundSport ? (
-          <span className="text-[10px] font-bold uppercase tracking-wider text-secondary flex-shrink-0">
-            {rating || '—'}
-          </span>
-        ) : (
-          <span className="text-[10px] text-muted font-data tabular-nums flex-shrink-0">
-            {formatScore(champ.score)}
-          </span>
-        )}
-      </div>
-      <div className="flex items-center gap-1.5 mt-1.5">
-        <Calendar className="w-2.5 h-2.5 text-muted" />
-        <span className="text-[10px] text-muted font-data tabular-nums">
-          {formatDate(season.archivedAt)}
-        </span>
-        {isSelected && <ChevronRight className="w-3 h-3 text-interactive ml-auto" />}
-      </div>
-    </button>
-  );
-};
-
+/**
+ * The season's champion (or SoundSport Best in Show) for the active class.
+ * @param {{
+ *   champion: SeasonChampionEntry,
+ *   season: SeasonChampions,
+ *   classKey: string,
+ *   fieldStats: { margin: number | null, gap: number | null },
+ *   isOwner: boolean,
+ *   onHangBanner: () => void,
+ * }} props
+ */
 const ChampionPlaque = ({ champion, season, classKey, fieldStats, isOwner, onHangBanner }) => {
   const { type, year } = parseSeasonName(season.seasonName);
-  const ClassIcon = CLASS_CONFIG[classKey]?.icon || Trophy;
+  const config = CLASS_CONFIG[classKey];
+  const ClassIcon = config?.icon || Trophy;
   const corpsName = champion.corpsName || champion.username || '—';
   const soundSport = isSoundSportClass(classKey);
   const rating =
@@ -190,14 +87,14 @@ const ChampionPlaque = ({ champion, season, classKey, fieldStats, isOwner, onHan
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           <span className="text-[10px] font-bold uppercase tracking-wider opacity-80 whitespace-nowrap">
-            {CLASS_CONFIG[classKey]?.name}
+            {config?.name}
           </span>
           {/* Shares the /share/champion URL so the link unfurls with the
-              live champion card (see src/utils/share.ts). */}
+              live champion card (see functions/src/helpers/shareCards.js). */}
           <button
             onClick={() =>
               shareLink({
-                title: `${season.seasonName || 'Season'} ${CLASS_CONFIG[classKey]?.name || ''} — marching.art`,
+                title: `${season.seasonName || 'Season'} ${config?.name || ''} — marching.art`,
                 url: championShareUrl(season.id, classKey),
               })
             }
@@ -306,17 +203,17 @@ const ChampionPlaque = ({ champion, season, classKey, fieldStats, isOwner, onHan
             <div className="text-xs text-white truncate">{rating || '—'}</div>
           ) : (
             <div
-              className={`text-xs font-data tabular-nums truncate ${fieldStats.margin > 0 ? 'text-green-500' : 'text-muted'}`}
+              className={`text-xs font-data tabular-nums truncate ${fieldStats.margin != null && fieldStats.margin > 0 ? 'text-green-500' : 'text-muted'}`}
             >
               {formatDelta(fieldStats.margin)}
             </div>
           )}
         </div>
         <div className="px-3 py-2.5">
-          <div className="text-[10px] text-muted uppercase tracking-wider">Division</div>
+          <div className="text-[10px] text-muted uppercase tracking-wider">Class</div>
           <div className="text-xs text-white truncate flex items-center gap-1">
             <ClassIcon className={`w-3 h-3 ${soundSport ? 'text-interactive' : 'text-brand'}`} />
-            {CLASS_CONFIG[classKey]?.short}
+            {config?.short}
           </div>
         </div>
       </div>
@@ -324,155 +221,76 @@ const ChampionPlaque = ({ champion, season, classKey, fieldStats, isOwner, onHan
   );
 };
 
-const FinalistsTable = ({ champions, classKey }) => {
-  if (!champions || champions.length === 0) return null;
-  const soundSport = isSoundSportClass(classKey);
-
+/**
+ * Two-tier switcher: the division (Fantasy / Podium), then that division's
+ * classes. The Podium row only appears once at least one archived season has
+ * a Podium podium (data-driven — no feature flag, history survives any flag
+ * state); the Fantasy row shows every class even before it has history.
+ * @param {{
+ *   divisions: HallDivisionConfig[],
+ *   selectedClass: string,
+ *   onSelectClass: (classKey: string) => void,
+ * }} props
+ */
+const DivisionSwitcher = ({ divisions, selectedClass, onSelectClass }) => {
+  const activeDivision = divisionOfClass(selectedClass);
   return (
-    <div className="bg-surface-card border border-line">
-      <div className="bg-surface-raised px-4 py-2.5 flex items-center justify-between border-b border-line">
-        <div className="flex items-center gap-2">
-          {soundSport ? (
-            <Music className="w-3.5 h-3.5 text-interactive" />
-          ) : (
-            <Trophy className="w-3.5 h-3.5 text-brand" />
-          )}
-          <span className="text-[11px] font-bold uppercase tracking-wider text-secondary">
-            {soundSport ? 'Recognized Ensembles' : 'Final Standings'}
-          </span>
-        </div>
-        <span className="text-[10px] text-muted font-data tabular-nums">
-          {champions.length}{' '}
-          {soundSport
-            ? `Ensemble${champions.length !== 1 ? 's' : ''}`
-            : `Finalist${champions.length !== 1 ? 's' : ''}`}
-        </span>
+    <div className="flex-shrink-0 border-b border-line bg-background">
+      {divisions.length > 1 && (
+        <>
+          <div className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-muted">
+            Division
+          </div>
+          <div className="flex border-t border-line" role="tablist" aria-label="Division">
+            {divisions.map((division) => {
+              const isSelected = division.id === activeDivision.id;
+              return (
+                <button
+                  key={division.id}
+                  role="tab"
+                  aria-selected={isSelected}
+                  onClick={() => onSelectClass(division.classes[0])}
+                  className={`flex-1 px-2 py-2.5 text-[10px] font-bold uppercase tracking-wider transition-colors border-r border-line last:border-r-0 ${
+                    isSelected
+                      ? 'bg-brand text-black'
+                      : 'text-muted hover:bg-surface-card hover:text-white'
+                  }`}
+                >
+                  {division.short}
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
+      <div className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-muted border-t border-line">
+        {divisions.length > 1 ? `${activeDivision.name} · Class` : 'Class'}
       </div>
-
-      {/* table-fixed keeps a long corps name from stretching the table past the
-          viewport on mobile — the Corps column absorbs the remaining width and
-          the name truncates instead of pushing the Score column off-screen. */}
-      <table className="w-full table-fixed">
-        <thead>
-          <tr className="bg-surface-sunken border-b border-line">
-            <th className="text-left py-2 px-3 text-[10px] font-bold uppercase tracking-wider text-muted w-10">
-              {soundSport ? '' : '#'}
-            </th>
-            <th className="text-left py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-muted">
-              {soundSport ? 'Ensemble' : 'Corps'}
-            </th>
-            <th className="text-left py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-muted hidden sm:table-cell">
-              Director
-            </th>
-            <th className="text-right py-2 px-3 text-[10px] font-bold uppercase tracking-wider text-muted w-20">
-              {soundSport ? 'Rating' : 'Score'}
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {champions.map((c, idx) => {
-            const meta = RANK_META[c.rank] || {};
-            const rowBg = idx % 2 === 0 ? 'bg-surface-card' : 'bg-surface-sunken';
-            const corpsName = c.corpsName || c.username || '—';
-            const isBestInShow = soundSport && c.rank === 1;
-            const rating =
-              soundSport && typeof c.score === 'number' ? getSoundSportRating(c.score) : null;
-            const ratingStyle = rating ? RATING_CONFIG[rating] : null;
-            const highlight = soundSport ? isBestInShow : c.rank === 1;
-
-            return (
-              <tr
-                key={`${c.uid}-${c.rank}-${idx}`}
-                className={`${rowBg} border-b border-line last:border-b-0`}
-              >
-                <td className="py-2.5 px-3">
-                  {soundSport ? (
-                    <div className="flex items-center justify-center">
-                      {isBestInShow ? (
-                        <BlueRibbonIcon className="w-4 h-4" />
-                      ) : (
-                        <Music className="w-3 h-3 text-muted" />
-                      )}
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-1.5">
-                      {meta.label ? (
-                        <Medal className={`w-3.5 h-3.5 ${meta.medalColor}`} />
-                      ) : (
-                        <Hash className="w-3 h-3 text-muted" />
-                      )}
-                      <span className="text-xs font-bold text-secondary font-data tabular-nums">
-                        {c.rank}
-                      </span>
-                    </div>
-                  )}
-                </td>
-                <td className="py-2.5 px-2">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <TeamAvatar name={corpsName} logoUrl={c.avatarUrl} size="xs" />
-                    <div className="min-w-0">
-                      <span
-                        className={`text-sm font-bold block truncate ${
-                          highlight
-                            ? soundSport
-                              ? 'text-interactive'
-                              : 'text-brand'
-                            : 'text-white'
-                        }`}
-                      >
-                        {corpsName}
-                      </span>
-                      {isBestInShow ? (
-                        <span className="text-[10px] uppercase tracking-wider text-interactive">
-                          Best in Show
-                        </span>
-                      ) : (
-                        meta.label &&
-                        !soundSport && (
-                          <span className={`text-[10px] uppercase tracking-wider ${meta.accent}`}>
-                            {meta.label}
-                          </span>
-                        )
-                      )}
-                    </div>
-                  </div>
-                </td>
-                <td className="py-2.5 px-2 hidden sm:table-cell">
-                  {c.uid ? (
-                    <Link
-                      to={`/profile/${c.uid}`}
-                      className="text-xs text-muted hover:text-interactive transition-colors truncate block"
-                    >
-                      {c.username || '—'}
-                    </Link>
-                  ) : (
-                    <span className="text-xs text-muted truncate block">{c.username || '—'}</span>
-                  )}
-                </td>
-                <td className="py-2.5 px-3 text-right">
-                  {soundSport ? (
-                    ratingStyle ? (
-                      <span
-                        className={`inline-block text-[10px] font-bold uppercase px-2 py-1 ${ratingStyle.badge}`}
-                      >
-                        {rating}
-                      </span>
-                    ) : (
-                      <span className="text-sm text-muted">—</span>
-                    )
-                  ) : (
-                    <span
-                      className={`text-sm font-bold font-data tabular-nums ${c.rank === 1 ? 'text-brand' : 'text-white'}`}
-                    >
-                      {formatScore(c.score)}
-                    </span>
-                  )}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+      <div
+        className="flex border-t border-line"
+        role="tablist"
+        aria-label={`${activeDivision.name} class`}
+      >
+        {activeDivision.classes.map((classKey) => {
+          const config = CLASS_CONFIG[classKey];
+          const isSelected = selectedClass === classKey;
+          return (
+            <button
+              key={classKey}
+              role="tab"
+              aria-selected={isSelected}
+              onClick={() => onSelectClass(classKey)}
+              className={`flex-1 px-2 py-2.5 text-[10px] font-bold uppercase tracking-wider transition-colors border-r border-line last:border-r-0 ${
+                isSelected
+                  ? 'bg-interactive text-white'
+                  : 'text-muted hover:bg-surface-card hover:text-white'
+              }`}
+            >
+              {config.short}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 };
@@ -484,10 +302,20 @@ const FinalistsTable = ({ champions, classKey }) => {
 const HallOfChampions = () => {
   const auth = useAuth();
   const currentUid = auth?.user?.uid || null;
+  const [searchParams, setSearchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
-  const [seasons, setSeasons] = useState([]);
-  const [selectedClass, setSelectedClass] = useState('worldClass');
-  const [selectedSeason, setSelectedSeason] = useState(null);
+  /** @type {[SeasonChampions[], React.Dispatch<React.SetStateAction<SeasonChampions[]>>]} */
+  const [seasons, setSeasons] = useState(/** @type {SeasonChampions[]} */ ([]));
+  // `?class=` deep links (the /share/champion page lands here) pick the
+  // opening class; anything unknown falls back to the World Championship.
+  const [selectedClass, setSelectedClass] = useState(() => {
+    const requested = searchParams.get('class');
+    return requested && isHallClassKey(requested) ? requested : DEFAULT_HALL_CLASS;
+  });
+  /** @type {[SeasonChampions | null, React.Dispatch<React.SetStateAction<SeasonChampions | null>>]} */
+  const [selectedSeason, setSelectedSeason] = useState(
+    /** @type {SeasonChampions | null} */ (null)
+  );
   const [showBannerModal, setShowBannerModal] = useState(false);
   const [bannerMessage, setBannerMessage] = useState('');
   const [purchasingBanner, setPurchasingBanner] = useState(false);
@@ -509,6 +337,13 @@ const HallOfChampions = () => {
 
         if (cancelled) return;
         setSeasons(seasonsData);
+        // `?season=` deep link: open that season if it crowned the opening
+        // class (read once, on load — the list is the navigation after that).
+        const requestedSeason = searchParams.get('season');
+        if (requestedSeason) {
+          const match = seasonsData.find((s) => s.id === requestedSeason);
+          if (match && (match.classes?.[selectedClass]?.length || 0) > 0) setSelectedSeason(match);
+        }
       } catch (error) {
         console.error('Error fetching season champions:', error);
       } finally {
@@ -519,16 +354,42 @@ const HallOfChampions = () => {
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- deep-link params are read once, on load
   }, []);
 
   // Divisions shown in the switcher. Podium only appears once real Podium
   // champions exist in the archive (data-driven — no feature flag).
-  const visibleClasses = useMemo(() => {
-    const hasPodiumHistory = seasons.some((s) => (s.classes?.podiumClass?.length || 0) > 0);
-    return Object.entries(CLASS_CONFIG).filter(
-      ([classKey]) => classKey !== 'podiumClass' || hasPodiumHistory
-    );
-  }, [seasons]);
+  const visibleDivisions = useMemo(
+    () =>
+      HALL_DIVISIONS.filter(
+        (division) =>
+          division.id === 'fantasy' ||
+          seasons.some((s) =>
+            division.classes.some((classKey) => (s.classes?.[classKey]?.length || 0) > 0)
+          )
+      ),
+    [seasons]
+  );
+
+  // Keep the URL shareable: the active class rides in `?class=` (replace, so
+  // tab-hopping never piles up history entries).
+  const selectClass = useCallback(
+    /** @param {string} classKey */
+    (classKey) => {
+      setSelectedClass(classKey);
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          if (classKey === DEFAULT_HALL_CLASS) next.delete('class');
+          else next.set('class', classKey);
+          next.delete('season');
+          return next;
+        },
+        { replace: true }
+      );
+    },
+    [setSearchParams]
+  );
 
   // Only seasons that actually have a crowned champion in the active class
   const crownedSeasons = useMemo(() => {
@@ -536,7 +397,7 @@ const HallOfChampions = () => {
   }, [seasons, selectedClass]);
 
   // Clear a selection that is no longer valid for the active class (e.g. after
-  // switching divisions to one the selected season has no champions in). We
+  // switching classes to one the selected season has no champions in). We
   // never *force* a selection here — leaving it null lets mobile show the
   // season list, while desktop falls back to the newest season via
   // `displaySeason` below. Forcing a selection previously made the mobile
@@ -556,11 +417,14 @@ const HallOfChampions = () => {
   const displaySeason = selectedSeason || crownedSeasons[0] || null;
 
   const currentChampions = useMemo(() => {
-    if (!displaySeason) return [];
+    if (!displaySeason) return /** @type {SeasonChampionEntry[]} */ ([]);
     return displaySeason.classes?.[selectedClass] || [];
   }, [displaySeason, selectedClass]);
 
   const totalCrowns = crownedSeasons.length;
+  const activeConfig = CLASS_CONFIG[selectedClass];
+  const activeDivision = divisionOfClass(selectedClass);
+  const soundSport = isSoundSportClass(selectedClass);
 
   // Margin / spread stats for the champion plaque
   const fieldStats = useMemo(() => {
@@ -608,7 +472,7 @@ const HallOfChampions = () => {
       }
     } catch (error) {
       console.error('Error hanging banner:', error);
-      toast.error(error.message || 'Failed to hang banner');
+      toast.error(error instanceof Error ? error.message : 'Failed to hang banner');
     } finally {
       setPurchasingBanner(false);
     }
@@ -624,7 +488,7 @@ const HallOfChampions = () => {
     <div className="flex flex-col h-full min-h-0 bg-background">
       <div className="flex-1 flex min-h-0">
         {/* ========================================================
-            SIDEBAR — Season list
+            SIDEBAR — Division/Class switcher + Season list
             ======================================================== */}
         <div
           className={`flex flex-col min-h-0 border-r border-line bg-surface-sunken ${
@@ -655,35 +519,16 @@ const HallOfChampions = () => {
             </div>
           </div>
 
-          {/* Division switcher */}
-          <div className="flex-shrink-0 border-b border-line bg-background">
-            <div className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-muted">
-              Division
-            </div>
-            <div className="flex border-t border-line">
-              {visibleClasses.map(([classKey, config]) => {
-                const isSelected = selectedClass === classKey;
-                return (
-                  <button
-                    key={classKey}
-                    onClick={() => setSelectedClass(classKey)}
-                    className={`flex-1 px-2 py-2.5 text-[10px] font-bold uppercase tracking-wider transition-colors border-r border-line last:border-r-0 ${
-                      isSelected
-                        ? 'bg-interactive text-white'
-                        : 'text-muted hover:bg-surface-card hover:text-white'
-                    }`}
-                  >
-                    {config.short}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+          <DivisionSwitcher
+            divisions={visibleDivisions}
+            selectedClass={selectedClass}
+            onSelectClass={selectClass}
+          />
 
           {/* Section label */}
           <div className="flex-shrink-0 bg-background border-b border-line px-4 py-1.5">
             <span className="text-[10px] font-bold uppercase tracking-widest text-muted">
-              {isSoundSportClass(selectedClass) ? 'Best in Show' : 'Champions'} · Most Recent First
+              {soundSport ? 'Best in Show' : 'Champions'} · Most Recent First
             </span>
           </div>
 
@@ -692,7 +537,9 @@ const HallOfChampions = () => {
             {crownedSeasons.length === 0 ? (
               <div className="px-4 py-12 text-center">
                 <Trophy className="w-8 h-8 text-muted mx-auto mb-2" />
-                <p className="text-xs text-muted uppercase tracking-wider">No champions recorded</p>
+                <p className="text-xs text-muted uppercase tracking-wider">
+                  No {activeConfig?.name} champions recorded
+                </p>
               </div>
             ) : (
               crownedSeasons.map((season) => (
@@ -716,7 +563,7 @@ const HallOfChampions = () => {
         >
           {!displaySeason ? (
             <div className="flex-1 flex items-center justify-center px-4">
-              <NoChampionsPanel label={CLASS_CONFIG[selectedClass]?.name} />
+              <NoChampionsPanel label={activeConfig?.name || 'Season'} />
             </div>
           ) : (
             <>
@@ -736,7 +583,7 @@ const HallOfChampions = () => {
                 <div className="px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-muted mb-0.5">
-                      <span>Championship Record</span>
+                      <span>{activeDivision.name} · Championship Record</span>
                     </div>
                     <Heading level="section" as="h2" className="truncate">
                       {parseSeasonName(displaySeason.seasonName).type}{' '}
@@ -748,17 +595,14 @@ const HallOfChampions = () => {
                   <div className="flex-shrink-0 flex items-center gap-2 text-[10px] uppercase tracking-wider">
                     <span className="hidden sm:inline-flex items-center gap-1 px-2 py-1 bg-background border border-line text-secondary">
                       <Users className="w-3 h-3" />
-                      {currentChampions.length}{' '}
-                      {isSoundSportClass(selectedClass) ? 'Ensembles' : 'Finalists'}
+                      {currentChampions.length} {soundSport ? 'Ensembles' : 'Finalists'}
                     </span>
                     <span
                       className={`inline-flex items-center gap-1 px-2 py-1 font-bold ${
-                        isSoundSportClass(selectedClass)
-                          ? 'bg-interactive text-white'
-                          : 'bg-brand text-black'
+                        soundSport ? 'bg-interactive text-white' : 'bg-brand text-black'
                       }`}
                     >
-                      {CLASS_CONFIG[selectedClass]?.name}
+                      {activeConfig?.name}
                     </span>
                   </div>
                 </div>

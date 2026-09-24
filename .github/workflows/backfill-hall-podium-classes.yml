@@ -1,0 +1,77 @@
+name: Backfill Hall of Champions Podium Open/A podiums
+
+# One-off (re-runnable) data migration that adds the Podium Division's Open
+# Class / A Class podiums to archived Hall of Champions seasons.
+#
+# WHY: the Hall now shows both divisions with their classes — Fantasy: World,
+# Open, A, SoundSport; Podium: World, Open, A. Seasons archived before this
+# carry only the Podium World Championship podium (classes.podiumClass). This
+# derives classes.podiumOpenClass / classes.podiumAClass for every archived
+# Podium season from its frozen record (podium-recaps/{seasonUid}
+# .finalStandings), exactly as a fresh archival now writes them.
+# See functions/src/scripts/backfillHallPodiumClasses.js.
+#
+# HOW TO RUN (no console needed — all from the Actions tab):
+#   1. Actions → "Backfill Hall of Champions Podium Open/A podiums" → Run workflow.
+#   2. Leave "commit" UNCHECKED for a dry run: the log lists every season it
+#      would change and who it would crown.
+#   3. Review the dry-run log, then Run workflow again with "commit" CHECKED to
+#      apply the writes. The script is idempotent, so a second commit run that
+#      finds nothing new is a safe no-op.
+#
+# Only classes.podiumOpenClass / classes.podiumAClass are written; the Podium
+# World podium, every fantasy class and every banner are never touched. This
+# job writes to Firestore only — it makes no repo commits.
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: 'Apply the writes (leave unchecked for a dry run)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  # Never let two backfill runs write the same docs at once.
+  group: backfill-hall-podium-classes
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Install function dependencies
+        run: cd functions && npm ci
+
+      - name: Run backfill (${{ inputs.commit && 'COMMIT' || 'dry run' }})
+        env:
+          # Same Firestore credentials the deploy workflow uses.
+          GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          # Production data namespace (paths.userProfile resolves usernames);
+          # matches functions/.env.marching-art.
+          DATA_NAMESPACE: marching-art
+        run: |
+          echo "$GOOGLE_APPLICATION_CREDENTIALS_JSON" > /tmp/sa-key.json
+          export GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa-key.json
+          trap 'rm -f /tmp/sa-key.json' EXIT
+
+          cd functions
+          if [ "${{ inputs.commit }}" = "true" ]; then
+            echo "Running WITH --commit: changes will be written to Firestore."
+            node src/scripts/backfillHallPodiumClasses.js --commit
+          else
+            echo "Dry run: no writes. Check 'commit' to apply."
+            node src/scripts/backfillHallPodiumClasses.js --dry-run
+          fi
