@@ -27,6 +27,7 @@ import {
   isHallClassKey,
   divisionOfClass,
   isSoundSportClass,
+  crownedAt,
   parseSeasonName,
   formatDate,
   formatScore,
@@ -58,6 +59,7 @@ const ChampionPlaque = ({ champion, season, classKey, fieldStats, isOwner, onHan
   const ClassIcon = config?.icon || Trophy;
   const corpsName = champion.corpsName || champion.username || '—';
   const soundSport = isSoundSportClass(classKey);
+  const crowning = crownedAt(classKey);
   const rating =
     soundSport && typeof champion.score === 'number' ? getSoundSportRating(champion.score) : null;
   const ratingStyle = rating ? RATING_CONFIG[rating] : null;
@@ -186,12 +188,16 @@ const ChampionPlaque = ({ champion, season, classKey, fieldStats, isOwner, onHan
 
       {/* Stats strip */}
       <div className="grid grid-cols-3 border-t border-line divide-x divide-line">
-        <div className="px-3 py-2.5">
+        {/* The show that decided the title — Open/A at the Day 46 Open & A
+            Class Finals, the World podiums at the Day 49 Finals. Never the
+            season's archive date, which is when the record was frozen. */}
+        <div className="px-3 py-2.5 min-w-0">
           <div className="text-[10px] text-muted uppercase tracking-wider">
-            {soundSport ? 'Awarded' : 'Crowned'}
+            {soundSport ? 'Awarded at' : 'Crowned at'}
           </div>
-          <div className="text-xs text-white font-data tabular-nums truncate">
-            {formatDate(season.archivedAt)}
+          <div className="text-xs text-white truncate" title={crowning.eventName}>
+            <span className="font-data tabular-nums">Day {crowning.day}</span> ·{' '}
+            {crowning.eventName}
           </div>
         </div>
         <div className="px-3 py-2.5">
@@ -583,7 +589,10 @@ const HallOfChampions = () => {
                 <div className="px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-muted mb-0.5">
-                      <span>{activeDivision.name} · Championship Record</span>
+                      <span className="truncate">{activeDivision.name} · Championship Record</span>
+                      <span className="hidden sm:inline font-data tabular-nums normal-case tracking-normal whitespace-nowrap">
+                        · Archived {formatDate(displaySeason.archivedAt)}
+                      </span>
                     </div>
                     <Heading level="section" as="h2" className="truncate">
                       {parseSeasonName(displaySeason.seasonName).type}{' '}

@@ -12,8 +12,8 @@ import { BlueRibbonIcon } from './HallOfChampionsParts';
 import {
   RANK_META,
   isSoundSportClass,
+  crownedAt,
   parseSeasonName,
-  formatDate,
   formatScore,
 } from './hallOfChampionsMeta';
 
@@ -35,6 +35,7 @@ export const SeasonRow = ({ season, isSelected, classKey, onSelect }) => {
   if (!champ) return null;
   const { type, year } = parseSeasonName(season.seasonName);
   const soundSport = isSoundSportClass(classKey);
+  const crowning = crownedAt(classKey);
   // SoundSport is a ratings-only format — never surface the numeric score here.
   const rating =
     soundSport && typeof champ.score === 'number' ? getSoundSportRating(champ.score) : null;
@@ -74,12 +75,14 @@ export const SeasonRow = ({ season, isSelected, classKey, onSelect }) => {
           </span>
         )}
       </div>
+      {/* The night the title was decided — Open/A at the Day 46 Class Finals,
+          never the season's archive date. */}
       <div className="flex items-center gap-1.5 mt-1.5">
         <Calendar className="w-2.5 h-2.5 text-muted" />
-        <span className="text-[10px] text-muted font-data tabular-nums">
-          {formatDate(season.archivedAt)}
+        <span className="text-[10px] text-muted truncate">
+          <span className="font-data tabular-nums">Day {crowning.day}</span> · {crowning.short}
         </span>
-        {isSelected && <ChevronRight className="w-3 h-3 text-interactive ml-auto" />}
+        {isSelected && <ChevronRight className="w-3 h-3 text-interactive ml-auto flex-shrink-0" />}
       </div>
     </button>
   );
@@ -92,6 +95,7 @@ export const SeasonRow = ({ season, isSelected, classKey, onSelect }) => {
 export const FinalistsTable = ({ champions, classKey }) => {
   if (!champions || champions.length === 0) return null;
   const soundSport = isSoundSportClass(classKey);
+  const crowning = crownedAt(classKey);
 
   return (
     <div className="bg-surface-card border border-line">
@@ -102,8 +106,8 @@ export const FinalistsTable = ({ champions, classKey }) => {
           ) : (
             <Trophy className="w-3.5 h-3.5 text-brand" />
           )}
-          <span className="text-[11px] font-bold uppercase tracking-wider text-secondary">
-            {soundSport ? 'Recognized Ensembles' : 'Final Standings'}
+          <span className="text-[11px] font-bold uppercase tracking-wider text-secondary truncate">
+            {soundSport ? 'Recognized Ensembles' : `${crowning.eventName} · Day ${crowning.day}`}
           </span>
         </div>
         <span className="text-[10px] text-muted font-data tabular-nums">

@@ -75,6 +75,39 @@ export const HALL_DIVISIONS = [
   },
 ];
 
+/**
+ * @typedef {object} HallCrowning
+ * @property {number} day        Competition day the title is decided.
+ * @property {string} eventName  The show that decides it.
+ * @property {string} short      Compact label for the sidebar row.
+ */
+
+/**
+ * WHEN each title is decided — the night a champion is crowned (server twin:
+ * functions/src/helpers/hallOfChampions.js HALL_CROWNING). The World
+ * Championship podiums at the Day 49 World Championship Finals; the Open and
+ * A Class titles at the Day 46 Open & A Class Finals — a separate competition,
+ * in both divisions, never a corps' later placement in the World bracket;
+ * SoundSport's Best in Show at the Day 49 festival.
+ * @type {Record<string, HallCrowning>}
+ */
+export const CROWNED_AT = {
+  worldClass: { day: 49, eventName: 'World Championship Finals', short: 'World Finals' },
+  openClass: { day: 46, eventName: 'Open & A Class Finals', short: 'Open & A Finals' },
+  aClass: { day: 46, eventName: 'Open & A Class Finals', short: 'Open & A Finals' },
+  soundSport: { day: 49, eventName: 'SoundSport International Festival', short: 'Festival' },
+  podiumClass: { day: 49, eventName: 'World Championship Finals', short: 'World Finals' },
+  podiumOpenClass: { day: 46, eventName: 'Open & A Class Finals', short: 'Open & A Finals' },
+  podiumAClass: { day: 46, eventName: 'Open & A Class Finals', short: 'Open & A Finals' },
+};
+
+/**
+ * The crowning show for a Hall class key (World Finals when unknown).
+ * @param {string} classKey
+ * @returns {HallCrowning}
+ */
+export const crownedAt = (classKey) => CROWNED_AT[classKey] || CROWNED_AT.worldClass;
+
 /** The default landing class. */
 export const DEFAULT_HALL_CLASS = 'worldClass';
 

@@ -9,7 +9,10 @@ const {
   HALL_DIVISION_OF,
   isHallClassKey,
   isPodiumHallClassKey,
+  HALL_CROWNING,
+  CLASS_FINALS_DAY,
   buildPodiumHallPodiums,
+  recapDayResults,
   withDirectorIdentity,
   carryBanners,
 } = require("./hallOfChampions");
@@ -57,7 +60,81 @@ describe("Hall class keys", () => {
   });
 });
 
+// The Day 46 Open & A Class Finals sheet — where the Open and A titles are
+// decided. Onyx (o1) finishes 2nd overall at season's end but lost the Open
+// Finals to Opal (o2); Ash (a2) beat Amber (a1) at the A Finals.
+const DAY46 = {
+  shows: [
+    {
+      eventName: "Open and A Class Finals",
+      results: [
+        { uid: "o2", corpsName: "Opal", division: "openClass", totalScore: 90.5 },
+        { uid: "o1", corpsName: "Onyx", division: "openClass", totalScore: 89.9 },
+        { uid: "o3", corpsName: "Ochre", division: "openClass", totalScore: 80.0 },
+        { uid: "o4", corpsName: "Olive", division: "openClass", totalScore: 70.0 },
+        { uid: "a2", corpsName: "Ash", division: "aClass", totalScore: 82.0 },
+        { uid: "a1", corpsName: "Amber", division: "aClass", totalScore: 81.5 },
+      ],
+    },
+  ],
+};
+
+describe("where each Hall title is decided", () => {
+  test("World podiums at the Day 49 Finals, Open/A at the Day 46 Class Finals, in both divisions", () => {
+    assert.equal(CLASS_FINALS_DAY, 46);
+    for (const key of HALL_CLASS_KEYS) assert.ok(HALL_CROWNING[key], key);
+    assert.equal(HALL_CROWNING.worldClass.day, 49);
+    assert.equal(HALL_CROWNING.podiumClass.day, 49);
+    assert.equal(HALL_CROWNING.soundSport.day, 49);
+    for (const key of ["openClass", "aClass", "podiumOpenClass", "podiumAClass"]) {
+      assert.equal(HALL_CROWNING[key].day, 46, key);
+      assert.equal(HALL_CROWNING[key].eventName, "Open & A Class Finals", key);
+    }
+  });
+});
+
 describe("buildPodiumHallPodiums", () => {
+  test("the Open and A Class podiums come from the Day 46 Class Finals, not the season record", () => {
+    const podiums = buildPodiumHallPodiums(RECORD, { classFinals: recapDayResults(DAY46) });
+    assert.deepEqual(
+      podiums.podiumOpenClass.map((e) => [e.rank, e.uid, e.score, e.corpsClass]),
+      [
+        [1, "o2", 90.5, "openClass"],
+        [2, "o1", 89.9, "openClass"],
+        [3, "o3", 80.0, "openClass"],
+      ]
+    );
+    assert.deepEqual(
+      podiums.podiumAClass.map((e) => [e.rank, e.uid, e.score]),
+      [
+        [1, "a2", 82.0],
+        [2, "a1", 81.5],
+      ]
+    );
+    // The World podium is still the season record's top three — Onyx's
+    // 2nd overall stands, its Open title does not.
+    assert.deepEqual(
+      podiums.podiumClass.map((e) => e.uid),
+      ["w1", "o1", "w2"]
+    );
+  });
+
+  test("a division with no Day 46 rows falls back to its season-end standing", () => {
+    const openOnly = recapDayResults(DAY46).filter((r) => r.division === "openClass");
+    const podiums = buildPodiumHallPodiums(RECORD, { classFinals: openOnly });
+    assert.equal(podiums.podiumOpenClass[0].uid, "o2");
+    assert.deepEqual(
+      podiums.podiumAClass.map((e) => e.uid),
+      ["a1", "a2"]
+    );
+  });
+
+  test("recapDayResults flattens every show and tolerates a missing recap", () => {
+    assert.equal(recapDayResults(DAY46).length, 6);
+    assert.deepEqual(recapDayResults(null), []);
+    assert.deepEqual(recapDayResults({ shows: [{}, { results: null }] }), []);
+  });
+
   test("the World podium is the top three of the whole field, whatever their division", () => {
     const podiums = buildPodiumHallPodiums(RECORD);
     assert.deepEqual(

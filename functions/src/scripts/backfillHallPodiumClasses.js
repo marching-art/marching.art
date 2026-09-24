@@ -11,9 +11,11 @@
  * classes the Fantasy Division has (helpers/hallOfChampions.js).
  *
  * This script derives those two podiums for every archived Podium season
- * from the season's frozen record (`podium-recaps/{seasonUid}.finalStandings`,
- * every scored corps ranked on the whole field with the division it competed
- * in), exactly as a fresh archival now would, with director usernames and
+ * from the season's Day 46 Open & A Class Finals recap
+ * (`podium-recaps/{seasonUid}/days/46` — the competition that decides those
+ * titles), falling back to the season's frozen record
+ * (`podium-recaps/{seasonUid}.finalStandings`) for a division with no Day 46
+ * rows, exactly as a fresh archival now would, with director usernames and
  * corps avatars resolved from current profiles. The World podium
  * (`podiumClass`), every fantasy class and every banner are never touched.
  *
@@ -36,7 +38,9 @@ const { paths } = require("../helpers/paths");
 const {
   PODIUM_HALL_CLASSES,
   PODIUM_HALL_CLASS_KEYS,
+  CLASS_FINALS_DAY,
   buildPodiumHallPodiums,
+  recapDayResults,
   carryBanners,
 } = require("../helpers/hallOfChampions");
 
@@ -53,15 +57,17 @@ const DIVISION_KEYS = PODIUM_HALL_CLASS_KEYS.filter(
  * @param {Object<string, Array<object>>} classes  the doc's `classes` map
  * @param {Array<object>} finalStandings  `podium-recaps/{seasonUid}.finalStandings`
  * @param {(uid: string) => (object|null)} resolveProfile  current profile lookup
+ * @param {Array<object>} [classFinals]  the Day 46 recap rows (every show's
+ *   `results` flattened); a division absent from them falls back to the record
  * @returns {{ classes: Object, changed: boolean }} a new `classes` map (every
  *   other key preserved) and whether either division podium changed.
  */
-function rebuildPodiumDivisionClasses(classes, finalStandings, resolveProfile) {
+function rebuildPodiumDivisionClasses(classes, finalStandings, resolveProfile, classFinals = []) {
   const oldClasses = classes || {};
   const next = { ...oldClasses };
   let changed = false;
 
-  const podiums = buildPodiumHallPodiums(finalStandings);
+  const podiums = buildPodiumHallPodiums(finalStandings, { classFinals });
   for (const key of DIVISION_KEYS) {
     const identified = (podiums[key] || []).map((entry) => {
       const profile = resolveProfile(entry.uid);
@@ -92,10 +98,15 @@ async function run({ commit }) {
   const seasons = recaps.docs.filter((doc) => Array.isArray(doc.get("finalStandings")));
   console.log(`Scanning ${recaps.size} Podium recap doc(s), ${seasons.length} with a frozen record…`);
 
-  // Every uid that can land on a division podium, fetched once.
+  // Each season's Day 46 Open & A Class Finals sheet, then every uid that can
+  // land on a division podium, fetched once.
+  const classFinalsBySeason = new Map();
   const allUids = new Set();
   for (const doc of seasons) {
-    const podiums = buildPodiumHallPodiums(doc.get("finalStandings"));
+    const day46 = await db.doc(`podium-recaps/${doc.id}/days/${CLASS_FINALS_DAY}`).get();
+    const classFinals = recapDayResults(day46.exists ? day46.data() : null);
+    classFinalsBySeason.set(doc.id, classFinals);
+    const podiums = buildPodiumHallPodiums(doc.get("finalStandings"), { classFinals });
     for (const key of DIVISION_KEYS) for (const entry of podiums[key] || []) allUids.add(entry.uid);
   }
   const profileByUid = new Map();
@@ -120,8 +131,10 @@ async function run({ commit }) {
     const { classes, changed } = rebuildPodiumDivisionClasses(
       championsDoc.exists ? championsDoc.get("classes") || {} : {},
       recap.get("finalStandings"),
-      resolveProfile
+      resolveProfile,
+      classFinalsBySeason.get(seasonUid) || []
     );
+    const fromDay46 = (classFinalsBySeason.get(seasonUid) || []).length > 0;
     if (!changed) continue;
 
     docsChanged += 1;
@@ -131,7 +144,10 @@ async function run({ commit }) {
     })
       .filter(Boolean)
       .join(", ");
-    console.log(`  ${seasonUid}: ${championsDoc.exists ? "added" : "created doc with"} Podium Open/A (${summary})`);
+    console.log(
+      `  ${seasonUid}: ${championsDoc.exists ? "added" : "created doc with"} Podium Open/A ` +
+        `from ${fromDay46 ? "the Day 46 Finals" : "the season record (no Day 46 recap)"} (${summary})`
+    );
 
     if (!commit) continue;
     if (championsDoc.exists) {
