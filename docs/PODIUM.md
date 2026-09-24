@@ -677,7 +677,12 @@ replaces ownership with **employment** — and an employment market never maxes 
     (day 46, top 8 Open + top 4 A) → World Championship Prelims (day 47, the whole field) →
     Semifinals (48, top 25 overall) → Finals (49, top 12 overall). Divisions decide the day-45/46
     Open/A track (World corps open at day-47 Prelims like real World Class), then the World rounds
-    cut the combined field. Divisions also set performance order and division blocks at the three
+    cut the combined field. **The World rounds are one field, not three:** the day-47/48/49 recap
+    sheets rank every corps together 1–N under one heading (World Prelims Performers, World
+    Semifinalists, World Finalists), the nightly run places and medals those nights on the whole
+    field (`showRanking.rankShowResults(…, { oneField })`), and the Podium Finals hardware / Hall
+    of Champions podium is the top three of the whole record — the Podium World Champion is the
+    corps that won Finals, whatever division it climbed from (`helpers/worldChampionship.js`). Divisions also set performance order and division blocks at the three
     regional anchors, show participation CorpsCoin (tiered by division, matching the existing
     class-reward pattern), and per-division caption awards.
   - **What divisions never change:** the scoring engine, the historical envelope, challenge-level
@@ -1747,7 +1752,9 @@ additions; conflicts are things that **must** be resolved before Phase 1 code.
    show banks a medal counter on the profile. Distinct from trophies (majors/finals hardware).
    _Shipped:_ medals are decided **within the division** a corps competed in that night — the
    same field its `place` is numbered against (§5.7: every division crowns its own) — at any
-   show of at least `balance.medals.minFieldSize` corps in total. The gate is the show's size,
+   show of at least `balance.medals.minFieldSize` corps in total. The World Championship rounds
+   (days 47–49) are the one exception: one field, every division ranked together, and the round's
+   podium is the medal (`oneField`). The gate is the show's size,
    not the division's: a two-corps Open Class at a ten-corps show is a contest, a one-corps
    "show" is not, and gating on the division wiped out every medal for the higher divisions
    in a season where they field two a night. One rule, `helpers/podium/showRanking.js`,

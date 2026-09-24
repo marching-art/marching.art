@@ -555,13 +555,17 @@ function awardClassChampionshipTrophies(batch, dailyRecap, seasonData, db) {
 /**
  * Award Day 49 Finals trophies and save season champions.
  *
- * The permanent season_champions record credits each class to the event that
- * actually decides its title: World Class (and the SoundSport Best in Show)
- * are settled here on Day 49, but Open Class and A Class crown their champions
- * at the Day 46 Open and A Class Finals. Open/A corps that advance into the
- * Day 49 World Championship bracket are ranked there against World Class for
- * overall placement — that placement must NOT overwrite their class titles —
- * so the Open/A podiums are pulled from the Day 46 recap.
+ * The World Championship Finals are ONE field (helpers/worldChampionship.js):
+ * every finalist is ranked together, whatever class it drafted in, and the
+ * top of that sheet is the World Champion. So `classes.worldClass` in the
+ * permanent season_champions record is the World Championship podium — the
+ * top three of the whole Finals field — not the best three World Class
+ * entries. An Open Class corps that wins Finals is the World Champion.
+ *
+ * Open Class and A Class still crown their own class champions at the Day 46
+ * Open and A Class Finals (two separate competitions), and a corps' overall
+ * Finals placement must NOT overwrite those titles — so the Open/A podiums
+ * are pulled from the Day 46 recap. SoundSport's Best in Show is settled here.
  *
  * @param {BatchLike} batch - Firestore batch (or ChunkedWriter) to add updates to
  * @param {Object} dailyRecap - The day's recap with shows and results
@@ -629,11 +633,20 @@ async function awardFinalsAndSaveChampions(batch, dailyRecap, seasonData, db) {
           "trophies.finalistMedals": FieldValue.arrayUnion(medal)
         });
       });
+
+      // The World Championship podium: the whole Finals field, one ranking.
+      // Filed under `worldClass` — the key the Hall of Champions, the champions
+      // post and the share cards have always read the World title from.
+      if (show.results.length > 0) {
+        allResultsByClass.worldClass = [...(allResultsByClass.worldClass || []), ...show.results];
+      }
     }
 
-    // Collect results by class for season champions
+    // Open/A keep their per-class Finals rows only as the FALLBACK podium for
+    // a season whose Day 46 recap is missing (replaced below when it exists).
     show.results.forEach(result => {
       const corpsClass = result.corpsClass || "worldClass";
+      if (corpsClass === "worldClass" || isSoundSport) return;
       if (!allResultsByClass[corpsClass]) {
         allResultsByClass[corpsClass] = [];
       }
@@ -708,6 +721,9 @@ async function awardFinalsAndSaveChampions(batch, dailyRecap, seasonData, db) {
       uid: result.uid,
       username: championUsernameMap.get(result.uid) || "Unknown",
       corpsName: result.corpsName,
+      // The class the corps drafted in — on the World Championship podium
+      // that can be any of the three, and the Hall says which.
+      corpsClass: result.corpsClass || corpsClass,
       // The corps graphic (avatar) rides along on every scored result, so the
       // Hall of Champions can render each finalist's logo instead of a bare
       // initial. Null when the corps never generated one.

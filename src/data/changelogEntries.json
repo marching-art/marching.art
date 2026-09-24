@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-09-24-world-championship-one-field",
+    "date": "2026-09-24",
+    "title": "World Championship sheets are one field, not three classes",
+    "category": "improvement",
+    "summary": "World Championship Prelims, Semifinals and Finals are no longer subdivided by class on the score sheets. Every corps that reaches a round is ranked 1 through N against everyone else in it — World, Open and A Class together, on a level playing field — in both the Fantasy and Podium divisions.",
+    "highlights": [
+      "Everyone on the Prelims sheet is a World Prelims Performer, everyone who reaches Semifinals is a World Semifinalist, everyone who reaches Finals is a World Finalist, and the top of the Finals sheet is the World Champion — whatever class the corps drafted in.",
+      "Podium placements and medals on the three World nights are earned against the whole field, and the Podium Finals podium is the top three overall.",
+      "The Hall of Champions' World Championship podium, the nightly Discord drop, the morning push, the public results pages and the share cards all read the same one-field sheet.",
+      "The Open & A Class Prelims and Finals stay split by class — those two nights are separate competitions."
+    ]
+  },
+  {
     "id": "2026-09-23-championship-week-cards-open",
     "date": "2026-09-23",
     "title": "Championship Week cards open like any other show",

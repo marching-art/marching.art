@@ -122,6 +122,30 @@ describe("buildScoresCardSvg", () => {
     // card exists for it (aggregateNightlyStandings excludes it from byClass).
     assert.equal(buildScoresCardSvg({ recap: RECAP, day: 12, classKey: "soundSport" }), null);
   });
+
+  test("a World Championship night's card is the whole field, billed by its round", () => {
+    // Day 48 — the same mixed recap is ONE field: no class card exists, only
+    // the World card, with the A Class corps ranked among everyone else.
+    const svg = buildScoresCardSvg({
+      recap: RECAP,
+      day: 48,
+      classKey: "worldChampionship",
+      seasonName: "Scherzo 2026",
+    });
+    assert.ok(svg.includes("Day 48 — World Semifinalists"));
+    assert.ok(svg.includes("WORLD CHAMPIONSHIP SEMIFINALS"));
+    assert.ok(svg.includes("Crimson Cadence"));
+    assert.ok(svg.includes("Steel City Sound"));
+    assert.ok(svg.includes("one field, every class"));
+    assert.equal(buildScoresCardSvg({ recap: RECAP, day: 48, classKey: "worldClass" }), null);
+    // The share route accepts the World key like any class key.
+    assert.deepEqual(parseOgPath("/api/og/scores/season42/48/worldChampionship.png"), {
+      type: "scores",
+      seasonUid: "season42",
+      day: 48,
+      classKey: "worldChampionship",
+    });
+  });
 });
 
 describe("buildChampionCardSvg", () => {
@@ -132,10 +156,13 @@ describe("buildChampionCardSvg", () => {
     },
   };
 
-  test("renders the season name, class, and champion", () => {
+  test("renders the season name, the World Championship billing, and the champion", () => {
     const svg = buildChampionCardSvg({ champions: CHAMPIONS, classKey: "worldClass" });
     assert.ok(svg.includes("Overture 2026 Champions"));
-    assert.ok(svg.includes("World Class"));
+    // `classes.worldClass` is the World Championship podium — the whole Finals
+    // field, every class together — so the card never bills it as a class.
+    assert.ok(svg.includes("World Championship"));
+    assert.ok(!svg.includes("World Class"));
     assert.ok(svg.includes("Crimson Cadence"));
     assert.ok(svg.includes("97.825"));
   });

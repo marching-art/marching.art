@@ -31,6 +31,7 @@ const assessment = require("./assessment");
 const joint = require("./joint");
 const { runScrimmagePass } = require("./scrimmagePass");
 const { rankShowResults } = require("./showRanking");
+const { isWorldChampionshipRound } = require("../worldChampionship");
 const { processCoinAwardsBatch } = require("../scoringAwards");
 const { SHOW_PARTICIPATION_REWARDS } = require("../classRegistry");
 const { ChunkedWriter } = require("../chunkedWriter");
@@ -681,10 +682,17 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
     // lifetime counter — the FMA "70+ regular-season golds" collector hook.
     // One rule, in showRanking.js, shared with the correction script.
     // The recap mirrors the fantasy `shows: [...]` shape.
+    // The World Championship rounds (47-49) are the one exception: ONE field,
+    // every division ranked together, and the round's podium is the medal
+    // (helpers/worldChampionship.js).
     const medalByUid = {};
     const recapShows = [];
     for (const group of showGroups.values()) {
-      Object.assign(medalByUid, rankShowResults(group.results, store.balance.medals).medalByUid);
+      const oneField = isWorldChampionshipRound(competitionDay, group.eventName);
+      Object.assign(
+        medalByUid,
+        rankShowResults(group.results, { ...store.balance.medals, oneField }).medalByUid
+      );
       recapShows.push(group);
     }
     // Credit the director on every recap row (username preferred, mirroring the

@@ -229,15 +229,24 @@ exports.getShareHttp = onRequest(
         }
       } else if (route.type === "scores") {
         const recap = await fetchDayRecap(db, route.seasonUid, route.day);
-        const standings = recap ? aggregateNightlyStandings(recap) : null;
+        const standings = recap
+          ? aggregateNightlyStandings(recap, { scoredDay: route.day })
+          : null;
         const entries = standings ? standings.byClass.get(route.classKey) : null;
         if (entries && entries.length > 0) {
-          const classLabel = CLASS_LABELS[route.classKey] || route.classKey;
+          // A World Championship night is one field, billed by its round
+          // ("World Semifinalists"), never by a class.
+          const world = standings.worldRound;
+          const classLabel = world
+            ? world.participants
+            : CLASS_LABELS[route.classKey] || route.classKey;
           const leader = entries[0];
           page = {
             title: `Day ${route.day} ${classLabel} scores | marching.art`,
             description:
-              `${clamp(leader.corpsName, 60)} leads ${classLabel} with ${leader.score.toFixed(3)} ` +
+              `${clamp(leader.corpsName, 60)} ${
+                world && world.winner ? `is the ${world.winner}` : `leads ${world ? world.title : classLabel}`
+              } with ${leader.score.toFixed(3)} ` +
               `after day ${route.day}. Full fantasy drum corps standings on marching.art.`,
             imageUrl: `${SITE_URL}/api/og/scores/${route.seasonUid}/${route.day}/${route.classKey}.png`,
             // Land humans on the public results page for the shared day —

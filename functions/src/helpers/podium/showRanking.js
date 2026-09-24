@@ -13,6 +13,13 @@
  * shown anywhere, and medalling on it put a silver next to a "1/3" and a gold
  * next to a "2/3" in the ledger.
  *
+ * The one exception is the World Championship (days 47-49, helpers/
+ * worldChampionship.js): Prelims, Semifinals and Finals are ONE field. Every
+ * corps that reaches a round is ranked against everyone else in it — World,
+ * Open and A together, 1 to N — and the medals are the round's podium, so the
+ * Finals gold is the World Champion's whatever division it climbed from.
+ * Callers pass `oneField: true` for those nights.
+ *
  * The size gate is the SHOW's field, not the division's: "top-3 at any
  * meaningfully-sized show" (§14.1.3). A division of two at a ten-corps show is
  * a real contest — the Open Class corps that beat the whole A Class field by
@@ -59,16 +66,18 @@ function medalForPlace(place, showFieldSize, minFieldSize) {
  *
  * @template {{ uid?: string, division?: string, totalScore?: number }} Row
  * @param {Row[]} results Mutated and returned.
- * @param {{ minFieldSize: number }} options
+ * @param {{ minFieldSize: number, oneField?: boolean }} options `oneField`
+ *   ranks the whole show as one field regardless of division — the World
+ *   Championship rounds.
  * @returns {{ results: Row[], medalByUid: Record<string, "gold"|"silver"|"bronze"> }}
  */
-function rankShowResults(results, { minFieldSize }) {
+function rankShowResults(results, { minFieldSize, oneField = false }) {
   results.sort(byTotalDesc);
 
   /** @type {Map<string, Row[]>} */
   const fieldByDivision = new Map();
   for (const row of results) {
-    const division = divisions.normalizeDivision(row.division);
+    const division = oneField ? "all" : divisions.normalizeDivision(row.division);
     if (!fieldByDivision.has(division)) fieldByDivision.set(division, []);
     fieldByDivision.get(division).push(row);
   }

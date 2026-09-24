@@ -580,7 +580,7 @@ function getRealTrophies(profile: UserProfile): TrophyData[] {
     if (isSoundSportType(medal.type)) return;
     out.push({
       id: `finalist-${i}`,
-      title: 'World Finals Finalist',
+      title: 'World Finalist',
       description: trophyDescription(medal),
       icon: Medal,
       color: 'text-muted',

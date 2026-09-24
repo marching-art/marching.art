@@ -258,6 +258,50 @@ describe("buildDayResultsHtml", () => {
   });
 });
 
+describe("buildDayResultsHtml — World Championship nights", () => {
+  const worldNight = (eventName) => ({
+    shows: [
+      {
+        eventName,
+        results: [
+          { uid: "w1", corpsClass: "worldClass", corpsName: "Crimson Cadence", totalScore: 95.0, geScore: 30, visualScore: 32, musicScore: 33 },
+          { uid: "o1", corpsClass: "openClass", corpsName: "River Rising", totalScore: 95.5, geScore: 30, visualScore: 32, musicScore: 33.5 },
+          { uid: "a1", corpsClass: "aClass", corpsName: "Steel City Sound", totalScore: 88.0, geScore: 28, visualScore: 30, musicScore: 30 },
+        ],
+      },
+    ],
+  });
+
+  test("Semifinals is one table of World Semifinalists, ranked across every class", () => {
+    const page = buildDayResultsHtml({
+      seasonUid: "s",
+      day: 48,
+      recap: worldNight("marching.art World Championship Semifinals"),
+      days: [47, 48],
+    });
+    assert.ok(page.includes("<h2>World Semifinalists (3)"));
+    assert.ok(!page.includes("<h2>World Class"));
+    assert.ok(!page.includes("<h2>Open Class"));
+    assert.ok(!page.includes("<h2>A Class"));
+    // The Open Class corps with the top score is #1 on the sheet.
+    assert.ok(page.indexOf("River Rising") < page.indexOf("Crimson Cadence"));
+    assert.ok(page.includes("/api/og/scores/s/48/worldChampionship.png"));
+    assert.ok(page.includes("Every class ranked together"));
+  });
+
+  test("Finals names the World Champion", () => {
+    const page = buildDayResultsHtml({
+      seasonUid: "s",
+      day: 49,
+      recap: worldNight("marching.art World Championship Finals"),
+      days: [49],
+    });
+    assert.ok(page.includes("<h2>World Finalists (3)"));
+    assert.ok(page.includes("First place is the World Champion."));
+    assert.ok(page.includes("River Rising is the World Champion with 95.500"));
+  });
+});
+
 describe("buildErrorPageHtml", () => {
   const html = buildErrorPageHtml({
     title: "No Results Yet | marching.art",

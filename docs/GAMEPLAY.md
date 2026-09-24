@@ -206,6 +206,19 @@ SoundSport cannot enter the World Championship (Days 47–49) or Open/A events
 (Days 45–46). Champions receive gold/silver/bronze trophies; results feed the
 Hall of Champions and the Records Book.
 
+**The World Championship is one field.** Prelims, Semifinals and Finals are
+never subdivided by class: every corps that reaches a round is ranked 1 through
+N against everyone else in it — World, Open and A Class together, on a level
+playing field — and carries the same title for having been there. Everyone on
+the Day 47 sheet is a **World Prelims Performer**, everyone who reaches Day 48
+is a **World Semifinalist**, everyone who reaches Day 49 is a **World
+Finalist**, and the top of the Finals sheet is the **World Champion**, whatever
+class that corps drafted in. The Hall of Champions' World Championship podium
+is the top three of the whole Finals field. Only the Open & A Class Prelims and
+Finals (Days 45–46) are class competitions, and only those two sheets are split
+by class. The same rule applies to the Podium Division's parallel bracket (see
+[`PODIUM.md`](PODIUM.md) §5.7).
+
 ### Caption scores on Days 47–49
 
 The three World Championship nights are scored on **real results only** — no

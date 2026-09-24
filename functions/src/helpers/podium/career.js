@@ -751,77 +751,77 @@ async function archivePodiumSeason(db, previousSeason) {
   // their profile trophy case (`trophies.championships`, fantasy shape) —
   // the trophy-case client renders corpsClass podiumClass as the
   // metal-colored Gem. Isolated: a Hall failure never fails archival.
+  //
+  // The World Championship Finals are ONE field (helpers/worldChampionship.js):
+  // every finalist is ranked together whatever division it climbed from, and
+  // the top of that sheet is the World Champion. So the Podium Finals hardware
+  // and the Hall podium are the top three of the WHOLE record — an Open Class
+  // corps that out-scores World Class at Finals is the Podium World Champion.
+  // (`divisionChampions` above still names each division's best for the
+  // season archive; that is a standings fact, not a title.)
   if (record.length > 0) {
     try {
       const metals = ["gold", "silver", "bronze"];
-      // Finals hardware per DIVISION (the FMA rise: every division medals
-      // its own podium). A director fields one corps in one division, so the
-      // per-user corpsClass+seasonName dedupe still holds.
-      let hallChampions = [];
-      for (const division of [...divisions.DIVISIONS].reverse()) {
-        const divisionStandings = record.filter((entry) => entry.division === division);
-        if (divisionStandings.length === 0) continue;
-        const eventName = `Podium ${divisions.DIVISION_LABELS[division]} Finals`;
-        const champions = [];
-        for (let i = 0; i < Math.min(3, divisionStandings.length); i++) {
-          const entry = divisionStandings[i];
-          const medalRank = i + 1;
-          let username = "Unknown";
-          let avatarUrl = null;
-          try {
-            const profileSnapshot = await store.profileRef(db, entry.uid).get();
-            const profile = profileSnapshot.exists ? profileSnapshot.data() : null;
-            if (profile) {
-              username = profile.username || profile.displayName || "Unknown";
-              // Podium corps store their graphic at corps.podiumClass.avatarUrl
-              // (same source the fantasy classes use) so the Hall of Champions
-              // can render the corps logo rather than a bare initial.
-              avatarUrl = (profile.corps && profile.corps.podiumClass && profile.corps.podiumClass.avatarUrl) || null;
-            }
-            // Finals medal — idempotent per season (re-sweeps skip the append).
-            const existing = (profile && profile.trophies && profile.trophies.championships) || [];
-            const alreadyAwarded = existing.some(
-              (trophy) =>
-                trophy &&
-                trophy.corpsClass === "podiumClass" &&
-                trophy.seasonName === previousSeason.seasonUid
-            );
-            if (!alreadyAwarded) {
-              await store.profileRef(db, entry.uid).set(
-                {
-                  trophies: {
-                    championships: [
-                      ...existing,
-                      {
-                        type: "championship",
-                        metal: metals[medalRank - 1],
-                        corpsClass: "podiumClass",
-                        seasonName: previousSeason.seasonUid,
-                        eventName,
-                        score: entry.lastTotal,
-                        rank: medalRank,
-                      },
-                    ],
-                  },
-                },
-                { merge: true }
-              );
-            }
-          } catch (profileError) {
-            logger.warn(`[podium] medal/username write failed for ${entry.uid}: ${profileError.message}`);
+      const eventName = "Podium World Championship Finals";
+      const hallChampions = [];
+      for (let i = 0; i < Math.min(3, record.length); i++) {
+        const entry = record[i];
+        const medalRank = i + 1;
+        let username = "Unknown";
+        let avatarUrl = null;
+        try {
+          const profileSnapshot = await store.profileRef(db, entry.uid).get();
+          const profile = profileSnapshot.exists ? profileSnapshot.data() : null;
+          if (profile) {
+            username = profile.username || profile.displayName || "Unknown";
+            // Podium corps store their graphic at corps.podiumClass.avatarUrl
+            // (same source the fantasy classes use) so the Hall of Champions
+            // can render the corps logo rather than a bare initial.
+            avatarUrl = (profile.corps && profile.corps.podiumClass && profile.corps.podiumClass.avatarUrl) || null;
           }
-          champions.push({
-            rank: medalRank,
-            uid: entry.uid,
-            username,
-            corpsName: entry.corpsName,
-            avatarUrl,
-            score: entry.lastTotal,
-          });
+          // Finals medal — idempotent per season (re-sweeps skip the append).
+          const existing = (profile && profile.trophies && profile.trophies.championships) || [];
+          const alreadyAwarded = existing.some(
+            (trophy) =>
+              trophy &&
+              trophy.corpsClass === "podiumClass" &&
+              trophy.seasonName === previousSeason.seasonUid
+          );
+          if (!alreadyAwarded) {
+            await store.profileRef(db, entry.uid).set(
+              {
+                trophies: {
+                  championships: [
+                    ...existing,
+                    {
+                      type: "championship",
+                      metal: metals[medalRank - 1],
+                      corpsClass: "podiumClass",
+                      seasonName: previousSeason.seasonUid,
+                      eventName,
+                      score: entry.lastTotal,
+                      rank: medalRank,
+                    },
+                  ],
+                },
+              },
+              { merge: true }
+            );
+          }
+        } catch (profileError) {
+          logger.warn(`[podium] medal/username write failed for ${entry.uid}: ${profileError.message}`);
         }
-        // The Hall of Champions shows the TOP active division's podium —
-        // World once it exists, the highest formed division until then.
-        if (hallChampions.length === 0) hallChampions = champions;
+        hallChampions.push({
+          rank: medalRank,
+          uid: entry.uid,
+          username,
+          corpsName: entry.corpsName,
+          avatarUrl,
+          score: entry.lastTotal,
+          // The division the corps competed in — on the World podium that can
+          // be any of the three, and the Hall says which.
+          corpsClass: divisions.normalizeDivision(entry.division),
+        });
       }
       const championsRef = db.doc(`season_champions/${previousSeason.seasonUid}`);
       const championsSnapshot = await championsRef.get();

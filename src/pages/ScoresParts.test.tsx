@@ -285,3 +285,47 @@ describe('FantasyRecapsView — championship-week cuts', () => {
     expect(screen.queryAllByText('Adv')).toHaveLength(0);
   });
 });
+
+describe('FantasyRecapsView — World Championship nights are one field', () => {
+  // A mixed World night: World, Open and A on the one sheet, interleaved on
+  // the way in so the sheet cannot be right by accident of input order.
+  const mixedField = [
+    { ...showScore('Open One', 95.5), corpsClass: 'openClass' },
+    showScore('World One', 95.0),
+    { ...showScore('A One', 93.0), corpsClass: 'aClass' },
+    showScore('World Two', 92.0),
+  ].sort((a, b) => b.score - a.score);
+
+  const placeOf = (name: string) =>
+    screen.getByText(name).closest('[class*="flex items-center gap-2 px-1"]')?.textContent ?? '';
+
+  it('ranks Semifinals 1 to N across every class under one heading', () => {
+    wrap(
+      <RecapsView shows={[show('marching.art World Championship Semifinals', 48, mixedField)]} />
+    );
+    expect(screen.getByText('World Semifinalists')).toBeInTheDocument();
+    expect(screen.queryByText('World Class')).not.toBeInTheDocument();
+    expect(screen.queryByText('Open Class')).not.toBeInTheDocument();
+    expect(screen.queryByText('A Class')).not.toBeInTheDocument();
+    // The Open Class corps with the top score is 1st; the A Class corps is 3rd
+    // of the whole field, not 1st of its class.
+    expect(placeOf('Open One')).toMatch(/^1\./);
+    expect(placeOf('A One')).toMatch(/^3\./);
+    expect(screen.getByText(/4 corps/)).toBeInTheDocument();
+  });
+
+  it('names the World Champion at the top of the Finals sheet', () => {
+    wrap(<RecapsView shows={[show('marching.art World Championship Finals', 49, mixedField)]} />);
+    expect(screen.getByText('World Finalists')).toBeInTheDocument();
+    expect(screen.getByText('World Champion')).toBeInTheDocument();
+    expect(placeOf('Open One')).toContain('World Champion');
+    expect(screen.getByText(/1st = World Champion/)).toBeInTheDocument();
+  });
+
+  it('keeps the Open & A Class nights split by class', () => {
+    wrap(<RecapsView shows={[show('Open and A Class Finals', 46, mixedField)]} />);
+    expect(screen.getByText('World Class')).toBeInTheDocument();
+    expect(screen.getByText('Open Class')).toBeInTheDocument();
+    expect(screen.queryByText(/World Finalists|World Semifinalists/)).not.toBeInTheDocument();
+  });
+});

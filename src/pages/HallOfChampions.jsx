@@ -39,7 +39,11 @@ import { RANK_META } from './hallOfChampionsMeta';
 // =============================================================================
 
 const CLASS_CONFIG = {
-  worldClass: { name: 'World Class', short: 'World', icon: Crown },
+  // `classes.worldClass` is the World Championship podium: the top three of the
+  // WHOLE Finals field, whatever class each corps drafted in (one field, one
+  // title — see utils/worldChampionship). It is billed as the championship,
+  // not as a class.
+  worldClass: { name: 'World Championship', short: 'World', icon: Crown },
   openClass: { name: 'Open Class', short: 'Open', icon: Trophy },
   aClass: { name: 'A Class', short: 'A Class', icon: Award },
   // SoundSport is rating-based (not placement-based). Its top-scoring ensemble

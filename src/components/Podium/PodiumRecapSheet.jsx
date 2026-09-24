@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // PodiumRecapSheet — the DCI-style box score for Podium Class shows
 // (Phase 2, design §5.4): full caption columns, bolded box-toppers, event
 // masthead, wordmark footer. Reads the public podium-recaps collection.
@@ -11,6 +10,12 @@
 // block is the sheet that matters to the corps in it. Rows can be sorted by any
 // caption; the split and the placements hold under the sort.
 //
+// The one exception is the World Championship (days 47-49, utils/
+// worldChampionship): Prelims, Semifinals and Finals are ONE field, every
+// division ranked together 1 to N under one heading — World Prelims
+// Performers, World Semifinalists, World Finalists — and the top of the Finals
+// sheet is the World Champion. The processor ranks those nights the same way.
+//
 // Full captions are shown because Podium is a virtual engine — nothing to
 // harvest, unlike the drafted fantasy classes (which stay GE/Vis/Mus-only).
 
@@ -21,14 +26,74 @@ import { Loader2, Medal } from 'lucide-react';
 import { db } from '../../api';
 import { formatEventName } from '../../utils/season';
 import { isViewerCorps } from '../../utils/corps';
-import { CLASS_LABELS } from '../../utils/scoresUtils';
 import { MEDAL_TEXT_CLASS, podiumMedalForPlace } from '../../utils/podiumMedals';
 import { TeamAvatar } from '../ui/TeamAvatar';
-import { AdvancesTag, CutBanner, ShareButton } from '../scores/SheetPrimitives';
-import { SHEET_CARD, groupByClass } from '../scores/sheetTokens';
+import { AdvancesTag, CutBanner, ShareButton, TitleTag } from '../scores/SheetPrimitives';
+import { SHEET_CARD, sectionsForNight } from '../scores/sheetTokens';
 import { useHorizontalTabSlide } from '../scores/useHorizontalTabSlide';
 import { PODIUM_CAPTIONS } from './podiumConstants';
 
+/**
+ * One corps' row as the Podium processor writes it (helpers/podium/processor →
+ * showRanking.rankShowResults), plus the director credit and avatar it attaches.
+ * @typedef {Object} PodiumRecapRow
+ * @property {string} uid
+ * @property {string} [corpsName]
+ * @property {string} [division]
+ * @property {number} [place]
+ * @property {number} [totalScore]
+ * @property {number} [geScore]
+ * @property {number} [visualScore]
+ * @property {number} [musicScore]
+ * @property {Record<string, number>} [captions]
+ * @property {string|null} [displayName]
+ * @property {string|null} [avatarUrl]
+ */
+
+/**
+ * One show on a recap day.
+ * @typedef {Object} PodiumRecapShow
+ * @property {string|null} [eventName]
+ * @property {string|null} [location]
+ * @property {PodiumRecapRow[]} [results]
+ */
+
+/**
+ * The cut tonight's results decided, as store.championshipCutFor publishes it.
+ * @typedef {Object} ChampionshipCut
+ * @property {number} toDay
+ * @property {string} rule
+ * @property {string[]} uids
+ * @property {number} advancingCount
+ * @property {number} missedCount
+ * @property {number|null} cutLine
+ */
+
+/**
+ * podium-recaps/{seasonUid}/days/{day}. New recaps carry `shows`; legacy per-day
+ * recaps carried a flat `results`.
+ * @typedef {Object} PodiumRecapDay
+ * @property {PodiumRecapShow[]} [shows]
+ * @property {PodiumRecapRow[]} [results]
+ * @property {ChampionshipCut|null} [championshipCut]
+ * @property {Array<{ corpsA: string|null, corpsB: string|null, city?: string|null }>} [jointRehearsals]
+ */
+
+/** A ranked row on the sheet: the recap row and its place in its section. */
+/** @typedef {{ row: PodiumRecapRow, place: number }} RankedRow */
+
+/**
+ * A section of a show's box score: one division, or on a World Championship
+ * night the whole field.
+ * @typedef {Object} SheetSection
+ * @property {string|null|undefined} cls
+ * @property {string} label
+ * @property {import('../../utils/worldChampionship').WorldChampionshipRound|null} world
+ * @property {Record<string, number>} tops
+ * @property {RankedRow[]} rows
+ */
+
+/** @type {Record<number, { name: string, site: string }>} */
 const MAJOR_MASTHEADS = {
   28: { name: 'marching.art Southwestern Championship', site: 'San Antonio, TX' },
   35: { name: 'marching.art Southeastern Championship', site: 'Atlanta, GA' },
@@ -39,6 +104,7 @@ const MAJOR_MASTHEADS = {
   49: { name: 'marching.art World Championship Finals', site: 'Podium Division' },
 };
 
+/** @param {number} day */
 function fallbackMasthead(day) {
   return MAJOR_MASTHEADS[day] || { name: 'Podium Division Tour Stop', site: `Day ${day}` };
 }
@@ -46,6 +112,8 @@ function fallbackMasthead(day) {
 /**
  * A recap day's shows, normalized. New recaps carry `shows: [...]`; legacy
  * per-day recaps carried a flat `results` — wrap those as one synthetic show.
+ * @param {PodiumRecapDay|null|undefined} recap
+ * @returns {PodiumRecapShow[]}
  */
 function showsOf(recap) {
   if (Array.isArray(recap?.shows)) return recap.shows;
@@ -55,13 +123,33 @@ function showsOf(recap) {
   return [];
 }
 
-/** Bold the top value in each caption column — real recaps mark box-toppers. */
+/**
+ * Bold the top value in each caption column — real recaps mark box-toppers.
+ * @param {PodiumRecapRow[]} results
+ * @returns {Record<string, number>}
+ */
 function boxToppersOf(results) {
+  /** @type {Record<string, number>} */
   const tops = {};
   for (const caption of PODIUM_CAPTIONS) {
     tops[caption] = Math.max(0, ...results.map((r) => r.captions?.[caption] ?? 0));
   }
   return tops;
+}
+
+/** @param {number|undefined} v */
+const fmt = (v) => (typeof v === 'number' ? v.toFixed(2) : '—');
+
+/**
+ * Index of the last element matching `test`, or -1 (Array.prototype.findLastIndex
+ * without the es2023 lib).
+ * @template T
+ * @param {T[]} list
+ * @param {(item: T) => boolean} test
+ */
+function lastIndexWhere(list, test) {
+  for (let i = list.length - 1; i >= 0; i--) if (test(list[i])) return i;
+  return -1;
 }
 
 /**
@@ -70,33 +158,48 @@ function boxToppersOf(results) {
  * division, not whoever happened to place first in a mixed field — and carries
  * its own box-toppers. A caption sort reorders the rows inside a section while
  * the placements stay put, exactly like the fantasy recaps.
+ *
+ * On a World Championship night (days 47-49) the whole field is ONE section,
+ * ranked together — no division wins anything on its own that night.
+ * @param {PodiumRecapRow[]|undefined} results
+ * @param {string} sortBy 'total' or a caption id.
+ * @param {number} day
+ * @param {string|null|undefined} eventName
+ * @returns {SheetSection[]}
  */
-function buildSections(results, sortBy) {
-  return groupByClass(results || [], (row) => row.division || 'aClass').map(({ cls, rows }) => {
-    const ranked = [...rows]
-      .sort((a, b) => b.totalScore - a.totalScore)
-      .map((row, index) => ({ row, place: index + 1 }));
-    return {
-      cls,
-      label: CLASS_LABELS[cls] || cls,
-      tops: boxToppersOf(rows),
-      rows:
-        sortBy === 'total'
-          ? ranked
-          : [...ranked].sort(
-              (a, b) => (b.row.captions?.[sortBy] ?? 0) - (a.row.captions?.[sortBy] ?? 0)
-            ),
-    };
-  });
+function buildSections(results, sortBy, day, eventName) {
+  return sectionsForNight(results || [], { day, eventName }, (row) => row.division || 'aClass').map(
+    ({ cls, label, world, rows }) => {
+      const ranked = [...rows]
+        .sort((a, b) => (b.totalScore ?? 0) - (a.totalScore ?? 0))
+        .map((row, index) => ({ row, place: index + 1 }));
+      return {
+        cls,
+        label,
+        world,
+        tops: boxToppersOf(rows),
+        rows:
+          sortBy === 'total'
+            ? ranked
+            : [...ranked].sort(
+                (a, b) => (b.row.captions?.[sortBy] ?? 0) - (a.row.captions?.[sortBy] ?? 0)
+              ),
+      };
+    }
+  );
 }
 
 /**
  * Format a single show as a monospace text sheet — pastes cleanly into Discord
  * (wrap in a code block) and group chats, the way FMA recaps circulated. One
  * block per show and one stanza per division, matching what is on screen.
+ * @param {PodiumRecapShow} show
+ * @param {number} day
+ * @param {string|null|undefined} seasonName
+ * @param {ChampionshipCut|null} cut
+ * @param {SheetSection[]} sections
  */
 function formatShowAsText(show, day, seasonName, cut, sections) {
-  const fmt = (v) => (typeof v === 'number' ? v.toFixed(2) : '—');
   const head = fallbackMasthead(day);
   const advancing = new Set(cut?.uids || []);
   const lines = [
@@ -127,6 +230,7 @@ const SORT_OPTIONS = [
   ...PODIUM_CAPTIONS.map((c) => ({ id: c, label: c })),
 ];
 
+/** @param {{ sortBy: string, onChange: (id: string) => void }} props */
 function SortBar({ sortBy, onChange }) {
   return (
     <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
@@ -154,12 +258,25 @@ function SortBar({ sortBy, onChange }) {
 // One show = one card (matching the fantasy recap cards): its own frame,
 // masthead, box score, and footer/share. The day's sort control lives above
 // the cards, so a card is a pure box score.
+/**
+ * @param {{
+ *   show: PodiumRecapShow,
+ *   day: number,
+ *   sortBy: string,
+ *   seasonName?: string|null,
+ *   viewer?: import('../../utils/corps').ViewerCorpsMatcher|null,
+ *   cut?: ChampionshipCut|null,
+ * }} props
+ */
 function ShowCard({ show, day, sortBy, seasonName, viewer, cut = null }) {
-  const sections = useMemo(() => buildSections(show.results, sortBy), [show.results, sortBy]);
+  const sections = useMemo(
+    () => buildSections(show.results, sortBy, day, show.eventName),
+    [show.results, sortBy, day, show.eventName]
+  );
+  const world = sections[0]?.world || null;
   // Who marches the next round, as the processor published it with this recap
   // (helpers/podium/store.championshipCutFor). Empty on all 46 other nights.
   const advancing = useMemo(() => new Set(cut?.uids || []), [cut]);
-  const fmt = (v) => (typeof v === 'number' ? v.toFixed(2) : '—');
   const head = fallbackMasthead(day);
 
   return (
@@ -220,7 +337,7 @@ function ShowCard({ show, day, sortBy, seasonName, viewer, cut = null }) {
             // (Day 45 cuts Open and A on their own standings).
             const cutLineAfter =
               cut && sortBy === 'total'
-                ? section.rows.findLastIndex(({ row }) => advancing.has(row.uid))
+                ? lastIndexWhere(section.rows, ({ row }) => advancing.has(row.uid))
                 : -1;
 
             return (
@@ -280,7 +397,10 @@ function ShowCard({ show, day, sortBy, seasonName, viewer, cut = null }) {
                               >
                                 {row.corpsName}
                               </span>
-                              {advances && <AdvancesTag toDay={cut.toDay} />}
+                              {advances && cut && <AdvancesTag toDay={cut.toDay} />}
+                              {!advances && world?.winner && place === 1 && (
+                                <TitleTag title={world.winner} />
+                              )}
                             </div>
                             {/* Director credit + profile link under the corps
                                 name — displayed the same way as the other
@@ -341,6 +461,13 @@ function ShowCard({ show, day, sortBy, seasonName, viewer, cut = null }) {
             <>
               <span className="text-green-400 font-bold">ADV</span> = marches Day {cut.toDay} ·{' '}
               {cut.rule}
+              {world ? ' · one field, every division' : ''}
+            </>
+          ) : world ? (
+            <>
+              {world.title} · one field, every division
+              {world.winner ? ` · 1st = ${world.winner}` : ''} · box-toppers in{' '}
+              <span className="text-brand font-bold">gold</span>
             </>
           ) : (
             <>
@@ -373,8 +500,10 @@ function ShowCard({ show, day, sortBy, seasonName, viewer, cut = null }) {
  */
 export default function PodiumRecapSheet({ seasonUid, seasonName, viewer = null }) {
   const [loading, setLoading] = useState(true);
-  const [days, setDays] = useState([]); // [{day, recap}]
-  const [selectedDay, setSelectedDay] = useState(null);
+  const [days, setDays] = useState(
+    /** @type {Array<{ day: number, recap: PodiumRecapDay }>} */ ([])
+  );
+  const [selectedDay, setSelectedDay] = useState(/** @type {number|null} */ (null));
   const [sortBy, setSortBy] = useState('total');
   // Keep the highlighted day visible on mobile (the strip runs D1→D49 and the
   // latest day defaults selected, so without this it sits off the right edge).
@@ -394,7 +523,10 @@ export default function PodiumRecapSheet({ seasonUid, seasonName, viewer = null 
         const snapshot = await getDocs(collection(db, 'podium-recaps', seasonUid, 'days'));
         if (cancelled) return;
         const loaded = snapshot.docs
-          .map((doc) => ({ day: Number(doc.id), recap: doc.data() }))
+          .map((doc) => ({
+            day: Number(doc.id),
+            recap: /** @type {PodiumRecapDay} */ (doc.data()),
+          }))
           .sort((a, b) => a.day - b.day);
         setDays(loaded);
         setSelectedDay(loaded.length > 0 ? loaded[loaded.length - 1].day : null);
@@ -496,7 +628,7 @@ export default function PodiumRecapSheet({ seasonUid, seasonName, viewer = null 
           <div className="text-[9px] font-bold uppercase tracking-wider text-muted">
             Joint Rehearsals
           </div>
-          {selected.recap.jointRehearsals.map((item, idx) => (
+          {(selected.recap.jointRehearsals || []).map((item, idx) => (
             <div key={idx} className="text-[10px] text-muted italic">
               {item.corpsA} and {item.corpsB} held a joint rehearsal
               {item.city ? ` in ${item.city}` : ''}.

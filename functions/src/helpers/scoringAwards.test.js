@@ -638,14 +638,15 @@ describe('awardFinalsAndSaveChampions', () => {
     assert.equal(saved.seasonName, 'Test Season 2026');
     assert.equal(saved.seasonType, 'off-season');
     assert.ok(saved.archivedAt instanceof Date);
-    // Per-class podiums, with usernames resolved from profiles.
+    // The World Championship podium (top 3 of the whole Finals field), with
+    // usernames resolved from profiles and the class each corps drafted in.
     assert.deepEqual(saved.classes.worldClass, [
-      { rank: 1, uid: 'w1', username: 'DirectorOne', corpsName: 'Champion Corps', avatarUrl: null, score: 97 },
-      { rank: 2, uid: 'w2', username: 'DirectorTwo', corpsName: 'Second Corps', avatarUrl: null, score: 93 },
-      { rank: 3, uid: 'w3', username: 'DirectorThree', corpsName: 'Third Corps', avatarUrl: null, score: 88 },
+      { rank: 1, uid: 'w1', username: 'DirectorOne', corpsName: 'Champion Corps', corpsClass: 'worldClass', avatarUrl: null, score: 97 },
+      { rank: 2, uid: 'w2', username: 'DirectorTwo', corpsName: 'Second Corps', corpsClass: 'worldClass', avatarUrl: null, score: 93 },
+      { rank: 3, uid: 'w3', username: 'DirectorThree', corpsName: 'Third Corps', corpsClass: 'worldClass', avatarUrl: null, score: 88 },
     ]);
     assert.deepEqual(saved.classes.openClass, [
-      { rank: 1, uid: 'o1', username: 'OpenDirector', corpsName: 'Open Star', avatarUrl: null, score: 75 },
+      { rank: 1, uid: 'o1', username: 'OpenDirector', corpsName: 'Open Star', corpsClass: 'openClass', avatarUrl: null, score: 75 },
     ]);
     // The function returns exactly what it saved.
     assert.deepEqual(champions, saved);
@@ -689,19 +690,61 @@ describe('awardFinalsAndSaveChampions', () => {
 
     const champions = await awardFinalsAndSaveChampions(batch, recap, seasonData, db);
 
-    // World Class still comes from today's World Championship Finals.
+    // The World Championship podium is the WHOLE Finals field ranked together:
+    // the Open Class corps that finished second at Finals is the World
+    // runner-up, not filed away under its class.
     assert.deepEqual(champions.classes.worldClass, [
-      { rank: 1, uid: 'w1', username: 'WorldDirector', corpsName: 'World Champ Corps', avatarUrl: null, score: 97 },
+      { rank: 1, uid: 'w1', username: 'WorldDirector', corpsName: 'World Champ Corps', corpsClass: 'worldClass', avatarUrl: null, score: 97 },
+      { rank: 2, uid: 'o2', username: 'OpenRunnerUp', corpsName: 'Open Runner Corps', corpsClass: 'openClass', avatarUrl: null, score: 90 },
     ]);
     // Open Class is crowned by the Day 46 Finals (o1 over o2), ignoring o2's
     // higher Day 49 World-bracket score.
     assert.deepEqual(champions.classes.openClass, [
-      { rank: 1, uid: 'o1', username: 'OpenChamp', corpsName: 'Open Champ Corps', avatarUrl: null, score: 82 },
-      { rank: 2, uid: 'o2', username: 'OpenRunnerUp', corpsName: 'Open Runner Corps', avatarUrl: null, score: 78 },
+      { rank: 1, uid: 'o1', username: 'OpenChamp', corpsName: 'Open Champ Corps', corpsClass: 'openClass', avatarUrl: null, score: 82 },
+      { rank: 2, uid: 'o2', username: 'OpenRunnerUp', corpsName: 'Open Runner Corps', corpsClass: 'openClass', avatarUrl: null, score: 78 },
     ]);
     assert.deepEqual(champions.classes.aClass, [
-      { rank: 1, uid: 'a1', username: 'AChamp', corpsName: 'A Champ Corps', avatarUrl: null, score: 70 },
+      { rank: 1, uid: 'a1', username: 'AChamp', corpsName: 'A Champ Corps', corpsClass: 'aClass', avatarUrl: null, score: 70 },
     ]);
+  });
+
+  test('an Open Class corps that wins the Finals is the World Champion', async () => {
+    const docs = new Map([
+      [profilePath('o1'), { username: 'Upstart' }],
+      [profilePath('w1'), { username: 'Establishment' }],
+    ]);
+    const { db, batch, writes } = makeFakeDb(docs);
+    const recap = recapWithShows([
+      {
+        eventName: 'marching.art World Championship Finals',
+        results: [
+          result('w1', 'worldClass', 95, 'Old Guard'),
+          result('o1', 'openClass', 96, 'Upstart Corps'),
+        ],
+      },
+    ]);
+
+    const champions = await awardFinalsAndSaveChampions(batch, recap, seasonData, db);
+
+    // One field, one title: the gold and the top of the World podium both go
+    // to the highest score on the sheet, whatever class it drafted in.
+    assert.equal(champions.classes.worldClass[0].uid, 'o1');
+    assert.equal(champions.classes.worldClass[0].corpsClass, 'openClass');
+    assert.equal(champions.classes.worldClass[1].uid, 'w1');
+    const gold = writes.find((w) => w.data['trophies.championships'] && w.path === profilePath('o1'));
+    assert.ok(
+      gold.data['trophies.championships'].isEqual(
+        FieldValue.arrayUnion({
+          type: 'championship',
+          metal: 'gold',
+          corpsClass: 'openClass',
+          seasonName: seasonData.name,
+          eventName: 'marching.art World Championship Finals',
+          score: 96,
+          rank: 1,
+        })
+      )
+    );
   });
 
   test('falls back to the Day 49 field for Open/A when the Day 46 recap is missing', async () => {
@@ -722,7 +765,7 @@ describe('awardFinalsAndSaveChampions', () => {
       (w) => w.path === `season_champions/${seasonData.seasonUid}`
     );
     assert.deepEqual(championsWrite.data.classes.openClass, [
-      { rank: 1, uid: 'o1', username: 'OpenDirector', corpsName: 'Open Star', avatarUrl: null, score: 75 },
+      { rank: 1, uid: 'o1', username: 'OpenDirector', corpsName: 'Open Star', corpsClass: 'openClass', avatarUrl: null, score: 75 },
     ]);
   });
 

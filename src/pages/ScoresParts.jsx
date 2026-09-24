@@ -15,7 +15,6 @@ import { Trophy, MapPin, Calendar } from 'lucide-react';
 import { formatEventName } from '../utils/season';
 import { isViewerCorps } from '../utils/corps';
 import {
-  CLASS_LABELS,
   getCaptionBreakdown,
   mergeTwoNightShows,
   formatStandingsAsText,
@@ -45,6 +44,7 @@ import {
   SheetFooter,
   SortPills,
   ShareButton,
+  TitleTag,
   TrendIndicator,
   ScoreAge,
 } from '../components/scores/SheetPrimitives';
@@ -56,8 +56,9 @@ import {
   STANDINGS_SORTS,
   CLASS_SECTION_ORDER,
   captionTops,
-  groupByClass,
+  sectionsForNight,
 } from '../components/scores/sheetTokens';
+import { WORLD_FIELD_KEY } from '../utils/worldChampionship';
 
 // =============================================================================
 // PILL TAB CONTROL (Design System) — moved to components/scores/PillTabControl
@@ -70,6 +71,12 @@ import {
 // don't re-render). Each show's field is separated into World / Open / A Class
 // sections, each independently ranked and box-topped — the fantasy recaps read
 // like the per-class standings instead of one mixed list.
+//
+// The one exception is the World Championship (days 47-49, utils/
+// worldChampionship): Prelims, Semifinals and Finals are ONE field. Every
+// corps that reached the round is ranked 1 to N against everyone else in it,
+// under one heading — World Prelims Performers, World Semifinalists, World
+// Finalists — and the top of the Finals sheet is the World Champion.
 // =============================================================================
 
 // Rank a class's scores (already total-desc, so index+1 is the finishing place)
@@ -106,25 +113,30 @@ const RecapDataGrid = memo(
     sortBy = 'total',
     advancement = null,
   }) => {
-    // Group the show's corps by class, then rank/sort within each class.
+    // Group the show's corps by class (or, on a World Championship night, keep
+    // the whole field as one section), then rank/sort within each section.
     const sections = useMemo(() => {
       if (!scores || scores.length === 0) return [];
-      return groupByClass(scores, (score) => score.corpsClass || 'aClass').map(
-        ({ cls, rows: classScores }) => {
-          const rows = buildClassRows(classScores, sortBy);
-          const advancingCount = advancement
-            ? rows.filter(({ score }) => advancement.advancing.has(advancementKey(score))).length
-            : 0;
-          return {
-            cls,
-            label: CLASS_LABELS[cls] || cls,
-            rows,
-            tops: captionTops(rows.map((r) => r.captions)),
-            advancingCount,
-          };
-        }
-      );
-    }, [scores, sortBy, advancement]);
+      return sectionsForNight(
+        scores,
+        { day: offSeasonDay, eventName },
+        (score) => score.corpsClass || 'aClass'
+      ).map(({ cls, label, world, rows: classScores }) => {
+        const rows = buildClassRows(classScores, sortBy);
+        const advancingCount = advancement
+          ? rows.filter(({ score }) => advancement.advancing.has(advancementKey(score))).length
+          : 0;
+        return {
+          cls,
+          label,
+          world,
+          rows,
+          tops: captionTops(rows.map((r) => r.captions)),
+          advancingCount,
+        };
+      });
+    }, [scores, sortBy, advancement, offSeasonDay, eventName]);
+    const world = sections[0]?.world || null;
 
     const activeCap = sortBy === 'total' ? null : sortBy;
 
@@ -157,13 +169,25 @@ const RecapDataGrid = memo(
     if (sections.length === 0) return null;
 
     // Link the share to the day's card for the sheet's top class present
-    // (World → Open → A order). The /share URL unfurls with a live standings
+    // (World → Open → A order) — or, on a World Championship night, the one
+    // card for the whole field. The /share URL unfurls with a live standings
     // image wherever the copied text is pasted.
-    const topRankedClass = sections.find((s) => CLASS_SECTION_ORDER.includes(s.cls))?.cls;
+    const topRankedClass = world
+      ? WORLD_FIELD_KEY
+      : sections.find((s) => CLASS_SECTION_ORDER.includes(s.cls))?.cls;
     const shareUrl = () =>
       seasonId && typeof offSeasonDay === 'number' && topRankedClass
         ? scoresShareUrl(seasonId, offSeasonDay, topRankedClass)
         : null;
+
+    // The footer legend: the cut on a cut night, else what the sheet is.
+    const footerNote = advancement
+      ? `ADV = marches Day ${advancement.advancesToDay} · ${advancement.rule}${
+          world ? ' · one field, every class' : ''
+        }`
+      : world
+        ? `${world.title} · one field, every class${world.winner ? ` · 1st = ${world.winner}` : ''}`
+        : 'Split by class · GE/VIS/MUS shown · box-toppers in gold';
 
     return (
       <div className={`${SHEET_CARD} space-y-3`}>
@@ -232,7 +256,13 @@ const RecapDataGrid = memo(
                       uid={score.uid}
                       avatarUrl={score.avatarUrl}
                       colors={score.colors}
-                      tag={advances ? <AdvancesTag toDay={advancement.advancesToDay} /> : null}
+                      tag={
+                        advances ? (
+                          <AdvancesTag toDay={advancement.advancesToDay} />
+                        ) : world?.winner && place === 1 ? (
+                          <TitleTag title={world.winner} />
+                        ) : null
+                      }
                     />
                     <div className="flex items-center gap-1.5 flex-shrink-0 text-[11px]">
                       <CaptionValue
@@ -262,11 +292,7 @@ const RecapDataGrid = memo(
         ))}
 
         <SheetFooter
-          note={
-            advancement
-              ? `ADV = marches Day ${advancement.advancesToDay} · ${advancement.rule}`
-              : 'Split by class · GE/VIS/MUS shown · box-toppers in gold'
-          }
+          note={footerNote}
           action={<ShareButton getText={shareText} getUrl={shareUrl} />}
         />
       </div>

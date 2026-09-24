@@ -39,6 +39,11 @@ const {
 } = require("./discord");
 const { claimScoringRun, markScoringRunCompleted, markScoringRunFailed } = require("./scoringRunGuard");
 const { RANKED_CLASSES } = require("./classRegistry");
+const {
+  WORLD_FIELD_KEY,
+  WORLD_FIELD_LABEL,
+  worldChampionshipRound,
+} = require("./worldChampionship");
 
 const CLASS_LABELS = {
   worldClass: "World Class",
@@ -46,6 +51,11 @@ const CLASS_LABELS = {
   aClass: "A Class",
   soundSport: "SoundSport",
   podiumClass: "Podium",
+  // Not a class: the one combined field of a World Championship night
+  // (helpers/worldChampionship.js). Listed here so every surface that labels a
+  // standings key by class — the drop, the share card, the results page —
+  // names it without a special case.
+  [WORLD_FIELD_KEY]: WORLD_FIELD_LABEL,
 };
 
 // Attribution params on the announcement deep links. Without these, a director
@@ -90,21 +100,31 @@ function ordinal(n) {
  * accumulation scoring.js uses for dailyScores — then ranked per class.
  * SoundSport entries are counted but never ranked or exposed with scores.
  *
+ * On the three World Championship nights (days 47-49) there are no classes:
+ * every corps on the sheet is ranked in ONE field, filed under
+ * WORLD_FIELD_KEY, and `worldRound` names the round. The night is read off
+ * the recap's `offSeasonDay` (or `options.scoredDay`, which wins).
+ *
  * Blue ribbons ride along: each show's top SoundSport corps is that show's
  * Best in Show (the same rule scoringAwards.js awards the trophy by), so the
  * winners can be named without ever exposing a SoundSport score.
  *
  * @param {Object} dailyRecap - fantasy_recaps day doc ({shows: [{eventName, results: []}]})
+ * @param {{scoredDay?: number|null}} [options]
  * @returns {{
- *   byClass: Map<string, Array<{uid: string, corpsName: string, displayName: string,
- *     score: number, rank: number, of: number}>>,
+ *   byClass: Map<string, Array<{uid: string, corpsClass: string, corpsName: string,
+ *     displayName: string, score: number, rank: number, of: number}>>,
  *   soundSport: Array<{uid: string, corpsName: string}>,
  *   bestInShow: Array<{uid: string, corpsName: string, displayName: string, eventName: string}>,
  *   showCount: number,
+ *   worldRound: ?import('./worldChampionship').WorldChampionshipRound,
  * }}
  */
-function aggregateNightlyStandings(dailyRecap) {
+function aggregateNightlyStandings(dailyRecap, options = {}) {
   const shows = (dailyRecap && dailyRecap.shows) || [];
+  const scoredDay =
+    options.scoredDay != null ? options.scoredDay : dailyRecap && dailyRecap.offSeasonDay;
+  const worldRound = worldChampionshipRound(scoredDay);
   const totals = new Map(); // `${uid}_${class}` -> entry
   const soundSportByUid = new Map();
   const bestInShow = [];
@@ -147,15 +167,23 @@ function aggregateNightlyStandings(dailyRecap) {
   }
 
   const byClass = new Map();
-  for (const corpsClass of RANKED_CLASSES) {
-    const entries = [...totals.values()].filter((e) => e.corpsClass === corpsClass);
+  // A World Championship night is one field: World, Open and A ranked together,
+  // 1 to N. Every other night ranks each class on its own.
+  /** @type {Array<[string, Array<any>]>} */
+  const fields = worldRound
+    ? [[WORLD_FIELD_KEY, [...totals.values()]]]
+    : RANKED_CLASSES.map((corpsClass) => [
+      corpsClass,
+      [...totals.values()].filter((e) => e.corpsClass === corpsClass),
+    ]);
+  for (const [key, entries] of fields) {
     if (entries.length === 0) continue;
     entries.sort((a, b) => b.score - a.score);
     entries.forEach((entry, index) => {
       entry.rank = index + 1;
       entry.of = entries.length;
     });
-    byClass.set(corpsClass, entries);
+    byClass.set(key, entries);
   }
 
   return {
@@ -163,7 +191,22 @@ function aggregateNightlyStandings(dailyRecap) {
     soundSport: [...soundSportByUid.values()],
     bestInShow,
     showCount: shows.length,
+    worldRound,
   };
+}
+
+/**
+ * The heading a standings key gets on a night: the class label, or on a World
+ * Championship night the round and what everyone on it is ("World
+ * Championship Semifinals — World Semifinalists").
+ * @param {string} key A `byClass` key.
+ * @param {?import('./worldChampionship').WorldChampionshipRound} worldRound
+ */
+function standingsLabel(key, worldRound) {
+  if (key === WORLD_FIELD_KEY && worldRound) {
+    return `${worldRound.title} — ${worldRound.participants}`;
+  }
+  return CLASS_LABELS[key] || key;
 }
 
 /**
@@ -177,16 +220,19 @@ function aggregateNightlyStandings(dailyRecap) {
  * @returns {Object|null}
  */
 function buildScoreDropEmbed({ dailyRecap, seasonName, scoredDay }) {
-  const { byClass, soundSport, bestInShow, showCount } = aggregateNightlyStandings(dailyRecap);
+  const { byClass, soundSport, bestInShow, showCount, worldRound } = aggregateNightlyStandings(
+    dailyRecap,
+    { scoredDay }
+  );
   if (byClass.size === 0 && soundSport.length === 0) return null;
 
   const fields = [];
-  for (const [corpsClass, entries] of byClass) {
+  for (const [key, entries] of byClass) {
     const lines = entries.slice(0, 3).map((entry, index) => {
       const director = entry.displayName ? ` · ${clampName(entry.displayName, 30)}` : "";
       return `${MEDALS[index]} **${clampName(entry.corpsName)}** — ${entry.score.toFixed(3)}${director}`;
     });
-    const fieldName = `${CLASS_LABELS[corpsClass] || corpsClass} (${entries.length} corps)`;
+    const fieldName = `${standingsLabel(key, worldRound)} (${entries.length} corps)`;
     fields.push({ name: fieldName, value: lines.join("\n") });
   }
 
@@ -205,10 +251,20 @@ function buildScoreDropEmbed({ dailyRecap, seasonName, scoredDay }) {
   }
 
   const showWord = showCount === 1 ? "show" : "shows";
+  // Finals night names the World Champion in the headline — one field, one
+  // title, whatever class the corps drafted in.
+  const worldField = worldRound ? byClass.get(WORLD_FIELD_KEY) : null;
+  const champion = worldRound && worldRound.winner && worldField ? worldField[0] : null;
   const embed = {
     title: `🎺 Day ${scoredDay} Scores Are In`,
     url: SCORES_URL,
-    description: `${seasonName} — ${showCount} ${showWord} scored tonight. Full recaps and standings on marching.art.`,
+    description: champion
+      ? `${seasonName} — ${worldRound.title}. **${clampName(champion.corpsName)}** is your ` +
+        `${worldRound.winner}. Full recaps and standings on marching.art.`
+      : worldRound
+        ? `${seasonName} — ${worldRound.title}: one field, every class, ranked together. ` +
+          "Full recaps and standings on marching.art."
+        : `${seasonName} — ${showCount} ${showWord} scored tonight. Full recaps and standings on marching.art.`,
     color: COLORS.scores,
     fields,
   };
@@ -300,7 +356,11 @@ function buildChampionsPayload({ champions, seasonName }) {
     const podium = classes[corpsClass];
     if (!Array.isArray(podium) || podium.length === 0) continue;
     fields.push({
-      name: CLASS_LABELS[corpsClass] || corpsClass,
+      // `classes.worldClass` is the World Championship podium — the top three
+      // of the whole Finals field, whatever class they drafted in
+      // (scoringAwards.awardFinalsAndSaveChampions) — so it is billed as the
+      // championship, not as a class.
+      name: corpsClass === "worldClass" ? WORLD_FIELD_LABEL : CLASS_LABELS[corpsClass] || corpsClass,
       value: joinLines(
         podium.slice(0, 3).map((entry, index) => {
           const director = entry.username ? ` · ${clampName(entry.username, 30)}` : "";
@@ -317,7 +377,7 @@ function buildChampionsPayload({ champions, seasonName }) {
     title: `👑 ${seasonName} Champions`,
     url: link("/hall-of-champions"),
     description: champion
-      ? `Finals are over. **${clampName(champion.corpsName)}** takes the World Class title, ` +
+      ? `Finals are over. **${clampName(champion.corpsName)}** is the ${seasonName} World Champion, ` +
         `and the season goes into the books.`
       : "Finals are over and the season goes into the books.",
     color: COLORS.champion,
@@ -338,20 +398,35 @@ function buildChampionsPayload({ champions, seasonName }) {
  * @returns {Array<{uid: string, title: string, body: string, url: string, data: Object}>}
  */
 function buildScoreDropPushes({ dailyRecap, scoredDay }) {
-  const { byClass, soundSport } = aggregateNightlyStandings(dailyRecap);
+  const { byClass, soundSport, worldRound } = aggregateNightlyStandings(dailyRecap, { scoredDay });
   const title = `Day ${scoredDay} scores are in 🎺`;
   const pushes = new Map(); // uid -> push (first hit wins: RANKED_CLASSES is tier order)
 
+  // On a World Championship night the one combined field is the only key; a
+  // director with corps in two classes hears about the higher one first, the
+  // same tier order as the class nights.
+  const worldField = worldRound ? byClass.get(WORLD_FIELD_KEY) || [] : [];
   for (const corpsClass of RANKED_CLASSES) {
-    for (const entry of byClass.get(corpsClass) || []) {
+    const entries = worldRound
+      ? worldField.filter((entry) => entry.corpsClass === corpsClass)
+      : byClass.get(corpsClass) || [];
+    for (const entry of entries) {
       if (pushes.has(entry.uid)) continue;
-      const label = CLASS_LABELS[corpsClass] || corpsClass;
+      const standing = worldRound
+        ? `${ordinal(entry.rank)} of ${entry.of} at ${worldRound.title}`
+        : `${ordinal(entry.rank)} of ${entry.of} in ${CLASS_LABELS[corpsClass] || corpsClass}`;
+      const honor =
+        worldRound && worldRound.winner && entry.rank === 1
+          ? ` ${worldRound.winner}!`
+          : worldRound
+            ? ` ${worldRound.participant}.`
+            : "";
       pushes.set(entry.uid, {
         uid: entry.uid,
         title,
         body:
           `${clampName(entry.corpsName)} scored ${entry.score.toFixed(3)} tonight — ` +
-          `${ordinal(entry.rank)} of ${entry.of} in ${label}. Tap for the full recap.`,
+          `${standing}.${honor} Tap for the full recap.`,
         url: `${SCORES_PATH}?${SRC_PARAM}=${SRC_PUSH}`,
         data: { scoredDay: String(scoredDay), corpsClass },
       });
@@ -505,6 +580,7 @@ async function runChampionsPost(db, { seasonUid, seasonName, webhookUrl, fetchIm
 module.exports = {
   discordScoresWebhookUrl,
   CLASS_LABELS,
+  standingsLabel,
   RECORD_LABELS,
   FINALS_DAY,
   ordinal,

@@ -3,6 +3,13 @@
 // a single kind of thing — this keeps React Fast Refresh happy and gives the
 // non-component constants a stable, dependency-free home.
 
+import { CLASS_LABELS } from '../../utils/scoresUtils';
+import {
+  WORLD_FIELD_KEY,
+  worldChampionshipRound,
+  type WorldChampionshipRound,
+} from '../../utils/worldChampionship';
+
 // The Podium recap sheet is the visual reference: a #1a1a1a card on a #333
 // border, gold (#c9a227) box-toppers/accents, blue for the viewer's own corps.
 export const SHEET_CARD = 'bg-surface-card border border-line rounded-none p-3 md:p-4';
@@ -68,6 +75,48 @@ export function groupByClass<T>(
     (cls) => typeof cls !== 'string' || !CLASS_SECTION_ORDER.includes(cls)
   );
   return [...known, ...rest].map((cls) => ({ cls, rows: byClass.get(cls) as T[] }));
+}
+
+/** A sheet section with its heading: a class, or a World round's one field. */
+export interface NightSection<T> extends ClassSection<T> {
+  /** Heading — the class label, or what everyone on a World sheet is. */
+  label: string;
+  /** The World Championship round, when the whole night is one field. */
+  world: WorldChampionshipRound | null;
+}
+
+/**
+ * The sections a night's sheet is drawn in.
+ *
+ * On the three World Championship nights (days 47-49, utils/worldChampionship)
+ * there are no classes: every corps on the sheet is ONE field, ranked 1 to N
+ * together, headed by what they all are — World Prelims Performers, World
+ * Semifinalists, World Finalists. Every other night (the Open & A Class nights
+ * included — those are two separate competitions) sections the field by class
+ * exactly as groupByClass does.
+ *
+ * @param rows The show's results, already in descending score order.
+ * @param night The competition day and, when known, the show's event name (a
+ *   live season can land an unrelated show on a World day; it keeps its
+ *   classes).
+ * @param classOf The class/division a row competed in.
+ */
+export function sectionsForNight<T>(
+  rows: readonly T[],
+  night: { day: number | null | undefined; eventName?: string | null },
+  classOf: (row: T) => string | null | undefined
+): Array<NightSection<T>> {
+  const world = worldChampionshipRound(night.day, night.eventName ?? null);
+  if (world) {
+    return rows.length > 0
+      ? [{ cls: WORLD_FIELD_KEY, rows: [...rows], label: world.participants, world }]
+      : [];
+  }
+  return groupByClass(rows, classOf).map((section) => ({
+    ...section,
+    label: (section.cls && CLASS_LABELS[section.cls]) || String(section.cls ?? ''),
+    world: null,
+  }));
 }
 
 export interface CaptionTriple {

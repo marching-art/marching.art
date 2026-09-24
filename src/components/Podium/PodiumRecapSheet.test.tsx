@@ -151,6 +151,48 @@ describe('PodiumRecapSheet — division split', () => {
   });
 });
 
+describe('PodiumRecapSheet — World Championship nights are one field', () => {
+  const mixed = [
+    { ...row('Open-1', 1, 95.5, 'openClass'), corpsName: 'Open One' },
+    { ...row('World-1', 1, 95.0, 'worldClass'), corpsName: 'World One' },
+    { ...row('A-1', 1, 93.0, 'aClass'), corpsName: 'A One' },
+    { ...row('World-2', 2, 92.0, 'worldClass'), corpsName: 'World Two' },
+  ];
+
+  it('ranks Semifinals 1 to N across every division under one heading', async () => {
+    withRecap(48, {
+      competitionDay: 48,
+      shows: [{ eventName: 'marching.art World Championship Semifinals', results: mixed }],
+    });
+
+    const { container } = wrap(<RecapSheet seasonUid="season-1" />);
+    await screen.findAllByText(/world championship semifinals/i);
+
+    const sections = sectionsOf(container);
+    expect(sections).toHaveLength(1);
+    expect(sections[0].label).toBe('World Semifinalists');
+    expect(sections[0].summary).toBe('4 corps');
+    expect(sections[0].corps[0]).toMatch(/^1\..*Open One/);
+    expect(sections[0].corps[2]).toMatch(/^3\..*A One/);
+  });
+
+  it('names the World Champion at the top of the Finals sheet', async () => {
+    withRecap(49, {
+      competitionDay: 49,
+      shows: [{ eventName: 'marching.art World Championship Finals', results: mixed }],
+    });
+
+    const { container } = wrap(<RecapSheet seasonUid="season-1" />);
+    await screen.findAllByText(/world championship finals/i);
+
+    const sections = sectionsOf(container);
+    expect(sections.map((s) => s.label)).toEqual(['World Finalists']);
+    expect(sections[0].corps[0]).toContain('World Champion');
+    expect(sections[0].corps[1]).not.toContain('World Champion');
+    expect(screen.getByText(/1st = World Champion/)).toBeInTheDocument();
+  });
+});
+
 describe('PodiumRecapSheet — championship-week cuts', () => {
   it('marks the corps the processor said advance, and only those', async () => {
     const results = field(30, 95);
