@@ -26,7 +26,10 @@ const {
   awardTokenWrite,
 } = require("./awardLedger");
 const { regionalTierForEventName } = require("./seasonSchedule");
-const { worldChampionshipRound } = require("./worldChampionship");
+const { worldChampionshipRound, roundEventName } = require("./worldChampionship");
+
+// The World Championship Finals night — the only night awardFinalsAndSaveChampions runs.
+const FINALS_DAY = 49;
 
 /**
  * Get top N corps from season standings with tie handling at cutoff position.
@@ -669,6 +672,9 @@ async function awardFinalsAndSaveChampions(batch, dailyRecap, seasonData, db) {
     show.results.sort((a, b) => b.totalScore - a.totalScore);
 
     const isSoundSport = show.eventName.includes("SoundSport");
+    // Hardware carries the round's canonical name, whatever title the
+    // season's schedule row stored (helpers/worldChampionship.js).
+    const hardwareEventName = roundEventName(FINALS_DAY, show.eventName);
 
     if (isSoundSport) {
       // SoundSport is non-competitive: the Festival crowns a single
@@ -680,7 +686,7 @@ async function awardFinalsAndSaveChampions(batch, dailyRecap, seasonData, db) {
         const award = {
           type: "international_festival",
           seasonName: seasonData.name,
-          eventName: show.eventName,
+          eventName: hardwareEventName,
           score: bestInShow.totalScore
         };
         batch.update(userProfileRef, {
@@ -697,7 +703,7 @@ async function awardFinalsAndSaveChampions(batch, dailyRecap, seasonData, db) {
           metal: metals[index],
           corpsClass: winner.corpsClass || "worldClass",
           seasonName: seasonData.name,
-          eventName: show.eventName,
+          eventName: hardwareEventName,
           score: winner.totalScore,
           rank: index + 1
         };

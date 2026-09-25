@@ -128,7 +128,24 @@ function worldChampionshipTitle(day, place) {
   return place === 1 && round.winner ? round.winner : round.participant;
 }
 
+/**
+ * The name a World round is printed under: the canonical marching.art event
+ * name when `day` is a World night and `eventName` is that round (a season's
+ * schedule row may carry the replayed archive's own title, "DCI Division I
+ * World Championship Semi-Finals"), else `eventName` untouched. Never renames
+ * the SoundSport festival that shares Finals night, or any other show.
+ * @param {number|string|null|undefined} day
+ * @param {string|null|undefined} eventName
+ * @returns {string|null|undefined}
+ */
+function roundEventName(day, eventName) {
+  if (!eventName) return eventName;
+  const round = worldChampionshipRound(day, eventName);
+  return round ? round.eventName : eventName;
+}
+
 module.exports = {
+  roundEventName,
   WORLD_CHAMPIONSHIP_ROUNDS,
   WORLD_CHAMPIONSHIP_DAYS,
   WORLD_FIELD_KEY,

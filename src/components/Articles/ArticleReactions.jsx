@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // =============================================================================
 // ARTICLE REACTIONS - Emoji Reaction System
 // =============================================================================
@@ -11,9 +10,13 @@ import { toggleArticleReaction, getArticleReactions } from '../../api/functions'
 import toast from 'react-hot-toast';
 
 // Available emoji reactions
+/** @typedef {import('../../types/news').ArticleReactionType} ReactionEmoji */
+
+/** @type {readonly ReactionEmoji[]} */
 const REACTIONS = ['👏', '🔥', '💯', '🎺', '🏳️', '🥁', '❤️', '🤔'];
 
 // Reaction labels for accessibility and tooltips
+/** @type {Record<string, string>} */
 const REACTION_LABELS = {
   '👏': 'Applause',
   '🔥': 'Fire',
@@ -26,13 +29,26 @@ const REACTION_LABELS = {
 };
 
 /**
+ * Reaction counts keyed by emoji, plus the running `total`.
+ * @typedef {import('../../types/news').ArticleReactionCounts} ReactionCounts
+ */
+/**
+ * The read-only shape the news feed passes the summaries: an article doc's
+ * counts, which may be partial or missing on older articles.
+ * @typedef {{ [reaction: string]: number | undefined, total?: number }} ReactionCountsLike
+ */
+
+/**
  * ArticleReactions - Interactive emoji reaction bar
  *
- * @param {string} articleId - The article ID to track reactions for
- * @param {object} initialCounts - Initial reaction counts (optional, for SSR/prefetch)
- * @param {string} initialUserReaction - User's initial reaction (optional)
- * @param {boolean} compact - Show compact version (for cards)
- * @param {function} onReactionChange - Callback when reactions change
+ * @param {{
+ *   articleId: string,
+ *   initialCounts?: ReactionCounts | null,
+ *   initialUserReaction?: ReactionEmoji | null,
+ *   compact?: boolean,
+ *   onReactionChange?: (counts: ReactionCounts, emoji: ReactionEmoji | null) => void,
+ * }} props - `initialCounts` / `initialUserReaction` are optional prefetch
+ *   values; `compact` renders the card-sized bar.
  */
 export default function ArticleReactions({
   articleId,
@@ -41,9 +57,9 @@ export default function ArticleReactions({
   compact = false,
   onReactionChange,
 }) {
-  const { user } = useAuth();
+  const user = useAuth()?.user;
   const [counts, setCounts] = useState(
-    initialCounts || {
+    /** @type {ReactionCounts} */ (initialCounts) || {
       '👏': 0,
       '🔥': 0,
       '💯': 0,
@@ -55,9 +71,11 @@ export default function ArticleReactions({
       total: 0,
     }
   );
-  const [userReaction, setUserReaction] = useState(initialUserReaction);
+  const [userReaction, setUserReaction] = useState(
+    /** @type {ReactionEmoji | null} */ (initialUserReaction)
+  );
   const [loading, setLoading] = useState(!initialCounts);
-  const [reacting, setReacting] = useState(null);
+  const [reacting, setReacting] = useState(/** @type {ReactionEmoji | null} */ (null));
 
   // Sync with parent's initialCounts when they become available
   useEffect(() => {
@@ -95,6 +113,7 @@ export default function ArticleReactions({
     }
   }, [articleId, initialCounts, fetchReactions]);
 
+  /** @param {ReactionEmoji} emoji */
   const handleReaction = async (emoji) => {
     if (!user) {
       toast.error('Sign in to react to articles');
@@ -222,9 +241,18 @@ export default function ArticleReactions({
 /**
  * Reaction Picker with Facebook-style overlapping emoji display
  */
+/**
+ * @param {{
+ *   counts: ReactionCounts,
+ *   userReaction: ReactionEmoji | null,
+ *   onReact: (emoji: ReactionEmoji) => void,
+ *   reacting: ReactionEmoji | null,
+ *   disabled: boolean,
+ * }} props
+ */
 function ReactionPickerWithDisplay({ counts, userReaction, onReact, reacting, disabled }) {
   const [isOpen, setIsOpen] = useState(false);
-  const pickerRef = useRef(null);
+  const pickerRef = useRef(/** @type {HTMLDivElement | null} */ (null));
 
   // Get top emojis that have been used (sorted by count)
   const activeEmojis = REACTIONS.filter((emoji) => counts[emoji] > 0).sort(
@@ -233,8 +261,9 @@ function ReactionPickerWithDisplay({ counts, userReaction, onReact, reacting, di
 
   // Close picker when clicking outside
   useEffect(() => {
+    /** @param {MouseEvent} e */
     const handleClickOutside = (e) => {
-      if (pickerRef.current && !pickerRef.current.contains(e.target)) {
+      if (pickerRef.current && !pickerRef.current.contains(/** @type {Node} */ (e.target))) {
         setIsOpen(false);
       }
     };
@@ -242,6 +271,7 @@ function ReactionPickerWithDisplay({ counts, userReaction, onReact, reacting, di
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  /** @param {ReactionEmoji} emoji */
   const handleReact = (emoji) => {
     onReact(emoji);
     setIsOpen(false);
@@ -299,7 +329,7 @@ function ReactionPickerWithDisplay({ counts, userReaction, onReact, reacting, di
                 <button
                   key={emoji}
                   onClick={() => handleReact(emoji)}
-                  disabled={reacting}
+                  disabled={Boolean(reacting)}
                   title={`${REACTION_LABELS[emoji]}${count > 0 ? ` (${count})` : ''}`}
                   className={`
                     w-10 h-10 flex flex-col items-center justify-center rounded-none transition-all
@@ -328,11 +358,14 @@ function ReactionPickerWithDisplay({ counts, userReaction, onReact, reacting, di
 /**
  * Compact reaction summary for article cards - Facebook style overlapping emojis
  */
+/** @param {{ counts: ReactionCountsLike | null | undefined, userReaction?: string | null }} props */
 export function ReactionSummary({ counts, userReaction }) {
-  if (!counts || counts.total === 0) return null;
+  if (!counts || !counts.total) return null;
 
-  const topReactions = REACTIONS.filter((emoji) => counts[emoji] > 0)
-    .sort((a, b) => counts[b] - counts[a])
+  /** @param {string} emoji */
+  const countOf = (emoji) => counts[emoji] ?? 0;
+  const topReactions = REACTIONS.filter((emoji) => countOf(emoji) > 0)
+    .sort((a, b) => countOf(b) - countOf(a))
     .slice(0, 3);
 
   return (
@@ -361,15 +394,26 @@ export function ReactionSummary({ counts, userReaction }) {
  * Combined engagement summary - Facebook style with overlapping reactions and comment count
  * Used on news cards to show both reactions and comments in one compact display
  */
+/**
+ * @param {{
+ *   reactionCounts: ReactionCountsLike | null | undefined,
+ *   userReaction?: string | null,
+ *   commentCount?: number,
+ * }} props
+ */
 export function EngagementSummary({ reactionCounts, userReaction, commentCount }) {
-  const hasReactions = reactionCounts && reactionCounts.total > 0;
-  const hasComments = commentCount > 0;
+  const counts = reactionCounts || {};
+  const total = counts.total ?? 0;
+  const hasReactions = total > 0;
+  const hasComments = (commentCount ?? 0) > 0;
 
   if (!hasReactions && !hasComments) return null;
 
+  /** @param {string} emoji */
+  const countOf = (emoji) => counts[emoji] ?? 0;
   const topReactions = hasReactions
-    ? REACTIONS.filter((emoji) => reactionCounts[emoji] > 0)
-        .sort((a, b) => reactionCounts[b] - reactionCounts[a])
+    ? REACTIONS.filter((emoji) => countOf(emoji) > 0)
+        .sort((a, b) => countOf(b) - countOf(a))
         .slice(0, 3)
     : [];
 
@@ -391,7 +435,7 @@ export function EngagementSummary({ reactionCounts, userReaction, commentCount }
               </span>
             ))}
           </div>
-          <span className="text-[10px] font-data tabular-nums">{reactionCounts.total}</span>
+          <span className="text-[10px] font-data tabular-nums">{total}</span>
         </div>
       )}
 

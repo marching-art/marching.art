@@ -13,6 +13,7 @@ const {
   worldChampionshipRound,
   isWorldChampionshipRound,
   worldChampionshipTitle,
+  roundEventName,
 } = require("./worldChampionship");
 
 describe("worldChampionshipRound", () => {
@@ -46,6 +47,24 @@ describe("worldChampionshipRound", () => {
     assert.equal(worldChampionshipTitle(48, 1), "World Semifinalist");
     assert.equal(worldChampionshipTitle(47, 30), "World Prelims Performer");
     assert.equal(worldChampionshipTitle(46, 1), null);
+  });
+
+  test("roundEventName prints a World round under its canonical name, and nothing else", () => {
+    assert.equal(
+      roundEventName(47, "marching.art Division I World Championship Quarterfinals"),
+      "marching.art World Championship Prelims"
+    );
+    assert.equal(
+      roundEventName(48, "DCI World Class World Championship Semi-Finals"),
+      "marching.art World Championship Semifinals"
+    );
+    assert.equal(roundEventName(49, "marching.art World Championship Finals"), "marching.art World Championship Finals");
+    // Not a World round: the SoundSport festival, a regular show, an Open/A night.
+    const festival = "SoundSport International Music & Food Festival";
+    assert.equal(roundEventName(49, festival), festival);
+    assert.equal(roundEventName(47, "Drums Along the Rockies"), "Drums Along the Rockies");
+    assert.equal(roundEventName(46, "DCI World Championship Semifinals"), "DCI World Championship Semifinals");
+    assert.equal(roundEventName(48, null), null);
   });
 
   test("the client twin carries the same rounds", () => {

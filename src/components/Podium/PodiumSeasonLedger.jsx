@@ -185,7 +185,7 @@ export default function PodiumSeasonLedger({
           medals are within division
         </>
       }
-      formatEventName={formatEventName}
+      formatEventName={(entry) => formatEventName(entry.eventName)}
       getShareText={
         summary ? () => formatLedgerAsText(ledger, summary, userCorpsName, seasonName) : undefined
       }

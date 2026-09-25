@@ -13,6 +13,7 @@
 import React, { useMemo, memo, useState } from 'react';
 import { Trophy, MapPin, Calendar } from 'lucide-react';
 import { formatEventName } from '../utils/season';
+import { displayEventName } from '../utils/eventNames';
 import { isViewerCorps } from '../utils/corps';
 import {
   getCaptionBreakdown,
@@ -113,6 +114,10 @@ const RecapDataGrid = memo(
     sortBy = 'total',
     advancement = null,
   }) => {
+    // The sheet's title: the fixed name for a Championship Week round (the
+    // season's row may carry a replayed archive title), else the show's own.
+    const title = displayEventName({ day: offSeasonDay, eventName });
+
     // Group the show's corps by class (or, on a World Championship night, keep
     // the whole field as one section), then rank/sort within each section.
     const sections = useMemo(() => {
@@ -146,7 +151,7 @@ const RecapDataGrid = memo(
         .map((section) =>
           formatStandingsAsText(
             {
-              title: `${formatEventName(eventName)} — ${section.label}`,
+              title: `${title} — ${section.label}`,
               subtitle:
                 [location, date, advancement && `${advancement.rule} (marked ">")`]
                   .filter(Boolean)
@@ -191,7 +196,7 @@ const RecapDataGrid = memo(
 
     return (
       <div className={`${SHEET_CARD} space-y-3`}>
-        <SheetMasthead title={formatEventName(eventName)} location={location} date={date} />
+        <SheetMasthead title={title} location={location} date={date} />
 
         {/* Championship-week cut — what tonight's scores decided */}
         {advancement && (

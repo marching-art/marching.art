@@ -114,6 +114,31 @@ describe('FantasySeasonLedger', () => {
     expect(row.textContent).toContain('/2');
   });
 
+  it('names a World round by its fixed name whatever title the outing stored', async () => {
+    withDays([
+      {
+        day: 48,
+        outings: [
+          outing('worldClass', 'marching.art Division I World Championship Semi-Finals', 15),
+        ],
+      },
+    ]);
+    wrap(
+      <Ledger
+        seasonUid="s1"
+        uid="me"
+        corpsClass="worldClass"
+        userCorpsName="My Corps"
+        publicShows={[]}
+      />
+    );
+    // Named in the row and again in the Season Best tile.
+    expect(await screen.findAllByText('marching.art World Championship Semifinals')).toHaveLength(
+      2
+    );
+    expect(screen.queryByText(/Semi-Finals/)).not.toBeInTheDocument();
+  });
+
   it('shows the empty state before any scored outing', async () => {
     withDays([]);
     wrap(<Ledger seasonUid="s1" uid="me" corpsClass="worldClass" userCorpsName="My Corps" />);
