@@ -26,9 +26,13 @@ const {
   normalizeCorpsName,
   isValidCaptionScore,
   CAPTION_MAX,
+  CHAMPIONSHIP_CARRY_FORWARD_DAYS,
+  hasCompleteLineup,
 } = require("./scoringMath");
 const {
   buildChampionshipConfig,
+  resolveChampionshipShowConfig,
+  noteEmptyChampionshipRound,
   processCoinAwardsBatch,
   awardRegionalTrophies,
   awardClassChampionshipTrophies,
@@ -61,44 +65,6 @@ const {
 } = require("./easternSplit");
 
 
-
-// The eight lineup captions a corps must fill before it can be scored. A corps
-// with an incomplete (or empty) lineup has not finished selecting captions and
-// must be excluded from scoring entirely — otherwise it lands in the recap and
-// standings with a meaningless 0.000.
-const LINEUP_CAPTIONS = ["GE1", "GE2", "VP", "VA", "CG", "B", "MA", "P"];
-
-// World Championship week: Prelims (47), Semifinals (48), Finals (49).
-//
-// Nothing is projected on these three nights. The championship is decided on
-// what corps actually scored, and most of the field stops competing partway
-// through it — only 25 corps march Semifinals and only 12 march Finals — so a
-// projection here would invent a championship result for a corps that was
-// already packing up. A corps with no result for the night carries the last
-// score it really earned, unmodified: the 17th-place corps scores its
-// Semifinals sheet again on Finals night, and a corps that didn't survive
-// Prelims carries its Prelims sheet through both later nights.
-//
-// Days 45 and 46 (Open and A Class Prelims/Finals) deliberately keep the
-// normal projection rules — the same argument applies to them, but the rule
-// as specified covers World Championship week.
-const CHAMPIONSHIP_CARRY_FORWARD_DAYS = new Set([47, 48, 49]);
-
-/**
- * True only when a lineup has a non-empty selection for every scoring caption.
- * Newly registered corps start with an empty `lineup: {}`, and the caption
- * selection is only ever saved as a complete 8-caption set, so this rejects
- * both the empty and any partially-filled case.
- *
- * @param {Object|undefined} lineup - The corps' caption -> "corpsName|year" map.
- * @returns {boolean}
- */
-function hasCompleteLineup(lineup) {
-  if (!lineup) return false;
-  return LINEUP_CAPTIONS.every(
-    (caption) => typeof lineup[caption] === "string" && lineup[caption].length > 0
-  );
-}
 
 // Nightly profile fetch: documents per page (also the max held in one query
 // response). The full doc list is accumulated in memory, but the select()
@@ -373,8 +339,11 @@ function scoreShowsForDay({
     // --- END: DAY 41/42 REGIONAL SPLIT LOGIC ---
 
     // --- CHAMPIONSHIP SHOW CONFIGURATION ---
-    // Get config for this specific show if it's a championship event
-    const showConfig = championshipConfig ? championshipConfig[show.eventName] : null;
+    // Get config for this specific show if it's a championship event. The
+    // World rounds resolve by the day they are played when the stored row
+    // carries an archive title instead of the canonical name
+    // (scoringAwards.championshipConfigForShow, which also logs the miss).
+    const showConfig = resolveChampionshipShowConfig(championshipConfig, show, scoredDay);
     // OPTIMIZATION #6: Build Set for O(1) participant lookups instead of O(n) .some()
     // Key format: "${uid}_${corpsClass}" for composite lookup
     let participantSet = null;
@@ -440,6 +409,7 @@ function scoreShowsForDay({
         }
       }
     }
+    noteEmptyChampionshipRound(showConfig, show, scoredDay, showResult);
     dailyRecap.shows.push(showResult);
   }
 

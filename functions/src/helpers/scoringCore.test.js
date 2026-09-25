@@ -324,6 +324,52 @@ describe("scoreShowsForDay", () => {
     assert.equal(result.stats.corpsScored, 1);
   });
 
+  test("day 48: a World round stored under an archive title still scores the semifinalists", () => {
+    // The season's schedules row kept the replayed year's title (a 2000s
+    // "Division I ... Semi-Finals"), not the canonical name the championship
+    // config is keyed by. Nobody can register for a championship round, so
+    // treating it as a regular show scored no one and the night posted empty.
+    const profilesSnapshot = {
+      docs: [
+        profileDoc("u1", { corps: { worldClass: { corpsName: "Advancer", lineup: fullLineup() } } }),
+        profileDoc("u2", { corps: { openClass: { corpsName: "OpenAdvancer", lineup: fullLineup() } } }),
+        profileDoc("u3", { corps: { worldClass: { corpsName: "Eliminated", lineup: fullLineup() } } }),
+      ],
+    };
+    const dailyRecap = { shows: [] };
+    const championshipConfig = {
+      "marching.art World Championship Semifinals": {
+        classFilter: ["worldClass", "openClass", "aClass"],
+        participants: [
+          { uid: "u1", corpsClass: "worldClass" },
+          { uid: "u2", corpsClass: "openClass" },
+        ],
+      },
+    };
+    const result = scoreShowsForDay({
+      dayEventData: {
+        shows: [{
+          eventName: "marching.art Division I World Championship Semi-Finals",
+          isChampionship: true,
+        }],
+      },
+      profilesSnapshot,
+      week: 7,
+      scoredDay: 48,
+      championshipConfig,
+      dailyRecap,
+      getBaseCaptionScore: () => 10,
+    });
+
+    const results = dailyRecap.shows[0].results;
+    assert.deepEqual(results.map((r) => r.uid).sort(), ["u1", "u2"]);
+    // The recap keeps the stored name — it is the join key every other
+    // surface uses for the night.
+    assert.equal(dailyRecap.shows[0].eventName, "marching.art Division I World Championship Semi-Finals");
+    assert.equal(result.stats.corpsScored, 2);
+    assert.equal(result.stats.corpsProcessed, 0);
+  });
+
   test("accumulates lifetime caption points per uid across corps and shows", () => {
     const profilesSnapshot = {
       docs: [

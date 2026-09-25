@@ -16,7 +16,7 @@ const { reconcileSelectedShows } = require("../helpers/scheduleAudit");
 const { getCompletedCalendarDay } = require("../helpers/gameDay");
 const { scraperApiKey } = require("../helpers/dciFetch");
 const { sendWelcomeEmail, brevoApiKey } = require("../helpers/emailService");
-const { discordOpsWebhookUrl } = require("../helpers/discord");
+const { discordOpsWebhookUrl, discordScoresWebhookUrl } = require("../helpers/discord");
 const { DCI_CORPS_DATA } = require("../scripts/seedDciReference");
 const { assertAdmin } = require("../helpers/callableGuards");
 const { FANTASY_CLASSES } = require("../helpers/classRegistry");
@@ -91,8 +91,9 @@ exports.startNewLiveSeason = onCall({
 exports.manualTrigger = onCall({
   cors: true,
   // discordOpsWebhookUrl + brevoApiKey are for the scrapeCanary job below,
-  // whose unhealthy path posts to #operations and emails the admins.
-  secrets: [scraperInvokeKey, scraperApiKey, discordOpsWebhookUrl, brevoApiKey],
+  // whose unhealthy path posts to #operations and emails the admins;
+  // discordScoresWebhookUrl posts the score drop after an off-season re-score.
+  secrets: [scraperInvokeKey, scraperApiKey, discordOpsWebhookUrl, discordScoresWebhookUrl, brevoApiKey],
   timeoutSeconds: 540,
   memory: "512MiB",
   cpu: 1,
@@ -238,10 +239,20 @@ exports.manualTrigger = onCall({
       // Resolve the day to whichever pipeline owns the night: under drop
       // scheduling a manual evening run means TONIGHT's day (show date);
       // legacy keeps the internal 2 AM-reset derivation (passing undefined).
+      // An explicit day is the repair path (the live-season twin below has
+      // the same): a night that scored against bad data can only be re-scored
+      // after the data is fixed, and by then "tonight" is some other day.
+      // Pair it with force=true — the first run holds the day's completed
+      // lease.
+      const dayOverride = request.data.scoredDay;
+      if (dayOverride !== undefined &&
+          (!Number.isInteger(dayOverride) || dayOverride < 1 || dayOverride > 49)) {
+        throw new HttpsError("invalid-argument", "scoredDay must be an integer competition day 1-49.");
+      }
       const db = getDb();
       const seasonDoc = await db.doc("game-settings/season").get();
-      let scoredDayOverride;
-      if (seasonDoc.exists && seasonDoc.data().status === "off-season") {
+      let scoredDayOverride = dayOverride;
+      if (scoredDayOverride === undefined && seasonDoc.exists && seasonDoc.data().status === "off-season") {
         const { isDropSchedulingEnabled } = require("../helpers/features");
         if (await isDropSchedulingEnabled(db)) {
           scoredDayOverride = await getManualRunCalendarDay(db, seasonDoc.data());
@@ -259,7 +270,30 @@ exports.manualTrigger = onCall({
             "Re-run with force=true to reprocess (re-applies coin awards).",
         };
       }
-      return { success: true, message: "Off-Season Score Processor & Archiver finished successfully." };
+      // The score drop rides the nightly dispatcher, which is what a manual
+      // re-run replaces — so post it here too. Its per-day lease means a
+      // night that already announced is never posted twice, and a night the
+      // dispatcher found empty (no lease taken) posts now. Isolated: a
+      // Discord failure never fails the re-score.
+      let dropStatus = "not-run";
+      if (result.status === "processed" && typeof result.scoredDay === "number") {
+        try {
+          const { runDiscordStage } = require("../scheduled/nightlyStages");
+          const drop = await runDiscordStage(db, discordScoresWebhookUrl.value(), undefined, {
+            scoredDay: result.scoredDay,
+          });
+          dropStatus = drop.status;
+        } catch (error) {
+          logger.error(`[manualTrigger] discord score drop failed (scoring unaffected): ${error.message}`);
+          dropStatus = "failed";
+        }
+      }
+      return {
+        success: true,
+        message:
+          `Off-season day ${result.scoredDay} scored (${result.status}); ` +
+          `Discord score drop: ${dropStatus}.`,
+      };
     }
     case "processLiveSeasonScores": {
       const db = getDb();
