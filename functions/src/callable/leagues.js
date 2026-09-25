@@ -18,6 +18,7 @@ const { chargeEntryFeeInTransaction, MAX_LEAGUE_ENTRY_FEE } = require("../helper
 const { escrowedTotal, deleteLeagueSubcollections } = require("../helpers/leagueLifecycle");
 const { addCoinHistoryEntryToTransaction, TRANSACTION_TYPES } = require("../helpers/economy");
 const { MATCHUP_CLASSES } = require("../helpers/classRegistry");
+const { parseLeagueIdentity, leagueMatchupClasses } = require("../helpers/leagueIdentity");
 const {
   isClassActiveThisSeason,
   computeSeasonActivity,
@@ -82,6 +83,14 @@ exports.createLeague = onCall({ cors: true }, async (request) => {
     );
   }
 
+  // Which game the league plays and how roleplay fits into it
+  // (helpers/leagueIdentity.js) — the same validator updateLeagueSettings uses.
+  const identity = parseLeagueIdentity({
+    gameMode: settings.gameMode,
+    roleplay: request.data.roleplay,
+    lore: request.data.lore,
+  });
+
   const db = getDb();
   const seasonDoc = await db.doc("game-settings/season").get();
   if (!seasonDoc.exists) throw new HttpsError("not-found", "No active season.");
@@ -143,6 +152,8 @@ exports.createLeague = onCall({ cors: true }, async (request) => {
       // must be written at creation — Firestore inequality filters skip
       // documents missing the field entirely.
       seasonActivity,
+      ...(identity.roleplay ? { roleplay: identity.roleplay } : {}),
+      ...(identity.lore ? { lore: identity.lore } : {}),
       settings: {
         // Whitelisted keys only — never spread arbitrary client-supplied
         // settings into the stored doc.
@@ -155,6 +166,7 @@ exports.createLeague = onCall({ cors: true }, async (request) => {
         // draws. `playoffSize` was a second name for the same idea and is gone
         // with them.
         finalsSize,
+        gameMode: identity.gameMode || "both",
         // Applied last so client values can't override the validated fee
         // or the pool. The prize pool is PURE ESCROW: it holds only entry
         // fees actually debited from members (creator's fee here, joiners'
@@ -705,12 +717,15 @@ exports.generateMatchups = onCall({ cors: true }, async (request) => {
   const corpsClasses = MATCHUP_CLASSES;
   const membersByClass = Object.fromEntries(corpsClasses.map((c) => [c, []]));
 
+  // Only the classes the league's game mode covers are paired; the rest are
+  // written empty (helpers/leagueIdentity.js).
+  const pairedClasses = leagueMatchupClasses(leagueData, corpsClasses);
   profileDocs.forEach((doc, index) => {
     const memberId = members[index];
     if (doc.exists) {
       const profileData = doc.data();
 
-      for (const corpsClass of corpsClasses) {
+      for (const corpsClass of pairedClasses) {
         if (isClassActiveThisSeason(profileData, corpsClass, seasonUid)) {
           membersByClass[corpsClass].push(memberId);
         }

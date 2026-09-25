@@ -221,6 +221,14 @@ export const LEAGUE_BASICS = [
     desc: 'Matchups are paired inside each corps class. A director fielding three classes plays three separate matchups a week, and the standings table adds them all up.',
   },
   {
+    title: 'Fantasy, Podium, or both',
+    desc: 'Every league says which game it plays. A Fantasy-only league pairs only caption-lineup classes, a Podium-only league pairs only Podium Division corps, and a both-games league pairs every class you field. Filter the league browser by the game you play.',
+  },
+  {
+    title: 'How roleplay fits in',
+    desc: "Commissioners set a roleplay style — none, welcome, encouraged, or immersive — and can spell out in their own words what taking part means, so a storytelling league never has to mean mandatory participation. Open a league's card to read its style and lore before you join; members find the full lore on the League tab.",
+  },
+  {
     title: 'Membership is permanent, participation is per season',
     desc: "You stay on the roster between seasons. Each new season you're counted as active once you register a corps, so a league goes quiet at rollover and lights back up as its members return.",
   },
@@ -332,7 +340,7 @@ export const LEAGUE_CLUBHOUSE = [
 export const LEAGUE_COMMISSIONER_TOOLS = [
   {
     title: 'Settings',
-    desc: 'Name, description, public or private, roster cap, and the size of the Finals field. The entry fee is the one thing fixed at creation, because members escrowed real CorpsCoin against it.',
+    desc: 'Name, description, public or private, roster cap, the size of the Finals field, which game the league plays (a change applies from the next undrawn week), its roleplay style, and its lore. The entry fee is the one thing fixed at creation, because members escrowed real CorpsCoin against it.',
   },
   {
     title: 'Co-commissioners',

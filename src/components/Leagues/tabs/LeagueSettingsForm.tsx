@@ -14,6 +14,9 @@ import React, { useMemo, useState } from 'react';
 import { Settings, Loader2, Save, Globe, Lock } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { updateLeagueSettings } from '../../../api/functions';
+import type { League, LeagueGameMode } from '../../../types';
+import { getLeagueGameMode, getLeagueRoleplayLevel } from '../../../utils/leagueIdentity';
+import LeagueIdentityFields, { type LeagueIdentityValue } from '../LeagueIdentityFields';
 
 interface LeagueSettingsFormProps {
   league?: {
@@ -23,14 +26,16 @@ interface LeagueSettingsFormProps {
     isPublic?: boolean;
     maxMembers?: number;
     tag?: string | null;
-    settings?: { finalsSize?: number; entryFee?: number };
+    roleplay?: League['roleplay'];
+    lore?: string;
+    settings?: { finalsSize?: number; entryFee?: number; gameMode?: LeagueGameMode };
     announcement?: { text?: string } | null;
   } | null;
   memberCount: number;
   onSaved?: () => void;
 }
 
-interface FormState {
+interface FormState extends LeagueIdentityValue {
   name: string;
   description: string;
   isPublic: boolean;
@@ -40,10 +45,12 @@ interface FormState {
   announcement: string;
 }
 
+// "Roleplay" used to be a fourth tag here. It could only say "some roleplay
+// happens", so it is superseded by the roleplay level below; a league still
+// carrying it migrates on its next save (the level reads it as "encouraged").
 const LEAGUE_TAGS = [
   { id: 'competitive', label: 'Competitive', hint: 'Records matter, show up every week' },
   { id: 'casual', label: 'Casual', hint: 'Play at your own pace' },
-  { id: 'roleplay', label: 'Roleplay', hint: 'In-character directors and corps lore' },
   { id: 'dynasty', label: 'Dynasty', hint: 'Carries across seasons' },
 ];
 
@@ -59,7 +66,11 @@ const LeagueSettingsForm = ({ league, memberCount, onSaved }: LeagueSettingsForm
       description: league?.description || '',
       isPublic: league?.isPublic !== false,
       maxMembers: league?.maxMembers || 20,
-      tag: league?.tag || null,
+      tag: league?.tag && league.tag !== 'roleplay' ? league.tag : null,
+      gameMode: getLeagueGameMode(league ?? null),
+      roleplayLevel: getLeagueRoleplayLevel(league ?? null),
+      expectations: league?.roleplay?.expectations || '',
+      lore: league?.lore || '',
       finalsSize: league?.settings?.finalsSize || 12,
       announcement: league?.announcement?.text || '',
     }),
@@ -96,6 +107,14 @@ const LeagueSettingsForm = ({ league, memberCount, onSaved }: LeagueSettingsForm
           isPublic: form.isPublic,
           maxMembers: form.maxMembers,
           tag: form.tag,
+          gameMode: form.gameMode,
+          roleplay: form.roleplayLevel
+            ? {
+                level: form.roleplayLevel,
+                expectations: form.roleplayLevel === 'none' ? '' : form.expectations.trim(),
+              }
+            : null,
+          lore: form.lore.trim(),
           finalsSize: form.finalsSize,
           announcement: form.announcement.trim() || null,
         },
@@ -195,7 +214,7 @@ const LeagueSettingsForm = ({ league, memberCount, onSaved }: LeagueSettingsForm
               league.isCompetitive / league.isDynasty / league.type — fields
               nothing ever wrote — so every league in the browse grid showed as
               "Casual" and search had no signal to filter on. */}
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             {LEAGUE_TAGS.map((tag) => (
               <button
                 key={tag.id}
@@ -213,6 +232,17 @@ const LeagueSettingsForm = ({ league, memberCount, onSaved }: LeagueSettingsForm
             ))}
           </div>
         </div>
+
+        {/* Which game the league plays and how roleplay fits in — what a
+            director needs to know before joining, shown on the discovery card
+            and the League tab. */}
+        <LeagueIdentityFields
+          idPrefix="league-settings"
+          value={form}
+          onChange={set}
+          showLore
+          gameModeNote="Changes apply from the next matchup week that hasn't been drawn yet."
+        />
 
         <div>
           <span className="block text-[10px] font-bold uppercase tracking-wider text-muted mb-1.5">

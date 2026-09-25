@@ -33,6 +33,17 @@ import { useSeasonStore } from '../store/seasonStore';
 import { CreateLeagueModal, LeagueDetailView } from '../components/Leagues';
 import { PullToRefresh } from '../components/ui/PullToRefresh';
 import type { League } from '../types';
+import {
+  DiscoverIdentityFilters,
+  LeagueCardAbout,
+  LeagueIdentityBadges,
+} from '../components/Leagues/LeagueIdentity';
+import {
+  matchesGameFilter,
+  matchesRoleplayFilter,
+  type GameFilter,
+  type RoleplayFilter,
+} from '../utils/leagueIdentity';
 import { EmptyDiscover, EmptyMyLeagues, QuickJoinModal } from './LeaguesParts';
 import type { ProfileDoc } from '../store/profileStore';
 import { getLeagueChatReadAt } from '../utils/leagueChatReads';
@@ -64,7 +75,6 @@ type LeagueCardDoc = Partial<League> & {
 const LEAGUE_TAGS: Record<string, { label: string; color: string }> = {
   competitive: { label: 'Competitive', color: 'text-red-400 bg-red-500/10' },
   casual: { label: 'Casual', color: 'text-green-400 bg-green-500/10' },
-  roleplay: { label: 'Roleplay', color: 'text-purple-400 bg-purple-500/10' },
   dynasty: { label: 'Dynasty', color: 'text-secondary bg-surface-raised' },
   weekly: { label: 'Weekly', color: 'text-blue-400 bg-blue-500/10' },
   public: { label: 'Public', color: 'text-muted bg-white/5' },
@@ -76,7 +86,8 @@ const LEAGUE_TAGS: Record<string, { label: string; color: string }> = {
 };
 
 /** Filter chips over the discover grid, in the order they read best. */
-const DISCOVER_FILTERS = ['competitive', 'casual', 'roleplay', 'dynasty', 'rookie'];
+// Roleplay is its own chip row now (DiscoverIdentityFilters), graded by level.
+const DISCOVER_FILTERS = ['competitive', 'casual', 'dynasty', 'rookie'];
 
 // `league.tag` is the taxonomy commissioners now set (updateLeagueSettings).
 // This used to read isCompetitive / isDynasty / type — three fields that
@@ -264,7 +275,10 @@ const DiscoverLeagueCard = ({
             </div>
             <div className="min-w-0">
               <h3 className="text-sm font-bold text-white truncate">{league.name}</h3>
-              <div className="flex items-center gap-1.5 mt-0.5">
+              <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
+                {/* What game it plays and how roleplay fits in come first:
+                    they decide whether this is the right room at all. */}
+                <LeagueIdentityBadges league={league} />
                 {tags.slice(0, 2).map((tag) => {
                   const config = LEAGUE_TAGS[tag];
                   return (
@@ -281,6 +295,8 @@ const DiscoverLeagueCard = ({
           </div>
         </div>
       </div>
+
+      <LeagueCardAbout league={league} />
 
       {/* Card Body */}
       <div className="px-3 py-2 bg-surface-sunken">
@@ -338,6 +354,8 @@ const Leagues = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
+  const [gameFilter, setGameFilter] = useState<GameFilter | null>(null);
+  const [roleplayFilter, setRoleplayFilter] = useState<RoleplayFilter | null>(null);
   const [showQuickJoin, setShowQuickJoin] = useState(false);
   const [inviteCode, setInviteCode] = useState('');
   const [joiningByCode, setJoiningByCode] = useState(false);
@@ -431,14 +449,18 @@ const Leagues = () => {
       filtered = filtered.filter(
         (league) =>
           league.name.toLowerCase().includes(term) ||
-          (league.description || '').toLowerCase().includes(term)
+          (league.description || '').toLowerCase().includes(term) ||
+          (league.lore || '').toLowerCase().includes(term)
       );
     }
     if (activeFilter) {
       filtered = filtered.filter((league) => getLeagueTags(league).includes(activeFilter));
     }
-    return filtered;
-  }, [availableLeagues, myLeagues, searchTerm, activeFilter]);
+    return filtered.filter(
+      (league) =>
+        matchesGameFilter(league, gameFilter) && matchesRoleplayFilter(league, roleplayFilter)
+    );
+  }, [availableLeagues, myLeagues, searchTerm, activeFilter, gameFilter, roleplayFilter]);
 
   // Handlers
   const handleCreateLeague = async (
@@ -668,6 +690,14 @@ const Leagues = () => {
                 );
               })}
             </div>
+            {/* Which game a league plays and how much roleplay it runs — so a
+                director finds their people without joining the wrong room. */}
+            <DiscoverIdentityFilters
+              gameFilter={gameFilter}
+              roleplayFilter={roleplayFilter}
+              onGameFilter={setGameFilter}
+              onRoleplayFilter={setRoleplayFilter}
+            />
           </div>
 
           {/* League Grid */}
@@ -680,7 +710,10 @@ const Leagues = () => {
             ) : (
               <>
                 {discoverLeagues.length === 0 ? (
-                  <EmptyDiscover searchTerm={searchTerm} hasFilter={!!activeFilter} />
+                  <EmptyDiscover
+                    searchTerm={searchTerm}
+                    hasFilter={!!(activeFilter || gameFilter || roleplayFilter)}
+                  />
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {discoverLeagues.map((league) => (

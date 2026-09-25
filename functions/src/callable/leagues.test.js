@@ -247,10 +247,44 @@ describe("createLeague input validation", () => {
       // finalsSize is the only real knob: it decides the finals field the
       // champion is drawn from and the standings cut line.
       finalsSize: 10,
+      // Which classes the generator pairs; absent from the request = both.
+      gameMode: "both",
       // Escrow invariant: both always server-derived from the validated fee
       entryFee: 0,
       prizePool: 0,
     });
+    // No roleplay block or lore unless the creator set them.
+    assert.equal(leagueWrite.data.roleplay, undefined);
+    assert.equal(leagueWrite.data.lore, undefined);
+  });
+
+  test("stores the league's game mode, roleplay style and lore", async () => {
+    const { db, writes } = makeFakeDb(seasonDocs());
+    setDbForTesting(db);
+
+    await createLeague.run(
+      authedRequest("u1", {
+        name: "Story League",
+        settings: { gameMode: "podium" },
+        roleplay: { level: "immersive", expectations: " Stay in character. " },
+        lore: " The 1994 circuit, reimagined. ",
+      })
+    );
+    const leagueWrite = writes.find(
+      (w) => w.type === "set" && w.path.startsWith(`artifacts/${NS}/leagues/`) &&
+        !w.path.includes("/standings/")
+    );
+    assert.equal(leagueWrite.data.settings.gameMode, "podium");
+    assert.deepEqual(leagueWrite.data.roleplay, {
+      level: "immersive",
+      expectations: "Stay in character.",
+    });
+    assert.equal(leagueWrite.data.lore, "The 1994 circuit, reimagined.");
+
+    await assert.rejects(
+      createLeague.run(authedRequest("u1", { name: "Bad Mode", settings: { gameMode: "x" } })),
+      /Game mode/
+    );
   });
 
   test("rejects a nonsense finals size instead of storing it", async () => {

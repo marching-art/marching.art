@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // src/pages/Onboarding.jsx
 // Streamlined 3-step onboarding: Welcome+Name, Create Corps, Draft Lineup
 import { DRAFT_POOL_MAX_POINTS } from '../components/CaptionSelection/useCaptionSelectionModal';
@@ -52,14 +51,14 @@ import {
 
 const Onboarding = () => {
   useBodyScroll();
-  const { user } = useAuth();
+  const user = useAuth()?.user;
   const navigate = useNavigate();
   // marching.art is two games in one. When Podium Class is enabled, onboarding
   // offers the choice up front instead of steering everyone into SoundSport.
   const podiumEnabled = usePodiumEnabled();
   // null until the director picks (or when Podium is disabled — the legacy
   // SoundSport-only flow ignores this). 'podium' | 'soundSport'.
-  const [gameMode, setGameMode] = useState(null);
+  const [gameMode, setGameMode] = useState(/** @type {string | null} */ (null));
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState(() => ({
     // Registration already asked for the director name (stored on the Firebase
@@ -79,16 +78,22 @@ const Onboarding = () => {
   const [seasonStatus, setSeasonStatus] = useState('loading');
   const [lineup, setLineup] = useState({});
   const [currentCaptionIndex, setCurrentCaptionIndex] = useState(0);
-  const [seasonData, setSeasonData] = useState(null);
+  const [seasonData, setSeasonData] = useState(
+    /** @type {({ seasonUid: string } & Record<string, unknown>) | null} */ (null)
+  );
   const [showCelebration, setShowCelebration] = useState(false);
 
   // Username validation state
-  const [usernameStatus, setUsernameStatus] = useState({
-    checking: false,
-    valid: null,
-    message: '',
-  });
-  const usernameCheckTimeout = React.useRef(null);
+  const [usernameStatus, setUsernameStatus] = useState(
+    /** @type {import('./onboardingUsername').UsernameStatus} */ ({
+      checking: false,
+      valid: null,
+      message: '',
+    })
+  );
+  const usernameCheckTimeout = React.useRef(
+    /** @type {ReturnType<typeof setTimeout> | null} */ (null)
+  );
 
   // Global stores for schedule data
   const globalCurrentWeek = useSeasonStore((state) => state.currentWeek);
@@ -96,8 +101,9 @@ const Onboarding = () => {
 
   // Backfill the director name if the auth user finishes loading after mount
   useEffect(() => {
-    if (user?.displayName) {
-      setFormData((prev) => (prev.displayName ? prev : { ...prev, displayName: user.displayName }));
+    const authName = user?.displayName;
+    if (authName) {
+      setFormData((prev) => (prev.displayName ? prev : { ...prev, displayName: authName }));
     }
   }, [user?.displayName]);
 
@@ -143,7 +149,10 @@ const Onboarding = () => {
   // from the shared corpsValues cache entry (same key as Landing/Dashboard).
   const corpsQuery = useCorpsValues(seasonData?.seasonUid);
   const availableCorps = useMemo(
-    () => (corpsQuery.data ?? []).filter((c) => (c.points || 0) <= DRAFT_POOL_MAX_POINTS),
+    () =>
+      /** @type {import('./OnboardingParts').PickerCorps[]} */ (corpsQuery.data ?? []).filter(
+        (c) => (c.points || 0) <= DRAFT_POOL_MAX_POINTS
+      ),
     [corpsQuery.data]
   );
 
@@ -188,6 +197,7 @@ const Onboarding = () => {
   }, [availableCorps]);
 
   // Username validation function
+  /** @param {string} username */
   const validateUsername = async (username) => {
     // Clear any pending timeout
     if (usernameCheckTimeout.current) {
@@ -221,6 +231,7 @@ const Onboarding = () => {
   };
 
   // Handle username input change
+  /** @param {React.ChangeEvent<HTMLInputElement>} e */
   const handleUsernameChange = (e) => {
     const value = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '');
     setFormData({ ...formData, username: value });
@@ -249,6 +260,7 @@ const Onboarding = () => {
       error?.code === 'functions/invalid-argument') &&
     /date of birth|years old/i.test(String(error?.message || ''));
 
+  /** @param {string} reason */
   const trackBlocked = (reason) => {
     trackFunnelEvent(CLIENT_FUNNEL_EVENTS.ONBOARDING_STEP, {
       step,
@@ -328,6 +340,9 @@ const Onboarding = () => {
       return;
     }
 
+    // Onboarding sits behind the auth gate; this only narrows the type.
+    if (!user) return;
+
     setLoading(true);
     try {
       // Create the base profile + reserve the username atomically on the server.
@@ -404,7 +419,7 @@ const Onboarding = () => {
 
       // Show celebration before navigating
       setShowCelebration(true);
-    } catch (error) {
+    } catch (/** @type {any} */ error) {
       console.error('Error creating profile:', error);
       trackFunnelEvent(CLIENT_FUNNEL_EVENTS.ONBOARDING_STEP, {
         step,
@@ -440,6 +455,9 @@ const Onboarding = () => {
       trackBlocked('username_unavailable');
       return;
     }
+
+    // Onboarding sits behind the auth gate; this only narrows the type.
+    if (!user) return;
 
     setLoading(true);
     try {
@@ -488,7 +506,7 @@ const Onboarding = () => {
       });
 
       setShowCelebration(true);
-    } catch (error) {
+    } catch (/** @type {any} */ error) {
       console.error('Error creating Podium profile:', error);
       trackFunnelEvent(CLIENT_FUNNEL_EVENTS.ONBOARDING_STEP, {
         step,

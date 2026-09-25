@@ -147,4 +147,52 @@ describe("buildLeagueSettingsUpdate — announcements", () => {
       /must be text/
     );
   });
+
+  test("the retired roleplay tag can't be newly chosen but a legacy one can be kept", () => {
+    assert.throws(() => buildLeagueSettingsUpdate({ tag: "roleplay" }, league()), /must be one of/);
+    assert.deepEqual(
+      buildLeagueSettingsUpdate({ tag: "roleplay" }, league({ tag: "roleplay" })).updates,
+      {}
+    );
+  });
+
+  test("game mode is stored under settings and an absent mode reads as both", () => {
+    assert.deepEqual(buildLeagueSettingsUpdate({ gameMode: "both" }, league()).updates, {});
+    const { updates, changes } = buildLeagueSettingsUpdate({ gameMode: "podium" }, league());
+    assert.deepEqual(updates, { "settings.gameMode": "podium" });
+    assert.deepEqual(changes, [{ field: "gameMode", from: "both", to: "podium" }]);
+    assert.throws(() => buildLeagueSettingsUpdate({ gameMode: "soundsport" }, league()), /Game mode/);
+  });
+
+  test("a roleplay level supersedes the legacy roleplay tag", () => {
+    const { updates } = buildLeagueSettingsUpdate(
+      { roleplay: { level: "immersive", expectations: "  Post in character weekly.  " } },
+      league({ tag: "roleplay" })
+    );
+    assert.deepEqual(updates, {
+      roleplay: { level: "immersive", expectations: "Post in character weekly." },
+      tag: null,
+    });
+  });
+
+  test("an unchanged roleplay block is not a change", () => {
+    const rp = { level: "optional", expectations: "Join in if you like." };
+    assert.deepEqual(buildLeagueSettingsUpdate({ roleplay: { ...rp } }, league({ roleplay: rp })).updates, {});
+    assert.throws(
+      () => buildLeagueSettingsUpdate({ roleplay: { level: "mandatory" } }, league()),
+      /Roleplay level/
+    );
+    assert.throws(
+      () =>
+        buildLeagueSettingsUpdate({ roleplay: { level: "optional", expectations: "x".repeat(501) } }, league()),
+      /500/
+    );
+  });
+
+  test("lore is trimmed, capped, and logged without its text", () => {
+    const { updates, changes } = buildLeagueSettingsUpdate({ lore: "  The year is 1987.  " }, league());
+    assert.deepEqual(updates, { lore: "The year is 1987." });
+    assert.deepEqual(changes, [{ field: "lore", from: null, to: "updated" }]);
+    assert.throws(() => buildLeagueSettingsUpdate({ lore: "x".repeat(2001) }, league()), /2000/);
+  });
 });

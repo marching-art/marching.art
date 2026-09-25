@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-09-25-league-game-and-roleplay-style",
+    "date": "2026-09-25",
+    "title": "Leagues now say which game they play and how roleplay fits in",
+    "category": "feature",
+    "summary": "Every league now shows whether it plays Fantasy, Podium, or both, and its roleplay style — no roleplay, welcome, encouraged, or immersive — so you can find your people without accidentally joining an intensive storytelling league when all you wanted was to optimize a brass line, or the other way round.",
+    "highlights": [
+      "Game mode is real: a Fantasy-only league only draws Fantasy matchups, and a Podium-only league only draws Podium ones.",
+      "Commissioners can spell out what roleplay participation means in their league, and write the league's lore — its setting, rivalries and story so far.",
+      "League cards in the browser show the game and roleplay badges, the description, and an \"About this league\" preview before you join.",
+      "New filters in the league browser: Plays Fantasy, Plays Podium, No RP, RP welcome and RP-focused.",
+      "A new League tab inside every league holds its game, roleplay style, expectations and full lore."
+    ]
+  },
+  {
     "id": "2026-09-25-draft-budget-grows-weekly",
     "date": "2026-09-25",
     "title": "Your draft budget now grows every week",

@@ -1,5 +1,5 @@
 import type { CorpsClass } from './corps';
-import type { LeagueSettings } from './league';
+import type { LeagueRoleplay, LeagueSettings } from './league';
 
 // =============================================================================
 // API RESPONSE TYPES
@@ -41,6 +41,8 @@ export interface LeagueCreationData {
    * client value. Declaring it here would invite a client to try.
    */
   settings: Omit<LeagueSettings, 'prizePool'>;
+  roleplay?: LeagueRoleplay | null;
+  lore?: string;
 }
 
 // =============================================================================

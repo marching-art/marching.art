@@ -427,7 +427,7 @@ export const StepCorps = ({ formData, setFormData }) => (
  *   displayName: string,
  *   corpsName: string,
  *   onComplete: () => void,
- *   onJoinLeague: () => void,
+ *   onJoinLeague?: () => void,
  *   headline?: string,
  *   detail?: React.ReactNode,
  *   ctaLabel?: string,

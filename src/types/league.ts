@@ -21,8 +21,16 @@ export interface League {
   members: string[];
   maxMembers: number;
   isPublic: boolean;
-  /** Discovery taxonomy set by the commissioner (updateLeagueSettings). */
+  /**
+   * Discovery taxonomy set by the commissioner (updateLeagueSettings).
+   * `roleplay` is retired — superseded by `roleplay.level` — and only survives
+   * on leagues that set it before the level existed.
+   */
   tag?: 'competitive' | 'casual' | 'roleplay' | 'dynasty' | null;
+  /** How roleplay fits into this league (functions/src/helpers/leagueIdentity.js). */
+  roleplay?: LeagueRoleplay | null;
+  /** The league's setting / storyline bible, written by its commissioners. */
+  lore?: string;
   /** Auto-provisioned beginner league (callable/rookieLeague.js). */
   isRookieCircuit?: boolean;
   /** Commissioner's pinned note, shown above every tab. */
@@ -71,6 +79,18 @@ export interface LeagueSeasonActivity {
   updatedAt: Timestamp;
 }
 
+/** How much in-character play a league runs, least to most. */
+export type RoleplayLevel = 'none' | 'optional' | 'encouraged' | 'immersive';
+
+/** Which game a league plays: its weekly matchups pair only these classes. */
+export type LeagueGameMode = 'fantasy' | 'podium' | 'both';
+
+export interface LeagueRoleplay {
+  level: RoleplayLevel;
+  /** The commissioner's own words on what participation means. */
+  expectations?: string;
+}
+
 export interface LeagueSettings {
   /**
    * How many regular-season seeds reach Finals, where the title is decided
@@ -83,6 +103,12 @@ export interface LeagueSettings {
    * implementation behind it.
    */
   finalsSize: number;
+  /**
+   * Which game this league plays. Absent means `both` (every league created
+   * before the field existed). Weekly matchup generation pairs only the
+   * classes the mode covers.
+   */
+  gameMode?: LeagueGameMode;
   prizePool: number;
   /** CorpsCoin fee charged to every joiner (creator included), paid into the prize pool */
   entryFee?: number;
