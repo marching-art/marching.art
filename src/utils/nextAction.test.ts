@@ -360,6 +360,111 @@ describe('resolveNextAction — show concept', () => {
   });
 });
 
+describe('resolveNextAction — unspent budget', () => {
+  // A lineup priced at 145 (the World Class opening budget): 8 slots whose
+  // trailing segment sums to 145.
+  const PRICED_LINEUP = {
+    GE1: 'Blue Devils|2014|25',
+    GE2: 'Carolina Crown|2013|20',
+    VP: 'Santa Clara Vanguard|2018|20',
+    VA: 'Bluecoats|2016|20',
+    CG: 'Cadets|2005|15',
+    B: 'Phantom Regiment|2008|15',
+    MA: 'Boston Crusaders|2022|15',
+    P: 'Cavaliers|2002|15',
+  };
+
+  it('nudges once the cap has grown past what the lineup spends', () => {
+    const action = resolveNextAction(
+      baseInput({
+        corps: corpsWith({ lineup: PRICED_LINEUP }),
+        budget: { cap: 147, opening: 145 },
+      })
+    );
+    expect(action?.id).toBe('spend_budget');
+    expect(action?.title).toBe('2 unspent points');
+    expect(action?.detail).toContain('grew to 147');
+    expect(action?.target).toEqual({ type: 'lineup' });
+    expect(action?.tone).toBe('action');
+  });
+
+  it('singularizes a single point', () => {
+    const action = resolveNextAction(
+      baseInput({
+        corps: corpsWith({ lineup: PRICED_LINEUP }),
+        budget: { cap: 146, opening: 145 },
+      })
+    );
+    expect(action?.title).toBe('1 unspent point');
+  });
+
+  it('stays silent while the cap is still the opening budget', () => {
+    // An under-spent week-1 lineup is a choice, not something the game changed.
+    const action = resolveNextAction(
+      baseInput({
+        corps: corpsWith({ lineup: { ...PRICED_LINEUP, GE1: 'Blue Devils|2014|10' } }),
+        budget: { cap: 145, opening: 145 },
+        currentWeek: 1,
+        currentDay: 3,
+      })
+    );
+    expect(action?.id).not.toBe('spend_budget');
+  });
+
+  it('stays silent when the lineup already spends the grown cap', () => {
+    const action = resolveNextAction(
+      baseInput({
+        corps: corpsWith({ lineup: { ...PRICED_LINEUP, GE1: 'Blue Devils|2014|27' } }),
+        budget: { cap: 147, opening: 145 },
+      })
+    );
+    expect(action?.id).not.toBe('spend_budget');
+  });
+
+  it('does not offer a dead lineup button while changes are locked', () => {
+    const action = resolveNextAction(
+      baseInput({
+        corps: corpsWith({ lineup: PRICED_LINEUP }),
+        budget: { cap: 147, opening: 145 },
+        captionWindow: { phase: 'weekly', status: 'locked', reopensAt: new Date() },
+      })
+    );
+    expect(action?.id).not.toBe('spend_budget');
+  });
+
+  it('yields to a missing show concept and outranks the daily report', () => {
+    const noConcept = resolveNextAction(
+      baseInput({
+        corps: corpsWith({ lineup: PRICED_LINEUP, showConcept: null }),
+        budget: { cap: 147, opening: 145 },
+      })
+    );
+    expect(noConcept?.id).toBe('set_concept');
+
+    const withReport = resolveNextAction(
+      baseInput({
+        corps: corpsWith({ lineup: PRICED_LINEUP }),
+        budget: { cap: 147, opening: 145 },
+        dailyDone: 1,
+      })
+    );
+    expect(withReport?.id).toBe('spend_budget');
+  });
+
+  it('stays silent for a lineup saved without a points segment', () => {
+    // Legacy strings carry no cost; they are unpriced, not free.
+    const action = resolveNextAction(baseInput({ budget: { cap: 147, opening: 145 } }));
+    expect(action?.id).not.toBe('spend_budget');
+  });
+
+  it('stays silent without a budget (season not hydrated)', () => {
+    const action = resolveNextAction(
+      baseInput({ corps: corpsWith({ lineup: PRICED_LINEUP }), budget: null })
+    );
+    expect(action?.id).toBe('all_clear');
+  });
+});
+
 describe("resolveNextAction — today's report", () => {
   it('reports the outstanding count', () => {
     const action = resolveNextAction(baseInput({ dailyDone: 2, dailyTotal: 5 }));

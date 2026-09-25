@@ -295,8 +295,11 @@ reading the wall clock internally.
 ### The class registry must stay in sync
 
 `functions/src/config/classRegistry.json` is the **canonical** source of truth
-for per-class policy (point caps, unlock gates, registration-lock weeks,
-participation rewards, capabilities); `src/config/classRegistry.json` is its
+for per-class policy (point caps and their weekly ramp — `pointCap` is the
+Championship Week budget, `pointCapRamp` how far below it the season opens,
+and `pointCapForWeek` in each wrapper is the only formula between them —
+unlock gates, registration-lock weeks, participation rewards, capabilities);
+`src/config/classRegistry.json` is its
 client mirror. Functions cannot import outside their deploy root, hence the two
 copies — they **must stay byte-identical**. Edit the functions copy, then run
 `node scripts/checkClassRegistrySync.js --fix` to sync the mirror; the CI lint

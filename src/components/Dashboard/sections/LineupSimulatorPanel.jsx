@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // LineupSimulatorPanel - Per-caption efficiency breakdown and weak-spot identification
 // Fetches season averages from historical_scores and highlights underperforming captions
 
@@ -16,24 +15,37 @@ import { REQUIRED_CAPTIONS, CAPTION_CATEGORIES } from '../../../utils/captionPri
 const SCORE_SCALE = 20;
 const TARGET_EFF = 0.8;
 
+/** One historical_scores event as the API returns it (loosely typed docs). */
+/** @typedef {{ scores?: Array<{ corps?: string, captions?: Record<string, number> }> }} HistoricalEvent */
+
+/** A caption id in the lineup: "GE1" | "GE2" | "VP" | "VA" | "CG" | "B" | "MA" | "P". */
+/** @typedef {(typeof REQUIRED_CAPTIONS)[number]} CaptionId */
+
 /**
  * Calculate the season average for one caption across all historical shows.
  * Returns null if no scored shows found for this corps/caption.
+ * @param {HistoricalEvent[]} yearData
+ * @param {string} corpsName
+ * @param {string} captionId
+ * @returns {number|null}
  */
 const calcSeasonAvg = (yearData, corpsName, captionId) => {
   const scores = yearData
     .flatMap((e) => e.scores?.filter((s) => s.corps === corpsName) ?? [])
     .map((s) => s.captions?.[captionId])
-    .filter((v) => v != null && v > 0);
+    .filter(/** @returns {v is number} */ (v) => v != null && v > 0);
   return scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : null;
 };
 
 /** Map efficiency percentage to a color tier */
+/** @param {number} pct */
 const effBgColor = (pct) => (pct >= 80 ? 'bg-green-500' : pct >= 60 ? 'bg-warning' : 'bg-red-500');
 
+/** @param {number} pct */
 const effTextColor = (pct) =>
   pct >= 80 ? 'text-green-500' : pct >= 60 ? 'text-warning' : 'text-red-500';
 
+/** @type {React.FC<{ pct: number }>} */
 const EfficiencyBar = React.memo(({ pct }) => (
   <div className="h-1.5 bg-line rounded-full overflow-hidden">
     <div
@@ -44,8 +56,18 @@ const EfficiencyBar = React.memo(({ pct }) => (
 ));
 EfficiencyBar.displayName = 'EfficiencyBar';
 
+/**
+ * @typedef {object} LineupSimulatorPanelProps
+ * @property {Record<string, string> | null | undefined} lineup - Caption id -> "Corps|year|points".
+ * @property {Record<string, { score?: number | null }> | null | undefined} lineupScoreData - Last-show caption scores.
+ * @property {string} activeCorpsClass
+ * @property {(captionId: string) => void} [onSwapCaption]
+ */
+
 const LineupSimulatorPanel = React.memo(
+  /** @param {LineupSimulatorPanelProps} props */
   ({ lineup, lineupScoreData, activeCorpsClass, onSwapCaption }) => {
+    /** @type {[Record<string, number | null>, React.Dispatch<React.SetStateAction<Record<string, number | null>>>]} */
     const [seasonAvgs, setSeasonAvgs] = useState({});
     const [avgsLoading, setAvgsLoading] = useState(false);
 
@@ -71,6 +93,7 @@ const LineupSimulatorPanel = React.memo(
           );
 
           // Fetch historical_scores documents in parallel (same pattern as Dashboard.jsx)
+          /** @type {Record<string, HistoricalEvent[]>} */
           const historicalData = {};
           await Promise.all(
             [...yearsNeeded].map(async (year) => {
@@ -82,6 +105,7 @@ const LineupSimulatorPanel = React.memo(
           if (cancelled) return;
 
           // Compute per-caption season averages
+          /** @type {Record<string, number | null>} */
           const avgs = {};
           REQUIRED_CAPTIONS.forEach((captionId) => {
             const value = lineup[captionId];
@@ -118,7 +142,7 @@ const LineupSimulatorPanel = React.memo(
           // Points added to the 100-point total by reaching the target efficiency,
           // scaled by this caption's real contribution (full for GE, half otherwise)
           const potentialGain =
-            pct != null && pct < TARGET_EFF * 100
+            avg != null && pct != null && pct < TARGET_EFF * 100
               ? +((TARGET_EFF * SCORE_SCALE - avg) * (max / SCORE_SCALE)).toFixed(1)
               : null;
           return { id: captionId, corpsName, year, avg, max, pct, potentialGain };
@@ -132,15 +156,15 @@ const LineupSimulatorPanel = React.memo(
     // Derived values — only computed when the component will actually render
     const scoredRows = rows.filter((r) => r.pct != null);
     const weakSpots = [...scoredRows]
-      .filter((r) => r.pct < 75)
-      .sort((a, b) => a.pct - b.pct)
+      .filter((r) => (r.pct ?? 100) < 75)
+      .sort((a, b) => (a.pct ?? 0) - (b.pct ?? 0))
       .slice(0, 2);
     // Weight each caption by its share of the 100-point total (GE counts double)
     // so the badge tracks projected score / max possible, not a flat average
     const overallEff =
       scoredRows.length > 0
         ? Math.round(
-            (scoredRows.reduce((s, r) => s + r.avg * (r.max / SCORE_SCALE), 0) /
+            (scoredRows.reduce((s, r) => s + (r.avg ?? 0) * (r.max / SCORE_SCALE), 0) /
               scoredRows.reduce((s, r) => s + r.max, 0)) *
               100
           )
