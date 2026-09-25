@@ -217,9 +217,21 @@ const Dashboard = () => {
 
   // Rivals are precomputed daily by scheduledRivalsUpdate and stored on the
   // profile under rivals[<corpsClass>]. Pull the slice for the active corps.
+  // One row per rival director: a slice written before the rivals job was
+  // pinned to profile/data can still carry the same director twice (once per
+  // profile doc the scan saw), so collapse repeats until the nightly run
+  // rewrites it.
   const activeCorpsRivals = useMemo(() => {
     if (!profile?.rivals || !activeCorpsClass) return [];
-    return profile.rivals[activeCorpsClass] || [];
+    /** @type {Array<Record<string, any>>} */
+    const slice = profile.rivals[activeCorpsClass] || [];
+    const seen = new Set();
+    return slice.filter((rival) => {
+      const key = `${rival?.uid}:${rival?.corpsClass}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
   }, [profile?.rivals, activeCorpsClass]);
 
   // Surface every corps the admin sweep flagged for rename. The dashboard

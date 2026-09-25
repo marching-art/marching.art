@@ -9,6 +9,7 @@ const { NEW_DIRECTOR_CORPSCOIN } = require("../helpers/economy");
 const { assertAuth, assertAdmin, assertWriteBudget } = require("../helpers/callableGuards");
 const { sumSeasonScore } = require("../helpers/seasonRankings");
 const { processAllInPages } = require("../helpers/firestorePaging");
+const { isProfileDataDoc, profileDataDocs } = require("../helpers/profileScan");
 const {
   showRegistrationEventKey,
   registrationEntryKey,
@@ -285,7 +286,9 @@ exports.getShowRegistrations = onCall({ cors: true }, async (request) => {
       .select("corps", "username");
     const querySnapshot = await q.get();
 
-    querySnapshot.forEach((doc) => {
+    // profile/data only — the group also returns each profile/public mirror,
+    // which would list every registrant twice.
+    profileDataDocs(querySnapshot.docs).forEach((doc) => {
       const profile = doc.data();
       const userCorps = profile.corps || {};
       const uid = doc.ref.parent.parent?.id;
@@ -422,16 +425,18 @@ exports.getUserRankings = onCall({ cors: true }, async (request) => {
   const profilesQuery = db.collectionGroup("profile")
     .where("activeSeasonId", "==", activeSeasonId)
     .select("corps", "corpsName", "totalSeasonScore");
-  const profilesSnapshot = await profilesQuery.get();
+  // profile/data only — the group also returns each profile/public mirror,
+  // which would double totalPlayers and push every rank down.
+  const profileDocs = profileDataDocs((await profilesQuery.get()).docs);
 
-  if (profilesSnapshot.empty) {
+  if (profileDocs.length === 0) {
     return { globalRank: 1, totalPlayers: 1 };
   }
 
   const allPlayerScores = [];
   let myTotalScore = 0;
 
-  profilesSnapshot.docs.forEach((doc) => {
+  profileDocs.forEach((doc) => {
     const profile = doc.data();
     const userId = doc.ref.parent.parent.id;
     const totalScore = sumSeasonScore(profile);
@@ -496,6 +501,9 @@ exports.fixProfileFields = onCall({ cors: true, timeoutSeconds: 540, memory: "51
     let scannedCount = 0;
 
     await processAllInPages(profilesQuery, 300, async (docSnap) => {
+      // Never "repair" the profile/public mirror (or another namespace) —
+      // the trigger rebuilds it from profile/data.
+      if (!isProfileDataDoc(docSnap)) return;
       scannedCount++;
       const profile = docSnap.data();
       const updates = {};

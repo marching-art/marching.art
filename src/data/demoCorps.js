@@ -70,6 +70,8 @@ export const DEMO_CORPS = {
   description: 'A community-built SoundSport corps chasing its first gold rating',
   corpsClass: 'soundSport',
   createdAt: { seconds: Date.now() / 1000, nanoseconds: 0 },
+  // No corps graphic in the demo — the scorecard renders its placeholder.
+  avatarUrl: null,
 
   // Uniform Design (for display)
   uniformDesign: {

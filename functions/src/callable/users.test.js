@@ -36,9 +36,12 @@ function makeFakeDb(docs = new Map(), profiles = null) {
       }
       return {
         empty: profiles.length === 0,
-        docs: profiles.map(({ uid, data }) => ({
+        docs: profiles.map(({ uid, data, docId = "data" }) => ({
           data: () => data,
-          ref: { parent: { parent: { id: uid } } },
+          ref: {
+            path: `artifacts/${NS}/users/${uid}/profile/${docId}`,
+            parent: { parent: { id: uid } },
+          },
         })),
       };
     },
@@ -118,6 +121,10 @@ describe("getUserRankings snapshot fallback", () => {
     const profiles = [
       { uid: "u1", data: { corps: { worldClass: { totalSeasonScore: 10 } } } },
       { uid: "u2", data: { corps: { worldClass: { totalSeasonScore: 20 } } } },
+      // The profile/public mirrors the same collection group returns: they
+      // must not count as extra players or push the rank down.
+      { uid: "u1", docId: "public", data: { corps: { worldClass: { totalSeasonScore: 10 } } } },
+      { uid: "u2", docId: "public", data: { corps: { worldClass: { totalSeasonScore: 20 } } } },
     ];
     setDbForTesting(makeFakeDb(docs, profiles));
 

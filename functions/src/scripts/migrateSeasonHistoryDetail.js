@@ -113,6 +113,7 @@ function summaryDiffers(row, summary) {
 async function migrateSeasonHistoryDetail({ dryRun = false } = {}) {
 const { getFirestore } = require("firebase-admin/firestore");
 const { initializeApp, getApps } = require("firebase-admin/app");
+const { profileDataDocs } = require("../helpers/profileScan");
   if (!getApps().length) {
     initializeApp();
   }
@@ -124,9 +125,8 @@ const { initializeApp, getApps } = require("firebase-admin/app");
   );
 
   const snapshot = await db.collectionGroup("profile").get();
-  const profiles = snapshot.docs.filter((doc) =>
-    doc.ref.path.startsWith(`artifacts/${DATA_NAMESPACE}/users/`)
-  );
+  // profile/data only (never the profile/public mirror or another namespace).
+  const profiles = profileDataDocs(snapshot.docs);
 
   const stats = {
     scanned: profiles.length,

@@ -23,6 +23,7 @@ const { FieldValue } = require("firebase-admin/firestore");
 const { getDb } = require("../config");
 const { ENABLED_CLASSES } = require("../helpers/classRegistry");
 const { processAllInPages } = require("../helpers/firestorePaging");
+const { profileDataDocs } = require("../helpers/profileScan");
 
 // Every enabled class competes for rivals — including podiumClass, which has
 // no lineup (hasLineup: false) and so is absent from FANTASY_CLASSES.
@@ -202,10 +203,12 @@ async function updateRivalsLogic() {
     .where("activeSeasonId", "==", activeSeasonId)
     .select("username", "corps", "classRanks");
   const allDocs = await processAllInPages(profilesQuery, 1000, async (doc) => doc);
-  // The collection group spans data namespaces; keep only this namespace's
-  // profile docs (users/{uid}/profile/data under paths.users()).
-  const usersPrefix = `${paths.users()}/`;
-  const profileDocs = allDocs.filter((doc) => doc.ref.path.startsWith(usersPrefix));
+  // The collection group also returns each director's profile/public mirror
+  // (same username, activeSeasonId and corps map) and every other data
+  // namespace. Keep only this namespace's profile/data docs — otherwise every
+  // director is indexed twice and lands in their rivals' panels twice, with
+  // deltas computed against whichever of their two copies came last.
+  const profileDocs = profileDataDocs(allDocs);
   if (profileDocs.length === 0) {
     logger.info("No active-season users found; skipping rivals computation.");
     return { processed: 0 };
