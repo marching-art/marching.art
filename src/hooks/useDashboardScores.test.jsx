@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Tests for the Dashboard score hooks (useDashboardScores.js) — the wiring
 // between react-query, the api/season service, and the per-caption/recent-
 // results derivations. The scoring math itself is covered by
@@ -48,11 +47,14 @@ vi.mock('./useScoresData', () => ({
 }));
 
 import {
-  getRecentSeasonRecaps,
-  getHistoricalScoresForYear,
-  getRecentPodiumRecaps,
+  getRecentSeasonRecaps as getRecentSeasonRecapsImpl,
+  getHistoricalScoresForYear as getHistoricalScoresForYearImpl,
+  getRecentPodiumRecaps as getRecentPodiumRecapsImpl,
 } from '../api/season';
-import { getEffectiveDay, processCaptionScores } from '../utils/dashboardScoring';
+import {
+  getEffectiveDay as getEffectiveDayImpl,
+  processCaptionScores as processCaptionScoresImpl,
+} from '../utils/dashboardScoring';
 import {
   useLineupScores,
   useRecentResults,
@@ -60,10 +62,22 @@ import {
   useBestInShowCount,
 } from './useDashboardScores';
 
+// The mocked module functions, typed as mocks so mockReturnValue and friends
+// type-check (vi.mock replaces the implementations above; vi.mocked only
+// narrows the type).
+const getRecentSeasonRecaps = vi.mocked(getRecentSeasonRecapsImpl);
+const getHistoricalScoresForYear = vi.mocked(getHistoricalScoresForYearImpl);
+const getRecentPodiumRecaps = vi.mocked(getRecentPodiumRecapsImpl);
+const getEffectiveDay = vi.mocked(getEffectiveDayImpl);
+const processCaptionScores = vi.mocked(processCaptionScoresImpl);
+
+/** @typedef {import('../utils/dashboardScoring').CaptionScoreResult} CaptionScoreResult */
+
 function createWrapper() {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
+  /** @param {{ children: import('react').ReactNode }} props */
   return function Wrapper({ children }) {
     return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
   };
@@ -99,8 +113,12 @@ describe('useLineupScores', () => {
 
   it('fetches each source year once and maps caption scores', async () => {
     getEffectiveDay.mockReturnValue(9);
-    getHistoricalScoresForYear.mockImplementation(async (year) => [{ offSeasonDay: 9, year }]);
-    processCaptionScores.mockReturnValue({ score: 85.5, trend: 'up', nextShow: null });
+    getHistoricalScoresForYear.mockImplementation(
+      /** @param {string | number} year */ async (year) => [{ offSeasonDay: 9, year }]
+    );
+    processCaptionScores.mockReturnValue(
+      /** @type {any} */ ({ score: 85.5, trend: 'up', nextShow: null })
+    );
 
     const lineup = {
       GE1: 'Blue Devils|2023',
@@ -136,11 +154,13 @@ describe('useLineupScores', () => {
   it('suppresses numeric scores for SoundSport but keeps next-show info', async () => {
     getEffectiveDay.mockReturnValue(9);
     getHistoricalScoresForYear.mockResolvedValue([{ offSeasonDay: 9 }]);
-    processCaptionScores.mockReturnValue({
-      score: 85.5,
-      trend: 'up',
-      nextShow: { day: 11, eventName: 'Big Show' },
-    });
+    processCaptionScores.mockReturnValue(
+      /** @type {any} */ ({
+        score: 85.5,
+        trend: 'up',
+        nextShow: { day: 11, eventName: 'Big Show' },
+      })
+    );
 
     const { result } = renderHook(
       () => useLineupScores({ GE1: 'Genesis|2022' }, 10, 'soundSport'),
@@ -161,6 +181,13 @@ describe('useRecentResults', () => {
   const user = { uid: 'alice' };
   const seasonData = { seasonUid: 'season-1', schedule: null };
 
+  /**
+   * A recap fixture with only the fields the hook reads (cast: the api type
+   * carries more).
+   * @param {number} day
+   * @param {Array<Record<string, unknown>>} results
+   * @returns {any}
+   */
   const recap = (day, results) => ({
     offSeasonDay: day,
     shows: [{ eventName: `Show ${day}`, results }],
@@ -168,9 +195,12 @@ describe('useRecentResults', () => {
   const aliceResult = { uid: 'alice', corpsClass: 'worldClass', totalScore: 80, placement: 2 };
 
   it('returns [] when required inputs are missing', () => {
-    const { result } = renderHook(() => useRecentResults(null, seasonData, 'worldClass', 10), {
-      wrapper: createWrapper(),
-    });
+    const { result } = renderHook(
+      () => useRecentResults(/** @type {any} */ (null), seasonData, 'worldClass', 10),
+      {
+        wrapper: createWrapper(),
+      }
+    );
     expect(result.current).toEqual([]);
     expect(getRecentSeasonRecaps).not.toHaveBeenCalled();
   });
@@ -218,6 +248,11 @@ describe('usePodiumRecentResults', () => {
   const seasonData = { seasonUid: 'season-1', schedule: null };
 
   // Podium recaps key by competitionDay and rank per show (result.place).
+  /**
+   * @param {number} day
+   * @param {Array<Record<string, unknown>>} results
+   * @returns {any}
+   */
   const recap = (day, results) => ({
     competitionDay: day,
     shows: [{ eventName: `Podium Show ${day}`, location: 'Somewhere, USA', results }],
@@ -265,6 +300,7 @@ describe('usePodiumRecentResults', () => {
 
 describe('useBestInShowCount', () => {
   const corps = { corpsName: 'My SoundSport' };
+  /** @param {Array<{ corpsName: string, score: number }>} scores */
   const show = (scores) => ({ scores });
 
   it('counts shows where the corps has the top score', () => {
