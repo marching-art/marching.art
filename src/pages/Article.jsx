@@ -46,7 +46,7 @@ import { useTickerData } from '../hooks/useTickerData';
 import { useLandingScores } from '../hooks/useLandingScores';
 import { useYoutubeSearch } from '../hooks/useYoutubeSearch';
 import { shareLink, articleShareUrl } from '../utils/shareSheet';
-import { formatEventName } from '../utils/season';
+import { displayEventName } from '../utils/eventNames';
 
 /**
  * The article this page renders. It arrives either as a feed entry (NewsEntry,
@@ -440,7 +440,12 @@ const Article = () => {
                     {article.metadata?.eventName && (
                       <>
                         <span className="text-muted">•</span>
-                        <span>{formatEventName(article.metadata.eventName)}</span>
+                        <span>
+                          {displayEventName({
+                            day: article.metadata.offSeasonDay,
+                            eventName: article.metadata.eventName,
+                          })}
+                        </span>
                       </>
                     )}
                     {cleanLocation(article.metadata?.location || article.authorLocation) && (

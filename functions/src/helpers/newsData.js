@@ -7,6 +7,7 @@ const { logger } = require("firebase-functions/v2");
 const { cleanLocation } = require("./newsArticleShared");
 const { competitionDayToDate } = require("./gameDay");
 const { loadHistoricalYears } = require("./historicalScores");
+const { roundEventName } = require("./worldChampionship");
 
 const CAPTIONS = {
   GE1: "General Effect 1",
@@ -313,6 +314,11 @@ async function fetchShowContext(db, seasonId, historicalData, reportDay) {
         ? new Date(eventDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
         : `Day ${reportDay}`;
 
+    // A World Championship night is printed under its canonical round name
+    // whatever title the schedule row or the archive year carries.
+    showName = roundEventName(reportDay, showName);
+    for (const s of allShows) s.name = roundEventName(reportDay, s.name);
+
     return {
       showName: showName || `Day ${reportDay} Competition`,
       // null (not a placeholder venue) when no real location is known, so the
@@ -408,7 +414,7 @@ function getScoresForDay(historicalData, targetDay, activeCorps) {
       captions: corpsScore.captions,
       total,
       subtotals: calculateCaptionSubtotals(corpsScore.captions),
-      showName: matchingEvent.eventName || matchingEvent.name || null,
+      showName: roundEventName(targetDay, matchingEvent.eventName || matchingEvent.name || null),
       location: cleanLocation(matchingEvent.location),
     });
   }

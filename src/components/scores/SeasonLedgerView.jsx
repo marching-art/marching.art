@@ -66,7 +66,7 @@ function StatTile({ label, value, sub }) {
  *   emptyText?: string,
  *   legendText?: React.ReactNode,
  *   getShareText?: () => string,
- *   formatEventName?: (name?: string | null) => string,
+ *   formatEventName?: (entry: { day?: number, eventName?: string | null }) => string,
  *   showMedals?: boolean,
  *   compact?: boolean,   // drop the card chrome when hosted inside a modal
  * }} props
@@ -81,7 +81,7 @@ export default function SeasonLedgerView({
   emptyText = 'No scored outings yet — your ledger fills in one line at a time as your corps competes.',
   legendText,
   getShareText,
-  formatEventName = (n) => n || '',
+  formatEventName = (entry) => (entry && entry.eventName) || '',
   showMedals = false,
   compact = false,
 }) {
@@ -114,7 +114,7 @@ export default function SeasonLedgerView({
           <StatTile
             label="Season Best"
             value={fmtScore(summary.best.totalScore)}
-            sub={formatEventName(summary.best.eventName) || `Day ${summary.best.day}`}
+            sub={formatEventName(summary.best) || `Day ${summary.best.day}`}
           />
           <StatTile label="Average" value={fmtScore(summary.average)} />
           {showMedals && (
@@ -188,7 +188,7 @@ export default function SeasonLedgerView({
                         )}
                         <div className="min-w-0">
                           <div className="text-white font-bold truncate leading-tight">
-                            {formatEventName(entry.eventName) || `Day ${entry.day}`}
+                            {formatEventName(entry) || `Day ${entry.day}`}
                           </div>
                           <div className="text-[9px] text-muted truncate leading-tight">
                             D{entry.day}

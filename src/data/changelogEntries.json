@@ -1,5 +1,16 @@
 [
   {
+    "id": "2026-09-25-championship-round-names-everywhere",
+    "date": "2026-09-25",
+    "title": "Championship Week rounds are named correctly on every sheet",
+    "category": "fix",
+    "summary": "The score sheets, your season ledger, share text, news articles and Finals hardware now always call the World Championship rounds by their marching.art names — Prelims, Semifinals and Finals — instead of an old archive title such as \"Division I World Championship Quarterfinals\".",
+    "highlights": [
+      "Matches the Schedule page and the dashboard, which already used the fixed names.",
+      "Podium sheets were already correct and are unchanged."
+    ]
+  },
+  {
     "id": "2026-09-25-world-championship-rounds-score-again",
     "date": "2026-09-25",
     "title": "World Championship Prelims and Semifinals scores are back",
