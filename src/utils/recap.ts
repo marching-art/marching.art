@@ -16,6 +16,7 @@ import type { Timestamp } from 'firebase/firestore';
 import type { DayRecap, NormalizedScore, RecapDate, RecapResult } from '../types/recap';
 
 import { formatEventName } from './season';
+import { displayEventName } from './eventNames';
 
 /**
  * Display/event name for a recap day.
@@ -28,10 +29,11 @@ import { formatEventName } from './season';
  * callable started branding — still reads as a marching.art show.
  */
 export function getRecapEventName(recap: DayRecap): string {
+  const raw = recap.showName || recap.eventName || recap.name || recap.shows?.[0]?.eventName;
+  // A Championship Week round is printed under its fixed name whatever title
+  // the season's row (and so the recap) stored; other shows get the brand swap.
   return (
-    formatEventName(
-      recap.showName || recap.eventName || recap.name || recap.shows?.[0]?.eventName
-    ) || 'Show'
+    displayEventName({ day: recap.offSeasonDay, eventName: raw }) || formatEventName(raw) || 'Show'
   );
 }
 

@@ -252,6 +252,18 @@ describe('FantasyRecapsView — championship-week cuts', () => {
     expect(screen.getAllByText('Adv')).toHaveLength(25);
   });
 
+  it('titles a World round by its fixed name even when the recap carries the archive title', () => {
+    // A season replaying a 2000s year stores that year's title on the row, and
+    // the recap keeps it (it is the night's join key); the sheet must not.
+    wrap(
+      <RecapsView
+        shows={[cutNight(47, 'marching.art Division I World Championship Quarterfinals', 30)]}
+      />
+    );
+    expect(screen.getByText('marching.art World Championship Prelims')).toBeInTheDocument();
+    expect(screen.queryByText(/Quarterfinals/)).not.toBeInTheDocument();
+  });
+
   it('marks the top 12 as advancing on Semifinals (day 48)', () => {
     wrap(<RecapsView shows={[cutNight(48, 'World Championship Semifinals', 20)]} />);
     expect(screen.getAllByText(/top 12 advance to finals/i).length).toBeGreaterThan(0);

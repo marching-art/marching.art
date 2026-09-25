@@ -15,7 +15,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { collection, getDocs } from 'firebase/firestore';
 import { db, paths } from '../../api';
-import { formatEventName } from '../../utils/season';
+import { displayEventName } from '../../utils/eventNames';
 import { CLASS_LABELS } from '../../utils/scoresUtils';
 import { CAPTION_IDS } from '../../data/captions';
 import SeasonLedgerView from './SeasonLedgerView';
@@ -105,7 +105,7 @@ function formatLedgerAsText(ledger, summary, corpsName, corpsClass, seasonName) 
     '',
   ];
   for (const entry of ledger) {
-    const name = formatEventName(entry.eventName) || `Day ${entry.day}`;
+    const name = displayEventName(entry) || `Day ${entry.day}`;
     const placeStr = entry.place ? `${entry.place}/${entry.fieldSize}` : '—';
     const caps = CAPTION_IDS.map((c) => `${c} ${fmtScore(entry.captions?.[c])}`).join(' · ');
     lines.push(
@@ -188,7 +188,7 @@ export default function FantasySeasonLedger({
           class · private to you
         </>
       }
-      formatEventName={formatEventName}
+      formatEventName={displayEventName}
       getShareText={
         summary
           ? () => formatLedgerAsText(ledger, summary, userCorpsName, corpsClass, seasonName)
