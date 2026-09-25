@@ -26,6 +26,8 @@ const {
   normalizeCorpsName,
   isValidCaptionScore,
   CAPTION_MAX,
+  CHAMPIONSHIP_CARRY_FORWARD_DAYS,
+  hasCompleteLineup,
 } = require("./scoringMath");
 const {
   buildChampionshipConfig,
@@ -52,6 +54,7 @@ const {
 } = require("./scoringRunGuard");
 const { settleLeaguePoolsForDay } = require("./leaguePools");
 const { processAllInPages } = require("./firestorePaging");
+const { profileDataDocs } = require("./profileScan");
 const { publishSeasonSummaryRequest } = require("./newsSeasonSummaryTrigger");
 const {
   isTwoNightShow,
@@ -62,44 +65,6 @@ const {
 } = require("./easternSplit");
 
 
-
-// The eight lineup captions a corps must fill before it can be scored. A corps
-// with an incomplete (or empty) lineup has not finished selecting captions and
-// must be excluded from scoring entirely — otherwise it lands in the recap and
-// standings with a meaningless 0.000.
-const LINEUP_CAPTIONS = ["GE1", "GE2", "VP", "VA", "CG", "B", "MA", "P"];
-
-// World Championship week: Prelims (47), Semifinals (48), Finals (49).
-//
-// Nothing is projected on these three nights. The championship is decided on
-// what corps actually scored, and most of the field stops competing partway
-// through it — only 25 corps march Semifinals and only 12 march Finals — so a
-// projection here would invent a championship result for a corps that was
-// already packing up. A corps with no result for the night carries the last
-// score it really earned, unmodified: the 17th-place corps scores its
-// Semifinals sheet again on Finals night, and a corps that didn't survive
-// Prelims carries its Prelims sheet through both later nights.
-//
-// Days 45 and 46 (Open and A Class Prelims/Finals) deliberately keep the
-// normal projection rules — the same argument applies to them, but the rule
-// as specified covers World Championship week.
-const CHAMPIONSHIP_CARRY_FORWARD_DAYS = new Set([47, 48, 49]);
-
-/**
- * True only when a lineup has a non-empty selection for every scoring caption.
- * Newly registered corps start with an empty `lineup: {}`, and the caption
- * selection is only ever saved as a complete 8-caption set, so this rejects
- * both the empty and any partially-filled case.
- *
- * @param {Object|undefined} lineup - The corps' caption -> "corpsName|year" map.
- * @returns {boolean}
- */
-function hasCompleteLineup(lineup) {
-  if (!lineup) return false;
-  return LINEUP_CAPTIONS.every(
-    (caption) => typeof lineup[caption] === "string" && lineup[caption].length > 0
-  );
-}
 
 // Nightly profile fetch: documents per page (also the max held in one query
 // response). The full doc list is accumulated in memory, but the select()
@@ -129,7 +94,13 @@ async function fetchAllActiveProfiles(db, seasonUid) {
   const profilesQuery = db.collectionGroup("profile")
     .where("activeSeasonId", "==", seasonUid)
     .select("corps", "username", "displayName");
-  const docs = await processAllInPages(profilesQuery, PROFILE_PAGE_SIZE, async (doc) => doc);
+  // The group also returns each director's profile/public mirror (same
+  // activeSeasonId + corps map, lineups stripped): the per-corps scoring loop
+  // skips it for lack of a lineup, but the nightly class rankings would count
+  // every corps twice (seasonRankOf doubled). Pin to profile/data.
+  const docs = profileDataDocs(
+    await processAllInPages(profilesQuery, PROFILE_PAGE_SIZE, async (doc) => doc),
+  );
   return { docs, size: docs.length, empty: docs.length === 0 };
 }
 

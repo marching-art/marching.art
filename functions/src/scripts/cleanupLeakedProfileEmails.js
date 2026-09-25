@@ -20,6 +20,7 @@
 
 const { FieldValue, getFirestore } = require("firebase-admin/firestore");
 const { initializeApp, getApps } = require("firebase-admin/app");
+const { isProfileDataDoc } = require("../helpers/profileScan");
 
 // Initialize Firebase Admin if not already initialized
 if (!getApps().length) {
@@ -38,10 +39,9 @@ async function cleanupLeakedProfileEmails() {
   // Collection-group query over every `profile/data` doc.
   const snapshot = await db.collectionGroup("profile").get();
 
+  // profile/data only (never the profile/public mirror or another namespace).
   const targets = snapshot.docs.filter(
-    (doc) =>
-      doc.ref.path.startsWith(`artifacts/${DATA_NAMESPACE}/users/`) &&
-      doc.get("email") !== undefined
+    (doc) => isProfileDataDoc(doc) && doc.get("email") !== undefined
   );
 
   console.log(

@@ -6,6 +6,7 @@ const { getDb } = require("../config");
 const { assertAdmin } = require("../helpers/callableGuards");
 const { computeDirectorRating } = require("../helpers/directorRating");
 const { processAllInPages } = require("../helpers/firestorePaging");
+const { profileDataDocs } = require("../helpers/profileScan");
 const { sumSeasonScore, computeSeasonRankings } = require("../helpers/seasonRankings");
 const {
   collectRegistrationsFromProfile,
@@ -74,10 +75,12 @@ async function fetchProfiles(db, fields, activeSeasonId) {
   }
   profilesQuery = profilesQuery.select(...fields);
   const docs = await processAllInPages(profilesQuery, 1000, async (doc) => doc);
-  const usersPrefix = `${paths.users()}/`;
-  return docs
-    .filter((doc) => doc.ref.path.startsWith(usersPrefix))
-    .map((doc) => ({ userId: doc.ref.parent.parent.id, data: doc.data() }));
+  // profile/data only: the group also returns each director's profile/public
+  // mirror (same corps map), which would seat every corps twice.
+  return profileDataDocs(docs).map((doc) => ({
+    userId: doc.ref.parent.parent.id,
+    data: doc.data(),
+  }));
 }
 
 // The lifetime leaderboards only move when a season is archived (that's the

@@ -20,6 +20,7 @@ const { discordOpsWebhookUrl, discordScoresWebhookUrl } = require("../helpers/di
 const { DCI_CORPS_DATA } = require("../scripts/seedDciReference");
 const { assertAdmin } = require("../helpers/callableGuards");
 const { FANTASY_CLASSES } = require("../helpers/classRegistry");
+const { profileDataDocs } = require("../helpers/profileScan");
 
 // Spring training period (calendar days) before competition day 1 in a live season.
 // Kept in sync with dailyProcessors.js / season helper defaults.
@@ -511,16 +512,19 @@ exports.manualTrigger = onCall({
         currentWeek = Math.max(1, Math.ceil((diffInDays + 1 - springTrainingDays) / 7));
       }
 
-      const profilesSnapshot = await db.collectionGroup("profile")
-        .where("activeSeasonId", "==", seasonId).get();
+      // profile/data only — the group also returns each profile/public
+      // mirror, and the reconciled picks must never be written onto it.
+      const profileDocs = profileDataDocs(
+        (await db.collectionGroup("profile").where("activeSeasonId", "==", seasonId).get()).docs
+      );
 
       const corpsClasses = FANTASY_CLASSES;
-      const totals = { profiles: profilesSnapshot.size, corpsChanged: 0, renamed: 0, moved: 0, removed: 0, kept: 0 };
+      const totals = { profiles: profileDocs.length, corpsChanged: 0, renamed: 0, moved: 0, removed: 0, kept: 0 };
       let usersUpdated = 0;
       let batch = db.batch();
       let batchCount = 0;
 
-      for (const doc of profilesSnapshot.docs) {
+      for (const doc of profileDocs) {
         const corpsData = doc.data().corps || {};
         const updates = {};
         let hasUpdates = false;
@@ -626,17 +630,20 @@ exports.manualTrigger = onCall({
 
       logger.info(`Clearing schedule selections for week ${currentWeek} and beyond for season ${seasonId}`);
 
-      const profilesQuery = db.collectionGroup("profile").where("activeSeasonId", "==", seasonId);
-      const profilesSnapshot = await profilesQuery.get();
+      // profile/data only — the group also returns each profile/public
+      // mirror, which must never be cleared directly (the trigger rebuilds it).
+      const profileDocs = profileDataDocs(
+        (await db.collectionGroup("profile").where("activeSeasonId", "==", seasonId).get()).docs
+      );
       let usersUpdated = 0;
 
-      if (!profilesSnapshot.empty) {
+      if (profileDocs.length > 0) {
         let batch = db.batch();
         let batchCount = 0;
 
         const corpsClasses = FANTASY_CLASSES;
 
-        for (const doc of profilesSnapshot.docs) {
+        for (const doc of profileDocs) {
           const profileData = doc.data();
           const corpsData = profileData.corps || {};
           const updates = {};

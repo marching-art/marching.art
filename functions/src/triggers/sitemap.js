@@ -12,7 +12,7 @@ const { getDb } = require("../config");
 const { listScoredDays } = require("./resultsPages");
 const { isProfilePrivate } = require("../helpers/publicProfilePages");
 const { SLUG_BY_CLASS } = require("../helpers/shareCards");
-const { paths } = require("../helpers/paths");
+const { isProfileDataDoc } = require("../helpers/profileScan");
 
 // Public, crawlable routes (see robots.txt for the disallow list these must
 // stay out of). lastmod is intentionally omitted for static routes — a fake
@@ -224,11 +224,10 @@ async function listPublicDirectors(db) {
       .limit(MAX_DIRECTOR_URLS)
       .get();
 
-    const usersPrefix = `${paths.users()}/`;
     const seen = new Set();
     const directors = [];
     for (const doc of snapshot.docs) {
-      if (doc.id !== "data" || !doc.ref.path.startsWith(usersPrefix)) continue;
+      if (!isProfileDataDoc(doc)) continue;
       const entry = directorEntryFromProfile(doc.data());
       if (!entry || seen.has(entry.username)) continue;
       seen.add(entry.username);

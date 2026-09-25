@@ -51,6 +51,8 @@ import RecentResultsFeed from '../components/Dashboard/sections/RecentResultsFee
 import RivalsPanel from '../components/Dashboard/sections/RivalsPanel';
 import AchievementTrackerPanel from '../components/Dashboard/sections/AchievementTrackerPanel';
 import { CAPTIONS as CAPTION_DEFS } from '../data/captions';
+
+/** @typedef {import('../components/GuestPreview/GuestLineupPicker').PickerCorps} PickerCorps */
 import { formatEventName } from '../utils/season';
 
 const STARTER_BUDGET = 90; // Same 90-pt SoundSport budget onboarding drafts under
@@ -62,18 +64,15 @@ const STARTER_BUDGET = 90; // Same 90-pt SoundSport budget onboarding drafts und
 // Guest view of the canonical captions (data/captions.ts). The compact draft
 // badges show the caption id, so `name` maps to id here (not the friendly
 // label the full dashboard uses).
-/**
- * @typedef {{ id: string, name: string, category: string, fullName: string }} GuestCaption
- * @typedef {import('../components/GuestPreview/GuestLineupPicker').PickerCorps} PickerCorps
- */
-
-/** @type {GuestCaption[]} */
 const CAPTIONS = CAPTION_DEFS.map((c) => ({
   id: c.id,
   name: c.id,
   category: c.group,
   fullName: c.fullName,
 }));
+
+/** The guest page's caption shape (id doubles as the short name). */
+/** @typedef {(typeof CAPTIONS)[number]} GuestCaption */
 
 // =============================================================================
 // GUEST HEADER COMPONENT
@@ -220,11 +219,13 @@ const LineupRow = ({ caption, value, pointsCost, isLast, isPlayable, onClick }) 
 // callable; a guest has no profile, so this read-only version shows the same
 // catalog with one pre-completed and routes taps to the registration gate.
 
-const DEMO_CHALLENGE_DAY = 5;
+// Seed for the demo's fixed trio of challenges (getChallengesForGameDay hashes
+// a game-day string; a number here hashed to 0 by accident).
+const DEMO_CHALLENGE_DAY = 'demo-day-5';
 
 /** @param {{ onGate: (gateType: string) => void }} props */
 const DemoDailyChallenges = ({ onGate }) => {
-  const challenges = getChallengesForGameDay(String(DEMO_CHALLENGE_DAY)) || [];
+  const challenges = getChallengesForGameDay(DEMO_CHALLENGE_DAY) || [];
   const completedIds = new Set(challenges.slice(0, 1).map((c) => c.id));
   const totalCount = challenges.length || 1;
   const completedCount = completedIds.size;
@@ -416,7 +417,7 @@ const GuestDashboard = () => {
   const { data: corpsValues } = useCorpsValues(seasonUid);
   const availableCorps = useMemo(
     // Mirror onboarding's availability filter (points <= 50)
-    () => (corpsValues ?? []).filter((c) => (c.points || 0) <= 50),
+    () => /** @type {PickerCorps[]} */ ((corpsValues ?? []).filter((c) => (c.points || 0) <= 50)),
     [corpsValues]
   );
   const [pickerCaption, setPickerCaption] = useState(/** @type {GuestCaption | null} */ (null));
@@ -501,6 +502,9 @@ const GuestDashboard = () => {
     }
   };
 
+  // Caption count powering AchievementTracker (guest's draft
+  // progress while drafting, the full demo lineup otherwise).
+
   // Shapes the reused dashboard components expect.
   const recentResultsForFeed = demoRecentScores.map((show) => ({
     eventName: show.showName,
@@ -581,9 +585,7 @@ const GuestDashboard = () => {
                 corpsName={demoCorps.corpsName}
                 corpsClass="soundSport"
                 loading={false}
-                avatarUrl={
-                  /** @type {{ avatarUrl?: string | null }} */ (demoCorps).avatarUrl || null
-                }
+                avatarUrl={demoCorps.avatarUrl || null}
                 bestInShowCount={demoCorps.bestInShowCount}
                 showConcept={demoCorps.showConcept}
                 onShowConcept={() => handleGatedClick('default')}
@@ -646,13 +648,11 @@ const GuestDashboard = () => {
                 <div>
                   {CAPTIONS.map((caption, index) => {
                     const draftValue = isDrafting ? guestLineup[caption.id] : null;
-                    /** @type {Record<string, string> | undefined} */
-                    const demoLineup = demoCorps.lineup;
                     return (
                       <LineupRow
                         key={caption.id}
                         caption={caption}
-                        value={isDrafting ? draftValue : demoLineup?.[caption.id]}
+                        value={isDrafting ? draftValue : demoCorps.lineup?.[caption.id]}
                         pointsCost={draftValue ? parseInt(draftValue.split('|')[2]) || null : null}
                         isPlayable={isPlayable}
                         isLast={index === CAPTIONS.length - 1}
@@ -808,7 +808,7 @@ const GuestDashboard = () => {
       <GuestLineupPicker
         isOpen={pickerCaption !== null}
         caption={pickerCaption}
-        availableCorps={/** @type {PickerCorps[]} */ (availableCorps)}
+        availableCorps={availableCorps}
         lineup={guestLineup || {}}
         onSelect={handlePickerSelect}
         onClose={handlePickerClose}

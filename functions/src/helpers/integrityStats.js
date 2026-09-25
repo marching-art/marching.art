@@ -41,8 +41,8 @@
 
 const crypto = require("crypto");
 const { logger } = require("firebase-functions/v2");
-const { paths } = require("./paths");
 const { processAllInPages } = require("./firestorePaging");
+const { profileDataDocs } = require("./profileScan");
 
 const STATS_DOC = "admin-stats/integrity";
 
@@ -463,8 +463,9 @@ async function computeIntegrityStats(db, options = {}) {
   const query = db.collectionGroup("profile").select(...PROJECTED_FIELDS);
   const docs = await processAllInPages(query, 1000, async (doc) => doc);
 
-  const usersPrefix = `${paths.users()}/`;
-  const profileDocs = docs.filter((doc) => doc.ref.path.startsWith(usersPrefix));
+  // profile/data only — the group also returns each profile/public mirror,
+  // which would count every account twice.
+  const profileDocs = profileDataDocs(docs);
 
   const authByUid = await authLister();
 
