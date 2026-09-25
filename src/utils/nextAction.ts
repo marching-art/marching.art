@@ -50,6 +50,7 @@ export type NextActionId =
   | 'register_corps'
   | 'season_complete'
   | 'complete_lineup'
+  | 'spend_budget'
   | 'lineup_locked'
   | 'register_shows'
   | 'claim_reward'
@@ -130,9 +131,23 @@ export interface ClaimableReward {
   targetId: string;
 }
 
+/**
+ * This week's draft budget for the class (utils/classRegistry
+ * pointCapForWeek) and the budget the season opened at. Null before the
+ * season store hydrates or for a class with no lineup.
+ */
+export interface LineupBudget {
+  /** The cap the director may spend this week. */
+  cap: number;
+  /** The week-1 cap; the nudge only fires once the cap has grown past it. */
+  opening: number;
+}
+
 export interface NextActionInput {
   /** Active corps for the selected class, or null when none exists yet. */
   corps: NextActionCorps | null;
+  /** Week-aware point cap for the class; optional for callers without a season. */
+  budget?: LineupBudget | null;
   /** Canonical class key. `podiumClass` is not a fantasy class — see below. */
   corpsClass: string | null;
   /** Competition day (1-49), or null before the season store hydrates. */
@@ -159,6 +174,26 @@ function countFilledCaptions(lineup: Record<string, unknown> | null | undefined)
     const value = lineup[id];
     return typeof value === 'string' && value.length > 0;
   }).length;
+}
+
+/**
+ * Total cost of a saved lineup, or null when any slot carries no cost.
+ * Selections are "Name|year|points" strings; the trailing segment is the
+ * display cost the editor wrote, which the server verified against the season
+ * registry on save. A lineup missing it (legacy / seeded data) is unpriced,
+ * not free — reporting the whole cap as unspent would be a lie.
+ */
+function lineupPoints(lineup: Record<string, unknown> | null | undefined): number | null {
+  if (!lineup) return null;
+  let total = 0;
+  for (const id of CAPTION_IDS) {
+    const value = lineup[id];
+    if (typeof value !== 'string') return null;
+    const cost = Number(value.split('|')[2]);
+    if (!Number.isFinite(cost)) return null;
+    total += cost;
+  }
+  return total;
 }
 
 /** Shows the corps is registered for in a given competition week. */
@@ -211,6 +246,7 @@ function describeLineupLock(window: CaptionWindowState | null): string | null {
 export function resolveNextAction(input: NextActionInput): NextAction | null {
   const {
     corps,
+    budget = null,
     corpsClass,
     currentDay,
     currentWeek,
@@ -331,6 +367,33 @@ export function resolveNextAction(input: NextActionInput): NextAction | null {
       progress: null,
       tone: 'action',
     };
+  }
+
+  // --- 6b. Budget grew, points unspent -----------------------------------
+  // The draft budget rises a point a week from week 3 to Championship Week
+  // (utils/classRegistry pointCapForWeek). A director who drafted in week 1
+  // and never came back is fielding a cheaper corps than the rules allow —
+  // this is the prod that turns "set it and forget it" into a weekly visit.
+  // Only once the cap has actually grown (an under-spent week-1 lineup is a
+  // choice, not an oversight), and only while the change window is open.
+  if (
+    budget &&
+    budget.cap > budget.opening &&
+    (!captionWindow || captionWindow.status === 'open')
+  ) {
+    const spent = lineupPoints(corps.lineup);
+    const unspent = spent == null ? 0 : budget.cap - spent;
+    if (unspent > 0) {
+      return {
+        id: 'spend_budget',
+        title: `${unspent} unspent point${unspent === 1 ? '' : 's'}`,
+        detail: `Your draft budget grew to ${budget.cap} this week — upgrade a caption to use it.`,
+        cta: 'Open Lineup',
+        target: { type: 'lineup' },
+        progress: null,
+        tone: 'action',
+      };
+    }
   }
 
   // --- 7. Today's Director's Report -------------------------------------

@@ -43,14 +43,29 @@ The schedule engine that builds each 49-day calendar is documented separately in
 
 The **Fantasy Division** has four classes (the **Podium Division** is documented
 separately in [`PODIUM.md`](PODIUM.md)). Each Fantasy Division class has a
-**point cap** — the maximum total cost of your 8 drafted captions.
+**point cap** — the maximum total cost of your 8 drafted captions. The cap is
+not flat: every class **opens the season 5 points below its full cap and gains
+1 point a week from Week 3**, reaching the full cap in Championship Week
+(Week 7). A director who drafts in Week 1 and never returns is fielding a
+cheaper corps than the rules allow every week after — the weekly point is
+the standing reason to come back and upgrade a caption.
 
-| Class           | Point cap | Fantasy-ranked | Unlock (any one path)                                      |
-| --------------- | --------- | -------------- | ---------------------------------------------------------- |
-| **SoundSport**  | 90        | No             | Default — open to everyone                                 |
-| **A Class**     | 60        | Yes            | Complete **1** season · or Level **3** · or **1,000** CC   |
-| **Open Class**  | 120       | Yes            | Complete **2** seasons · or Level **5** · or **2,500** CC  |
-| **World Class** | 150       | Yes            | Complete **3** seasons · or Level **10** · or **5,000** CC |
+| Class           | Point cap (Wk 1–2 → Wk 7) | Fantasy-ranked | Unlock (any one path)                                      |
+| --------------- | ------------------------- | -------------- | ---------------------------------------------------------- |
+| **SoundSport**  | 85 → 90                   | No             | Default — open to everyone                                 |
+| **A Class**     | 55 → 60                   | Yes            | Complete **1** season · or Level **3** · or **1,000** CC   |
+| **Open Class**  | 115 → 120                 | Yes            | Complete **2** seasons · or Level **5** · or **2,500** CC  |
+| **World Class** | 145 → 150                 | Yes            | Complete **3** seasons · or Level **10** · or **5,000** CC |
+
+Week by week (World Class): 145, 145, 146, 147, 148, 149, 150. The cap never
+falls within a season, so a lineup that was legal when saved stays legal; it
+only ever leaves points on the table. The ramp lines up with the caption-change
+phases: Weeks 1–2 (unlimited changes) are the opening budget, each of the
+3-changes-a-week weeks brings a new point to spend, and Championship Week
+unlocks the last one. The opening/full caps and the 5-point ramp live in the
+class registry (`pointCap` / `pointCapRamp`; the week formula is
+`pointCapForWeek` in both registry wrappers). The dashboard's next-action card
+calls out unspent points once the cap has grown past what a lineup spends.
 
 The lower cap on A Class (60) makes it a distinct tighter-budget puzzle, not a
 "weaker World Class." SoundSport is unranked by design — it's the on-ramp and the
@@ -89,8 +104,9 @@ Rules:
 
 - Each caption carries a **cost** derived from that corps' historical
   performance in that caption. The **sum of your 8 costs must not exceed your
-  class point cap.** Building a strong, legal lineup under the cap is the game's
-  central strategic act.
+  class point cap for the current week** (it grows a point a week from Week 3
+  to the full cap in Week 7). Building a strong, legal lineup under the cap is
+  the game's central strategic act.
 - **No duplicate lineups per season** — if two directors submit the exact same
   8-caption lineup, the first to submit keeps it.
 - A **show concept** can grant synergy bonuses; the Lineup Analyzer helps

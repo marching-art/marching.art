@@ -17,7 +17,7 @@ import { useProfileStore } from '../../store/profileStore';
 import { useSeasonDeadlines } from '../../hooks/useSeasonClock';
 import { formatEtShort } from '../../utils/seasonClock';
 import { useSeasonStore } from '../../store/seasonStore';
-import { POINT_CAPS } from '../../utils/classRegistry';
+import { POINT_CAPS, pointCapForWeek } from '../../utils/classRegistry';
 import { generateQuickFillLineup } from './quickFillLineup';
 
 /**
@@ -144,7 +144,17 @@ export function useCaptionSelectionModal({
 
   const captions = CAPTIONS;
 
-  const pointLimit = POINT_CAPS[corpsClass];
+  // This week's draft budget. The cap opens below the class's full cap and
+  // grows a point a week until Championship Week (utils/classRegistry
+  // pointCapForWeek — the same formula saveLineup enforces), so a director
+  // who drafted in week 1 has points to spend every week after. Before the
+  // season store hydrates, currentWeek is 1 and the opening budget applies —
+  // the conservative direction.
+  const currentWeek = useSeasonStore((s) => s.currentWeek);
+  const maxPointLimit = POINT_CAPS[corpsClass];
+  const pointLimit = pointCapForWeek(corpsClass, currentWeek) ?? maxPointLimit;
+  /** Points the cap still gains between now and the final week (0 once at full). */
+  const pointLimitGrowth = Math.max(0, (maxPointLimit ?? 0) - (pointLimit ?? 0));
 
   const categoryColors = CATEGORY_COLORS;
 
@@ -279,7 +289,10 @@ export function useCaptionSelectionModal({
       return 'The season has ended — changes are closed.';
     }
     if (!isComplete) return `Pick all 8 captions — ${selectionCount}/8 chosen.`;
-    if (isOverLimit) return `Over budget by ${totalPoints - pointLimit}. Swap for cheaper corps.`;
+    if (isOverLimit)
+      return `Over this week's budget by ${totalPoints - pointLimit}. Swap for cheaper corps${
+        pointLimitGrowth > 0 ? ` — the cap grows to ${maxPointLimit} by Championship Week` : ''
+      }.`;
     if (!isInitialSetup && changeCount === 0)
       return 'No changes yet — edit a caption to enable saving.';
     return null;
@@ -291,6 +304,8 @@ export function useCaptionSelectionModal({
     isOverLimit,
     totalPoints,
     pointLimit,
+    pointLimitGrowth,
+    maxPointLimit,
     isInitialSetup,
     changeCount,
   ]);
@@ -445,7 +460,7 @@ export function useCaptionSelectionModal({
       return;
     }
     if (isOverLimit) {
-      setSaveError(`Lineup exceeds the ${pointLimit} point limit.`);
+      setSaveError(`Lineup exceeds this week's ${pointLimit} point limit.`);
       return;
     }
     // Offline: store the save locally and submit automatically on reconnect.
@@ -510,6 +525,9 @@ export function useCaptionSelectionModal({
     captions,
     categoryColors,
     pointLimit,
+    maxPointLimit,
+    pointLimitGrowth,
+    currentWeek,
     // selections + derived
     selections,
     totalPoints,

@@ -5,7 +5,8 @@ const { assertAuth, assertWriteBudget } = require("../helpers/callableGuards");
 const { loadHistoricalYears } = require("../helpers/historicalScores");
 const { logger } = require("firebase-functions/v2");
 const { getCaptionChangeWindow, isDayScoresProcessed } = require("../helpers/captionWindows");
-const { FANTASY_CLASSES, ENABLED_CLASSES, POINT_CAPS } = require("../helpers/classRegistry");
+const { FANTASY_CLASSES, ENABLED_CLASSES, POINT_CAPS, pointCapForWeek } = require("../helpers/classRegistry");
+const { getActiveCompetitionDay } = require("../helpers/gameDay");
 const {
   showRegistrationEventKey,
   registrationEntryKey,
@@ -18,6 +19,21 @@ const {
   resolveShowsAgainstSchedule,
 } = require("../helpers/showSelection");
 const { FieldValue } = require("firebase-admin/firestore");
+
+/**
+ * Competition week (1-7) for the point-cap ramp, from the season doc's
+ * schedule. Uses the clamped active competition day (2 AM ET reset, spring
+ * training excluded) so it agrees with the client's getSeasonProgress; null
+ * before the season has a usable start date, which pointCapForWeek treats
+ * as week 1 (the opening budget).
+ *
+ * @param {any} seasonData - game-settings/season doc data.
+ * @returns {number|null}
+ */
+function currentSeasonWeek(seasonData) {
+  const day = getActiveCompetitionDay(seasonData);
+  return day == null ? null : Math.ceil(day / 7);
+}
 
 /**
  * Task 2.7: Saves a user's 8-caption lineup for a specific corps class.
@@ -57,14 +73,20 @@ exports.saveLineup = onCall({ cors: true }, async (request) => {
   const activeSeasonId = seasonData.seasonUid;
 
   // 3. --- Validate selections & points cap against the season corps registry ---
-  // Caps come from the class-capability registry (Phase 1.1). Point COSTS are
+  // Caps come from the class-capability registry (Phase 1.1) and grow with the
+  // season: `pointCapForWeek` opens each class below its full cap and adds a
+  // point a week until the final week, so a director who set a lineup in
+  // week 1 and never returned is leaving budget on the table. The week is
+  // computed server-side from the season clock (never client-supplied) with
+  // the same day math the nightly processors use. Point COSTS are
   // server-authoritative: each selection's cost is resolved from the season's
   // dci-data registry, never from the client-supplied points segment — a
   // tampered "Blue Devils|2025|1" string must not field an elite corps at 1
   // point. The trailing segment is display-only sugar for the frontend; if
   // present it must agree with the registry so stored lineup strings never
   // carry a falsified cost.
-  const pointCap = POINT_CAPS[corpsClass];
+  const currentWeek = currentSeasonWeek(seasonData);
+  const pointCap = pointCapForWeek(corpsClass, currentWeek) ?? POINT_CAPS[corpsClass];
   const dataDocId = seasonData.dataDocId;
   const corpsDataDoc = await db.doc(`dci-data/${dataDocId}`).get();
   if (!corpsDataDoc.exists) {
@@ -107,7 +129,13 @@ exports.saveLineup = onCall({ cors: true }, async (request) => {
   }
 
   if (totalPoints > pointCap) {
-    throw new HttpsError("invalid-argument", `Lineup exceeds ${pointCap} point limit for ${corpsClass}. Total: ${totalPoints}`);
+    const fullCap = POINT_CAPS[corpsClass];
+    const growth =
+      fullCap > pointCap ? ` It grows to ${fullCap} by Championship Week.` : "";
+    throw new HttpsError(
+      "invalid-argument",
+      `Lineup exceeds this week's ${pointCap} point limit for ${corpsClass}. Total: ${totalPoints}.${growth}`
+    );
   }
 
   // 4. --- Create Unique Lineup Key ---
@@ -855,10 +883,13 @@ exports.validateLineup = onCall({ cors: true }, async (request) => {
       totalPoints += registryPoints;
     }
 
-    // A lineup that no longer fits under the class point cap (registry
-    // prices, never the stored segments) also requires a forced update.
-    const isValid = invalidSelections.length === 0 &&
-      totalPoints <= POINT_CAPS[corpsClass];
+    // A lineup that no longer fits under this week's class point cap
+    // (registry prices, never the stored segments) also requires a forced
+    // update. The cap only rises within a season, so this can only trip on
+    // a lineup carried over from a season with different prices.
+    const pointCap =
+      pointCapForWeek(corpsClass, currentSeasonWeek(seasonData)) ?? POINT_CAPS[corpsClass];
+    const isValid = invalidSelections.length === 0 && totalPoints <= pointCap;
 
     // If lineup is invalid, mark it on the profile for UI to show warning
     if (!isValid) {

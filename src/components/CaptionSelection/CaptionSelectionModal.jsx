@@ -41,6 +41,8 @@ const CaptionSelectionModal = ({
     captions,
     categoryColors: categoryColorMap,
     pointLimit: classPointLimit,
+    maxPointLimit,
+    pointLimitGrowth,
     selections,
     totalPoints,
     remainingPoints,
@@ -138,6 +140,15 @@ const CaptionSelectionModal = ({
                   </h2>
                   <p className="text-sm text-muted">
                     {CLASS_LABELS[corpsClass]} • Draft budget: {pointLimit}
+                    {pointLimitGrowth > 0 && (
+                      <span
+                        className="text-xs"
+                        title={`The budget grows 1 point a week and reaches ${maxPointLimit} in Championship Week.`}
+                      >
+                        {' '}
+                        this week · {maxPointLimit} by Championship Week
+                      </span>
+                    )}
                   </p>
                 </div>
               </div>

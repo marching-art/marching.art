@@ -1,5 +1,15 @@
 import { describe, it, expect } from 'vitest';
-import { classHasLineup, classIdOf, POINT_CAPS, ENABLED_CLASSES } from './classRegistry';
+import {
+  classHasLineup,
+  classIdOf,
+  POINT_CAPS,
+  POINT_CAP_RAMPS,
+  ENABLED_CLASSES,
+  pointCapForWeek,
+  pointCapSchedule,
+  openingPointCap,
+  formatPointCapRange,
+} from './classRegistry';
 
 describe('classIdOf', () => {
   it('accepts registry ids, aliases and display names', () => {
@@ -44,5 +54,45 @@ describe('classHasLineup', () => {
     for (const classId of ENABLED_CLASSES) {
       expect(classHasLineup(classId), classId).toBe(classId in POINT_CAPS);
     }
+  });
+});
+
+describe('pointCapForWeek — the weekly budget ramp', () => {
+  it('World Class opens at 145 and climbs a point a week to 150', () => {
+    expect(pointCapSchedule('worldClass')?.map((r) => r.cap)).toEqual([
+      145, 145, 146, 147, 148, 149, 150,
+    ]);
+  });
+
+  it('every lineup class ramps 5 below its full cap', () => {
+    for (const classId of Object.keys(POINT_CAPS)) {
+      expect(POINT_CAP_RAMPS[classId], classId).toBe(5);
+      expect(openingPointCap(classId), classId).toBe(Number(POINT_CAPS[classId]) - 5);
+      expect(pointCapForWeek(classId, 7), classId).toBe(POINT_CAPS[classId]);
+    }
+  });
+
+  it('treats an unknown or un-hydrated week as the opening budget', () => {
+    expect(pointCapForWeek('worldClass', null)).toBe(145);
+    expect(pointCapForWeek('worldClass', 0)).toBe(145);
+    expect(pointCapForWeek('worldClass', undefined)).toBe(145);
+  });
+
+  it('never exceeds the full cap and resolves aliases', () => {
+    expect(pointCapForWeek('worldClass', 12)).toBe(150);
+    expect(pointCapForWeek('open', 5)).toBe(118);
+    expect(pointCapForWeek('aClass', 3)).toBe(56);
+  });
+
+  it('formats the budget as a range for the class tables', () => {
+    expect(formatPointCapRange('worldClass')).toBe('145\u2013150');
+    expect(formatPointCapRange('soundSport')).toBe('85\u201390');
+    expect(formatPointCapRange('podiumClass')).toBe('');
+  });
+
+  it('has no cap for a class without a lineup', () => {
+    expect(pointCapForWeek('podiumClass', 3)).toBeNull();
+    expect(pointCapSchedule('podiumClass')).toBeNull();
+    expect(openingPointCap('podiumClass')).toBeNull();
   });
 });

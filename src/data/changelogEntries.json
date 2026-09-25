@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-09-25-draft-budget-grows-weekly",
+    "date": "2026-09-25",
+    "title": "Your draft budget now grows every week",
+    "category": "balance",
+    "summary": "Every Fantasy Division class now opens the season 5 points under its full cap and gains 1 point a week from Week 3, reaching the full cap in Championship Week. World Class runs 145, 145, 146, 147, 148, 149, 150; Open, A Class and SoundSport ramp the same 5 points. A lineup that fit when you saved it always stays legal — but a director who drafts in Week 1 and never comes back is leaving points on the table every week after.",
+    "highlights": [
+      "The lineup editor shows this week's budget and the full cap it reaches by Championship Week.",
+      "The dashboard's next-action card flags unspent points once your budget has grown past what your lineup spends.",
+      "Registration screens show each class's budget as a range, opening to full.",
+      "Weeks 1 and 2 (unlimited changes) share the opening budget; each 3-changes-a-week week adds a point, and Championship Week unlocks the last one."
+    ]
+  },
+  {
     "id": "2026-09-25-world-championship-rounds-score-again",
     "date": "2026-09-25",
     "title": "World Championship Prelims and Semifinals scores are back",

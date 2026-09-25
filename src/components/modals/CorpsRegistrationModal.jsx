@@ -11,7 +11,9 @@ import { CLASS_TABLE } from '../SeasonSetupWizard/constants';
 
 // Budget + unlock level per class come from the class registry via the shared
 // table (a local literal copy here once drifted from the real gates).
-const CLASSES = CLASS_TABLE.map((cls) => ({ ...cls, budget: `${cls.budget} pts` }));
+// The budget reads as a range ("145–150 pts"): it opens at the low end and
+// grows a point a week to the full cap by Championship Week.
+const CLASSES = CLASS_TABLE.map((cls) => ({ ...cls, budget: `${cls.budgetLabel} pts` }));
 
 /**
  * @param {{

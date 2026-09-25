@@ -4,7 +4,12 @@
 import { getCorpsClassName } from '../../utils/corps';
 import { formatSeasonName } from '../../utils/season';
 import { CAPTIONS as CAPTION_DEFS } from '../../data/captions';
-import { POINT_CAPS, UNLOCK_LEVELS_ALL } from '../../utils/classRegistry';
+import {
+  POINT_CAPS,
+  UNLOCK_LEVELS_ALL,
+  openingPointCap,
+  formatPointCapRange,
+} from '../../utils/classRegistry';
 
 // Re-export for backwards compatibility
 export { getCorpsClassName, formatSeasonName };
@@ -32,7 +37,12 @@ const CLASS_DIFFICULTY = {
 export const CLASS_TABLE = ALL_CLASSES.map((id) => ({
   id,
   name: getCorpsClassName(id),
+  /** Full (Championship Week) budget. */
   budget: POINT_CAPS[id],
+  /** Week-1 budget — the cap opens here and grows a point a week. */
+  openingBudget: openingPointCap(id),
+  /** "145–150" (or "90" for a flat cap) for the registration tables. */
+  budgetLabel: formatPointCapRange(id),
   difficulty: CLASS_DIFFICULTY[id],
   reqLevel: UNLOCK_LEVELS_ALL[id] ?? 0,
 }));
@@ -48,7 +58,7 @@ export const REGISTRATION_LOCKS = {
 // Point limits by class — sourced from the canonical class-capability registry
 // (utils/classRegistry) rather than re-declared here, so the wizard's budgets
 // can never drift from the rest of the app or the backend registry JSON.
-export { POINT_CAPS as POINT_LIMITS } from '../../utils/classRegistry';
+export { POINT_CAPS as POINT_LIMITS, formatPointCapRange } from '../../utils/classRegistry';
 
 // Class display names
 export const CLASS_NAMES = {

@@ -20,7 +20,7 @@ import { Heading } from '../ui';
 // Import constants
 import {
   ALL_CLASSES,
-  POINT_LIMITS,
+  formatPointCapRange,
   getCorpsClassName,
   formatSeasonName,
   // Budget + unlock level per class, derived from the class registry (never a
@@ -463,7 +463,7 @@ const SeasonSetupWizard = ({
                           </td>
                           <td className="px-4 py-2 text-right">
                             <span className="text-sm text-muted tabular-nums">
-                              {cls.budget} pts
+                              {cls.budgetLabel} pts
                             </span>
                           </td>
                           <td className="px-4 py-2 text-center">
@@ -573,8 +573,11 @@ const SeasonSetupWizard = ({
                   <div className="mt-4 pt-4 border-t border-line">
                     <div className="flex justify-between items-center">
                       <span className="text-[10px] text-muted uppercase">Point Budget</span>
-                      <span className="text-lg font-bold text-white tabular-nums">
-                        {POINT_LIMITS[formData.selectedClass]} pts
+                      <span
+                        className="text-lg font-bold text-white tabular-nums"
+                        title="Opens at the low end and grows 1 point a week to the full budget by Championship Week."
+                      >
+                        {formatPointCapRange(formData.selectedClass)} pts
                       </span>
                     </div>
                   </div>

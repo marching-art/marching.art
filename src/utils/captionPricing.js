@@ -3,6 +3,7 @@
 
 import {
   POINT_CAPS,
+  pointCapForWeek,
   UNLOCK_LEVELS_ALL,
   UNLOCK_XP_THRESHOLDS,
   REGISTRATION_LOCK_WEEKS,
@@ -90,9 +91,12 @@ export const calculateLineupValue = (lineup, availableCorps) => {
  * @param {Object} lineup - Caption to corps ID mapping
  * @param {string} corpsClass - Competition class
  * @param {Array<{ id: string, value: number }>} availableCorps - Available corps with values
+ * @param {{week?: number|null}} [options] - `week` applies that competition
+ *   week's ramped cap (utils/classRegistry pointCapForWeek). Omitted, the
+ *   class's full cap is used.
  * @returns {Object} { valid: boolean, reason: string, totalValue: number }
  */
-export const validateLineup = (lineup, corpsClass, availableCorps) => {
+export const validateLineup = (lineup, corpsClass, availableCorps, options = {}) => {
   // Check all captions are selected
   const selectedCaptions = Object.keys(lineup);
   if (selectedCaptions.length !== REQUIRED_CAPTIONS.length) {
@@ -127,8 +131,11 @@ export const validateLineup = (lineup, corpsClass, availableCorps) => {
   // Calculate total value
   const totalValue = calculateLineupValue(lineup, availableCorps);
 
-  // Check point limit for class
-  const limit = CLASS_POINT_LIMITS[corpsClass];
+  // Check point limit for class (this week's, when the caller knows the week)
+  const limit =
+    options.week != null
+      ? (pointCapForWeek(corpsClass, options.week) ?? CLASS_POINT_LIMITS[corpsClass])
+      : CLASS_POINT_LIMITS[corpsClass];
   if (!limit) {
     return {
       valid: false,

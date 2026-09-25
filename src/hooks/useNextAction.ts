@@ -6,6 +6,7 @@
 
 import { useMemo } from 'react';
 import { useSeasonStore } from '../store/seasonStore';
+import { openingPointCap, pointCapForWeek } from '../utils/classRegistry';
 import { useSeasonDeadlines } from './useSeasonClock';
 import {
   computeDirectorsReport,
@@ -96,10 +97,20 @@ export function useNextAction({
     [profile, recentResults.length, seasonUid]
   );
 
+  // This week's draft budget vs. the week-1 budget, for the unspent-points
+  // nudge. Null until the season store knows the week (0 = not hydrated).
+  const budget = useMemo(() => {
+    if (!activeCorpsClass || !currentWeek) return null;
+    const cap = pointCapForWeek(activeCorpsClass, currentWeek);
+    const opening = openingPointCap(activeCorpsClass);
+    return cap == null || opening == null ? null : { cap, opening };
+  }, [activeCorpsClass, currentWeek]);
+
   return useMemo(
     () =>
       resolveNextAction({
         corps: activeCorps,
+        budget,
         corpsClass: activeCorpsClass,
         currentDay: currentDay ?? null,
         currentWeek: currentWeek ?? null,
@@ -112,6 +123,7 @@ export function useNextAction({
       }),
     [
       activeCorps,
+      budget,
       activeCorpsClass,
       currentDay,
       currentWeek,

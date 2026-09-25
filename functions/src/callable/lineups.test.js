@@ -331,7 +331,7 @@ describe("saveLineup point-cap enforcement", () => {
         lineup: buildLineup("Elite"),
         corpsClass: "worldClass",
       })),
-      /exceeds 150 point limit for worldClass. Total: 200/
+      /exceeds this week's 145 point limit for worldClass. Total: 200. It grows to 150 by Championship Week/
     );
     assert.equal(writes.length, 0);
   });
@@ -348,6 +348,55 @@ describe("saveLineup point-cap enforcement", () => {
       /not available this season/
     );
     assert.equal(writes.length, 0);
+  });
+
+  /** A 150-point lineup: five Budget (15) + three Elite (25) corps. */
+  function fullCapLineup() {
+    const lineup = buildLineup("Budget", 15);
+    ["GE1", "GE2", "VP"].forEach((caption, i) => {
+      lineup[caption] = `Elite ${i + 1}|2025|25`;
+    });
+    return lineup;
+  }
+
+  /** Season docs whose schedule puts today on competition day `day`. */
+  function makeRampDocs(day, profileCorps) {
+    const docs = makeLineupDocs(profileCorps);
+    const startDate = new Date();
+    startDate.setUTCDate(startDate.getUTCDate() - (day - 1));
+    startDate.setUTCHours(0, 0, 0, 0);
+    docs.set("game-settings/season", {
+      seasonUid: "season-1",
+      dataDocId: "dd-1",
+      status: "off-season",
+      schedule: { startDate },
+    });
+    return docs;
+  }
+
+  test("the opening-week cap is 5 below the class cap", async () => {
+    // Day 3 = week 1: World Class may spend 145, so a 150-point lineup is over.
+    const docs = makeRampDocs(3, { worldClass: { lineup: {} } });
+    const { db, writes } = makeFakeDb(docs);
+    setDbForTesting(db);
+
+    await assert.rejects(
+      saveLineup.run(authedRequest("u1", { lineup: fullCapLineup(), corpsClass: "worldClass" })),
+      /exceeds this week's 145 point limit for worldClass. Total: 150/
+    );
+    assert.equal(writes.length, 0);
+  });
+
+  test("the cap reaches the full class cap in Championship Week", async () => {
+    // Day 46 = week 7: the same 150-point lineup is legal.
+    const docs = makeRampDocs(46, { worldClass: { lineup: {} } });
+    const { db } = makeFakeDb(docs);
+    setDbForTesting(db);
+
+    const result = await saveLineup.run(
+      authedRequest("u1", { lineup: fullCapLineup(), corpsClass: "worldClass" })
+    );
+    assert.equal(result.success, true);
   });
 
   test("saves an honest lineup under the cap", async () => {

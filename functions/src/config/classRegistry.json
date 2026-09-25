@@ -2,6 +2,7 @@
   "meta": {
     "version": 1,
     "note": "Class-capability registry (Phase 1.1, PODIUM.md). Single source for the policy values that were previously mirrored across ~9 client/server sites: point caps, unlock gates, registration locks, participation rewards, ranking membership, and per-class capabilities. Presentation (labels/colors) stays in src/utils/corps.ts. This file MUST stay byte-identical to src/config/classRegistry.json — run scripts/checkClassRegistrySync.js --check (functions cannot import outside their deploy root, hence the copy).",
+    "pointCapNote": "pointCap is the FULL (finals-week) lineup budget; pointCapRamp is how many points below it the season opens. The budget rises 1 point per week over the season's last pointCapRamp weeks so it reaches pointCap in the final week (150 with ramp 5 over 7 weeks: 145,145,146,147,148,149,150). Both wrappers derive the schedule from these two numbers (pointCapForWeek) — never hand-mirror it.",
     "podiumNote": "podiumClass is LIVE (launched July 2026): enabled here adds it to derived lists (leagues/matchups, participation rewards, registration locks); game-settings/features.podiumClass remains the runtime kill switch. hasLineup:false keeps it out of every lineup/point-cap path."
   },
   "classes": {
@@ -11,6 +12,7 @@
       "aliases": ["worldClass", "world"],
       "capabilities": { "hasLineup": true, "fantasyRanked": true, "usesRehearsal": false, "hasDivisions": false },
       "pointCap": 150,
+      "pointCapRamp": 5,
       "unlockLevel": 10,
       "unlockXp": 10000,
       "unlockCost": 5000,
@@ -23,6 +25,7 @@
       "aliases": ["openClass", "open"],
       "capabilities": { "hasLineup": true, "fantasyRanked": true, "usesRehearsal": false, "hasDivisions": false },
       "pointCap": 120,
+      "pointCapRamp": 5,
       "unlockLevel": 5,
       "unlockXp": 5000,
       "unlockCost": 2500,
@@ -35,6 +38,7 @@
       "aliases": ["aClass"],
       "capabilities": { "hasLineup": true, "fantasyRanked": true, "usesRehearsal": false, "hasDivisions": false },
       "pointCap": 60,
+      "pointCapRamp": 5,
       "unlockLevel": 3,
       "unlockXp": 3000,
       "unlockCost": 1000,
@@ -47,6 +51,7 @@
       "aliases": ["soundSport"],
       "capabilities": { "hasLineup": true, "fantasyRanked": false, "usesRehearsal": false, "hasDivisions": false },
       "pointCap": 90,
+      "pointCapRamp": 5,
       "unlockLevel": 0,
       "unlockXp": 0,
       "unlockCost": 0,
@@ -59,6 +64,7 @@
       "aliases": ["podiumClass", "podium"],
       "capabilities": { "hasLineup": false, "fantasyRanked": false, "usesRehearsal": true, "hasDivisions": true },
       "pointCap": null,
+      "pointCapRamp": null,
       "unlockLevel": 0,
       "unlockXp": 0,
       "unlockCost": 0,

@@ -25,13 +25,15 @@ director-simulation game. **SoundSport is Fantasy Division only.**
 
 | Class           | Format         | Point cap | Notes                                                |
 | --------------- | -------------- | --------- | ---------------------------------------------------- |
-| **SoundSport**  | Fantasy lineup | 90        | Open to everyone; unranked (participation-focused)   |
-| **A Class**     | Fantasy lineup | 60        | Unlock by completing 1 season / Level 3 / 1,000 CC   |
-| **Open Class**  | Fantasy lineup | 120       | Unlock by completing 2 seasons / Level 5 / 2,500 CC  |
-| **World Class** | Fantasy lineup | 150       | Unlock by completing 3 seasons / Level 10 / 5,000 CC |
+| **SoundSport**  | Fantasy lineup | 85 → 90   | Open to everyone; unranked (participation-focused)   |
+| **A Class**     | Fantasy lineup | 55 → 60   | Unlock by completing 1 season / Level 3 / 1,000 CC   |
+| **Open Class**  | Fantasy lineup | 115 → 120 | Unlock by completing 2 seasons / Level 5 / 2,500 CC  |
+| **World Class** | Fantasy lineup | 145 → 150 | Unlock by completing 3 seasons / Level 10 / 5,000 CC |
 
 The four Fantasy Division classes share one lineup-and-scoring engine (draft 8
-captions, score nightly).
+captions, score nightly). Each class's point cap opens 5 below its full value
+and grows 1 point a week from Week 3, reaching the full cap in Championship
+Week — see [`docs/GAMEPLAY.md`](docs/GAMEPLAY.md#classes).
 
 ### Podium Division
 

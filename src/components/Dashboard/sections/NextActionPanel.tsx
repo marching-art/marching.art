@@ -30,6 +30,7 @@ import {
   MoonStar,
   Music,
   Palette,
+  TrendingUp,
   Trophy,
   type LucideIcon,
 } from 'lucide-react';
@@ -42,6 +43,7 @@ const ICONS: Record<NextActionId, LucideIcon> = {
   register_corps: Trophy,
   season_complete: Flag,
   complete_lineup: Music,
+  spend_budget: TrendingUp,
   lineup_locked: Lock,
   register_shows: Calendar,
   claim_reward: Gift,

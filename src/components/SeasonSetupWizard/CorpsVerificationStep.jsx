@@ -14,7 +14,7 @@ import {
   Unlock,
 } from 'lucide-react';
 import { sortCorpsEntriesByClass } from '../../utils/corps';
-import { POINT_LIMITS, getCorpsClassName } from './constants';
+import { formatPointCapRange, getCorpsClassName } from './constants';
 
 /**
  * @typedef {{ corpsName?: string, location?: string }} ExistingCorps
@@ -260,7 +260,9 @@ const CorpsVerificationStep = ({
                         <span className="text-[10px] font-bold text-muted uppercase tracking-wider block mb-1">
                           {getCorpsClassName(classId)}
                         </span>
-                        <p className="text-xs text-muted">{POINT_LIMITS[classId]} point budget</p>
+                        <p className="text-xs text-muted">
+                          {formatPointCapRange(classId)} point budget
+                        </p>
                       </div>
                     </div>
 
