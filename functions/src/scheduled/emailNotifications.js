@@ -9,6 +9,7 @@ const { FieldValue } = require("firebase-admin/firestore");
 const { getAuth } = require("firebase-admin/auth");
 const { getDb } = require("../config");
 const { paths } = require("../helpers/paths");
+const { profileDataDocs } = require("../helpers/profileScan");
 const {
   sendStreakBrokenEmail,
   sendRivalContextEmail,
@@ -309,10 +310,13 @@ exports.weeklyDigestEmailJob = onSchedule(
         }
 
         lastDoc = snapshot.docs[snapshot.docs.length - 1];
+        // Only this namespace's profile/data docs — never the profile/public
+        // mirror the same collection group returns.
+        const pageDocs = profileDataDocs(snapshot.docs);
 
         // One batched Auth lookup per page instead of a getUser() per user.
         const emailByUid = await getUserEmails(
-          snapshot.docs.map((doc) => doc.ref.parent.parent.id),
+          pageDocs.map((doc) => doc.ref.parent.parent.id),
         );
 
         const processUser = async (doc) => {
@@ -377,8 +381,8 @@ exports.weeklyDigestEmailJob = onSchedule(
           return { status: "sent" };
         };
 
-        for (let i = 0; i < snapshot.docs.length; i += PARALLEL_LIMIT) {
-          const chunk = snapshot.docs.slice(i, i + PARALLEL_LIMIT);
+        for (let i = 0; i < pageDocs.length; i += PARALLEL_LIMIT) {
+          const chunk = pageDocs.slice(i, i + PARALLEL_LIMIT);
           const results = await Promise.allSettled(chunk.map(processUser));
 
           for (const result of results) {
@@ -462,10 +466,13 @@ exports.winBackEmailJob = onSchedule(
         }
 
         lastDoc = snapshot.docs[snapshot.docs.length - 1];
+        // Only this namespace's profile/data docs — never the profile/public
+        // mirror the same collection group returns.
+        const pageDocs = profileDataDocs(snapshot.docs);
 
         // One batched Auth lookup per page instead of a getUser() per user.
         const emailByUid = await getUserEmails(
-          snapshot.docs.map((doc) => doc.ref.parent.parent.id),
+          pageDocs.map((doc) => doc.ref.parent.parent.id),
         );
 
         // OPTIMIZATION: Process users in parallel chunks instead of sequentially
@@ -521,8 +528,8 @@ exports.winBackEmailJob = onSchedule(
         };
 
         // Process batch in parallel chunks
-        for (let i = 0; i < snapshot.docs.length; i += PARALLEL_LIMIT) {
-          const chunk = snapshot.docs.slice(i, i + PARALLEL_LIMIT);
+        for (let i = 0; i < pageDocs.length; i += PARALLEL_LIMIT) {
+          const chunk = pageDocs.slice(i, i + PARALLEL_LIMIT);
           const results = await Promise.allSettled(chunk.map(processUser));
 
           for (const result of results) {
@@ -601,10 +608,13 @@ exports.streakBrokenEmailJob = onSchedule(
         }
 
         lastDoc = snapshot.docs[snapshot.docs.length - 1];
+        // Only this namespace's profile/data docs — never the profile/public
+        // mirror the same collection group returns.
+        const pageDocs = profileDataDocs(snapshot.docs);
 
         // One batched Auth lookup per page instead of a getUser() per user.
         const emailByUid = await getUserEmails(
-          snapshot.docs.map((doc) => doc.ref.parent.parent.id),
+          pageDocs.map((doc) => doc.ref.parent.parent.id),
         );
 
         // OPTIMIZATION: Process users in parallel chunks instead of sequentially
@@ -682,8 +692,8 @@ exports.streakBrokenEmailJob = onSchedule(
         };
 
         // Process batch in parallel chunks
-        for (let i = 0; i < snapshot.docs.length; i += PARALLEL_LIMIT) {
-          const chunk = snapshot.docs.slice(i, i + PARALLEL_LIMIT);
+        for (let i = 0; i < pageDocs.length; i += PARALLEL_LIMIT) {
+          const chunk = pageDocs.slice(i, i + PARALLEL_LIMIT);
           const results = await Promise.allSettled(chunk.map(processUser));
 
           for (const result of results) {

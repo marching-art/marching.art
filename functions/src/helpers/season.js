@@ -12,6 +12,7 @@ const { resetLeaguesForNewSeason } = require("./leagueSeasonReset");
 const { archiveSeasonResultsLogic } = require("./leagueArchival");
 const { fetchSeasonParticipation, corpsSeason } = require("./seasonParticipation");
 const { paths } = require("./paths");
+const { profileDataDocs } = require("./profileScan");
 const {
   seasonDetailId,
   splitSeasonRecord,
@@ -135,22 +136,25 @@ function keepBestSeasonAward(awards) {
 
 async function archiveAndResetProfiles(db, oldSeasonUid, newSeasonUid) {
   const profilesQuery = db.collectionGroup("profile").where("activeSeasonId", "==", oldSeasonUid);
-  const profilesSnapshot = await profilesQuery.get();
+  // Pin to this namespace's profile/data docs: the group also returns every
+  // profile/public mirror, which would double each class ranking, pay every
+  // season-finish bonus twice and write the reset onto the mirror itself.
+  const profileDocs = profileDataDocs((await profilesQuery.get()).docs);
 
-  if (profilesSnapshot.empty) return;
+  if (profileDocs.length === 0) return;
 
   // What every corps actually did, from the recap days — one read of at most
   // 49 documents, shared by every profile below.
   const participation = await fetchSeasonParticipation(db, oldSeasonUid);
 
-  logger.info(`Resetting ${profilesSnapshot.size} user profiles from season ${oldSeasonUid}...`);
+  logger.info(`Resetting ${profileDocs.length} user profiles from season ${oldSeasonUid}...`);
 
   // Build class rankings from all profiles before archiving.
   // Keyed by the user's uid (doc.ref.parent.parent.id) — every profile doc in
   // the collectionGroup has the same doc.id ("data"), so keying by doc.id
   // made findIndex match the first entry and archived placement 1 for everyone.
   const classRankings = {}; // Map<classKey, Array<{uid, totalSeasonScore, corpsName, displayName}>>
-  for (const doc of profilesSnapshot.docs) {
+  for (const doc of profileDocs) {
     const uid = doc.ref.parent.parent.id;
     const profileData = doc.data();
     const corpsData = profileData.corps || {};
@@ -181,7 +185,7 @@ async function archiveAndResetProfiles(db, oldSeasonUid, newSeasonUid) {
   let batch = db.batch();
   let opCount = 0; // counts every write in the batch (profile + coin history)
 
-  for (const doc of profilesSnapshot.docs) {
+  for (const doc of profileDocs) {
     const uid = doc.ref.parent.parent.id;
     const profileData = doc.data();
     const corpsData = profileData.corps || {};

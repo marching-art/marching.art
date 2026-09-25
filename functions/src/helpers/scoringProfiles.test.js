@@ -5,10 +5,14 @@
 //
 // Fake query modeled on firestorePaging.test.js, extended with the
 // where/select chain fetchAllActiveProfiles builds before paging begins.
+process.env.DATA_NAMESPACE = process.env.DATA_NAMESPACE || "test-ns";
+
 const { test, describe } = require("node:test");
 const assert = require("node:assert/strict");
 
 const { fetchAllActiveProfiles } = require("./scoring");
+
+const NS = process.env.DATA_NAMESPACE;
 
 // A fake collection-group query over in-memory profile docs. Records the
 // where/select calls; cursor paging slices the array by id order, exactly like
@@ -36,7 +40,12 @@ function fakeDb(items, calls) {
         docs: slice.map((d) => ({
           id: d.id,
           data: () => ({ corps: d.corps }),
-          ref: { parent: { parent: { id: d.uid } } },
+          ref: {
+            // users/{uid}/profile/data, or the profile/public mirror sibling
+            // the same collection group returns (docId "public").
+            path: `artifacts/${NS}/users/${d.uid}/profile/${d.docId || "data"}`,
+            parent: { parent: { id: d.uid } },
+          },
         })),
       };
     },
@@ -86,6 +95,22 @@ describe("fetchAllActiveProfiles", () => {
     assert.equal(snapshot.docs[0].data().corps.worldClass.corpsName, "Corps 0");
     assert.equal(snapshot.docs[0].ref.parent.parent.id, "user0");
     assert.equal(snapshot.docs[1].ref.parent.parent.id, "user1");
+  });
+
+  test("drops each director's profile/public mirror so nobody is scored twice", async () => {
+    const calls = mkCalls();
+    const withMirrors = mkProfiles(3).flatMap((p) => [
+      p,
+      { ...p, id: `${p.id}-public`, docId: "public" },
+    ]);
+    const snapshot = await fetchAllActiveProfiles(fakeDb(withMirrors, calls), "s2026");
+
+    assert.equal(snapshot.size, 3);
+    assert.deepEqual(
+      snapshot.docs.map((doc) => doc.ref.parent.parent.id),
+      ["user0", "user1", "user2"],
+    );
+    assert.ok(snapshot.docs.every((doc) => doc.ref.path.endsWith("/profile/data")));
   });
 
   test("reports empty when no profiles match", async () => {

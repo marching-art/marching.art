@@ -50,6 +50,7 @@ const {
 } = require("./scoringRunGuard");
 const { settleLeaguePoolsForDay } = require("./leaguePools");
 const { processAllInPages } = require("./firestorePaging");
+const { profileDataDocs } = require("./profileScan");
 const { publishSeasonSummaryRequest } = require("./newsSeasonSummaryTrigger");
 const {
   isTwoNightShow,
@@ -127,7 +128,13 @@ async function fetchAllActiveProfiles(db, seasonUid) {
   const profilesQuery = db.collectionGroup("profile")
     .where("activeSeasonId", "==", seasonUid)
     .select("corps", "username", "displayName");
-  const docs = await processAllInPages(profilesQuery, PROFILE_PAGE_SIZE, async (doc) => doc);
+  // The group also returns each director's profile/public mirror (same
+  // activeSeasonId + corps map, lineups stripped): the per-corps scoring loop
+  // skips it for lack of a lineup, but the nightly class rankings would count
+  // every corps twice (seasonRankOf doubled). Pin to profile/data.
+  const docs = profileDataDocs(
+    await processAllInPages(profilesQuery, PROFILE_PAGE_SIZE, async (doc) => doc),
+  );
   return { docs, size: docs.length, empty: docs.length === 0 };
 }
 

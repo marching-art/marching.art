@@ -8,6 +8,7 @@ const { logger } = require("firebase-functions/v2");
 const { normalizeCorpsName, pickDuplicateWinner, CORPS_NAME_CLASSES } = require("../helpers/corpsHelpers");
 const { assertAuth, assertAdmin } = require("../helpers/callableGuards");
 const { processAllInPages } = require("../helpers/firestorePaging");
+const { isProfileDataDoc } = require("../helpers/profileScan");
 
 /**
  * Detect corps in this user's profile that must be renamed because they share
@@ -73,6 +74,10 @@ exports.sweepDuplicateCorps = onCall({ cors: true, timeoutSeconds: 540, memory: 
       db.collectionGroup("profile").select("corps"),
       300,
       async (profileDoc) => {
+        // profile/data only: the group also returns each director's
+        // profile/public mirror, whose corps carry the same names — every
+        // corps would "collide" with its own mirror and be flagged to rename.
+        if (!isProfileDataDoc(profileDoc)) return;
         const data = profileDoc.data();
         const profileUid = profileDoc.ref.parent.parent?.id;
         if (!profileUid) return;

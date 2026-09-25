@@ -17,6 +17,7 @@ const {
 const { buildTakeTheFieldPushes } = require("../helpers/performancePush");
 const { getCurrentSeasonWeek, getCompletedCalendarDay, toCompetitionDay } = require("../helpers/gameDay");
 const { processAllInPages } = require("../helpers/firestorePaging");
+const { isProfileDataDoc } = require("../helpers/profileScan");
 const { FANTASY_CLASSES } = require("../helpers/classRegistry");
 const { buildScoreDropPushes } = require("../helpers/scoreDrop");
 const { getLineupLockContext, buildLineupLockPushes } = require("../helpers/lineupReminders");
@@ -108,7 +109,10 @@ exports.showReminderPushJob = onSchedule(
         .where("activeSeasonId", "==", season.seasonUid)
         .select("corps");
       await processAllInPages(profilesQuery, 500, async (profileDoc) => {
-        // profile/data lives under artifacts/{ns}/users/{uid}/profile/data
+        // profile/data lives under artifacts/{ns}/users/{uid}/profile/data;
+        // the group also returns the profile/public mirror — one reminder
+        // per director, not two.
+        if (!isProfileDataDoc(profileDoc)) return;
         const uid = profileDoc.ref.parent.parent?.id;
         if (!uid) return;
         const profile = profileDoc.data();
@@ -516,10 +520,15 @@ exports.lineupLockReminderPushJob = onSchedule(
         .collectionGroup("profile")
         .where("activeSeasonId", "==", season.seasonUid)
         .select("corps");
-      const profiles = await processAllInPages(profilesQuery, 500, async (doc) => ({
-        uid: doc.ref.parent.parent?.id,
-        corps: doc.data().corps || {},
-      }));
+      // Skip the profile/public mirrors the group also returns — one lock
+      // reminder per director, not two.
+      const profiles = (
+        await processAllInPages(profilesQuery, 500, async (doc) =>
+          isProfileDataDoc(doc)
+            ? { uid: doc.ref.parent.parent?.id, corps: doc.data().corps || {} }
+            : null,
+        )
+      ).filter(Boolean);
 
       const pushes = buildLineupLockPushes(context, profiles, season.seasonUid);
 
@@ -775,7 +784,7 @@ exports.streakAtRiskPushJob = onSchedule(
         lastDoc = snapshot.docs[snapshot.docs.length - 1];
         candidates += snapshot.docs.length;
 
-        const profiles = snapshot.docs.map((doc) => ({
+        const profiles = snapshot.docs.filter(isProfileDataDoc).map((doc) => ({
           uid: doc.ref.parent.parent?.id,
           ...doc.data(),
         }));

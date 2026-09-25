@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 /**
  * GuestDashboard - Read-Only Dashboard for Guest Preview Mode
  *
@@ -52,6 +51,8 @@ import RecentResultsFeed from '../components/Dashboard/sections/RecentResultsFee
 import RivalsPanel from '../components/Dashboard/sections/RivalsPanel';
 import AchievementTrackerPanel from '../components/Dashboard/sections/AchievementTrackerPanel';
 import { CAPTIONS as CAPTION_DEFS } from '../data/captions';
+
+/** @typedef {import('../components/GuestPreview/GuestLineupPicker').PickerCorps} PickerCorps */
 import { formatEventName } from '../utils/season';
 
 const STARTER_BUDGET = 90; // Same 90-pt SoundSport budget onboarding drafts under
@@ -69,6 +70,9 @@ const CAPTIONS = CAPTION_DEFS.map((c) => ({
   category: c.group,
   fullName: c.fullName,
 }));
+
+/** The guest page's caption shape (id doubles as the short name). */
+/** @typedef {(typeof CAPTIONS)[number]} GuestCaption */
 
 // =============================================================================
 // GUEST HEADER COMPONENT
@@ -134,6 +138,16 @@ const GuestHeader = () => {
 // LINEUP ROW COMPONENT (draftable)
 // =============================================================================
 
+/**
+ * @param {{
+ *   caption: GuestCaption,
+ *   value: string | null | undefined,
+ *   pointsCost: number | null,
+ *   isLast: boolean,
+ *   isPlayable: boolean,
+ *   onClick: () => void,
+ * }} props
+ */
 const LineupRow = ({ caption, value, pointsCost, isLast, isPlayable, onClick }) => {
   const hasValue = !!value;
   const [corpsName, sourceYear] = hasValue ? value.split('|') : [null, null];
@@ -205,8 +219,11 @@ const LineupRow = ({ caption, value, pointsCost, isLast, isPlayable, onClick }) 
 // callable; a guest has no profile, so this read-only version shows the same
 // catalog with one pre-completed and routes taps to the registration gate.
 
-const DEMO_CHALLENGE_DAY = 5;
+// Seed for the demo's fixed trio of challenges (getChallengesForGameDay hashes
+// a game-day string; a number here hashed to 0 by accident).
+const DEMO_CHALLENGE_DAY = 'demo-day-5';
 
+/** @param {{ onGate: (gateType: string) => void }} props */
 const DemoDailyChallenges = ({ onGate }) => {
   const challenges = getChallengesForGameDay(DEMO_CHALLENGE_DAY) || [];
   const completedIds = new Set(challenges.slice(0, 1).map((c) => c.id));
@@ -285,6 +302,13 @@ const CLASS_PERKS = {
   worldClass: 'The complete competitive experience',
 };
 
+/**
+ * @param {{
+ *   unlockedClasses: string[],
+ *   activeCorpsClass: string,
+ *   onGate: (gateType: string) => void,
+ * }} props
+ */
 const ClassProgressionPanel = ({ unlockedClasses, activeCorpsClass, onGate }) => (
   <div className="bg-surface-card border border-line rounded-none overflow-hidden">
     <div className="bg-surface-raised px-4 py-3 border-b border-line">
@@ -393,10 +417,10 @@ const GuestDashboard = () => {
   const { data: corpsValues } = useCorpsValues(seasonUid);
   const availableCorps = useMemo(
     // Mirror onboarding's availability filter (points <= 50)
-    () => (corpsValues ?? []).filter((c) => (c.points || 0) <= 50),
+    () => /** @type {PickerCorps[]} */ ((corpsValues ?? []).filter((c) => (c.points || 0) <= 50)),
     [corpsValues]
   );
-  const [pickerCaption, setPickerCaption] = useState(null);
+  const [pickerCaption, setPickerCaption] = useState(/** @type {GuestCaption | null} */ (null));
   const [engagementGateShown, setEngagementGateShown] = useState(false);
 
   // Mark preview as started on mount
@@ -405,6 +429,7 @@ const GuestDashboard = () => {
   }, [startPreview]);
 
   // Handle gated action clicks
+  /** @param {string} gateType */
   const handleGatedClick = (gateType) => {
     trackInteraction(gateType);
     setGateModal({ isOpen: true, type: gateType });
@@ -428,6 +453,7 @@ const GuestDashboard = () => {
     : 0;
 
   // Open the draft picker for a caption (or gate when corps didn't load)
+  /** @param {GuestCaption} caption */
   const handleLineupClick = (caption) => {
     trackInteraction('lineup');
     if (isPlayable) {
@@ -449,8 +475,13 @@ const GuestDashboard = () => {
 
   // A pick was made: advance to the next empty caption, or celebrate a
   // complete draft with the save-progress prompt.
+  /**
+   * @param {string} captionId
+   * @param {string} value
+   */
   const handlePickerSelect = (captionId, value) => {
     updateGuestLineup(captionId, value);
+    /** @type {Record<string, string>} */
     const nextLineup = { ...(guestLineup || {}), [captionId]: value };
     const nextEmpty = CAPTIONS.find((c) => !nextLineup[c.id]);
     if (nextEmpty) {
@@ -473,7 +504,6 @@ const GuestDashboard = () => {
 
   // Caption count powering AchievementTracker (guest's draft
   // progress while drafting, the full demo lineup otherwise).
-  const lineupCount = isDrafting ? draftPickCount : Object.keys(demoCorps.lineup || {}).length;
 
   // Shapes the reused dashboard components expect.
   const recentResultsForFeed = demoRecentScores.map((show) => ({
@@ -707,12 +737,7 @@ const GuestDashboard = () => {
               <RivalsPanel rivals={demoRivals} corpsClass="soundSport" />
 
               {/* Achievement Tracker — real progress-to-next-achievement widget */}
-              <AchievementTrackerPanel
-                profile={demoProfile}
-                lineupCount={lineupCount}
-                resultCount={demoRecentScores.length}
-                leagueCount={0}
-              />
+              <AchievementTrackerPanel profile={demoProfile} />
 
               {/* Join League CTA */}
               <button

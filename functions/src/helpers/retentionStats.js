@@ -25,8 +25,8 @@
  */
 
 const { logger } = require("firebase-functions/v2");
-const { paths } = require("./paths");
 const { processAllInPages } = require("./firestorePaging");
+const { profileDataDocs } = require("./profileScan");
 
 const STATS_DOC = "admin-stats/retention";
 
@@ -217,9 +217,9 @@ async function computeRetentionStats(db, { now = new Date() } = {}) {
   const query = db.collectionGroup("profile").select(...PROJECTED_FIELDS);
   const docs = await processAllInPages(query, 1000, async (doc) => doc);
 
-  const usersPrefix = `${paths.users()}/`;
-  const profiles = docs
-    .filter((doc) => doc.ref.path.startsWith(usersPrefix))
+  // profile/data only — the group also returns each profile/public mirror,
+  // which would count every director twice.
+  const profiles = profileDataDocs(docs)
     .map((doc) => doc.data());
 
   return summarizeRetention(profiles, now);

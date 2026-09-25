@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-09-25-rivals-one-row-per-director",
+    "date": "2026-09-25",
+    "title": "Rivals, rankings and reminders count every director once",
+    "category": "fix",
+    "summary": "The Rivals card on your dashboard no longer lists the same director twice or leaves a slot taken by a repeat — your three closest competitors are three different corps, in both divisions. The same fix reaches everything built from a scan of every director's profile.",
+    "highlights": [
+      "Rivals: one row per rival, with the score gap measured against your current total.",
+      "Nightly class standings show the true field size — \"of N\" no longer counts anyone twice.",
+      "Show-day and lineup-lock reminders arrive once per director, and the season-end recap pays each finish bonus exactly once.",
+      "Community report — thank you for the screenshot."
+    ]
+  },
+  {
     "id": "2026-09-24-dashboard-fixed-event-names",
     "date": "2026-09-24",
     "title": "The dashboard names the majors and Championship Week rounds correctly",
