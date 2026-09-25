@@ -25,6 +25,7 @@ const { paths } = require("../helpers/paths");
 const { assertAuth, hasAdminClaim, assertWriteBudget, assertDocId } = require("../helpers/callableGuards");
 const { createLeagueActivity } = require("../helpers/leagueHelpers");
 const { createUserNotification } = require("../helpers/userNotifications");
+const { parseLeagueIdentity, leagueGameMode } = require("../helpers/leagueIdentity");
 const {
   isLeagueCommissioner,
   isLeagueOwner,
@@ -39,8 +40,26 @@ const MAX_ANNOUNCEMENT_LENGTH = 280;
 const MIN_MAX_MEMBERS = 2;
 const MAX_MAX_MEMBERS = 50;
 
-/** League "vibe" tags, the taxonomy the discovery cards already render. */
-const LEAGUE_TAGS = ["competitive", "casual", "roleplay", "dynasty"];
+/**
+ * League "vibe" tags, the taxonomy the discovery cards already render.
+ * "roleplay" is retired: the roleplay level (helpers/leagueIdentity.js) says
+ * how much roleplay a league runs, where the tag could only say "some".
+ */
+const LEAGUE_TAGS = ["competitive", "casual", "dynasty"];
+
+/** Member-facing names for the activity feed's "updated: …" line. */
+const SETTING_LABELS = {
+  name: "name",
+  description: "description",
+  isPublic: "visibility",
+  maxMembers: "member cap",
+  tag: "league type",
+  gameMode: "game mode",
+  roleplay: "roleplay style",
+  lore: "league lore",
+  finalsSize: "Finals spots",
+  announcement: "pinned announcement",
+};
 
 /**
  * Validate the client's patch and return only the fields that actually change.
@@ -134,7 +153,10 @@ function buildLeagueSettingsUpdate(patch, league) {
     }
   }
 
-  if (patch.tag !== undefined) {
+  // A league still carrying the retired "roleplay" tag may keep it until its
+  // commissioner sets a roleplay level (below clears it then); it just can't
+  // be newly chosen.
+  if (patch.tag !== undefined && !(patch.tag === "roleplay" && league.tag === "roleplay")) {
     if (patch.tag !== null && !LEAGUE_TAGS.includes(patch.tag)) {
       throw new HttpsError(
         "invalid-argument",
@@ -144,6 +166,45 @@ function buildLeagueSettingsUpdate(patch, league) {
     if (patch.tag !== league.tag) {
       updates.tag = patch.tag;
       note("tag", league.tag, patch.tag);
+    }
+  }
+
+  const identity = parseLeagueIdentity(patch);
+  if (identity.gameMode !== undefined) {
+    // Takes effect from the next week the generator draws: weeks already
+    // paired keep their matchups.
+    const current = leagueGameMode(league);
+    if (identity.gameMode !== current) {
+      updates["settings.gameMode"] = identity.gameMode;
+      note("gameMode", current, identity.gameMode);
+    }
+  }
+  if (identity.roleplay !== undefined) {
+    const current = league.roleplay || null;
+    const next = identity.roleplay;
+    const same =
+      (current === null && next === null) ||
+      (current !== null &&
+        next !== null &&
+        current.level === next.level &&
+        (current.expectations || "") === next.expectations);
+    if (!same) {
+      updates.roleplay = next;
+      note("roleplay", current ? current.level : null, next ? next.level : null);
+    }
+    // One roleplay signal, not two: a level supersedes the retired tag.
+    if (next && league.tag === "roleplay" && updates.tag === undefined) {
+      updates.tag = null;
+      note("tag", "roleplay", null);
+    }
+  }
+  if (identity.lore !== undefined) {
+    const current = league.lore || "";
+    if (identity.lore !== current) {
+      updates.lore = identity.lore;
+      // The lore itself can run to thousands of characters; the activity
+      // feed only needs to know it changed.
+      note("lore", current ? "set" : null, identity.lore ? "updated" : null);
     }
   }
 
@@ -229,7 +290,9 @@ exports.updateLeagueSettings = onCall({ cors: true }, async (request) => {
   await createLeagueActivity(db, leagueId, {
     type: "settings_changed",
     title: "League Settings Updated",
-    message: `The commissioner updated: ${changes.map((c) => c.field).join(", ")}.`,
+    message: `The commissioner updated: ${changes
+      .map((c) => SETTING_LABELS[c.field] || c.field)
+      .join(", ")}.`,
     userId: uid,
     metadata: { changes },
   });

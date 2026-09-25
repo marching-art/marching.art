@@ -44,6 +44,8 @@ export interface LeagueDetailHeaderProps {
   userStats?: LeagueMemberStanding;
   tabs: LeagueDetailTab[];
   activeTab: string;
+  /** Which game the league plays / its roleplay style, as badges. */
+  identity?: React.ReactNode;
   onBack?: () => void;
   onOpenSettings: () => void;
   onLeaveClick: () => void;
@@ -58,6 +60,7 @@ const LeagueDetailHeader = ({
   isCommissioner,
   inviteCode,
   inviteCopied,
+  identity,
   userStats,
   tabs,
   activeTab,
@@ -127,6 +130,7 @@ const LeagueDetailHeader = ({
               <Calendar className="w-3 h-3" />
               Wk {currentWeek}
             </span>
+            {identity && <span className="hidden sm:flex items-center gap-1.5">{identity}</span>}
           </div>
         </div>
 

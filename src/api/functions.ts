@@ -5,6 +5,7 @@
 // Usage: import { registerCorps, claimDailyLogin } from '@/api/functions';
 
 import { createCallable } from './callable';
+import type { LeagueGameMode, LeagueRoleplay } from '../types';
 
 // Article reactions, comments, engagement and admin moderation wrappers live in
 // a separate module to keep this file under the max-lines guardrail.
@@ -491,6 +492,12 @@ export const updateLeagueSettings = createCallable<
       isPublic?: boolean;
       maxMembers?: number;
       tag?: string | null;
+      /** Which game the league plays (fantasy / podium / both). */
+      gameMode?: LeagueGameMode;
+      /** How roleplay fits in, or null to clear it. */
+      roleplay?: LeagueRoleplay | null;
+      /** The league's setting / storyline bible; empty text clears it. */
+      lore?: string;
       finalsSize?: number;
       /** Pinned note, or null to unpin. */
       announcement?: string | null;

@@ -72,6 +72,38 @@ describe('CreateLeagueModal', () => {
     expect(onOpenLeague).toHaveBeenCalledWith('league-1');
   });
 
+  it('sends the chosen game and roleplay style with the league', async () => {
+    const onCreate = vi.fn().mockResolvedValue({ success: true, leagueId: 'league-1' });
+    render(<CreateLeagueModal onClose={() => {}} onCreate={onCreate} />);
+
+    fireEvent.click(screen.getByRole('radio', { name: /Podium only/ }));
+    fireEvent.click(screen.getByRole('radio', { name: /Roleplay welcome/ }));
+    fireEvent.change(screen.getByLabelText('What participation means'), {
+      target: { value: '  Storylines on show nights.  ' },
+    });
+    await fillNameAndSubmit();
+
+    await waitFor(() => expect(onCreate).toHaveBeenCalled());
+    expect(onCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        settings: expect.objectContaining({ gameMode: 'podium' }),
+        roleplay: { level: 'optional', expectations: 'Storylines on show nights.' },
+      })
+    );
+  });
+
+  it('plays both games and states no roleplay style unless chosen', async () => {
+    const onCreate = vi.fn().mockResolvedValue({ success: true, leagueId: 'league-1' });
+    render(<CreateLeagueModal onClose={() => {}} onCreate={onCreate} />);
+
+    await fillNameAndSubmit();
+
+    await waitFor(() => expect(onCreate).toHaveBeenCalled());
+    const sent = onCreate.mock.calls[0][0];
+    expect(sent.settings.gameMode).toBe('both');
+    expect(sent.roleplay).toBeUndefined();
+  });
+
   it('stays on the form when creation fails', async () => {
     const onCreate = vi.fn().mockRejectedValue(new Error('League name already taken'));
     render(<CreateLeagueModal onClose={() => {}} onCreate={onCreate} />);

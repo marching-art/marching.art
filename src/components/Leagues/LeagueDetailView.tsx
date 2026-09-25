@@ -8,7 +8,7 @@
 
 import React, { useState, useMemo, useCallback, useEffect, lazy, Suspense } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { Swords, MessageSquare, BarChart3, Bell, Pin } from 'lucide-react';
+import { Swords, MessageSquare, BarChart3, Bell, Pin, BookOpen } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 // Import tab components
@@ -28,6 +28,7 @@ import { useLeagueChat } from '../../hooks/useLeagueChat';
 import { LeaveLeagueModal } from './LeagueDetailViewParts';
 import LeagueDetailHeader from './LeagueDetailHeader';
 import LeaguePoolCard from './LeaguePoolCard';
+import { LeagueCharter, LeagueIdentityBadges } from './LeagueIdentity';
 import { isLeagueCommissioner, isLeagueOwner } from '../../utils/leaguePermissions';
 import type { CaptionsBlock } from '../../utils/captionWars';
 import type { LeagueChampionEntry } from './LeagueHallOfFame';
@@ -241,6 +242,8 @@ const LeagueDetailView = ({
       badge: unreadCount > 0,
       badgeCount: unreadCount,
     },
+    // Which game the league plays, how roleplay fits in, and its lore.
+    { id: 'league', label: 'League', icon: BookOpen },
   ];
 
   return (
@@ -256,6 +259,7 @@ const LeagueDetailView = ({
         userStats={userStats}
         tabs={tabs}
         activeTab={activeTab}
+        identity={<LeagueIdentityBadges league={league} />}
         onBack={onBack}
         onOpenSettings={() => selectTab('settings')}
         onLeaveClick={() => setShowLeaveModal(true)}
@@ -399,6 +403,16 @@ const LeagueDetailView = ({
               onDelete={deleteMessage}
               onReport={reportMessage}
             />
+          )}
+          {activeTab === 'league' && (
+            <div key="league" className="p-4">
+              <div className="bg-surface-card border border-line p-4">
+                <LeagueCharter
+                  league={league}
+                  onEdit={isCommissioner ? () => selectTab('settings') : undefined}
+                />
+              </div>
+            </div>
           )}
           {activeTab === 'settings' && isCommissioner && (
             <SettingsTab

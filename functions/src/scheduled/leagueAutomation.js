@@ -46,6 +46,7 @@ const {
 // Corps class configuration — registry-derived (Phase 7.4) so Podium joins
 // automated matchup generation when its registry entry enables at launch.
 const { MATCHUP_CLASSES: CORPS_CLASSES } = require("../helpers/classRegistry");
+const { leagueMatchupClasses } = require("../helpers/leagueIdentity");
 
 /**
  * Calculate current week number from season start date
@@ -180,12 +181,15 @@ exports.generateWeeklyMatchups = onSchedule(
           // odd counts handed out meaningless byes. See helpers/leagueActivity.js.
           const membersByClass = Object.fromEntries(CORPS_CLASSES.map((c) => [c, []]));
 
+          // A Fantasy-only or Podium-only league pairs only its game's
+          // classes (helpers/leagueIdentity.js); the rest are written empty.
+          const pairedClasses = leagueMatchupClasses(league);
           profileDocs.forEach((doc, index) => {
             const memberId = members[index];
             if (doc.exists) {
               const profileData = doc.data();
 
-              for (const corpsClass of CORPS_CLASSES) {
+              for (const corpsClass of pairedClasses) {
                 if (isClassActiveThisSeason(profileData, corpsClass, seasonUid)) {
                   membersByClass[corpsClass].push(memberId);
                 }
@@ -464,11 +468,12 @@ exports.triggerMatchupGeneration = onCall(
     // scheduled generator (see helpers/leagueActivity.js).
     const membersByClass = Object.fromEntries(CORPS_CLASSES.map((c) => [c, []]));
 
+    const pairedClasses = leagueMatchupClasses(league);
     profileDocs.forEach((doc, index) => {
       const memberId = members[index];
       if (doc.exists) {
         const profileData = doc.data();
-        for (const corpsClass of CORPS_CLASSES) {
+        for (const corpsClass of pairedClasses) {
           if (isClassActiveThisSeason(profileData, corpsClass, seasonUid)) {
             membersByClass[corpsClass].push(memberId);
           }

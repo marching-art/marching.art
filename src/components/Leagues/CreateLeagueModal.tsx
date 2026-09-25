@@ -10,6 +10,8 @@ import { useEscapeKey } from '../../hooks/useEscapeKey';
 import type { LeagueCreationData } from '../../types';
 import type { CreateLeagueResult } from '../../api/leagues';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
+import LeagueIdentityFields, { type LeagueIdentityValue } from './LeagueIdentityFields';
+import { LeagueIdentityBadges } from './LeagueIdentity';
 
 /** Exactly what createLeague accepts — no prizePool, which is server escrow. */
 type LeagueFormData = LeagueCreationData & {
@@ -50,6 +52,15 @@ const CreateLeagueModal = ({ onClose, onCreate, onOpenLeague }: CreateLeagueModa
       entryFee: 0,
     },
   });
+  // Which game the league plays and how roleplay fits in — asked up front so a
+  // league is never listed without saying what kind of room it is. Lore is
+  // written later, from Settings.
+  const [identity, setIdentity] = useState<LeagueIdentityValue>({
+    gameMode: 'both',
+    roleplayLevel: null,
+    expectations: '',
+    lore: '',
+  });
   const [processing, setProcessing] = useState(false);
   const [createdLeague, setCreatedLeague] = useState<CreatedLeague | null>(null);
   const [copied, setCopied] = useState(false);
@@ -59,9 +70,21 @@ const CreateLeagueModal = ({ onClose, onCreate, onOpenLeague }: CreateLeagueModa
     setProcessing(true);
 
     try {
-      const result = await onCreate(formData);
-      setCreatedLeague({
+      const submitted: LeagueFormData = {
         ...formData,
+        settings: { ...formData.settings, gameMode: identity.gameMode },
+        ...(identity.roleplayLevel
+          ? {
+              roleplay: {
+                level: identity.roleplayLevel,
+                expectations: identity.roleplayLevel === 'none' ? '' : identity.expectations.trim(),
+              },
+            }
+          : {}),
+      };
+      const result = await onCreate(submitted);
+      setCreatedLeague({
+        ...submitted,
         inviteCode: result?.inviteCode,
         leagueId: result?.leagueId,
       });
@@ -167,6 +190,13 @@ const CreateLeagueModal = ({ onClose, onCreate, onOpenLeague }: CreateLeagueModa
                       className="w-full h-10 px-3 bg-background border border-line rounded-none text-sm text-white placeholder-muted focus:outline-none focus:border-interactive"
                     />
                   </div>
+
+                  <LeagueIdentityFields
+                    idPrefix="create-league"
+                    value={identity}
+                    onChange={(patch) => setIdentity((prev) => ({ ...prev, ...patch }))}
+                    stacked
+                  />
 
                   {/* Public/Private Toggle */}
                   <div>
@@ -327,6 +357,11 @@ const CreateLeagueModal = ({ onClose, onCreate, onOpenLeague }: CreateLeagueModa
                     <span>•</span>
                     <span>{formData.maxMembers} max</span>
                   </div>
+                  {createdLeague && (
+                    <div className="flex items-center justify-center gap-1.5 mt-2">
+                      <LeagueIdentityBadges league={createdLeague} />
+                    </div>
+                  )}
                 </div>
 
                 {createdLeague?.inviteCode ? (
