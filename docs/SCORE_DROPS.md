@@ -199,3 +199,9 @@ silently discarded (`gameDay.test.js` pins the boundary).
   mismatches, ignored bogus `scoresAt` values.
 - Venue timezone regressions surface at gazetteer rebuild time
   (`tzSource: "needs-review"` + `TZ REVIEW` build warnings).
+- A championship round that scores nobody logs
+  `championship round "…" scored no corps` (`scoringAwards.noteEmptyChampionshipRound`);
+  a World round whose schedule row carries an archive title instead of the
+  canonical name logs `stored under an archive title` and is scored by the day
+  it is played (`championshipConfigForShow`). A green `scoring_runs` lease
+  with a tiny `opCount` on a day ≥ 45 is the same symptom seen from Firestore.

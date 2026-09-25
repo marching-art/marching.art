@@ -340,17 +340,23 @@ const JobsTab = ({ callAdminFunction, seasonData }) => {
     }
   };
 
-  // Re-score one live-season competition day. The repair path for a night that
-  // scored against a schedule that was missing a show: fix the schedule, then
-  // re-run that exact day. force=true is required — the first run holds the
-  // day's completed lease — and it re-applies that day's coin/XP awards, so it
-  // is a deliberate, confirmed action rather than a button.
+  // Re-score one competition day of the active season — off-season or live.
+  // The repair path for a night that scored against bad data (a show missing
+  // from the schedule, a championship round stored under the wrong name): fix
+  // the data, then re-run that exact day. force=true is required — the first
+  // run holds the day's completed lease — and it re-applies that day's
+  // coin/XP awards, so it is a deliberate, confirmed action rather than a
+  // button. An off-season re-run also posts the Discord score drop the
+  // nightly dispatcher would have (once per day, lease-guarded).
+  const isOffSeason = seasonData?.status === 'off-season';
+  const rescoreJob = isOffSeason ? 'processAndArchiveOffSeasonScores' : 'processLiveSeasonScores';
+  const rescoreLabel = isOffSeason ? 'off-season' : 'live season';
   const handleRescoreDay = async () => {
     const day = parseInt(rescoreDay, 10);
     if (!day || day < 1 || day > 49) return toast.error('Enter a valid day (1-49)');
     if (
       !window.confirm(
-        `Re-score live season day ${day}?\n\nThis re-runs scoring for that day and RE-APPLIES its ` +
+        `Re-score ${rescoreLabel} day ${day}?\n\nThis re-runs scoring for that day and RE-APPLIES its ` +
           'coin and XP awards to every corps that scores. Only do this after fixing the data the ' +
           'day scored against.'
       )
@@ -359,7 +365,7 @@ const JobsTab = ({ callAdminFunction, seasonData }) => {
     setLoading('rescoreDay');
     try {
       await callAdminFunction('manualTrigger', {
-        jobName: 'processLiveSeasonScores',
+        jobName: rescoreJob,
         scoredDay: day,
         force: true,
       });
@@ -523,13 +529,17 @@ const JobsTab = ({ callAdminFunction, seasonData }) => {
         </div>
       </div>
 
-      {/* Re-score a live-season day (schedule/data repair path) */}
+      {/* Re-score a season day (schedule/data repair path) */}
       <div className="bg-surface-card border border-line overflow-hidden">
-        <SectionHeader title="Re-score Live Season Day" icon={RefreshCw} />
+        <SectionHeader
+          title={isOffSeason ? 'Re-score Off-Season Day' : 'Re-score Live Season Day'}
+          icon={RefreshCw}
+        />
         <div className="p-3">
           <p className="text-[11px] text-muted mb-2">
-            Re-run scoring for one competition day (1-49) after fixing the data it scored against —
-            e.g. a show missing from the schedule. Re-applies that day&apos;s coin and XP awards.
+            Re-run scoring for one competition day (1-49) of the {rescoreLabel} after fixing the
+            data it scored against — e.g. a show missing from the schedule. Re-applies that
+            day&apos;s coin and XP awards{isOffSeason ? ' and posts the Discord score drop' : ''}.
           </p>
           <div className="flex gap-2">
             <input

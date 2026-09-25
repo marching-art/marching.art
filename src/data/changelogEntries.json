@@ -1,5 +1,17 @@
 [
   {
+    "id": "2026-09-25-world-championship-rounds-score-again",
+    "date": "2026-09-25",
+    "title": "World Championship Prelims and Semifinals scores are back",
+    "category": "fix",
+    "summary": "The Day 47 World Championship Prelims and Day 48 Semifinals fantasy scores did not post on their nights: the rounds were being scored as ordinary shows that no one was registered for, so nobody scored. Both nights are being re-scored with the full field, the Day 48 cut is taken from the real Prelims sheet, and the Finals on Day 49 will post on time.",
+    "highlights": [
+      "Every World Championship round now scores its real field whichever way the season's schedule names it, so this cannot skip a night again.",
+      "The Discord score drop, morning notifications and the advancement cut post for the re-scored nights as they normally would.",
+      "Podium Division scores were never affected."
+    ]
+  },
+  {
     "id": "2026-09-24-dashboard-fixed-event-names",
     "date": "2026-09-24",
     "title": "The dashboard names the majors and Championship Week rounds correctly",

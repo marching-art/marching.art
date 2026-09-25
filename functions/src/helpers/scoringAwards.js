@@ -26,6 +26,7 @@ const {
   awardTokenWrite,
 } = require("./awardLedger");
 const { regionalTierForEventName } = require("./seasonSchedule");
+const { worldChampionshipRound } = require("./worldChampionship");
 
 /**
  * Get top N corps from season standings with tie handling at cutoff position.
@@ -262,6 +263,91 @@ function buildChampionshipConfig(scoredDay, recapsByDay, allRecaps) {
   }
 
   return null;
+}
+
+/**
+ * The championship config a scheduled show scores under, or null for a show
+ * that is not a championship round.
+ *
+ * buildChampionshipConfig keys its rounds by the canonical marching.art event
+ * names, and the exact stored name is the first match. But the three World
+ * Championship rounds on an off-season schedule are seeded from the archive
+ * year the season replays, and seasons generated before 2026-09-24 kept the
+ * archive's own title on the row — "marching.art Division I World
+ * Championship Semi-Finals" from a 2000s year, say. A World round that fails
+ * the exact match falls back to the round the DAY plays (days 47/48/49,
+ * helpers/worldChampionship.js), provided the row is a World Championship
+ * show by name and not the SoundSport festival that shares Finals night.
+ * Without this, the scorer treated the round as a regular show — nobody can
+ * register for a championship round, so it scored no one and the night posted
+ * empty.
+ *
+ * @param {Object|null} championshipConfig - From buildChampionshipConfig().
+ * @param {{eventName?: string}} show - A scheduled show for the night.
+ * @param {number} scoredDay - Competition day 1-49.
+ * @returns {{config: Object, key: string, byRound: boolean}|null} The config,
+ *   the key it was found under, and whether the day-based fallback resolved it.
+ */
+function championshipConfigForShow(championshipConfig, show, scoredDay) {
+  if (!championshipConfig || !show || typeof show.eventName !== "string") return null;
+  const exact = championshipConfig[show.eventName];
+  if (exact) return { config: exact, key: show.eventName, byRound: false };
+
+  if (/soundsport/i.test(show.eventName)) return null;
+  const round = worldChampionshipRound(scoredDay, show.eventName);
+  const fallback = round ? championshipConfig[round.eventName] : null;
+  if (!fallback) return null;
+  return { config: fallback, key: round.eventName, byRound: true };
+}
+
+/**
+ * The config a show scores under, with the diagnostics the scoring loop wants:
+ * a warning when a World round resolved by day (the row carries an archive
+ * title — fix the schedule row when convenient), an error when a row the
+ * schedule marks as a championship show matches nothing (it will score as a
+ * regular show, which nobody can register for, so the night posts empty).
+ *
+ * @param {Object|null} championshipConfig - From buildChampionshipConfig().
+ * @param {{eventName?: string, isChampionship?: boolean}} show
+ * @param {number} scoredDay
+ * @returns {Object|null} The config for the show, or null.
+ */
+function resolveChampionshipShowConfig(championshipConfig, show, scoredDay) {
+  const resolved = championshipConfigForShow(championshipConfig, show, scoredDay);
+  if (resolved && resolved.byRound) {
+    logger.warn(
+      `Day ${scoredDay}: "${show.eventName}" is stored under an archive title; ` +
+      `scoring it as the ${resolved.key}.`
+    );
+  } else if (!resolved && championshipConfig && show && show.isChampionship) {
+    logger.error(
+      `Day ${scoredDay}: championship show "${show.eventName}" matches no championship ` +
+      `round (expected one of: ${Object.keys(championshipConfig).join(", ")}). ` +
+      "It will score as a regular show, which nobody can register for."
+    );
+  }
+  return resolved ? resolved.config : null;
+}
+
+/**
+ * A championship round that scored nobody is never right — every round
+ * auto-enrolls its field — so say so loudly instead of letting the night post
+ * empty as a quiet no-op.
+ *
+ * @param {Object|null} showConfig - The show's resolved championship config.
+ * @param {{eventName?: string}} show
+ * @param {number} scoredDay
+ * @param {{results: Array<unknown>}} showResult - The recap entry just scored.
+ */
+function noteEmptyChampionshipRound(showConfig, show, scoredDay, showResult) {
+  if (!showConfig || showResult.results.length > 0) return;
+  const field = showConfig.participants
+    ? `${showConfig.participants.length} advancing`
+    : "open field";
+  logger.error(
+    `Day ${scoredDay}: championship round "${show.eventName}" scored no corps ` +
+    `(classes ${(showConfig.classFilter || []).join("/")}, ${field}).`
+  );
 }
 
 /**
@@ -797,6 +883,9 @@ function buildEasternClassicParticipantSet(profilesSnapshot, eventName, week, sc
 module.exports = {
   getTopCorpsFromSeasonStandings,
   buildChampionshipConfig,
+  championshipConfigForShow,
+  resolveChampionshipShowConfig,
+  noteEmptyChampionshipRound,
   processCoinAwardsBatch,
   awardRegionalTrophies,
   awardClassChampionshipTrophies,

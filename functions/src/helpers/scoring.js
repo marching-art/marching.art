@@ -29,6 +29,8 @@ const {
 } = require("./scoringMath");
 const {
   buildChampionshipConfig,
+  resolveChampionshipShowConfig,
+  noteEmptyChampionshipRound,
   processCoinAwardsBatch,
   awardRegionalTrophies,
   awardClassChampionshipTrophies,
@@ -366,8 +368,11 @@ function scoreShowsForDay({
     // --- END: DAY 41/42 REGIONAL SPLIT LOGIC ---
 
     // --- CHAMPIONSHIP SHOW CONFIGURATION ---
-    // Get config for this specific show if it's a championship event
-    const showConfig = championshipConfig ? championshipConfig[show.eventName] : null;
+    // Get config for this specific show if it's a championship event. The
+    // World rounds resolve by the day they are played when the stored row
+    // carries an archive title instead of the canonical name
+    // (scoringAwards.championshipConfigForShow, which also logs the miss).
+    const showConfig = resolveChampionshipShowConfig(championshipConfig, show, scoredDay);
     // OPTIMIZATION #6: Build Set for O(1) participant lookups instead of O(n) .some()
     // Key format: "${uid}_${corpsClass}" for composite lookup
     let participantSet = null;
@@ -433,6 +438,7 @@ function scoreShowsForDay({
         }
       }
     }
+    noteEmptyChampionshipRound(showConfig, show, scoredDay, showResult);
     dailyRecap.shows.push(showResult);
   }
 
