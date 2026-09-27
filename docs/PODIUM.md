@@ -881,8 +881,13 @@ turned into the class's social mechanic. Fully mutual, capped, and deterministic
 - **Geography gates it.** Using the venue gazetteer, each corps has a "current location" at all
   times (hometown before its first show, otherwise its most recent venue). A joint rehearsal
   requires the two corps to be within the **Day Trip tier (≤250 mi)** of each other on that day —
-  or one party pays the normal travel cost to close the gap. Tour routing thus shapes your social
-  calendar, exactly as it does in real life: you rehearse with whoever's housed nearby.
+  or the proposer pays the normal travel cost to close the gap: the tier's CorpsCoin (unaffordable →
+  the usual stamina surcharge) **and** its stamina, Tour Manager reduction applied, charged by the
+  nightly run on the joint day. It is one outbound leg — a joint never relocates the corps, so the
+  route resumes from its last show with no return leg. The tier charged is the lower of the one
+  frozen at acceptance and the real gap that night, so nobody pays more than they agreed to. Tour
+  routing thus shapes your social calendar, exactly as it does in real life: you rehearse with
+  whoever's housed nearby.
 - **What it does mechanically.** On the shared day, each corps' **Full Ensemble block yields
   +25%** and both receive a **morale bump** (+6; performing for an audience of peers). The bonus
   touches only Full Ensemble — it can sharpen ensemble captions, never substitute for balanced

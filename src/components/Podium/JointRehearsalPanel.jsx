@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // JointRehearsalPanel — the human handshake (design §5.12, redesigned).
 // Pick a rival and the system maps both tours and ranks the real overlap
 // windows (open days for both corps) with their host city/stadium, distance,
@@ -17,7 +16,15 @@ import {
 } from '../../api/podium';
 import { PODIUM_CAPTIONS, CAPTION_LABELS } from './podiumConstants';
 
+/** @typedef {import('../../api/podium').JointProposal} JointProposal */
+/** @typedef {import('../../api/podium').JointScrimmage} JointScrimmage */
+/** @typedef {import('../../api/podium').JointHeadToHead} JointHeadToHead */
+/** @typedef {import('../../api/podium').JointOverlapWindow} JointOverlapWindow */
+/** @typedef {import('../../api/podium').JointOverlapsResponse} JointOverlapsResponse */
+/** @typedef {import('../../api/podium').JointRehearsalsResponse} JointRehearsalsResponse */
+
 // Travel-tier keys → human labels (mirror balanceConfig.travel.tiers).
+/** @type {Record<string, string>} */
 const TIER_LABELS = {
   local: 'Local',
   dayTrip: 'Day Trip',
@@ -26,9 +33,19 @@ const TIER_LABELS = {
   crossCountry: 'Cross-Country',
 };
 
+/**
+ * @param {string | null | undefined} city
+ * @param {string | null | undefined} stadium
+ */
 const cityLine = (city, stadium) => (stadium ? `${city} · ${stadium}` : city || 'TBA');
 
+/** @param {string | null | undefined} tier */
+const tierLabel = (tier) => (tier ? TIER_LABELS[tier] || tier : '');
+
 // One ranked overlap window — day, host city/stadium, distance, fit, cost.
+/**
+ * @param {{ win: JointOverlapWindow, selected: boolean, onSelect: (day: number) => void }} props
+ */
 function WindowCard({ win, selected, onSelect }) {
   const fitColor = win.isFree ? 'text-green-400' : 'text-warning';
   return (
@@ -55,9 +72,7 @@ function WindowCard({ win, selected, onSelect }) {
         <div className="flex flex-wrap gap-x-2.5 gap-y-0.5 mt-1 text-[9px] font-mono text-muted">
           {win.milesApart != null && <span>{win.milesApart} mi apart</span>}
           <span className={fitColor}>
-            {win.isFree
-              ? 'fits route — free'
-              : `detour · ${TIER_LABELS[win.travelTier] || win.travelTier}`}
+            {win.isFree ? 'fits route — free' : `detour · ${tierLabel(win.travelTier)}`}
           </span>
         </div>
       </div>
@@ -65,7 +80,7 @@ function WindowCard({ win, selected, onSelect }) {
         <div
           className={`text-[11px] font-mono font-bold tabular-nums ${win.isFree ? 'text-green-400' : 'text-warning'}`}
         >
-          {win.isFree ? 'Free' : `−${win.coinCost} CC · −${win.staminaCost}`}
+          {win.isFree ? 'Free' : `−${win.coinCost} CC · −${win.staminaCost} stamina`}
         </div>
         <div className="text-[8px] font-mono uppercase tracking-wider text-secondary border border-line rounded-none px-1.5 py-0.5 inline-block">
           Ens +{win.ensembleBonusPct}%
@@ -77,6 +92,10 @@ function WindowCard({ win, selected, onSelect }) {
 
 // The invitee's informed-accept card: their burden (none — proposer covers the
 // gap) vs. their gain (bonus + the private scrimmage).
+/**
+ * @param {{ proposal: JointProposal, busy: boolean, blocked: boolean,
+ *   onAccept: () => void, onDecline: () => void }} props
+ */
 function IncomingCard({ proposal, busy, blocked, onAccept, onDecline }) {
   const tier = proposal.proposerTravelTier;
   return (
@@ -103,7 +122,7 @@ function IncomingCard({ proposal, busy, blocked, onAccept, onDecline }) {
             <div className="text-[13px] font-bold text-green-400">No travel</div>
             <div className="text-[9px] text-muted mt-0.5">
               {tier
-                ? `${proposal.fromCorpsName} covers the ${TIER_LABELS[tier] || tier} leg.`
+                ? `${proposal.fromCorpsName} covers the ${tierLabel(tier)} leg.`
                 : 'You are already together on tour.'}
             </div>
           </div>
@@ -143,10 +162,15 @@ function IncomingCard({ proposal, busy, blocked, onAccept, onDecline }) {
 
 // The Tale of the Tape — the scored head-to-head, winner-highlighted, with a
 // Discord-friendly copy. Private; never published.
+/** @param {{ scrimmage: JointScrimmage | null | undefined }} props */
 function TaleOfTheTape({ scrimmage }) {
   const [copied, setCopied] = useState(false);
   if (!scrimmage) return null;
 
+  /**
+   * @param {number | undefined} mine
+   * @param {number | undefined} theirs
+   */
   const diff = (mine, theirs) => (mine || 0) - (theirs || 0);
   const totalDiff = diff(scrimmage.mine?.total, scrimmage.theirs?.total);
 
@@ -246,6 +270,7 @@ function TaleOfTheTape({ scrimmage }) {
 
 // Season head-to-head record — the profile-facing "who's been rehearsing with
 // whom" log, rendered compactly in-panel.
+/** @param {{ headToHead: Record<string, JointHeadToHead> | null | undefined }} props */
 function HeadToHead({ headToHead }) {
   const rows = Object.entries(headToHead || {});
   if (rows.length === 0) return null;
@@ -282,21 +307,21 @@ function HeadToHead({ headToHead }) {
 }
 
 export default function JointRehearsalPanel() {
-  const [data, setData] = useState(null);
+  const [data, setData] = useState(/** @type {JointRehearsalsResponse | null} */ (null));
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState(null);
-  const [notice, setNotice] = useState(null);
+  const [error, setError] = useState(/** @type {string | null} */ (null));
+  const [notice, setNotice] = useState(/** @type {string | null} */ (null));
   const [toUid, setToUid] = useState('');
   // Overlap search result + the day the director selected from it.
-  const [overlaps, setOverlaps] = useState(null);
-  const [selectedDay, setSelectedDay] = useState(null);
+  const [overlaps, setOverlaps] = useState(/** @type {JointOverlapsResponse | null} */ (null));
+  const [selectedDay, setSelectedDay] = useState(/** @type {number | null} */ (null));
 
   const reload = useCallback(async () => {
     try {
       const result = await getJointRehearsals();
       setData(result.data);
     } catch (err) {
-      setError(err?.message || 'Could not load joint rehearsals.');
+      setError((err instanceof Error && err.message) || 'Could not load joint rehearsals.');
     }
   }, []);
 
@@ -304,6 +329,10 @@ export default function JointRehearsalPanel() {
     if (data === null) reload();
   }, [data, reload]);
 
+  /**
+   * @param {() => Promise<unknown>} fn
+   * @param {string} [successMessage]
+   */
   const act = async (fn, successMessage) => {
     setBusy(true);
     setError(null);
@@ -314,7 +343,7 @@ export default function JointRehearsalPanel() {
       await reload();
       return true;
     } catch (err) {
-      setError(err?.message || 'Request failed.');
+      setError((err instanceof Error && err.message) || 'Request failed.');
       return false;
     } finally {
       setBusy(false);
@@ -331,7 +360,7 @@ export default function JointRehearsalPanel() {
       const result = await getJointOverlaps({ toUid });
       setOverlaps(result.data);
     } catch (err) {
-      setError(err?.message || 'Could not map the tours.');
+      setError((err instanceof Error && err.message) || 'Could not map the tours.');
     } finally {
       setBusy(false);
     }
@@ -357,6 +386,7 @@ export default function JointRehearsalPanel() {
   const incoming = data?.incoming || [];
   // Weeks already spent (a joint booked or scrimmaged) — those weeks are
   // unavailable; every other week of the season stays open.
+  /** @param {number} d */
   const weekOf = (d) => (d < 1 ? 0 : Math.ceil(d / 7));
   const usedWeeks = new Set([
     ...upcoming.map((j) => weekOf(j.day)),
@@ -380,7 +410,8 @@ export default function JointRehearsalPanel() {
         Pick a rival and the system maps both tours, then ranks the open days you could share — each
         with its host city, distance, and stamina cost. Full Ensemble sharpens (+25%, decaying for
         repeat partners), morale lifts, and both directors get a private scrimmage report. One per
-        week; the proposer covers any travel.
+        week; the proposer covers any travel. A joint is a day trip: your route picks up from your
+        last show afterward, with no extra leg to get back on tour.
       </p>
 
       {!data && !error && (
@@ -408,7 +439,7 @@ export default function JointRehearsalPanel() {
             {joint.travelTier && (
               <span className="text-warning">
                 {' '}
-                · you cover the {TIER_LABELS[joint.travelTier] || joint.travelTier} leg
+                · you cover the {tierLabel(joint.travelTier)} leg
               </span>
             )}
           </span>

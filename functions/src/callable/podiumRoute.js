@@ -178,6 +178,7 @@ async function buildRoutePreview(db, seasonData, state, uid, competitionDay, eas
  */
 function buildRouteLegs(state, upcoming, { jointByDay, locations, today = 0 }) {
   const legs = [];
+  const tourReduction = staffMarket.tourStaminaReduction(state, store.balance);
   let cursor = currentVenueOf(state);
   for (const day of upcoming) {
     // Joint-rehearsal day: a rehearsal leg, not a show. The partner's city
@@ -202,7 +203,10 @@ function buildRouteLegs(state, upcoming, { jointByDay, locations, today = 0 }) {
         tier: joint.travelTier || null,
         miles: move ? move.miles : null,
         coinCost: tierCfg ? tierCfg.coinCost : 0,
-        staminaCost: tierCfg ? tierCfg.staminaCost : 0,
+        // The proposer's stamina for the leg, Tour Manager applied — what the
+        // nightly run charges (capped at this booked tier; see
+        // joint.jointTravelCharge).
+        staminaCost: jointHelper.travelStaminaFor(state, tierCfg, store.balance),
         heat: 0,
         isMajor: false,
         isToday: day === today,
@@ -225,7 +229,9 @@ function buildRouteLegs(state, upcoming, { jointByDay, locations, today = 0 }) {
     const airfare = venues.airfareFor(leg, store.balance);
     const airfareFlagged = Boolean(state.airfare && state.airfare[day]);
     const airfarePurchased = Boolean(airfare.eligible && airfareFlagged);
-    const rawStamina = leg ? leg.staminaCost : 0;
+    // Tour Manager applied, rounded as the processor rounds it — the preview
+    // shows the stamina the nightly run will actually charge.
+    const rawStamina = leg ? Math.round(leg.staminaCost * (1 - tourReduction) * 10) / 10 : 0;
     legs.push({
       day,
       eventName: pick?.eventName || null,

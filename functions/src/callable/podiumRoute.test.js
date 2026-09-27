@@ -131,6 +131,16 @@ describe('buildRouteLegs — joint rehearsals never relocate the tour (design §
     assert.equal(showLeg.miles, 25);
     assert.equal(showLeg.staminaCost, 0);
   });
+
+  test('a Tour Manager cuts the joint leg stamina the route shows, as the nightly run charges it', () => {
+    const jointByDay = {
+      10: { day: 10, city: 'Dallas, Texas', travelTier: 'crossCountry', bonusMult: 1.25 },
+    };
+    const state = { ...cantonState(), staff: { tourManager: { tier: 'legend' } } };
+    const [jointLeg] = buildRouteLegs(state, upcoming, { jointByDay, locations });
+    const tierCfg = store.balance.travel.tiers.find((t) => t.key === 'crossCountry');
+    assert.equal(jointLeg.staminaCost, Math.round(tierCfg.staminaCost * 0.7 * 10) / 10);
+  });
 });
 
 describe('buildRouteLegs — airfare on long legs (design §5.3)', () => {
@@ -153,6 +163,24 @@ describe('buildRouteLegs — airfare on long legs (design §5.3)', () => {
     assert.equal(leg.airfareCost, Math.ceil(leg.miles / 2));
     assert.equal(leg.airfareStaminaCost, Math.round(leg.staminaCost * 0.5 * 10) / 10);
     assert.equal(leg.airfarePurchased, false);
+  });
+
+  test('a Tour Manager cuts the show leg stamina and the flown stamina with it', () => {
+    const plain = buildRouteLegs(cantonState(), [12], {
+      jointByDay: {},
+      locations: { 12: 'Dallas, Texas' },
+    })[0];
+    const managed = buildRouteLegs(
+      cantonState({ staff: { tourManager: { tier: 'legend' } } }),
+      [12],
+      { jointByDay: {}, locations: { 12: 'Dallas, Texas' } }
+    )[0];
+    assert.equal(managed.staminaCost, Math.round(plain.staminaCost * 0.7 * 10) / 10);
+    assert.equal(
+      managed.airfareStaminaCost,
+      Math.round(managed.staminaCost * 0.5 * 10) / 10,
+      'airfare halves the already-reduced leg, as the processor does'
+    );
   });
 
   test('a short leg is not airfare-eligible', () => {

@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026-09-27-joint-rehearsal-travel-stamina",
+    "date": "2026-09-27",
+    "title": "Long-distance joint rehearsals now cost the stamina they show",
+    "category": "balance",
+    "summary": "When you propose a joint rehearsal with a corps more than a day trip away, you now pay that leg like any tour stop: CorpsCoin and stamina. Before, only the coin was charged, even though the stamina was shown. Joints within a day trip stay free, and you never pay more than what was shown when the joint was booked. If the other corps turns out to be closer on the day, you pay less.",
+    "highlights": [
+      "It's one trip out. Your route picks up from your last show afterward, with no extra leg to get back on tour.",
+      "A Tour Manager cuts joint travel stamina just like show travel, and the overlap list, the route and the Tour sheet all show the reduced number.",
+      "Joints booked before today are charged the smaller of their booked cost and the real distance on the day."
+    ]
+  },
+  {
+    "id": "2026-09-27-joint-rehearsal-locations",
+    "date": "2026-09-27",
+    "title": "Joint rehearsals now land where your tours actually are",
+    "category": "fix",
+    "summary": "Joint rehearsal windows were sometimes hosted in a city far from both corps' routes — two corps touring Indiana and Ohio could be offered a rehearsal in Virginia. Each corps' tour position now comes from the show it actually picked, so windows, proposals and accepted joints are hosted near where both corps really are, and the travel cost shown is the real one."
+  },
+  {
     "id": "2026-09-27-podium-corps-no-class-move",
     "date": "2026-09-27",
     "title": "Podium corps no longer offer \"Move to another class\"",

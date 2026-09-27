@@ -70,7 +70,7 @@ const SECTIONS = [
   {
     n: 12,
     title: 'Joint rehearsals',
-    body: `Propose a shared rehearsal day with another corps. If they accept: Full Ensemble sharpens for both, morale lifts, and each director privately receives the scrimmage report — a caption-by-caption head-to-head, the only scouting outside a shared floor. One per week; you must be within a day trip of each other on tour, or the proposer pays the travel. Repeat pairings decay, so spread the handshakes around.`,
+    body: `Propose a shared rehearsal day with another corps. If they accept: Full Ensemble sharpens for both, morale lifts, and each director privately receives the scrimmage report — a caption-by-caption head-to-head, the only scouting outside a shared floor. One per week. Within a day trip of each other on tour it's free; farther apart, the proposer pays that leg like any tour stop — CorpsCoin and stamina (a Tour Manager cuts the stamina), never more than what was shown when the joint was booked. It's a day trip, so your route picks up from your last show afterward. Repeat pairings decay, so spread the handshakes around.`,
   },
   {
     n: 13,

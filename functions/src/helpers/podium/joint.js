@@ -26,6 +26,7 @@
 
 const engine = require("./engine");
 const venues = require("./venues");
+const staffMarket = require("./staffMarket");
 
 function proposalsCollection(db, seasonUid) {
   return db.collection(`podium-joint/${seasonUid}/proposals`);
@@ -74,18 +75,122 @@ function ensembleBonusFor(priorPairCount, cfg) {
 /**
  * A corps' location on a given competition day: its most recent show venue
  * strictly before that day, else hometown (design §5.12 "current location").
- * `scheduleLocations` is the processor's {day -> location} preload.
+ *
+ * Each show day resolves exactly the way the nightly processor routes it
+ * (processor.showVenueFor): a branded major's fixed site, else the location of
+ * the show THIS corps picked that day, and only for a legacy pick with no
+ * stored location the day's first scheduled show (`scheduleLocations`, the
+ * {day -> location} preload). Reading the day's first show unconditionally put
+ * a corps touring Indiana/Ohio at whatever show happened to be listed first
+ * that day — a Virginia venue hundreds of miles off its route — so windows,
+ * proposals and acceptances all priced and hosted joints somewhere neither
+ * corps was. The hometown fallback prefers the structured `home` venue, as the
+ * processor and route sheet do.
  */
 function corpsVenueOnDay(state, uid, competitionDay, scheduleLocations, storeModule, easternAssignments) {
   for (let day = Math.min(competitionDay - 1, 49); day >= 1; day--) {
     if (!storeModule.isShowDayFor(state, uid, day, easternAssignments)) continue;
     const major = venues.MAJOR_VENUES[day];
     if (major) return major;
-    const location = scheduleLocations[day];
+    const pick = storeModule.showPickFor(state, day);
+    const location = (pick && pick.location) || scheduleLocations[day];
     const venue = location ? venues.venueFor(location) : null;
     if (venue) return venue;
   }
-  return venues.venueFor(state.location) || null;
+  return state.home || venues.venueFor(state.location) || null;
+}
+
+/**
+ * Where a corps stands on tour right now: its last performed show's venue,
+ * else its structured home, else its free-text hometown resolved against the
+ * gazetteer. The same origin the processor prices every show leg from.
+ */
+function tourPositionOf(state) {
+  return state.lastVenue || state.home || venues.venueFor(state.location) || null;
+}
+
+/**
+ * Stamina a travel tier costs THIS corps: the tier's base cost less its Tour
+ * Manager's reduction, rounded to a tenth exactly as the processor rounds a
+ * show leg — so every preview shows the number the nightly run will charge.
+ */
+function travelStaminaFor(state, tierCfg, cfg) {
+  if (!tierCfg || !tierCfg.staminaCost) return 0;
+  const reduction = staffMarket.tourStaminaReduction(state, cfg);
+  return Math.round(tierCfg.staminaCost * (1 - reduction) * 10) / 10;
+}
+
+/**
+ * The proposer's travel charge on the joint day (pure; design §5.12). A joint
+ * is ONE outbound leg — a day trip, never a relocation — priced like any tour
+ * leg: the tier's coin cost plus its stamina (Tour Manager applies).
+ *
+ * The charged tier is the LOWER of the tier frozen at acceptance and the tier
+ * the two corps' real positions produce tonight: nobody ever pays more than
+ * they agreed to, and a joint booked from a stale position (a partner who has
+ * since moved closer, or a joint priced before tour positions followed each
+ * corps' own picked show) is charged the gap that actually exists. A partner
+ * within the free tier, or a position the gazetteer can't place, costs
+ * nothing.
+ *
+ * @param {object} state the proposer's state (drives the Tour Manager cut)
+ * @param {string|null} bookedTier travel tier frozen on the booking
+ * @param {object|null} fromVenue proposer's tour position as the day began
+ * @param {object|null} hostVenue partner's tour position as the day began
+ * @param {object} cfg balance config
+ * @returns {{tier: string, miles: number, coinCost: number, staminaCost: number,
+ *   hostVenueId: string|null}|null} null when the joint costs nothing
+ */
+function jointTravelCharge(state, bookedTier, fromVenue, hostVenue, cfg) {
+  if (!bookedTier) return null;
+  const tiers = cfg.travel.tiers;
+  const bookedIndex = tiers.findIndex((t) => t.key === bookedTier);
+  if (bookedIndex < 0) return null;
+  const gate = geographyGate(fromVenue, hostVenue, cfg);
+  if (!gate.travelTier) return null;
+  const liveIndex = tiers.findIndex((t) => t.key === gate.travelTier);
+  const tierCfg = tiers[Math.min(bookedIndex, liveIndex < 0 ? bookedIndex : liveIndex)];
+  if (!tierCfg.coinCost && !tierCfg.staminaCost) return null;
+  return {
+    tier: tierCfg.key,
+    miles: gate.miles,
+    coinCost: tierCfg.coinCost || 0,
+    staminaCost: travelStaminaFor(state, tierCfg, cfg),
+    hostVenueId: hostVenue ? hostVenue.venueId : null,
+  };
+}
+
+/**
+ * Bill a jointTravelCharge to the proposer's state (mutates): the coin from the
+ * Corps Budget — an unaffordable fare becomes the usual stamina surcharge, the
+ * bus still rolls (free floor) — then the leg's stamina, logged to the travel
+ * log beside the show legs. `debitBudget` is store.debitBudget (injected so
+ * this module stays free of the store's Firestore surface).
+ */
+function applyJointTravel(state, charge, competitionDay, debitBudget, cfg) {
+  let staminaCost = charge.staminaCost;
+  let coinCharged = 0;
+  let paid = true;
+  if (charge.coinCost > 0) {
+    paid = debitBudget(state, charge.coinCost, "jointTravel", competitionDay);
+    if (paid) coinCharged = charge.coinCost;
+    else staminaCost += cfg.travel.unaffordableStaminaSurcharge;
+  }
+  state.condition.stamina = Math.max(0, state.condition.stamina - staminaCost);
+  state.travelLog = [
+    ...(state.travelLog || []).slice(-30),
+    {
+      day: competitionDay,
+      to: charge.hostVenueId,
+      tier: charge.tier,
+      miles: charge.miles,
+      coinCost: coinCharged,
+      unaffordable: !paid || undefined,
+      staminaCost,
+      heat: 0,
+      joint: true,
+    },
+  ];
 }
 
 /**
@@ -133,7 +238,7 @@ function computeOverlaps(myState, theirState, myUid, theirUid, ctx) {
     if (gate.travelTier) {
       const tierCfg = cfg.travel.tiers.find((t) => t.key === gate.travelTier);
       travelTier = gate.travelTier;
-      staminaCost = tierCfg ? tierCfg.staminaCost : 0;
+      staminaCost = travelStaminaFor(myState, tierCfg, cfg);
       coinCost = tierCfg ? tierCfg.coinCost : 0;
     }
     windows.push({
@@ -211,6 +316,10 @@ module.exports = {
   pendingJoints,
   ensembleBonusFor,
   corpsVenueOnDay,
+  tourPositionOf,
+  travelStaminaFor,
+  jointTravelCharge,
+  applyJointTravel,
   geographyGate,
   computeOverlaps,
   scrimmageReport,
