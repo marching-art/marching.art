@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // src/components/Admin/ArticleManagement.jsx
 // Admin article management - list, edit, archive articles
 // Follows Admin panel dark theme: bg-background, bg-surface-card, bg-surface-raised
@@ -25,23 +24,27 @@ const FILTER_TABS = [
 
 const PAGE_SIZE = 20;
 
+/** @typedef {import('../../api/articleAdmin').ArticleListItem} ArticleListItem */
+/** @typedef {import('../../api/articleAdmin').ArticleForEdit} ArticleForEdit */
+
 const ArticleManagement = () => {
-  const [articles, setArticles] = useState([]);
+  const [articles, setArticles] = useState(/** @type {ArticleListItem[]} */ ([]));
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
-  const [editingArticle, setEditingArticle] = useState(null);
+  const [editingArticle, setEditingArticle] = useState(/** @type {ArticleForEdit | null} */ (null));
   const [editLoading, setEditLoading] = useState(false);
   const [hasMore, setHasMore] = useState(false);
-  const [lastCreatedAt, setLastCreatedAt] = useState(null);
+  const [lastCreatedAt, setLastCreatedAt] = useState(/** @type {string | null} */ (null));
 
   // Load articles on mount
   useEffect(() => {
     loadArticles();
   }, []);
 
+  /** @param {string | null} [startAfter] */
   const loadArticles = async (startAfter = null) => {
     try {
       if (startAfter) {
@@ -84,6 +87,7 @@ const ArticleManagement = () => {
     toast.success('Articles refreshed');
   };
 
+  /** @param {ArticleListItem} article */
   const handleEditClick = async (article) => {
     setEditLoading(true);
     try {
@@ -99,6 +103,7 @@ const ArticleManagement = () => {
     }
   };
 
+  /** @param {ArticleListItem} article */
   const handleArchiveToggle = async (article) => {
     const isArchiving = !article.isArchived;
     try {
@@ -123,6 +128,7 @@ const ArticleManagement = () => {
     }
   };
 
+  /** @param {ArticleListItem} article */
   const handleDelete = async (article) => {
     if (
       !window.confirm(`Permanently delete "${article.headline}"?\n\nThis action cannot be undone.`)
@@ -164,9 +170,10 @@ const ArticleManagement = () => {
     return matchesSearch && matchesFilter;
   });
 
+  /** @param {unknown} dateString */
   const formatDate = (dateString) => {
     if (!dateString) return 'Unknown';
-    const date = new Date(dateString);
+    const date = new Date(String(dateString));
     return date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
@@ -308,12 +315,15 @@ const ArticleManagement = () => {
             }
           }}
           onRegenerateImage={async (path, headline, category) => {
+            if (!path) return null;
             try {
               const result = await regenerateArticleImage({ path, headline, category });
               if (result.data.success) {
                 toast.success('New image generated!');
                 // Update the editing article's imageUrl
-                setEditingArticle((prev) => ({ ...prev, imageUrl: result.data.imageUrl }));
+                setEditingArticle((prev) =>
+                  prev ? { ...prev, imageUrl: result.data.imageUrl } : prev
+                );
                 // Update the articles list
                 setArticles((prev) =>
                   prev.map((a) => (a.path === path ? { ...a, imageUrl: result.data.imageUrl } : a))

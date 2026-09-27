@@ -10,6 +10,7 @@ const {
   runPodiumStage,
   runDiscordStage,
   runFanFavoriteStage,
+  announcePreviousFanFavorite,
   runPodiumScoreDropStage,
   runEasternClassicStage,
 } = require("./nightlyStages");
@@ -292,6 +293,54 @@ describe("nightly Fan Favorite announcement stage", () => {
     });
     assert.equal(result.status, "ran");
     assert.deepEqual(result.announcements, []);
+  });
+});
+
+describe("previous-season Fan Favorite crown", () => {
+  const crownedDocs = () => ({
+    "podium-config/podiumSeasons": {
+      current: { seasonUid: "allegro_2026-27", index: 3 },
+      history: { 2: { seasonUid: "overture_2026-27", index: 2 } },
+    },
+    "podium-fan/overture_2026-27": {
+      winner: { uid: "a", corpsName: "Blue Stars", finalsVotes: 5 },
+      finalsResults: [{ uid: "a", corpsName: "Blue Stars", votes: 5 }],
+    },
+  });
+
+  test("posts the just-archived season's crown the moment it exists", async () => {
+    const posts = [];
+    const fetchImpl = async (url, options) => {
+      posts.push(JSON.parse(options.body));
+      return { ok: true, status: 204, text: async () => "" };
+    };
+    const db = fakeDb(crownedDocs());
+    const result = await announcePreviousFanFavorite(db, "https://d.test/a", fetchImpl, {
+      currentSeasonUid: "allegro_2026-27",
+    });
+    assert.deepEqual(result, { kind: "crowned", status: "posted" });
+    assert.equal(posts.length, 1);
+    assert.match(posts[0].embeds[0].title, /Blue Stars is the .* Fan Favorite/);
+    assert.equal(db.writes["scoring_runs/overture_2026-27_fanfav_winner_day0"].status, "completed");
+  });
+
+  test("an uncrowned previous season, the active season, or no webhook posts nothing", async () => {
+    const neverFetch = async () => assert.fail("must not post");
+    const uncrowned = crownedDocs();
+    delete uncrowned["podium-fan/overture_2026-27"];
+    assert.equal(
+      await announcePreviousFanFavorite(fakeDb(uncrowned), "https://d.test/a", neverFetch, {
+        currentSeasonUid: "allegro_2026-27",
+      }),
+      null
+    );
+    assert.equal(
+      await announcePreviousFanFavorite(fakeDb(crownedDocs()), "https://d.test/a", neverFetch, {
+        currentSeasonUid: "overture_2026-27",
+      }),
+      null
+    );
+    assert.equal(await announcePreviousFanFavorite(fakeDb(crownedDocs()), "", neverFetch), null);
   });
 });
 

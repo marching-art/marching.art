@@ -233,30 +233,59 @@ async function runFanFavoriteStage(
     fetchImpl,
   });
 
-  // A season's Fan Favorite is crowned at ARCHIVAL — the first night of the
-  // next season — so the winner announcement belongs to the previous season's
-  // ballot, not the active one.
+  // A season's Fan Favorite is crowned at ARCHIVAL — the 3 AM rollover into
+  // the next season, which announces the crown itself (seasonScheduler.js).
+  // This is the lease-guarded backstop for a crown that landed some other way
+  // (registration or tonight's archival re-sweep) or a post that failed.
+  const crowned = await announcePreviousFanFavorite(db, webhookUrl, fetchImpl, {
+    currentSeasonUid: seasonData.seasonUid,
+  });
+  if (crowned) announcements.push(crowned);
+
+  return { status: "ran", competitionDay, announcements };
+}
+
+/**
+ * Announce the PREVIOUS season's crowned Fan Favorite to #announcements.
+ *
+ * Crowning happens at archival — the season rollover into the next season —
+ * so the winner belongs to the season before the active one. Called straight
+ * after the rollover (seasonScheduler.js) so the crown posts the morning the
+ * finals ballot closes, and again by the nightly Fan Favorite stage as a
+ * backstop. The `{seasonUid}_fanfav_winner` lease makes the pair post once.
+ * Never throws.
+ *
+ * @param {FirebaseFirestore.Firestore} db
+ * @param {string} webhookUrl - #announcements webhook; falsy disables it.
+ * @param {typeof fetch} [fetchImpl] - Injectable for tests.
+ * @param {Object} [options]
+ * @param {string} [options.currentSeasonUid] - The active season, which is
+ *   never announced as "previous" (its crown, if any, is the stage's own).
+ * @returns {Promise<{kind: string, status: string, [k: string]: unknown}|null>}
+ *   The announcement result, or null when there is no crown to announce.
+ */
+async function announcePreviousFanFavorite(db, webhookUrl, fetchImpl, { currentSeasonUid = null } = {}) {
+  if (!webhookUrl) return null;
   try {
     const career = require("../helpers/podium/career");
     const previous = await career.latestPreviousSeason(db);
-    if (previous && previous.seasonUid !== seasonData.seasonUid) {
-      const crowned = await fanFavoriteDiscord.announceFanFavoriteWinner(db, {
-        seasonUid: previous.seasonUid,
-        // A past season carries only its uid; format it the same way the
-        // active one is formatted rather than showing a raw key.
-        seasonName: formatSeasonName(previous.seasonUid),
-        webhookUrl,
-        fetchImpl,
-      });
-      // Uncrowned is the state on all but one night a year — reporting it
-      // would make every quiet night look like the stage did something.
-      if (crowned.status !== "no-winner") announcements.push(crowned);
-    }
+    if (!previous || previous.seasonUid === currentSeasonUid) return null;
+    const fanFavoriteDiscord = require("../helpers/podium/fanFavoriteDiscord");
+    const crowned = await fanFavoriteDiscord.announceFanFavoriteWinner(db, {
+      seasonUid: previous.seasonUid,
+      // A past season carries only its uid; format it the same way the
+      // active one is formatted rather than showing a raw key.
+      seasonName: formatSeasonName(previous.seasonUid),
+      webhookUrl,
+      fetchImpl,
+    });
+    // Uncrowned is the state on all but one night a season — reporting it
+    // would make every quiet night look like the stage did something.
+    return crowned.status === "no-winner" ? null : crowned;
   } catch (error) {
     logger.warn(`[fan-favorite] previous-season winner check skipped: ${error.message}`);
+    return null;
   }
-
-  return { status: "ran", competitionDay, announcements };
 }
 
 /**
@@ -391,6 +420,7 @@ module.exports = {
   runPodiumStage,
   runDiscordStage,
   runFanFavoriteStage,
+  announcePreviousFanFavorite,
   runPodiumScoreDropStage,
   runEasternClassicStage,
   runShowcaseStage,

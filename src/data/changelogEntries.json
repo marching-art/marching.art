@@ -1,5 +1,12 @@
 [
   {
+    "id": "2026-09-27-fan-favorite-crown-announced-at-once",
+    "date": "2026-09-27",
+    "title": "The Fan Favorite winner is announced on Discord the morning after finals",
+    "category": "fix",
+    "summary": "When a season ends, the Podium Fan Favorite winner now goes out to the Discord announcements channel as soon as the ballot is counted, ahead of the new season's kickoff post. Before, it didn't go out until the next evening, which made it look like there was no announcement at all."
+  },
+  {
     "id": "2026-09-25-league-game-and-roleplay-style",
     "date": "2026-09-25",
     "title": "Leagues now say which game they play and how roleplay fits in",

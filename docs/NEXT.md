@@ -355,7 +355,7 @@ ops step below)_
 
 ## Evergreen ratchets (any session, any size)
 
-- `@ts-nocheck` paydown — **37 files** at
+- `@ts-nocheck` paydown — **27 files** at
   last update; `npm run ts-nocheck:next` ranks the cheapest (no free wins
   left — the cheapest `src/` files are ~14 errors). It needs `npm ci` first
   and refuses to report on any other compiler. One per substantive task is
@@ -376,6 +376,15 @@ ops step below)_
 
 ## Recently shipped (context, newest first — prune when stale)
 
+- 2026-09-27: **Fan Favorite crown posts at rollover** — the Overture 2026-27
+  crown never reached #announcements the morning finals closed: the rollover
+  (3 AM seasonScheduler → settlePodiumSeasonBoundary → archivePodiumSeason)
+  crowns the winner, but the only poster was the 9 PM `podiumNightly` Fan
+  Favorite stage, ~18 h later. The scheduler now calls
+  `announceFanFavoriteCrown` between the rollover and the season-start post
+  (`nightlyStages.announcePreviousFanFavorite`, shared with the 9 PM stage,
+  which stays as the `{seasonUid}_fanfav_winner`-leased backstop).
+  Also typed `ArticleManagement.jsx` (@ts-nocheck 28 → 27).
 - 2026-09-25: **League identity (game mode + roleplay style + lore)** — from a
   director's request that a league say up front whether it serves Podium,
   Fantasy or both, and separately how roleplay fits in. `settings.gameMode`

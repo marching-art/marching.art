@@ -46,6 +46,7 @@ async function runSeasonScheduler(db, { now = new Date(), deps = {} } = {}) {
     isLive = isLiveSeasonTime,
     finalsOverridesFor = getFinalsDateOverrides,
     announce = announceSeasonStart,
+    announceCrown = announceFanFavoriteCrown,
     recordFailure = recordSchedulerFailure,
     alert = (params) => postOpsAlert(discordOpsWebhookUrl.value(), params),
   } = deps;
@@ -71,6 +72,10 @@ async function runSeasonScheduler(db, { now = new Date(), deps = {} } = {}) {
         logger.info("Starting a new off-season.");
         await startOff({ force });
       }
+      // The rollover just archived the old season, which crowns its Fan
+      // Favorite — post the crown now, while the finals ballot is fresh, and
+      // before the new season's kickoff so the channel reads in order.
+      await announceCrown(db);
       await announce(db);
     };
 
@@ -184,5 +189,33 @@ async function announceSeasonStart(db) {
   }
 }
 
+/**
+ * Post the just-archived season's Fan Favorite crown to #announcements.
+ *
+ * The rollover's Podium archival crowns the finals-ballot winner; without this
+ * the crown waited for the 9 PM Podium job, ~18 hours after the ballot closed,
+ * which read as no announcement at all. Lease-guarded with that job's backstop
+ * post, so the two never double-post. Isolated like the season-start post.
+ *
+ * @param {FirebaseFirestore.Firestore} db
+ */
+async function announceFanFavoriteCrown(db) {
+  const webhookUrl = discordAnnouncementsWebhookUrl.value();
+  if (!webhookUrl) return;
+  try {
+    const { isPodiumEnabled } = require("../helpers/features");
+    if (!(await isPodiumEnabled(db))) return;
+    const seasonDoc = await db.doc("game-settings/season").get();
+    const { announcePreviousFanFavorite } = require("./nightlyStages");
+    const result = await announcePreviousFanFavorite(db, webhookUrl, undefined, {
+      currentSeasonUid: seasonDoc.exists ? seasonDoc.data().seasonUid : null,
+    });
+    if (result) logger.info(`[season-scheduler] Fan Favorite crown announcement: ${result.status}`);
+  } catch (error) {
+    logger.error(`[season-scheduler] Fan Favorite crown announcement failed: ${error.message}`);
+  }
+}
+
 exports.announceSeasonStart = announceSeasonStart;
+exports.announceFanFavoriteCrown = announceFanFavoriteCrown;
 exports.runSeasonScheduler = runSeasonScheduler;
