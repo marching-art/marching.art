@@ -1,5 +1,12 @@
 [
   {
+    "id": "2026-09-27-podium-corps-no-class-move",
+    "date": "2026-09-27",
+    "title": "Podium corps no longer offer \"Move to another class\"",
+    "category": "fix",
+    "summary": "A Podium Division corps belongs to Podium for good, so its corps menu no longer shows a class-transfer option that could never work. Fantasy corps can still move between classes as before."
+  },
+  {
     "id": "2026-09-25-league-game-and-roleplay-style",
     "date": "2026-09-25",
     "title": "Leagues now say which game they play and how roleplay fits in",
