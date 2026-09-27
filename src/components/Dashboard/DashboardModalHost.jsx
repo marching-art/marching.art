@@ -236,7 +236,7 @@ const DashboardModalHost = ({
         />
       )}
 
-      {showMoveCorps && activeCorps && (
+      {showMoveCorps && activeCorps && activeCorpsClass !== 'podiumClass' && (
         <MoveCorpsModal
           onClose={() => setShowMoveCorps(false)}
           onMove={handleMoveCorps}

@@ -357,6 +357,8 @@ export function useDashboardModals(user, dashboardData, podiumContext = {}) {
   /** @type {(targetClass: string) => Promise<void>} */
   const handleMoveCorps = useCallback(
     async (targetClass) => {
+      // Podium Division corps can't change class (server rejects it too).
+      if (activeCorpsClass === 'podiumClass') return;
       try {
         setTransferring(true);
         const result = await transferCorps({ fromClass: activeCorpsClass, toClass: targetClass });
