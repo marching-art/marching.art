@@ -10,6 +10,7 @@ const joint = require("./joint");
 const engine = require("./engine");
 const store = require("./store");
 const balance = require("./balanceConfig.json");
+const venues = require("./venues");
 
 describe("joint caps and decay", () => {
   test("weekOf maps competition days to weeks (pre-season is week 0)", () => {
@@ -107,6 +108,16 @@ describe("computeOverlaps (ranked windows)", () => {
     assert.equal(windows[0].ensembleBonusPct, 25, "first pairing = full bonus");
   });
 
+  test("the proposer's Tour Manager cuts the stamina each window shows", () => {
+    const me = { ...corps("Canton, Ohio"), staff: { tourManager: { tier: "legend" } } };
+    const [managed] = joint.computeOverlaps(me, corps("Dallas, Texas"), "me", "them", ctx());
+    const [plain] = joint.computeOverlaps(
+      corps("Canton, Ohio"), corps("Dallas, Texas"), "me", "them", ctx()
+    );
+    assert.equal(managed.staminaCost, Math.round(plain.staminaCost * 0.7 * 10) / 10);
+    assert.equal(managed.coinCost, plain.coinCost, "coin is not a Tour Manager's to cut");
+  });
+
   test("distant corps: windows carry the proposer's travel tier, stamina and coin", () => {
     const windows = joint.computeOverlaps(
       corps("Canton, Ohio"), corps("Dallas, Texas"), "me", "them", ctx()
@@ -174,6 +185,84 @@ describe("computeOverlaps (ranked windows)", () => {
       ctx({ competitionDay: 40 })
     );
     assert.ok(windows.every((w) => w.day > 40 && w.day <= 49), "clamped to day 49");
+  });
+});
+
+describe("jointTravelCharge (the proposer's joint-day bill)", () => {
+  const tier = (key) => balance.travel.tiers.find((t) => t.key === key);
+  const canton = venues.venueFor("Canton, Ohio");
+  const akron = venues.venueFor("Akron, Ohio");
+  const dallas = venues.venueFor("Dallas, Texas");
+  const plain = {};
+
+  test("the acceptor's copy (no booked tier) is never charged", () => {
+    assert.equal(joint.jointTravelCharge(plain, null, canton, dallas, balance), null);
+  });
+
+  test("a far partner costs the booked tier's coin AND stamina", () => {
+    const charge = joint.jointTravelCharge(plain, "crossCountry", canton, dallas, balance);
+    const live = joint.geographyGate(canton, dallas, balance).travelTier;
+    const expected = tier(live);
+    assert.equal(charge.tier, live);
+    assert.equal(charge.coinCost, expected.coinCost);
+    assert.equal(charge.staminaCost, expected.staminaCost);
+    assert.equal(charge.hostVenueId, dallas.venueId);
+    assert.ok(charge.miles > 600);
+  });
+
+  test("never more than booked: a real gap wider than the booking is capped at the booked tier", () => {
+    const charge = joint.jointTravelCharge(plain, "overnightHaul", canton, dallas, balance);
+    assert.equal(charge.tier, "overnightHaul");
+    assert.equal(charge.staminaCost, tier("overnightHaul").staminaCost);
+    assert.equal(charge.coinCost, tier("overnightHaul").coinCost);
+  });
+
+  test("a booking priced from a stale far position costs only tonight's real gap", () => {
+    // Booked as cross-country (hosted far off by the old first-show lookup),
+    // but the partner is really in Akron — a day trip from Canton — so it's free.
+    assert.equal(joint.jointTravelCharge(plain, "crossCountry", canton, akron, balance), null);
+  });
+
+  test("an unplaceable position or a vanished partner costs nothing (free floor)", () => {
+    assert.equal(joint.jointTravelCharge(plain, "longHaul", canton, null, balance), null);
+    assert.equal(joint.jointTravelCharge(plain, "longHaul", null, dallas, balance), null);
+    assert.equal(joint.jointTravelCharge(plain, "notATier", canton, dallas, balance), null);
+  });
+
+  test("a Tour Manager cuts the stamina (not the coin), rounded like a show leg", () => {
+    const managed = { staff: { tourManager: { tier: "journeyman" } } };
+    const charge = joint.jointTravelCharge(managed, "longHaul", canton, dallas, balance);
+    assert.equal(charge.staminaCost, Math.round(tier("longHaul").staminaCost * 0.85 * 10) / 10);
+    assert.equal(charge.coinCost, tier("longHaul").coinCost);
+  });
+
+  test("applyJointTravel debits coin, drains stamina and logs the leg", () => {
+    const charge = joint.jointTravelCharge(plain, "longHaul", canton, dallas, balance);
+    const state = { condition: { stamina: 80 } };
+    const debits = [];
+    const pay = (_s, amount, reason) => (debits.push([amount, reason]), true);
+    joint.applyJointTravel(state, charge, 9, pay, balance);
+    assert.deepEqual(debits, [[charge.coinCost, "jointTravel"]]);
+    assert.equal(state.condition.stamina, 80 - charge.staminaCost);
+    assert.equal(state.travelLog[0].joint, true);
+    assert.equal(state.travelLog[0].coinCost, charge.coinCost);
+  });
+
+  test("applyJointTravel: an unaffordable fare adds the stamina surcharge instead", () => {
+    const charge = joint.jointTravelCharge(plain, "longHaul", canton, dallas, balance);
+    const state = { condition: { stamina: 80 } };
+    joint.applyJointTravel(state, charge, 9, () => false, balance);
+    const expected = 80 - charge.staminaCost - balance.travel.unaffordableStaminaSurcharge;
+    assert.equal(state.condition.stamina, expected);
+    assert.equal(state.travelLog[0].coinCost, 0);
+    assert.equal(state.travelLog[0].unaffordable, true);
+  });
+
+  test("tourPositionOf: last show venue, else structured home, else hometown text", () => {
+    assert.equal(joint.tourPositionOf({ lastVenue: dallas, home: canton }), dallas);
+    assert.equal(joint.tourPositionOf({ home: canton, location: "Dallas, Texas" }), canton);
+    assert.equal(joint.tourPositionOf({ location: "Akron, Ohio" }).venueId, akron.venueId);
+    assert.equal(joint.tourPositionOf({}), null);
   });
 });
 

@@ -80,7 +80,7 @@ function WindowCard({ win, selected, onSelect }) {
         <div
           className={`text-[11px] font-mono font-bold tabular-nums ${win.isFree ? 'text-green-400' : 'text-warning'}`}
         >
-          {win.isFree ? 'Free' : `−${win.coinCost} CC · −${win.staminaCost}`}
+          {win.isFree ? 'Free' : `−${win.coinCost} CC · −${win.staminaCost} stamina`}
         </div>
         <div className="text-[8px] font-mono uppercase tracking-wider text-secondary border border-line rounded-none px-1.5 py-0.5 inline-block">
           Ens +{win.ensembleBonusPct}%

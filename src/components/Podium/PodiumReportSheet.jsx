@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // PodiumReportSheet — the Podium Class standings sheet (design §7).
 //
 // The Scores-tab standings view is DAILY: the nightly processor publishes a
@@ -48,8 +47,41 @@ import {
 import { CLASS_LABELS, formatStandingsAsText, scoreAgeDays } from '../../utils/scoresUtils';
 import { useHorizontalTabSlide } from '../scores/useHorizontalTabSlide';
 
+/**
+ * One corps on a published standings sheet (`podium-recaps/{s}/standings/{day}`
+ * or the archived weekly `power` column).
+ * @typedef {object} PodiumStandingsEntry
+ * @property {string} [uid]
+ * @property {string} [corpsName]
+ * @property {string|null} [division]
+ * @property {number} [total]
+ * @property {number|null} [ge]
+ * @property {number|null} [vis]
+ * @property {number|null} [mus]
+ * @property {number|null} [lastDay]
+ * @property {string|null} [displayName]
+ * @property {string|null} [avatarUrl]
+ */
+/**
+ * @typedef {object} PodiumStandingsColumn
+ * @property {PodiumStandingsEntry[]} [entries]
+ * @property {number} [day]
+ * @property {number} [week]
+ * @property {number} [competitionDay]
+ * @property {number} [fieldSize]
+ */
+/**
+ * @typedef {object} PodiumStandingsSnapshot
+ * @property {number} key
+ * @property {string} tabLabel
+ * @property {string} periodLabel
+ * @property {PodiumStandingsColumn} column
+ */
+/** @typedef {'total' | 'GE' | 'VIS' | 'MUS'} StandingsSort */
+
 // GE/VIS/MUS for one standings entry. Columns populate for days scored after the
 // processor started persisting captions; earlier ones render "—".
+/** @param {PodiumStandingsEntry | null | undefined} entry */
 const captionsOf = (entry) => ({
   ge: entry?.ge ?? null,
   vis: entry?.vis ?? null,
@@ -62,6 +94,7 @@ const captionsOf = (entry) => ({
  * the weekly power fallback carries `week` plus the `competitionDay` it was
  * published on. Null on archived columns that predate `competitionDay`, which
  * renders the age column as dashes rather than a wrong number.
+ * @param {PodiumStandingsColumn | null | undefined} column
  */
 const referenceDayOf = (column) => {
   const day = column?.competitionDay ?? column?.day;
@@ -75,6 +108,8 @@ const referenceDayOf = (column) => {
  * movement inside the division a corps actually competes in — an overall delta
  * would report a "climb" a corps earned only because someone in another
  * division dropped past it.
+ * @param {PodiumStandingsColumn | null | undefined} column
+ * @returns {Map<string, number>}
  */
 function divisionRanksOf(column) {
   const counts = new Map();
@@ -93,8 +128,17 @@ function divisionRanksOf(column) {
 // archived seasons on the weekly fallback). `periodLabel` is e.g. "Day 12";
 // `previousColumn` is the snapshot before it (null for the first one), which is
 // where the movement arrows come from.
+/**
+ * @param {{
+ *   column: PodiumStandingsColumn | null,
+ *   previousColumn: PodiumStandingsColumn | null,
+ *   periodLabel: string,
+ *   seasonName?: string | null,
+ *   viewer?: import('../../utils/corps').ViewerCorpsMatcher | null,
+ * }} props
+ */
 function PodiumStandings({ column, previousColumn, periodLabel, seasonName, viewer }) {
-  const [sortBy, setSortBy] = useState('total');
+  const [sortBy, setSortBy] = useState(/** @type {StandingsSort} */ ('total'));
 
   // World → Open → A, each ranked on its own scores. Entries with no division
   // (archived seasons) fall into one unlabeled section, i.e. the sheet as it
@@ -102,10 +146,12 @@ function PodiumStandings({ column, previousColumn, periodLabel, seasonName, view
   const sections = useMemo(() => {
     const previousRanks = divisionRanksOf(previousColumn);
     const refDay = referenceDayOf(column);
-    const key = { GE: 'ge', VIS: 'vis', MUS: 'mus' }[sortBy];
+    /** @type {Record<StandingsSort, 'ge' | 'vis' | 'mus' | null>} */
+    const sortKeys = { total: null, GE: 'ge', VIS: 'vis', MUS: 'mus' };
+    const key = sortKeys[sortBy];
     return groupByClass(column?.entries || [], (entry) => entry.division).map(({ cls, rows }) => {
       const ranked = rows.map((entry, index) => {
-        const previousRank = previousRanks.get(entry.uid);
+        const previousRank = entry.uid ? previousRanks.get(entry.uid) : undefined;
         return {
           entry,
           captions: captionsOf(entry),
@@ -118,7 +164,7 @@ function PodiumStandings({ column, previousColumn, periodLabel, seasonName, view
       });
       return {
         cls,
-        label: CLASS_LABELS[cls] || null,
+        label: (cls && CLASS_LABELS[cls]) || null,
         tops: captionTops(ranked.map((r) => r.captions)),
         rows: key
           ? [...ranked].sort((a, b) => (b.captions[key] ?? -1) - (a.captions[key] ?? -1))
@@ -146,7 +192,7 @@ function PodiumStandings({ column, previousColumn, periodLabel, seasonName, view
           },
           section.rows.map(({ entry, captions, place }, idx) => ({
             place: sortBy === 'total' ? place : idx + 1,
-            corpsName: entry.corpsName,
+            corpsName: entry.corpsName || '',
             total: entry.total,
             captions,
           }))
@@ -164,7 +210,11 @@ function PodiumStandings({ column, previousColumn, periodLabel, seasonName, view
           </span>
           <span className="text-[9px] uppercase tracking-wider text-muted">{subtitle}</span>
         </div>
-        <SortPills options={STANDINGS_SORTS} value={sortBy} onChange={setSortBy} />
+        <SortPills
+          options={STANDINGS_SORTS}
+          value={sortBy}
+          onChange={(id) => setSortBy(/** @type {StandingsSort} */ (id))}
+        />
       </div>
 
       {/* One block per division — its own header, ranking and box-toppers,
@@ -266,10 +316,21 @@ function PodiumStandings({ column, previousColumn, periodLabel, seasonName, view
  * weekly `power` column so their standings view still renders. Returns a
  * normalized, chronologically-ascending list of snapshots.
  */
+/**
+ * @param {string} seasonUid
+ * @returns {Promise<PodiumStandingsSnapshot[]>}
+ */
 async function loadStandingsSnapshots(seasonUid) {
+  /**
+   * @param {import('firebase/firestore').QueryDocumentSnapshot[]} docs
+   * @param {'day' | 'week'} keyField
+   * @param {string} prefix
+   * @param {string} word
+   * @returns {PodiumStandingsSnapshot[]}
+   */
   const normalize = (docs, keyField, prefix, word) =>
     docs
-      .map((doc) => doc.data())
+      .map((doc) => /** @type {PodiumStandingsColumn} */ (doc.data()))
       .filter((d) => d && (d.entries || []).length)
       .map((d) => ({
         key: d[keyField] ?? 0,
@@ -297,8 +358,8 @@ async function loadStandingsSnapshots(seasonUid) {
  */
 export default function PodiumReportSheet({ seasonUid, seasonName, viewer = null }) {
   const [loading, setLoading] = useState(true);
-  const [snapshots, setSnapshots] = useState([]); // ascending by day/week
-  const [selectedKey, setSelectedKey] = useState(null);
+  const [snapshots, setSnapshots] = useState(/** @type {PodiumStandingsSnapshot[]} */ ([])); // ascending by day/week
+  const [selectedKey, setSelectedKey] = useState(/** @type {number | null} */ (null));
   // Keep the highlighted day visible on mobile (the strip runs oldest→newest
   // and the latest defaults selected, so without this it sits off the edge).
   const { containerRef: stripRef, selectedRef } = useHorizontalTabSlide(

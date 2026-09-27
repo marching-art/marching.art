@@ -238,6 +238,15 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
       );
     }
 
+    // Every corps' tour position as the day BEGAN. A joint's travel charge
+    // (§5.12) prices the proposer's gap to the partner's real position, which
+    // must not depend on whether the partner happens to be processed earlier
+    // in this loop. A partner not fielding this season has no entry, so its
+    // stale joint costs nothing.
+    const startPositionByUid = new Map(
+      active.map((i) => [rosterDocs[i].id, joint.tourPositionOf(stateSnapshots[i].data())])
+    );
+
     for (const rosterIndex of active) {
       const rosterDoc = rosterDocs[rosterIndex];
       const uid = rosterDoc.id;
@@ -487,9 +496,13 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
       }
 
       // Joint rehearsal day (design §5.12): morale bump (performing for an
-      // audience of peers), the proposer's travel gap charged like any leg
-      // (debit-or-surcharge, free floor), and the pair registered for the
-      // post-loop scrimmage pass. Stale entries (partner vanished, missed
+      // audience of peers), the proposer's travel gap charged like any leg —
+      // coin AND stamina (Tour Manager applies), debit-or-surcharge on the
+      // coin — and the pair registered for the post-loop scrimmage pass.
+      // One outbound leg only: a joint never relocates the corps (lastVenue
+      // is untouched), so there is no return leg to charge. The tier charged
+      // is the lower of the booked one and tonight's real gap
+      // (joint.jointTravelCharge). Stale entries (partner vanished, missed
       // day) are cleared quietly.
       const todayJoint = joint.pendingJoints(state).find((j) => j.day === competitionDay);
       if (todayJoint) {
@@ -497,17 +510,17 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
           store.balance.condition.moraleMax,
           (state.condition.morale || 0) + store.balance.joint.moraleBonus
         );
-        if (todayJoint.travelTier) {
-          const tierCfg = store.balance.travel.tiers.find((t) => t.key === todayJoint.travelTier);
-          if (tierCfg && tierCfg.coinCost > 0) {
-            const paid = store.debitBudget(state, tierCfg.coinCost, "jointTravel", competitionDay);
-            if (!paid) {
-              state.condition.stamina = Math.max(
-                0,
-                state.condition.stamina - store.balance.travel.unaffordableStaminaSurcharge
-              );
-            }
-          }
+        const charge = startPositionByUid.has(todayJoint.partnerUid)
+          ? joint.jointTravelCharge(
+              state,
+              todayJoint.travelTier,
+              startPositionByUid.get(uid),
+              startPositionByUid.get(todayJoint.partnerUid),
+              store.balance
+            )
+          : null;
+        if (charge) {
+          joint.applyJointTravel(state, charge, competitionDay, store.debitBudget, store.balance);
         }
         jointToday.push({
           uid,
