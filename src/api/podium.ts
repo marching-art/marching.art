@@ -584,6 +584,10 @@ export interface JointProposal {
   stadium?: string | null;
   proposerTravelTier?: string | null;
   milesApart?: number | null;
+  // Refreshed live by getJointRehearsals from both tours as they stand now:
+  // what accepting would cost the proposer (Tour Manager applied).
+  proposerStaminaCost?: number;
+  proposerCoinCost?: number;
   status: string;
 }
 

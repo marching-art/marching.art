@@ -110,6 +110,43 @@ function tourPositionOf(state) {
 }
 
 /**
+ * Where a proposed joint lands and who travels (pure; design §5.12): the
+ * invitee's tour position on that day hosts (the proposer's when the
+ * invitee's can't be placed), and the proposer owes any gap beyond the free
+ * tier. One rule for the propose-time snapshot, the live refresh the inbox
+ * reads, and acceptance — so every screen names the same city and cost.
+ *
+ * @param {object} fromState proposer's state
+ * @param {string} fromUid
+ * @param {object} toState invitee's state
+ * @param {string} toUid
+ * @param {number} day proposed competition day
+ * @param {{scheduleLocations: object, easternAssignments: any, storeModule: any, cfg: any}} ctx
+ * @returns {{city: string|null, stadium: string|null, proposerTravelTier: string|null,
+ *   milesApart: number|null, proposerStaminaCost: number, proposerCoinCost: number}}
+ */
+function proposalPreview(fromState, fromUid, toState, toUid, day, ctx) {
+  const { scheduleLocations, easternAssignments, storeModule, cfg } = ctx;
+  const fromVenue = corpsVenueOnDay(
+    fromState, fromUid, day, scheduleLocations, storeModule, easternAssignments
+  );
+  const toVenue = corpsVenueOnDay(
+    toState, toUid, day, scheduleLocations, storeModule, easternAssignments
+  );
+  const host = toVenue || fromVenue || null;
+  const gate = geographyGate(fromVenue, toVenue, cfg);
+  const tierCfg = gate.travelTier ? cfg.travel.tiers.find((t) => t.key === gate.travelTier) : null;
+  return {
+    city: host ? `${host.city}, ${host.region}` : null,
+    stadium: host ? venues.stadiumFor(host.venueId) : null,
+    proposerTravelTier: gate.travelTier,
+    milesApart: gate.miles,
+    proposerStaminaCost: travelStaminaFor(fromState, tierCfg, cfg),
+    proposerCoinCost: tierCfg ? tierCfg.coinCost || 0 : 0,
+  };
+}
+
+/**
  * Stamina a travel tier costs THIS corps: the tier's base cost less its Tour
  * Manager's reduction, rounded to a tenth exactly as the processor rounds a
  * show leg — so every preview shows the number the nightly run will charge.
@@ -316,6 +353,7 @@ module.exports = {
   pendingJoints,
   ensembleBonusFor,
   corpsVenueOnDay,
+  proposalPreview,
   tourPositionOf,
   travelStaminaFor,
   jointTravelCharge,

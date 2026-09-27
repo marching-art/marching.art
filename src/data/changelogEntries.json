@@ -1,5 +1,16 @@
 [
   {
+    "id": "2026-09-27-joint-invites-live-city",
+    "date": "2026-09-27",
+    "title": "Joint rehearsal invites stay up to date with your tour",
+    "category": "improvement",
+    "summary": "Joint rehearsal invites now show the host city and travel cost from both corps' tours as they are right now, not when the invite was sent. If you've picked new shows since, the card updates to match. Invites also spell out that accepting costs the invited corps no travel and no stamina, and never moves your corps: your route carries on from your own shows.",
+    "highlights": [
+      "The host is where the invited corps will be that day: its last show before it, or its home if it hasn't performed yet.",
+      "Proposals you've sent show what they'd cost you now, or \"free\" when you're within a day trip."
+    ]
+  },
+  {
     "id": "2026-09-27-joint-rehearsal-travel-stamina",
     "date": "2026-09-27",
     "title": "Long-distance joint rehearsals now cost the stamina they show",
