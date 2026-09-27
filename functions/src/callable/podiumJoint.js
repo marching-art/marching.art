@@ -9,7 +9,6 @@ const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
 const store = require("../helpers/podium/store");
 const joint = require("../helpers/podium/joint");
-const venues = require("../helpers/podium/venues");
 const { podiumContext } = require("./podium");
 const { assertWriteBudget, assertDocId } = require("../helpers/callableGuards");
 
@@ -142,10 +141,12 @@ exports.proposeJointRehearsal = onCall({ cors: true }, async (request) => {
     store.loadScheduleLocations(db, seasonData),
     store.loadEasternAssignments(db, seasonData.seasonUid),
   ]);
-  const myVenue = joint.corpsVenueOnDay(myState, uid, day, scheduleLocations, store, easternAssignments);
-  const theirVenue = joint.corpsVenueOnDay(theirState, toUid, day, scheduleLocations, store, easternAssignments);
-  const host = theirVenue || myVenue || null;
-  const gate = joint.geographyGate(myVenue, theirVenue, store.balance);
+  const preview = joint.proposalPreview(myState, uid, theirState, toUid, day, {
+    scheduleLocations,
+    easternAssignments,
+    storeModule: store,
+    cfg: store.balance,
+  });
 
   const proposalRef = joint.proposalsCollection(db, seasonData.seasonUid).doc();
   await proposalRef.set({
@@ -155,11 +156,12 @@ exports.proposeJointRehearsal = onCall({ cors: true }, async (request) => {
     fromCorpsName: myState.corpsName || null,
     toCorpsName: theirState.corpsName || null,
     day,
-    // Informed-consent snapshot for the inbox.
-    city: host ? `${host.city}, ${host.region}` : null,
-    stadium: host ? venues.stadiumFor(host.venueId) : null,
-    proposerTravelTier: gate.travelTier,
-    milesApart: gate.miles,
+    // Informed-consent snapshot for the inbox (getJointRehearsals refreshes it
+    // live, so a tour re-routed after proposing never shows a stale city).
+    city: preview.city,
+    stadium: preview.stadium,
+    proposerTravelTier: preview.proposerTravelTier,
+    milesApart: preview.milesApart,
     status: "pending",
     seasonUid: seasonData.seasonUid,
     createdAt: new Date().toISOString(),
@@ -227,30 +229,26 @@ exports.respondJointRehearsal = onCall({ cors: true }, async (request) => {
     assertJointCapacity(fromState, proposal.day, `${fromState.corpsName}`);
     assertJointCapacity(toState, proposal.day, "Your corps");
 
-    const venueFrom = joint.corpsVenueOnDay(
-      fromState, proposal.fromUid, proposal.day, scheduleLocations, store, easternAssignments
-    );
-    const venueTo = joint.corpsVenueOnDay(
-      toState, uid, proposal.day, scheduleLocations, store, easternAssignments
-    );
-    const gate = joint.geographyGate(venueFrom, venueTo, store.balance);
+    // The same rule the window list, the proposal and the inbox use.
+    const preview = joint.proposalPreview(fromState, proposal.fromUid, toState, uid, proposal.day, {
+      scheduleLocations,
+      easternAssignments,
+      storeModule: store,
+      cfg: store.balance,
+    });
+    const gate = { travelTier: preview.proposerTravelTier, miles: preview.milesApart };
+    const hostCity = preview.city;
 
     // Repeat-pair decay, frozen at acceptance so both sides agree forever.
     const priorPairs = joint.pairCountWith(fromState, uid);
     const bonusMult = joint.ensembleBonusFor(priorPairs, store.balance);
-    const hostCity = venueTo
-      ? `${venueTo.city}, ${venueTo.region}`
-      : venueFrom
-        ? `${venueFrom.city}, ${venueFrom.region}`
-        : null;
 
-    const host = venueTo || venueFrom || null;
     const week = joint.weekOf(proposal.day);
     const entryBase = {
       day: proposal.day,
       bonusMult,
       city: hostCity,
-      stadium: host ? venues.stadiumFor(host.venueId) : null,
+      stadium: preview.stadium,
       proposalId,
     };
     transaction.set(
@@ -336,10 +334,48 @@ exports.getJointRehearsals = onCall({ cors: true }, async (request) => {
     stateSnapshot.exists && stateSnapshot.data().seasonUid === seasonUid
       ? stateSnapshot.data()
       : null;
+  const incoming = live(incomingSnapshot.docs);
+  const outgoing = live(outgoingSnapshot.docs);
+
+  // Re-derive each pending proposal's host city and travel burden from BOTH
+  // tours as they stand now. The stored city is a propose-time snapshot; a
+  // director who has since picked shows elsewhere (or a proposal sent before
+  // tour positions followed each corps' own picks) would otherwise be shown a
+  // city neither corps will be near. Acceptance recomputes the same way, so
+  // the card is exactly what accepting books.
+  if (state && incoming.length + outgoing.length > 0) {
+    const otherUids = [
+      ...new Set([...incoming.map((p) => p.fromUid), ...outgoing.map((p) => p.toUid)]),
+    ].filter((other) => typeof other === "string" && other && other !== uid);
+    const [scheduleLocations, easternAssignments, otherSnapshots] = await Promise.all([
+      store.loadScheduleLocations(db, seasonData),
+      store.loadEasternAssignments(db, seasonUid),
+      otherUids.length
+        ? db.getAll(...otherUids.map((other) => store.stateRef(db, other)))
+        : Promise.resolve([]),
+    ]);
+    const statesByUid = new Map([[uid, state]]);
+    otherSnapshots.forEach((snapshot, i) => {
+      if (snapshot.exists && snapshot.data().seasonUid === seasonUid) {
+        statesByUid.set(otherUids[i], snapshot.data());
+      }
+    });
+    const ctx = { scheduleLocations, easternAssignments, storeModule: store, cfg: store.balance };
+    for (const proposal of [...incoming, ...outgoing]) {
+      const fromState = statesByUid.get(proposal.fromUid);
+      const toState = statesByUid.get(proposal.toUid);
+      if (!fromState || !toState) continue;
+      Object.assign(
+        proposal,
+        joint.proposalPreview(fromState, proposal.fromUid, toState, proposal.toUid, proposal.day, ctx)
+      );
+    }
+  }
+
   return {
     success: true,
-    incoming: live(incomingSnapshot.docs),
-    outgoing: live(outgoingSnapshot.docs),
+    incoming,
+    outgoing,
     upcoming: state
       ? joint.pendingJoints(state).filter((j) => j.day > competitionDay).sort((a, b) => a.day - b.day)
       : [],

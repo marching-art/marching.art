@@ -114,12 +114,17 @@ function IncomingCard({ proposal, busy, blocked, onAccept, onDecline }) {
           <MapPin className="w-3 h-3 text-muted shrink-0" />
           <span className="truncate">{cityLine(proposal.city, proposal.stadium)}</span>
         </div>
+        <p className="text-[9px] text-muted leading-relaxed">
+          Hosted where your corps stands on Day {proposal.day}: your last show before it, or home if
+          you haven&apos;t performed yet. Accepting never moves your corps — your route continues
+          from your own shows, with no leg to get back.
+        </p>
         <div className="grid grid-cols-2 gap-px bg-line border border-line">
           <div className="bg-surface-sunken px-2.5 py-2">
             <div className="text-[8px] font-mono uppercase tracking-wider text-muted mb-1">
               Your burden
             </div>
-            <div className="text-[13px] font-bold text-green-400">No travel</div>
+            <div className="text-[13px] font-bold text-green-400">No travel · no stamina</div>
             <div className="text-[9px] text-muted mt-0.5">
               {tier
                 ? `${proposal.fromCorpsName} covers the ${tierLabel(tier)} leg.`
@@ -470,7 +475,17 @@ export default function JointRehearsalPanel() {
         <div key={proposal.id} className="px-3 py-1.5 text-[10px] text-muted">
           Awaiting <span className="text-secondary">{proposal.toCorpsName}</span> for Day{' '}
           {proposal.day}
-          {proposal.city ? ` · ${proposal.city}` : ''} — expires unanswered that morning.
+          {proposal.city ? ` · ${proposal.city}` : ''}
+          {proposal.proposerTravelTier ? (
+            <span className="text-warning">
+              {' '}
+              · you&apos;d cover −{proposal.proposerCoinCost ?? 0} CC · −
+              {proposal.proposerStaminaCost ?? 0} stamina
+            </span>
+          ) : (
+            <span className="text-green-400"> · free</span>
+          )}{' '}
+          — expires unanswered that morning.
         </div>
       ))}
 

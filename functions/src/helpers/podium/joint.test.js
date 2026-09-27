@@ -266,6 +266,36 @@ describe("jointTravelCharge (the proposer's joint-day bill)", () => {
   });
 });
 
+describe("proposalPreview (one rule for proposal, inbox and acceptance)", () => {
+  const storeModule = {
+    isShowDayFor: (state, _uid, day) => (state.showDays || []).includes(day),
+    showPickFor: store.showPickFor,
+  };
+  const ctx = { scheduleLocations: {}, easternAssignments: null, storeModule, cfg: balance };
+
+  test("the invitee's tour position hosts, and the invitee never travels", () => {
+    // Proposer toured to Allentown; invitee has picked a show in Dallas since.
+    const from = { home: venues.venueFor("Canton, Ohio"), showDays: [2],
+      selectedShows: { 2: { eventName: "E", location: "Allentown, Pennsylvania" } } };
+    const to = { home: venues.venueFor("Canton, Ohio"), showDays: [3],
+      selectedShows: { 3: { eventName: "W", location: "Dallas, Texas" } } };
+    const preview = joint.proposalPreview(from, "a", to, "b", 5, ctx);
+    assert.equal(preview.city, "Dallas, TX", "hosted where the invitee actually is");
+    assert.ok(preview.proposerTravelTier, "the proposer owes the gap");
+    assert.ok(preview.proposerStaminaCost > 0 && preview.proposerCoinCost > 0);
+  });
+
+  test("before the invitee's first show its home hosts; nearby is free for everyone", () => {
+    const from = { home: venues.venueFor("Akron, Ohio") };
+    const to = { home: venues.venueFor("Canton, Ohio") };
+    const preview = joint.proposalPreview(from, "a", to, "b", 4, ctx);
+    assert.equal(preview.city, "Canton, OH");
+    assert.equal(preview.proposerTravelTier, null);
+    assert.equal(preview.proposerStaminaCost, 0);
+    assert.equal(preview.proposerCoinCost, 0);
+  });
+});
+
 describe("scrimmage report", () => {
   const makeState = (name, challengeLevel) => {
     const state = engine.createSeasonState(
