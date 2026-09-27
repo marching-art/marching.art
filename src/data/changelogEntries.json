@@ -1,5 +1,12 @@
 [
   {
+    "id": "2026-09-27-joint-rehearsal-locations",
+    "date": "2026-09-27",
+    "title": "Joint rehearsals now land where your tours actually are",
+    "category": "fix",
+    "summary": "Joint rehearsal windows were sometimes hosted in a city far from both corps' routes — two corps touring Indiana and Ohio could be offered a rehearsal in Virginia. Each corps' tour position now comes from the show it actually picked, so windows, proposals and accepted joints are hosted near where both corps really are, and the travel cost shown is the real one."
+  },
+  {
     "id": "2026-09-27-podium-corps-no-class-move",
     "date": "2026-09-27",
     "title": "Podium corps no longer offer \"Move to another class\"",

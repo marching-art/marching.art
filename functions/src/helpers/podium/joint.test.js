@@ -83,6 +83,7 @@ describe("computeOverlaps (ranked windows)", () => {
   // windows deterministic without a season doc.
   const fakeStore = (showDaysByUid) => ({
     isShowDayFor: (_state, uid, day) => (showDaysByUid[uid] || new Set()).has(day),
+    showPickFor: store.showPickFor,
   });
   const ctx = (over = {}) => ({
     competitionDay: 1,
@@ -132,6 +133,39 @@ describe("computeOverlaps (ranked windows)", () => {
     const windows = joint.computeOverlaps(me, corps("Akron, Ohio"), "me", "them", ctx());
     assert.ok(windows.every((w) => w.week !== 1), "no windows in the spent week");
     assert.ok(windows.some((w) => w.week === 2), "later weeks still open");
+  });
+
+  test("tour position follows each corps' OWN picked show, not the day's first listed show", () => {
+    // Both corps toured Indiana/Ohio on day 2, but the schedule lists a
+    // Virginia show first that day. The joint must land in the Midwest.
+    const me = { location: "Canton, Ohio", selectedShows: { 2: { eventName: "A", location: "Dayton, Ohio" } } };
+    const them = { location: "Akron, Ohio", selectedShows: { 2: { eventName: "B", location: "Fort Wayne, Indiana" } } };
+    const windows = joint.computeOverlaps(
+      me, them, "me", "them",
+      ctx({
+        scheduleLocations: { 2: "Richmond, Virginia" },
+        showDays: { me: new Set([2]), them: new Set([2]) },
+      })
+    );
+    assert.ok(windows.length > 0);
+    assert.ok(windows.every((w) => w.city === "Fort Wayne, IN"), "partner's picked venue hosts");
+    assert.ok(windows.every((w) => w.isFree), "Dayton ↔ Fort Wayne is a day trip");
+  });
+
+  test("a legacy pick with no stored location falls back to the day's schedule", () => {
+    const legacy = { location: "Canton, Ohio", selectedShowDays: [2] };
+    const venue = joint.corpsVenueOnDay(
+      legacy, "me", 5, { 2: "Fort Wayne, Indiana" }, fakeStore({ me: new Set([2]) }), null
+    );
+    assert.equal(venue.city, "Fort Wayne");
+  });
+
+  test("no show yet: the structured home venue wins over the free-text hometown", () => {
+    const home = { venueId: "x", city: "Dayton", region: "OH", lat: 39.76, lng: -84.19 };
+    const venue = joint.corpsVenueOnDay(
+      { home, location: "Richmond, Virginia" }, "me", 5, {}, fakeStore({}), null
+    );
+    assert.equal(venue, home);
   });
 
   test("two-week horizon, capped at the season end", () => {

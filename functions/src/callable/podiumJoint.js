@@ -202,7 +202,12 @@ exports.respondJointRehearsal = onCall({ cors: true }, async (request) => {
   // Geography (design §5.12): free within the day-trip tier of both corps'
   // tour positions on that day; beyond it the PROPOSER pays the normal
   // travel cost of the gap (charged by the processor on the joint day).
-  const scheduleLocations = await store.loadScheduleLocations(db, seasonData);
+  // Same inputs as the window list and the proposal preview (Eastern night
+  // included), so the city the invitee accepts is the city both saw.
+  const [scheduleLocations, easternAssignments] = await Promise.all([
+    store.loadScheduleLocations(db, seasonData),
+    store.loadEasternAssignments(db, seasonData.seasonUid),
+  ]);
 
   const fromRef = store.stateRef(db, proposal.fromUid);
   const toRef = store.stateRef(db, uid);
@@ -223,9 +228,11 @@ exports.respondJointRehearsal = onCall({ cors: true }, async (request) => {
     assertJointCapacity(toState, proposal.day, "Your corps");
 
     const venueFrom = joint.corpsVenueOnDay(
-      fromState, proposal.fromUid, proposal.day, scheduleLocations, store
+      fromState, proposal.fromUid, proposal.day, scheduleLocations, store, easternAssignments
     );
-    const venueTo = joint.corpsVenueOnDay(toState, uid, proposal.day, scheduleLocations, store);
+    const venueTo = joint.corpsVenueOnDay(
+      toState, uid, proposal.day, scheduleLocations, store, easternAssignments
+    );
     const gate = joint.geographyGate(venueFrom, venueTo, store.balance);
 
     // Repeat-pair decay, frozen at acceptance so both sides agree forever.

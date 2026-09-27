@@ -74,18 +74,29 @@ function ensembleBonusFor(priorPairCount, cfg) {
 /**
  * A corps' location on a given competition day: its most recent show venue
  * strictly before that day, else hometown (design §5.12 "current location").
- * `scheduleLocations` is the processor's {day -> location} preload.
+ *
+ * Each show day resolves exactly the way the nightly processor routes it
+ * (processor.showVenueFor): a branded major's fixed site, else the location of
+ * the show THIS corps picked that day, and only for a legacy pick with no
+ * stored location the day's first scheduled show (`scheduleLocations`, the
+ * {day -> location} preload). Reading the day's first show unconditionally put
+ * a corps touring Indiana/Ohio at whatever show happened to be listed first
+ * that day — a Virginia venue hundreds of miles off its route — so windows,
+ * proposals and acceptances all priced and hosted joints somewhere neither
+ * corps was. The hometown fallback prefers the structured `home` venue, as the
+ * processor and route sheet do.
  */
 function corpsVenueOnDay(state, uid, competitionDay, scheduleLocations, storeModule, easternAssignments) {
   for (let day = Math.min(competitionDay - 1, 49); day >= 1; day--) {
     if (!storeModule.isShowDayFor(state, uid, day, easternAssignments)) continue;
     const major = venues.MAJOR_VENUES[day];
     if (major) return major;
-    const location = scheduleLocations[day];
+    const pick = storeModule.showPickFor(state, day);
+    const location = (pick && pick.location) || scheduleLocations[day];
     const venue = location ? venues.venueFor(location) : null;
     if (venue) return venue;
   }
-  return venues.venueFor(state.location) || null;
+  return state.home || venues.venueFor(state.location) || null;
 }
 
 /**
