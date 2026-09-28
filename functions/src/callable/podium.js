@@ -187,14 +187,15 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
     throw new HttpsError("invalid-argument", `Corps name must be ${NAME_MIN}-${NAME_MAX} characters.`);
   }
   // Official home location (design §5.3): required and must resolve to a real
-  // city on the tour map, because the corps' whole season routes from here. A
-  // free-text guess that isn't in the gazetteer can't be routed or priced, so
-  // it is rejected rather than silently making every leg free.
+  // place, because the corps' whole season routes from here. Any US/Canadian
+  // town geocodes (tour-map city first, then the hometown place index); text
+  // that names no real town can't be routed or priced, so it is rejected
+  // rather than silently making every leg free.
   const homeVenue = typeof location === "string" ? venues.venueFor(location) : null;
   if (!homeVenue) {
     throw new HttpsError(
       "invalid-argument",
-      "Choose an official home city from the tour map — it's where your corps starts every tour."
+      "We couldn't place that hometown — pick your town from the list (any US or Canadian town works)."
     );
   }
   const homeLabel = `${homeVenue.city}, ${homeVenue.region}`;

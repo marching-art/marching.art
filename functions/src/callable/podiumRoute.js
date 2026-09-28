@@ -404,9 +404,10 @@ exports.getPodiumRegistrationPreview = onCall({ cors: true }, async (request) =>
       ? {
           corpsName: staleSnapshot.data().corpsName || null,
           location: staleSnapshot.data().location || null,
-          // The current official home, resolved to a tour-map venue so the client
-          // can preselect it AND measure the distance to any new pick (the move
-          // fee). Legacy corps with only a free-text `location` resolve here too.
+          // The current official home, resolved to a venue (tour-map city or any
+          // real town) so the client can preselect it AND measure the distance to
+          // any new pick (the move fee). Legacy corps with only a free-text
+          // `location` resolve here too.
           ...(() => {
             const home =
               staleSnapshot.data().home || venues.venueFor(staleSnapshot.data().location) || null;

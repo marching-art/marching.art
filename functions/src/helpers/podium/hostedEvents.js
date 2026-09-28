@@ -87,7 +87,9 @@ function validateHostRequest({ eventName, venueTier, day, location }, currentCom
   if (store.MAJOR_DAYS.includes(day)) {
     throw new Error("The majors' days are exclusive — pick another date.");
   }
-  const venue = venues.venueFor(location);
+  // Hosting stays on the tour map (a known show city); hometowns and live-
+  // schedule towns may be anywhere, but a director-booked show may not.
+  const venue = venues.tourVenueFor(location);
   if (!venue) {
     throw new Error("Venue city not recognized — use a \"City, State\" from the tour map.");
   }

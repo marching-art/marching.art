@@ -1,45 +1,38 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // PodiumRegistration — the four-step FMA-style setup (design §5.13):
 // 1) corps identity, 2) show concept, 3) design (challenge sliders + one-tap
 // audition presets), 4) march. No payments anywhere.
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  ChevronRight,
-  ChevronLeft,
-  Loader2,
-  TrendingUp,
-  Minus,
-  Plus,
-  MapPin,
-  Check,
-} from 'lucide-react';
+import { ChevronRight, ChevronLeft, Loader2, TrendingUp, Minus, Plus } from 'lucide-react';
 import {
   PODIUM_CAPTIONS,
   CAPTION_LABELS,
   CHALLENGE_PRESETS,
   AUDITION_PRESETS,
 } from './podiumConstants';
-import { HOSTABLE_VENUES, homeRelocationFee } from '../../utils/venues';
+import { relocationFeeBetween } from '../../utils/places';
+import HometownPicker from './HometownPicker';
 import PodiumSeasonAssessment from './PodiumSeasonAssessment';
 import PodiumRegistrationDone from './PodiumRegistrationDone';
 import PodiumStaffRetention from './PodiumStaffRetention';
 
-// Cap the rendered city dropdown so a bare focus doesn't paint all ~500 cities
-// (mirrors the Host-a-Show picker). A real search narrows well below this.
-const HOME_RESULTS_LIMIT = 40;
-
 const STEPS = ['Corps', 'Show', 'Design', 'March'];
 
+/** @typedef {ReturnType<typeof import('../../hooks/usePodium').usePodium>} PodiumApi */
+/** @typedef {NonNullable<Awaited<ReturnType<PodiumApi['loadRegistrationPreview']>>>} RegistrationPreview */
+/** @typedef {import('../../api/podium').PodiumStaffProjection} StaffProjection */
+/** @typedef {import('./HometownPicker').SelectedHome} SelectedHome */
+
+/** @param {{ podium: PodiumApi }} props */
 export default function PodiumRegistration({ podium }) {
   const [step, setStep] = useState(0);
   const [corpsName, setCorpsName] = useState('');
-  // The official home (design §5.3): a KNOWN tour-map city, not free text — it's
-  // where every tour starts, so it must resolve to a venue. `selectedHome` holds
-  // the confirmed city; `homeQuery` is the search box text.
-  const [selectedHome, setSelectedHome] = useState(null);
+  // The official home (design §5.3): any real US/Canadian town, geocoded from
+  // the place index — it's where every tour starts, so it must resolve to real
+  // coordinates. `selectedHome` holds the confirmed town; `homeQuery` is the
+  // search box text.
+  const [selectedHome, setSelectedHome] = useState(/** @type {SelectedHome | null} */ (null));
   const [homeQuery, setHomeQuery] = useState('');
-  const [homeListOpen, setHomeListOpen] = useState(false);
   const [showConcept, setShowConcept] = useState('');
   const [challenge, setChallenge] = useState(
     Object.fromEntries(PODIUM_CAPTIONS.map((c) => [c, 5]))
@@ -47,24 +40,26 @@ export default function PodiumRegistration({ podium }) {
   const [auditionPreset, setAuditionPreset] = useState('balanced');
   const [budgetCommitment, setBudgetCommitment] = useState(0);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState(null);
-  const [done, setDone] = useState(null);
+  const [error, setError] = useState(/** @type {string | null} */ (null));
+  const [done, setDone] = useState(/** @type {any} */ (null));
 
   // The between-seasons decision (design §5.13). Null until the returning
   // director chooses — while null with an assessment on file, the Season
   // Assessment screen shows instead of the setup wizard. 'startNew' banks the
   // old lineage and founds a fresh corps (freshStart).
-  const [decision, setDecision] = useState(null); // null | 'continue' | 'startNew'
+  const [decision, setDecision] = useState(/** @type {null | 'continue' | 'startNew'} */ (null));
 
   // Between-seasons funding preview (design §5.6): carried staff and what they
   // cost next season vs. the CC the director can commit. Absent for a
   // first-time corps — the preview call reports hasCarriedStaff:false.
-  const [preview, setPreview] = useState(null);
+  const [preview, setPreview] = useState(/** @type {RegistrationPreview | null} */ (null));
   // Specialties the director chooses to keep; unchecked = voluntarily released.
-  const [keptStaff, setKeptStaff] = useState(null); // Set, initialized from preview
+  const [keptStaff, setKeptStaff] = useState(
+    /** @type {Set<string> | null} */ (null) // initialized from preview
+  );
   // Lapsed salary locks the director re-signs here: { specialty: seasons }.
   // A staffer left out keeps floating season to season.
-  const [renewals, setRenewals] = useState({});
+  const [renewals, setRenewals] = useState(/** @type {Record<string, number>} */ ({}));
 
   const loadPreview = podium.loadRegistrationPreview;
   const refreshPreview = useCallback(async () => {
@@ -107,12 +102,21 @@ export default function PodiumRegistration({ podium }) {
       if (carry.corpsName) setCorpsName(carry.corpsName);
       if (carry.homeVenueId && carry.homeCity) {
         const [city, region] = carry.homeCity.split(', ');
-        setSelectedHome({ venueId: carry.homeVenueId, city, region, label: carry.homeCity });
+        setSelectedHome({
+          venueId: carry.homeVenueId,
+          city,
+          region,
+          label: carry.homeCity,
+          // NaN when the server sent no fix — the fee preview then treats the
+          // move as unpriceable (free), exactly as the server does.
+          lat: carry.homeLat ?? NaN,
+          lng: carry.homeLng ?? NaN,
+        });
         setHomeQuery(carry.homeCity);
       } else if (carry.location) {
-        // Legacy corps whose free-text hometown never resolved: leave the box
-        // seeded so the director can pick a real city (no move fee — there's no
-        // mapped origin to move from).
+        // Legacy corps whose free-text hometown never resolved: seed the box so
+        // the picker can adopt it once the towns load, or the director picks a
+        // real one (no move fee — there's no mapped origin to move from).
         setHomeQuery(carry.location);
       }
       if (carry.showConcept) setShowConcept(carry.showConcept);
@@ -135,31 +139,25 @@ export default function PodiumRegistration({ podium }) {
     return preset && Object.keys(preset.points).length > 0 ? preset.points : null;
   }, [auditionPreset]);
 
-  // Home-city typeahead: the same known-city list the Host-a-Show picker uses.
-  const homeResults = useMemo(() => {
-    const q = homeQuery.trim().toLowerCase();
-    const matches = q
-      ? HOSTABLE_VENUES.filter((v) => v.label.toLowerCase().includes(q))
-      : HOSTABLE_VENUES;
-    return matches.slice(0, HOME_RESULTS_LIMIT);
-  }, [homeQuery]);
-
-  const pickHome = (venue) => {
-    setSelectedHome(venue);
-    setHomeQuery(venue.label);
-    setHomeListOpen(false);
-  };
-
   // The between-seasons move fee (design §5.3): 1 CC per `milesPerCoin` miles
   // from the current home to the newly picked one. Only a CONTINUE with a mapped
   // prior home is chargeable — a fresh start or a first-time corps sets its home
   // free. Priced client-side for preview; the server re-charges authoritatively.
-  const carriedHomeId = preview?.carryover?.homeVenueId || null;
+  const carry = preview?.carryover;
+  const carriedHomeId = carry?.homeVenueId || null;
   const milesPerCoin = preview?.homeRelocationMilesPerCoin || 2;
   const move = useMemo(() => {
     if (decision !== 'continue' || !carriedHomeId || !selectedHome) return { miles: 0, fee: 0 };
-    return homeRelocationFee(carriedHomeId, selectedHome.venueId, milesPerCoin);
-  }, [decision, carriedHomeId, selectedHome, milesPerCoin]);
+    // Re-picking the current home (same label or venue) is always free.
+    if (selectedHome.venueId === carriedHomeId || selectedHome.label === carry?.homeCity) {
+      return { miles: 0, fee: 0 };
+    }
+    const from =
+      carry && carry.homeLat != null && carry.homeLng != null
+        ? { lat: carry.homeLat, lng: carry.homeLng }
+        : null;
+    return relocationFeeBetween(from, selectedHome, milesPerCoin);
+  }, [decision, carriedHomeId, carry, selectedHome, milesPerCoin]);
 
   const hasCarried = Boolean(preview?.hasCarriedStaff);
   const activeStaff = useMemo(() => (preview?.staff || []).filter((s) => !s.retiring), [preview]);
@@ -169,6 +167,7 @@ export default function PodiumRegistration({ podium }) {
   // how much CC to commit next season.
   const lastSeasonReport = preview?.lastSeasonReport || null;
   const estimatedBudget = preview?.estimatedSeasonBudget || 0;
+  /** @param {number | null | undefined} n */
   const fmt = (n) => (n ?? 0).toLocaleString();
   const maxCommit = preview ? Math.min(preview.commitmentCap || 0, preview.corpsCoin || 0) : 2500;
   // A carried-staff director can commit at most what they hold; a first-time
@@ -208,6 +207,7 @@ export default function PodiumRegistration({ podium }) {
   // required now, not optional free text.
   const canNext = step === 0 ? corpsName.trim().length >= 3 && Boolean(selectedHome) : true;
 
+  /** @param {string} specialty */
   const toggleKeep = (specialty) => {
     setKeptStaff((prev) => {
       const next = new Set(prev);
@@ -218,6 +218,10 @@ export default function PodiumRegistration({ podium }) {
   };
 
   // Pick a re-sign length for a lapsed lock, or clear it (0) to keep floating.
+  /**
+   * @param {string} specialty
+   * @param {number} seasons
+   */
   const setRenewal = (specialty, seasons) => {
     setRenewals((prev) => {
       const next = { ...prev };
@@ -242,8 +246,8 @@ export default function PodiumRegistration({ podium }) {
           : undefined;
       const result = await podium.register({
         corpsName: corpsName.trim(),
-        // The official home — send the resolved city label; the server validates
-        // it against the gazetteer and charges any relocation fee.
+        // The official home — send the resolved town label; the server geocodes
+        // it (tour map first, then the place index) and charges any move fee.
         location: selectedHome ? selectedHome.label : '',
         showConcept: showConcept.trim(),
         challenge,
@@ -262,7 +266,7 @@ export default function PodiumRegistration({ podium }) {
       });
       setDone(result);
     } catch (err) {
-      setError(err?.message || 'Registration failed.');
+      setError(/** @type {{ message?: string }} */ (err)?.message || 'Registration failed.');
     } finally {
       setSubmitting(false);
     }
@@ -279,9 +283,9 @@ export default function PodiumRegistration({ podium }) {
   if (hasAssessment && decision === null) {
     return (
       <PodiumSeasonAssessment
-        assessment={preview.assessment}
-        carryover={preview.carryover}
-        retiredLineages={preview.retiredLineages || []}
+        assessment={preview?.assessment ?? null}
+        carryover={preview?.carryover ?? null}
+        retiredLineages={preview?.retiredLineages || []}
         podium={podium}
         onContinue={chooseContinue}
         onStartNew={chooseStartNew}
@@ -341,64 +345,19 @@ export default function PodiumRegistration({ podium }) {
             className="w-full bg-surface-sunken border border-line rounded-none px-3 py-2 text-sm text-white placeholder-muted focus:border-interactive outline-none"
           />
 
-          {/* Official home city (design §5.3): a KNOWN tour-map city, not free
-              text — every tour starts here, and every travel leg is priced from
-              it. Same typeahead the Host-a-Show picker uses. */}
+          {/* Official home (design §5.3): any real US/Canadian town, geocoded
+              from the place index — every tour starts here and every travel leg
+              is priced from it. */}
           <div>
-            <label className="block text-[10px] font-bold uppercase tracking-wider text-muted mb-1">
-              Official home
-            </label>
-            <div className="relative">
-              <div className="relative">
-                <MapPin className="w-3.5 h-3.5 text-muted absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <input
-                  value={homeQuery}
-                  onChange={(e) => {
-                    setHomeQuery(e.target.value);
-                    setSelectedHome(null);
-                    setHomeListOpen(true);
-                  }}
-                  onFocus={() => setHomeListOpen(true)}
-                  // Delay so a click on a result registers before the list closes.
-                  onBlur={() => setTimeout(() => setHomeListOpen(false), 150)}
-                  placeholder="Search your home city (e.g., Canton, OH)"
-                  autoComplete="off"
-                  aria-label="Official home city"
-                  className="w-full bg-surface-sunken border border-line rounded-none pl-8 pr-8 py-2 text-sm text-white placeholder-muted focus:border-interactive outline-none"
-                />
-                {selectedHome && (
-                  <Check className="w-3.5 h-3.5 text-green-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                )}
-              </div>
-              {homeListOpen && (
-                <div className="absolute z-20 mt-1 w-full max-h-44 overflow-y-auto bg-surface-sunken border border-line rounded-none">
-                  {homeResults.length === 0 ? (
-                    <div className="px-2 py-1.5 text-[10px] text-muted">
-                      No matching city — try a nearby one.
-                    </div>
-                  ) : (
-                    homeResults.map((v) => (
-                      <button
-                        key={v.venueId}
-                        type="button"
-                        // onMouseDown fires before the input's onBlur, so the
-                        // pick lands even though blur closes the list.
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          pickHome(v);
-                        }}
-                        className="w-full flex items-center px-2 py-1.5 text-[11px] text-left text-secondary hover:bg-surface-card"
-                      >
-                        <span className="truncate">{v.label}</span>
-                      </button>
-                    ))
-                  )}
-                </div>
-              )}
-            </div>
+            <HometownPicker
+              query={homeQuery}
+              onQueryChange={setHomeQuery}
+              selected={selectedHome}
+              onSelect={setSelectedHome}
+            />
             <p className="text-[10px] text-muted mt-1">
-              Your tour starts here and every travel leg is priced from it — pick a home in the
-              region you want to compete in.
+              Your tour starts here and every travel leg is priced from it. Any town works — cities
+              marked <span className="text-interactive">Show city</span> host shows on the tour.
               {carriedHomeId && decision === 'continue' && (
                 <>
                   {' '}
@@ -647,9 +606,9 @@ export default function PodiumRegistration({ podium }) {
                 {hasCarried ? (
                   <>
                     CorpsCoin into this season&apos;s Corps Budget. You hold{' '}
-                    <span className="text-secondary tabular-nums">{preview.corpsCoin}</span> CC;{' '}
-                    {preview.divisionLabel} caps a commitment at{' '}
-                    <span className="text-secondary tabular-nums">{preview.commitmentCap}</span>.
+                    <span className="text-secondary tabular-nums">{preview?.corpsCoin}</span> CC;{' '}
+                    {preview?.divisionLabel} caps a commitment at{' '}
+                    <span className="text-secondary tabular-nums">{preview?.commitmentCap}</span>.
                   </>
                 ) : (
                   <>

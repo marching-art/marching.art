@@ -711,6 +711,12 @@ export const getScheduleCoverage = createCallable<
     years?: Array<Record<string, unknown>>;
     totals?: Record<string, number>;
     pool?: { seasonId: string | null; size: number; unmapped: string[] };
+    venues?: {
+      total: number;
+      tour: number;
+      geocoded: Array<{ location: string; resolvedAs: string; eventName: string | null }>;
+      unresolved: Array<{ location: string; eventName: string | null }>;
+    };
   }
 >('getScheduleCoverage');
 // 3 min timeout: generates the full day's AI articles in one call
