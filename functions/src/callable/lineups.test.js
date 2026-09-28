@@ -580,6 +580,73 @@ describe("selectUserShows schedule enforcement", () => {
     assert.equal(indexWrites[0].data.date, "2026-07-01");
   });
 
+  describe("per-night registration lock", () => {
+    // An off-season that started 10 days ago: Days 8-9 of week 2 have been
+    // scored and rolled over whatever the hour, Day 13 is still ahead.
+    function lockedWeekDocs(selectedShows = {}) {
+      const start = new Date();
+      start.setUTCHours(0, 0, 0, 0);
+      start.setUTCDate(start.getUTCDate() - 10);
+      return new Map([
+        ["game-settings/season", {
+          seasonUid: "season-1",
+          status: "off-season",
+          schedule: { startDate: { toDate: () => start } },
+        }],
+        ["schedules/season-1", {
+          competitions: [
+            { name: "Scored Show", day: 9, date: "2026-07-01", location: "Anytown, USA" },
+            { name: "Other Scored Show", day: 9, date: "2026-07-01", location: "Elsewhere, USA" },
+            { name: "Upcoming Show", day: 13, date: "2026-07-05", location: "Somewhere, USA" },
+          ],
+        }],
+        [profilePath("u1"), {
+          username: "alice",
+          corps: { worldClass: { corpsName: "Alice Corps", selectedShows } },
+        }],
+      ]);
+    }
+    const scored = { eventName: "Scored Show", day: 9, date: "2026-07-01", location: "Anytown, USA" };
+
+    test("rejects withdrawing from a show whose scores have run", async () => {
+      const { db, writes } = makeFakeDb(lockedWeekDocs({ week2: [scored] }));
+      setDbForTesting(db);
+      await assert.rejects(
+        selectUserShows.run(authedRequest("u1", { week: 2, shows: [], corpsClass: "worldClass" })),
+        /already been processed/
+      );
+      assert.equal(writes.filter((w) => w.type === "update").length, 0);
+    });
+
+    test("rejects joining a show whose scores have run", async () => {
+      const { db, writes } = makeFakeDb(lockedWeekDocs());
+      setDbForTesting(db);
+      await assert.rejects(
+        selectUserShows.run(authedRequest("u1", {
+          week: 2, shows: [{ eventName: "Other Scored Show" }], corpsClass: "worldClass",
+        })),
+        /closed when that night's scores/
+      );
+      assert.equal(writes.filter((w) => w.type === "update").length, 0);
+    });
+
+    test("keeps a scored show while registering for an upcoming one", async () => {
+      const { db, writes } = makeFakeDb(lockedWeekDocs({ week2: [scored] }));
+      setDbForTesting(db);
+      const result = await selectUserShows.run(authedRequest("u1", {
+        week: 2,
+        shows: [{ eventName: "Scored Show" }, { eventName: "Upcoming Show" }],
+        corpsClass: "worldClass",
+      }));
+      assert.equal(result.success, true);
+      const update = writes.find((w) => w.type === "update" && w.path === profilePath("u1"));
+      assert.deepEqual(
+        update.data["corps.worldClass.selectedShows.week2"].map((s) => s.eventName),
+        ["Scored Show", "Upcoming Show"]
+      );
+    });
+  });
+
   test("clearing a week with an empty selection still works", async () => {
     const { db, writes } = makeFakeDb(makeShowDocs());
     setDbForTesting(db);

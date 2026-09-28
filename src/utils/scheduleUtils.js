@@ -5,7 +5,7 @@
  * Used by scheduleStore and any component that needs schedule data.
  */
 
-import { getShowRegistrationDeadline } from './seasonClock';
+import { isShowRegistrationClosed } from './seasonClock';
 
 /**
  * @typedef {Object} LineupEntry
@@ -619,14 +619,16 @@ export function showCalendarDay(comp) {
 }
 
 /**
- * Check if an event date is considered "past" for display purposes.
- * Events are considered past only once the nightly score processing after
- * show day has run (2 AM ET — the same instant registration closes), via
- * the shared season clock.
+ * Check if an event date is considered "past" — its registration has closed
+ * because that night's scores have run (9 PM ET off-season; the published
+ * drop instant live), via the shared season clock. Without `seasonData` it
+ * falls back to the latest possible close (2 AM ET the next morning).
  * @param {Date|null} eventDate - The date of the event
+ * @param {{status?: string}|null} [seasonData] - Season doc (needs status)
+ * @param {{showDateKey?: string, dropAt?: Date}|null} [dropPlan] - Tonight's plan (useDropPlan)
+ * @param {Date} [now]
  * @returns {boolean} True if the event is past
  */
-export function isEventPast(eventDate) {
-  const deadline = getShowRegistrationDeadline(eventDate);
-  return deadline ? new Date() >= deadline : false;
+export function isEventPast(eventDate, seasonData = null, dropPlan = null, now = new Date()) {
+  return isShowRegistrationClosed(eventDate, seasonData, dropPlan, now);
 }

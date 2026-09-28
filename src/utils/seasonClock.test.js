@@ -3,6 +3,8 @@ import { describe, it, expect } from 'vitest';
 import {
   getNextScoresProcessingTime,
   getShowRegistrationDeadline,
+  getShowRegistrationLockTime,
+  isShowRegistrationClosed,
   getCaptionChangeInfo,
   formatCountdown,
   formatEtShort,
@@ -48,6 +50,50 @@ describe('getShowRegistrationDeadline', () => {
   it('returns null for missing dates', () => {
     expect(getShowRegistrationDeadline(null)).toBeNull();
     expect(getShowRegistrationDeadline(new Date('nonsense'))).toBeNull();
+  });
+});
+
+describe('getShowRegistrationLockTime', () => {
+  const eventDate = new Date(2026, 8, 27); // Sun Sep 27, local midnight
+
+  it('locks at the 9 PM ET off-season drop, not the 2 AM rollover', () => {
+    const lockAt = getShowRegistrationLockTime(eventDate, { status: 'off-season' });
+    expect(lockAt.toISOString()).toBe('2026-09-28T01:00:00.000Z'); // 9 PM EDT Sep 27
+    expect(
+      isShowRegistrationClosed(
+        eventDate,
+        { status: 'off-season' },
+        null,
+        new Date('2026-09-27T23:52:00-04:00')
+      )
+    ).toBe(true);
+    expect(
+      isShowRegistrationClosed(
+        eventDate,
+        { status: 'off-season' },
+        null,
+        new Date('2026-09-27T20:59:00-04:00')
+      )
+    ).toBe(false);
+  });
+
+  it("uses tonight's published live drop for that show date", () => {
+    const dropAt = new Date('2026-09-28T04:00:00Z'); // midnight EDT
+    const plan = { showDateKey: '2026-09-27', dropAt };
+    expect(getShowRegistrationLockTime(eventDate, { status: 'live-season' }, plan)).toBe(dropAt);
+  });
+
+  it('ignores a plan for another night and falls back to the 2 AM bound', () => {
+    const plan = { showDateKey: '2026-09-26', dropAt: new Date('2026-09-27T03:00:00Z') };
+    expect(
+      getShowRegistrationLockTime(eventDate, { status: 'live-season' }, plan).toISOString()
+    ).toBe('2026-09-28T06:00:00.000Z');
+    expect(getShowRegistrationLockTime(eventDate).toISOString()).toBe('2026-09-28T06:00:00.000Z');
+  });
+
+  it('is null (never closed) without a date', () => {
+    expect(getShowRegistrationLockTime(null)).toBeNull();
+    expect(isShowRegistrationClosed(null)).toBe(false);
   });
 });
 

@@ -15,8 +15,8 @@
  *     rules in functions/src/helpers/captionWindows.js. Lockouts reopen at
  *     the 2 AM ET boundary regardless of how early that night's scores
  *     dropped (the backend gate is 2 AM AND the recap existing).
- *   - When show registration effectively closes (the night's scores
- *     processing).
+ *   - When show registration closes — the moment the night's scores run
+ *     (getShowRegistrationLockTime; enforced server-side by selectUserShows).
  *
  * All UI surfaces that display a deadline must derive it from here so the
  * times can never drift apart between screens.
@@ -238,6 +238,54 @@ export function getShowRegistrationCloseEstimate(eventDate, seasonData) {
     return { at: easternWallTimeToDate(year, month, day, OFF_SEASON_DROP_HOUR_ET), exact: true };
   }
   return { at: easternWallTimeToDate(year, month, day, LIVE_EARLIEST_DROP_HOUR_ET), exact: false };
+}
+
+/**
+ * The instant a show's registration actually closes: when that night's scores
+ * RUN. Mirrors the server lock (functions/src/helpers/showRegistrationLock.js)
+ * that selectUserShows enforces:
+ *   - Off-season: 9 PM ET on the show date (fixed, exact).
+ *   - Live season: tonight's published drop instant (drop_plans — the
+ *     westernmost-show ladder) when `dropPlan` is for this show's date;
+ *     otherwise the 2 AM ET bound (getShowRegistrationDeadline).
+ * Never later than the 2 AM ET bound.
+ *
+ * @param {Date|null} eventDate - Local-midnight Date for the show's calendar day
+ * @param {{status?: string}|null} [seasonData] - Season doc (needs status)
+ * @param {{showDateKey?: string, dropAt?: Date}|null} [dropPlan] - Tonight's plan (useDropPlan)
+ * @returns {Date|null}
+ */
+export function getShowRegistrationLockTime(eventDate, seasonData = null, dropPlan = null) {
+  const deadline = getShowRegistrationDeadline(eventDate);
+  if (!eventDate || !deadline) return null;
+  if (seasonData?.status === 'off-season') {
+    return getShowRegistrationCloseEstimate(eventDate, seasonData)?.at ?? deadline;
+  }
+  const year = eventDate.getFullYear();
+  const month = String(eventDate.getMonth() + 1).padStart(2, '0');
+  const day = String(eventDate.getDate()).padStart(2, '0');
+  if (dropPlan?.dropAt && dropPlan.showDateKey === `${year}-${month}-${day}`) {
+    return dropPlan.dropAt.getTime() < deadline.getTime() ? dropPlan.dropAt : deadline;
+  }
+  return deadline;
+}
+
+/**
+ * Whether a show's registration has closed (its night's scores have run).
+ * @param {Date|null} eventDate - Local-midnight Date for the show's calendar day
+ * @param {{status?: string}|null} [seasonData]
+ * @param {{showDateKey?: string, dropAt?: Date}|null} [dropPlan]
+ * @param {Date} [now]
+ * @returns {boolean}
+ */
+export function isShowRegistrationClosed(
+  eventDate,
+  seasonData = null,
+  dropPlan = null,
+  now = new Date()
+) {
+  const lockAt = getShowRegistrationLockTime(eventDate, seasonData, dropPlan);
+  return lockAt ? now.getTime() >= lockAt.getTime() : false;
 }
 
 /**

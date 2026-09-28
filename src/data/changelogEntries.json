@@ -1,5 +1,17 @@
 [
   {
+    "id": "2026-09-28-show-registration-locks-at-scores",
+    "date": "2026-09-28",
+    "title": "Show registration now locks when scores run",
+    "category": "fix",
+    "summary": "Once a night's scores have been processed, its shows are locked: you can no longer register for them or withdraw from them. Before, a show stayed open for a few hours after its scores posted.",
+    "highlights": [
+      "Shows lock at the moment that night's scores drop (9:00 PM ET in the off-season), and the schedule greys them out right then.",
+      "If you have a show open when its scores drop, it switches to \"Registration closed\" instead of letting you save.",
+      "Changes to the rest of the week's shows still work as usual."
+    ]
+  },
+  {
     "id": "2026-09-28-any-hometown",
     "date": "2026-09-28",
     "title": "Your corps can call any town home",
