@@ -26,6 +26,7 @@ const staffMarket = require("../helpers/podium/staffMarket");
 const staffNames = require("../helpers/podium/staffNames");
 const career = require("../helpers/podium/career");
 const divisions = require("../helpers/podium/divisions");
+const hometown = require("../helpers/podium/hometown");
 const {
   validateCommitment,
   validateStaffPriority,
@@ -199,13 +200,7 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
     );
   }
   const homeLabel = `${homeVenue.city}, ${homeVenue.region}`;
-  const homeRecord = {
-    venueId: homeVenue.venueId,
-    city: homeVenue.city,
-    region: homeVenue.region,
-    lat: homeVenue.lat,
-    lng: homeVenue.lng,
-  };
+  const homeRecord = hometown.homeRecordFor(homeVenue);
   if (calendarDay < 1) {
     throw new HttpsError("failed-precondition", "The season has not started yet.");
   }
@@ -254,8 +249,11 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
   const priorHomeVenue = hasStalePriorSeason
     ? staleStateSnapshot.data().home || venues.venueFor(staleStateSnapshot.data().location) || null
     : null;
+  // A home the old show-city-only rule forced on the director (and never
+  // corrected) moves for free: they never chose it (helpers/podium/hometown.js).
+  const priorHomeForced = hasStalePriorSeason && hometown.homeWasForced(staleStateSnapshot.data());
   const relocation =
-    hasStalePriorSeason && !freshStart
+    hasStalePriorSeason && !freshStart && !priorHomeForced
       ? venues.relocationFee(priorHomeVenue, homeRecord, store.balance)
       : { miles: 0, fee: 0 };
   const movingFee = relocation.fee;
@@ -546,6 +544,8 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
     transaction.set(store.rosterRef(db, seasonUid, uid), {
       uid,
       corpsName: trimmedName,
+      // The joint-rehearsal roster lists each corps' home city from here.
+      location: homeLabel,
       createdAt: new Date().toISOString(),
     });
     // Display copy on the profile (identity + placeholders the UI reads).

@@ -148,6 +148,8 @@ export default function PodiumRegistration({ podium }) {
   const milesPerCoin = preview?.homeRelocationMilesPerCoin || 2;
   const move = useMemo(() => {
     if (decision !== 'continue' || !carriedHomeId || !selectedHome) return { miles: 0, fee: 0 };
+    // A home the old show-city-only rule forced moves free this once.
+    if (carry?.homeMoveFree) return { miles: 0, fee: 0 };
     // Re-picking the current home (same label or venue) is always free.
     if (selectedHome.venueId === carriedHomeId || selectedHome.label === carry?.homeCity) {
       return { miles: 0, fee: 0 };
@@ -358,7 +360,14 @@ export default function PodiumRegistration({ podium }) {
             <p className="text-[10px] text-muted mt-1">
               Your tour starts here and every travel leg is priced from it. Any town works — cities
               marked <span className="text-interactive">Show city</span> host shows on the tour.
-              {carriedHomeId && decision === 'continue' && (
+              {carriedHomeId && decision === 'continue' && carry?.homeMoveFree && (
+                <>
+                  {' '}
+                  Your current home was picked when only show cities were allowed, so moving it this
+                  season is <span className="text-secondary">free</span>.
+                </>
+              )}
+              {carriedHomeId && decision === 'continue' && !carry?.homeMoveFree && (
                 <>
                   {' '}
                   You can move it for{' '}

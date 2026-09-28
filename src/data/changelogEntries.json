@@ -1,5 +1,17 @@
 [
   {
+    "id": "2026-09-28-hometown-correction",
+    "date": "2026-09-28",
+    "title": "Fix your hometown for free",
+    "category": "improvement",
+    "summary": "If you founded your Podium corps when hometowns had to be a city that hosts shows, you can now move your home to your real hometown once, for free. Look for the hometown card at the top of your Podium dashboard.",
+    "highlights": [
+      "If your tour hasn't started yet, your route is priced from your new hometown. If it has, you keep going from your last show, and nothing you've already paid for changes.",
+      "Your profile shows the new hometown, and next season starts from it.",
+      "If you don't change it this season, you can still move it for free when you register next season."
+    ]
+  },
+  {
     "id": "2026-09-28-any-hometown",
     "date": "2026-09-28",
     "title": "Your corps can call any town home",
