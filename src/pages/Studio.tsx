@@ -80,7 +80,7 @@ export default function Studio() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const corpsOptions: CorpsOption[] = useMemo(() => {
-    const corpsMap = (profile?.corps || {}) as Record<string, CorpsData>;
+    const corpsMap = (profile?.corps || {}) as Record<string, CorpsData | null>;
     return (PROFILE_CORPS_CLASS_ORDER as readonly string[])
       .map((classKey) => ({
         classKey,

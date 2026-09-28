@@ -259,9 +259,15 @@ The returning director's home is the **Director's Report** dashboard
 **Daily systems** (all server-authoritative and idempotent):
 
 - **Daily login** — +25 XP, streak increment, milestone bonuses.
-- **Daily challenges** — 2 rotating micro-tasks (from a pool of three genuinely
-  daily actions: review your lineup, make today's prediction, enter your league
-  prediction pool), 10 XP (20 for the league-pool stretch tier), plus a
+- **Daily challenges** — 2 rotating micro-tasks dealt from a pool of six
+  genuinely daily actions (review your lineup, make today's prediction, enter
+  your league prediction pool, talk shop in league chat, react to a news
+  story, applaud someone else's design on the Exchange), filtered per director
+  to the ones they're eligible for — no lineup row for a Podium-only director,
+  no pool or chat row without a league — so everyone draws a full, varied set.
+  The reaction / like / chat rows verify off a game-day stamp the acting
+  callable writes to the server-only `engagement.dailyActs` map
+  (`helpers/dailyActs.js`). 10 XP (20 for the league-pool stretch tier), plus a
   **graduated weekly arc**: completing the full daily set on 3 / 5 / 7 distinct
   ET-week days pays 40 / 60 / 50 XP + CC at each milestone (cumulative 100 by
   five days — unchanged — and 150 for a perfect week). Every challenge verifies

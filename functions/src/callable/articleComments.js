@@ -16,6 +16,8 @@ const { FieldValue } = require("firebase-admin/firestore");
 const { getAuth } = require("firebase-admin/auth");
 const { brevoApiKey } = require("../helpers/emailService");
 const { hasAdminClaim, assertAuthWithBudget, assertDocId } = require("../helpers/callableGuards");
+const { DAILY_ACTS } = require("../helpers/dailyChallenges");
+const { recordDailyAct } = require("../helpers/dailyActs");
 
 // Maximum comment length
 const MAX_COMMENT_LENGTH = 1000;
@@ -130,6 +132,12 @@ exports.toggleArticleReaction = onCall(
         action: result.action,
         emoji: result.emoji,
       });
+
+      // Weighing in (a new or changed reaction, never a retraction) is the
+      // react-to-news daily challenge.
+      if (result.action !== "removed") {
+        await recordDailyAct(db, userId, DAILY_ACTS.REACT_TO_NEWS);
+      }
 
       return {
         success: true,

@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // =============================================================================
 // DASHBOARD - TEAM OVERVIEW (data-terminal style)
 // =============================================================================
@@ -74,7 +73,6 @@ import { useScheduleStore } from '../store/scheduleStore';
 import { useDashboardData } from '../hooks/useDashboardData';
 import { useNextAction } from '../hooks/useNextAction';
 import { useScoresData } from '../hooks/useScoresData';
-import { useMyLeagues } from '../hooks/useLeagues';
 import { CORPS_CLASS_ORDER } from '../utils/corps';
 import { canEditCorpsThisSeason } from '../utils/corps';
 import { useDashboardModals } from '../hooks/useDashboardModals';
@@ -109,8 +107,29 @@ import { getEquippedCosmetic } from '../utils/cosmetics';
 // DASHBOARD COMPONENT
 // =============================================================================
 
+/**
+ * The active class's corps entry (`profile.corps[class]`) as this page reads
+ * it. Podium carries display copies of its score/rank here (the nightly
+ * processor mirrors them), so both divisions share the shape.
+ * @typedef {{
+ *   corpsName?: string,
+ *   name?: string,
+ *   lineup?: Record<string, string>,
+ *   selectedShows?: Record<string, import('../utils/dashboardScoring').SelectedShow[]>,
+ *   showConcept?: Record<string, any> | null,
+ *   totalSeasonScore?: number,
+ *   seasonRank?: number,
+ *   avatarUrl?: string | null,
+ *   division?: string,
+ *   [key: string]: unknown,
+ * }} DashboardActiveCorps
+ */
+
+/** One rival row, precomputed nightly onto `profile.rivals[class]`. */
+/** @typedef {Record<string, any>} RivalRow */
+
 const Dashboard = () => {
-  const { user } = useAuth();
+  const user = useAuth()?.user;
   const navigate = useNavigate();
   const dashboardData = useDashboardData();
   // Rank/score for the active corps and the class recaps the Season Ledger
@@ -130,7 +149,6 @@ const Dashboard = () => {
     classFilter: dashboardClassKey === 'soundSport' ? 'soundSport' : 'all',
     enabled: dashboardClassKey !== 'podiumClass',
   });
-  const { data: myLeagues } = useMyLeagues(user?.uid);
   // Narrow per-field selectors (not a bare useSeasonStore()) so this heavy page
   // re-renders only when a value it actually uses changes, not on every
   // season-store write. Matches the store's documented selector contract.
@@ -182,7 +200,7 @@ const Dashboard = () => {
   const {
     profile,
     corps,
-    activeCorps,
+    activeCorps: rawActiveCorps,
     activeCorpsClass,
     seasonData,
     corpsNeedingSetup,
@@ -191,6 +209,9 @@ const Dashboard = () => {
     handleCorpsSwitch,
     unlockedClasses, // Includes admin override - admins have all classes
   } = dashboardData;
+  const activeCorps = /** @type {DashboardActiveCorps | null} */ (rawActiveCorps);
+  // The class key as the optional props downstream take it (null → absent).
+  const corpsClassProp = activeCorpsClass ?? undefined;
 
   // Season recap ledger — opened by clicking SEASON SCORE on the scorecard
   // (community request). Podium gets the public-recap ledger; the ranked fantasy
@@ -198,7 +219,8 @@ const Dashboard = () => {
   // caption ledger. Local UI state; the ledger reads its own data.
   const [showSeasonLedger, setShowSeasonLedger] = useState(false);
   const hasSeasonLedger =
-    isPodiumSelected || ['worldClass', 'openClass', 'aClass'].includes(activeCorpsClass);
+    isPodiumSelected ||
+    (activeCorpsClass !== null && ['worldClass', 'openClass', 'aClass'].includes(activeCorpsClass));
 
   // Whether the director has entered today's league prediction pool — the
   // per-day fact the join-league-pool daily challenge verifies, read off the
@@ -223,8 +245,8 @@ const Dashboard = () => {
   // rewrites it.
   const activeCorpsRivals = useMemo(() => {
     if (!profile?.rivals || !activeCorpsClass) return [];
-    /** @type {Array<Record<string, any>>} */
-    const slice = profile.rivals[activeCorpsClass] || [];
+    const rivalsByClass = /** @type {Record<string, RivalRow[]>} */ (profile.rivals);
+    const slice = rivalsByClass[activeCorpsClass] || [];
     const seen = new Set();
     return slice.filter((rival) => {
       const key = `${rival?.uid}:${rival?.corpsClass}`;
@@ -275,7 +297,12 @@ const Dashboard = () => {
   // Places climbed (positive) or dropped since the last daily rank snapshot,
   // written by the rivals job (scheduled/rivalsComputation.js) at 2:30 AM ET.
   const userRankChange = useMemo(() => {
-    const snapshot = profile?.classRanks?.[activeCorpsClass];
+    if (!activeCorpsClass) return null;
+    const classRanks =
+      /** @type {Record<string, {rank?: number, previousRank?: number}> | undefined} */ (
+        profile?.classRanks
+      );
+    const snapshot = classRanks?.[activeCorpsClass];
     if (!snapshot?.rank || !snapshot?.previousRank) return null;
     return snapshot.previousRank - snapshot.rank;
   }, [profile?.classRanks, activeCorpsClass]);
@@ -315,7 +342,7 @@ const Dashboard = () => {
     user,
     seasonData,
     activeCorpsClass,
-    activeCorpsClass === 'podiumClass' ? null : currentDay
+    activeCorpsClass === 'podiumClass' ? 0 : currentDay
   );
   const podiumRecentResults = usePodiumRecentResults(
     user,
@@ -443,7 +470,10 @@ const Dashboard = () => {
               // If the director has retired corps for this class, offer the
               // choice between starting fresh and bringing one back. Otherwise
               // jump straight to registration with this class preselected.
-              const retiredForClass = (profile?.retiredCorps || [])
+              const retiredCorps = /** @type {Array<{corpsClass?: string}>} */ (
+                profile?.retiredCorps || []
+              );
+              const retiredForClass = retiredCorps
                 .map((record, retiredIndex) => ({ record, retiredIndex }))
                 .filter((entry) => entry.record?.corpsClass === classId);
               if (retiredForClass.length > 0) {
@@ -619,7 +649,7 @@ const Dashboard = () => {
                     rank={userCorpsRank}
                     rankChange={userRankChange}
                     corpsName={activeCorps.corpsName || activeCorps.name}
-                    corpsClass={activeCorpsClass}
+                    corpsClass={corpsClassProp}
                     loading={scoresLoading}
                     avatarUrl={activeCorps.avatarUrl}
                     onDesignUniform={() => navigate(`/studio?corps=${activeCorpsClass}`)}
@@ -709,18 +739,12 @@ const Dashboard = () => {
                   </h2>
 
                   {/* Season progress hub — ladder + achievements as one surface */}
-                  <SeasonProgressHub
-                    profile={profile}
-                    seasonUid={seasonData?.seasonUid}
-                    lineupCount={lineupCount}
-                    resultCount={recentResults.length}
-                    leagueCount={myLeagues?.length || 0}
-                  />
+                  <SeasonProgressHub profile={profile} seasonUid={seasonData?.seasonUid} />
 
                   {/* Rivals - closest competitors in the active corps's class */}
                   <RivalsPanel
                     rivals={activeCorpsRivals}
-                    corpsClass={activeCorpsClass}
+                    corpsClass={corpsClassProp}
                     division={activeCorps?.division}
                   />
 
@@ -728,7 +752,7 @@ const Dashboard = () => {
                     <RecentResultsFeed
                       results={recentResults}
                       loading={scoresLoading}
-                      corpsClass={activeCorpsClass}
+                      corpsClass={corpsClassProp}
                     />
                   </div>
                 </div>

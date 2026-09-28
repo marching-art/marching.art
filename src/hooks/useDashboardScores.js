@@ -30,7 +30,7 @@ const SCORES_STALE_TIME = 5 * 60 * 1000;
 /**
  * @param {Record<string, string>} lineup - Caption id -> "corpsName|sourceYear".
  * @param {number} currentDay
- * @param {string} activeCorpsClass
+ * @param {string|null} activeCorpsClass
  */
 export function useLineupScores(lineup, currentDay, activeCorpsClass) {
   const hasLineup = !!lineup && Object.keys(lineup).length > 0;
@@ -124,10 +124,10 @@ export function useLineupScores(lineup, currentDay, activeCorpsClass) {
  * sets on that key and re-downloaded the whole season twelve times an hour
  * from the most-visited route (SITE_REVIEW_2026-09 F-H2).
  *
- * @param {DirectorUser} user
- * @param {SeasonDoc} seasonData
- * @param {string} activeCorpsClass
- * @param {number} currentDay
+ * @param {DirectorUser|null|undefined} user
+ * @param {SeasonDoc|null} seasonData
+ * @param {string|null} activeCorpsClass
+ * @param {number} currentDay - 0 disables the fetch (the Podium tab).
  */
 export function useRecentResults(user, seasonData, activeCorpsClass, currentDay) {
   const seasonUid = seasonData?.seasonUid;
@@ -157,7 +157,7 @@ export function useRecentResults(user, seasonData, activeCorpsClass, currentDay)
     for (const recap of sortedRecaps) {
       for (const show of recap.shows || []) {
         const userResult = (show.results || []).find(
-          (r) => r.uid === user.uid && r.corpsClass === activeCorpsClass
+          (r) => r.uid === user?.uid && r.corpsClass === activeCorpsClass
         );
 
         if (userResult && results.length < 5) {
@@ -193,8 +193,8 @@ export function useRecentResults(user, seasonData, activeCorpsClass, currentDay)
  * reads that collection so the Dashboard's Recent Results box populates for
  * Podium. Returns the same { eventName, score, placement, date } shape.
  *
- * @param {DirectorUser} user
- * @param {SeasonDoc} seasonData
+ * @param {DirectorUser|null|undefined} user
+ * @param {SeasonDoc|null} seasonData
  * @param {number} currentDay
  * @param {boolean} [enabled]
  */
@@ -227,7 +227,7 @@ export function usePodiumRecentResults(user, seasonData, currentDay, enabled = t
 
     for (const recap of sortedRecaps) {
       for (const show of recap.shows || []) {
-        const mine = /** @type {any} */ ((show.results || []).find((r) => r.uid === user.uid));
+        const mine = /** @type {any} */ ((show.results || []).find((r) => r.uid === user?.uid));
         if (mine && results.length < 5) {
           results.push({
             eventName:
@@ -252,7 +252,7 @@ export function usePodiumRecentResults(user, seasonData, currentDay, enabled = t
 
 /**
  * @param {{ corpsName?: string, name?: string }|null|undefined} activeCorps
- * @param {string} activeCorpsClass
+ * @param {string|null} activeCorpsClass
  * @param {Array<{ scores?: Array<{ score?: number, corpsName?: string, corps?: string }> }>} allShows
  */
 export function useBestInShowCount(activeCorps, activeCorpsClass, allShows) {

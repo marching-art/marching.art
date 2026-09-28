@@ -60,7 +60,7 @@ EfficiencyBar.displayName = 'EfficiencyBar';
  * @typedef {object} LineupSimulatorPanelProps
  * @property {Record<string, string> | null | undefined} lineup - Caption id -> "Corps|year|points".
  * @property {Record<string, { score?: number | null }> | null | undefined} lineupScoreData - Last-show caption scores.
- * @property {string} activeCorpsClass
+ * @property {string|null} activeCorpsClass
  * @property {(captionId: string) => void} [onSwapCaption]
  */
 

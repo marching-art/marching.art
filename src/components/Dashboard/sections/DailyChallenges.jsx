@@ -1,17 +1,20 @@
-// DailyChallenges — the day's rotating objectives (2 of a 3-challenge pool).
-// Every challenge is a DECISION with a server-verified, GENUINELY SAME-DAY
-// outcome: make today's prediction, enter today's league pool, or review your
-// lineup. None verify persistent season state, so a fresh game day always
-// starts incomplete — the old register-show / set-show-concept rows (which
+// DailyChallenges — the day's rotating objectives (2 dealt from a 6-challenge
+// pool, only from the ones this director is eligible for). Every challenge is
+// a DECISION with a server-verified, GENUINELY SAME-DAY outcome: make today's
+// prediction, enter today's league pool, talk shop in league chat, react to a
+// news story, applaud someone's design on the Exchange, or review your lineup.
+// None verify persistent season state, so a fresh game day always starts
+// incomplete — the old register-show / set-show-concept rows (which
 // auto-completed off a show map or concept set once and fired a phantom "+XP"
 // toast every rollover) are retired to the First Season Journey.
 //
-// Completion flow: the prediction and league-pool rows auto-claim once their
-// per-day state appears (a pick saved today, a pool entered today); the
-// lineup row is action-gated — it claims on the review click, not on load, so
-// it never phantom-completes off a lineup that merely exists. The
-// completeDailyChallenge callable re-verifies before awarding XP. Completing
-// the full set on 5 days in an ET week pays the weekly-arc bonus (server-owned,
+// Completion flow: every row but the lineup auto-claims once its per-day
+// state appears (a pick saved today, a pool entered today, or a daily-act
+// stamp the acting callable wrote to engagement.dailyActs); the lineup row is
+// action-gated — it claims on the review click, not on load, so it never
+// phantom-completes off a lineup that merely exists. The completeDailyChallenge
+// callable re-verifies before awarding XP. Completing the full set on 3/5/7
+// days in an ET week pays the weekly-arc ladder (server-owned,
 // engagement.weeklyLoop).
 
 import React, { memo, useEffect, useMemo, useRef } from 'react';
@@ -122,10 +125,9 @@ const DailyChallengesInner = ({
     if (challenge.action === 'lineup') completeDailyChallenge(challenge.id);
   };
 
-  // With the pool trimmed to genuinely-daily challenges, a director can now
-  // have none available today (a Podium-only director has no lineup, and a
-  // brand-new director has no prediction question yet). Render nothing rather
-  // than an empty "0/0 — all complete" shell.
+  // Defensive: every director is eligible for the always-dealt challenges,
+  // so a dealt set is never empty today — but render nothing rather than an
+  // empty "0/0 — all complete" shell if the pool ever changes.
   if (totalCount === 0) return null;
 
   return (

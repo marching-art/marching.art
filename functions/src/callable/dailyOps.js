@@ -375,65 +375,58 @@ const completeDailyChallenge = onCall({ cors: true }, async (request) => {
     // safely computed outside the transaction; it only costs a recap read
     // when the answer could matter (rotation includes it, no picks yet).
     const gameDayPre = getGameDay();
-    const rotationIds = getChallengesForGameDay(gameDayPre).map((c) => c.id);
+    // The rotation is dealt per director (only challenges they're eligible
+    // for), so the profile is always pre-read. The transaction re-reads it
+    // authoritatively; this pre-read exists for the cross-document lookups a
+    // transaction can't do — recaps, the podium subcollection, and the
+    // leagues' pool docs.
+    const preSnap = await profileRef.get();
+    const pre = preSnap.exists ? preSnap.data() : {};
+    const seasonUid = pre.activeSeasonId;
+    const rotationIds = getChallengesForGameDay(gameDayPre, pre).map((c) => c.id);
     const needsPrediction = rotationIds.includes("make-prediction");
-    const needsPodium = rotationNeedsPodiumContext(gameDayPre);
-    const needsLeaguePool = rotationNeedsLeaguePoolContext(gameDayPre);
+    const needsPodium = rotationNeedsPodiumContext(gameDayPre, pre);
+    const needsLeaguePool = rotationNeedsLeaguePoolContext(gameDayPre, pre);
 
     let predictionAvailable = true;
     let podiumFacts = null;
     let leaguePoolFacts = null;
-    // A single profile read covers every pre-transaction fact. Skip it
-    // entirely when today's rotation needs none. (The transaction re-reads
-    // the profile authoritatively; this pre-read exists only for the
-    // cross-document lookups a transaction can't do — recaps, the podium
-    // subcollection, and the leagues' pool docs.)
-    if (needsPrediction || needsPodium || needsLeaguePool) {
-      const preSnap = await profileRef.get();
-      const pre = preSnap.exists ? preSnap.data() : {};
-      const seasonUid = pre.activeSeasonId;
 
-      if (needsPrediction) {
-        const hasPicksToday =
-          Object.keys(pre.predictions?.[gameDayPre]?.picks || {}).length > 0;
-        if (!hasPicksToday) {
-          const classes = Object.keys(pre.corps || {});
-          predictionAvailable = false;
-          for (const cls of classes) {
-            // Class-aware source (Podium reads podium-recaps) so a podium-only
-            // director's make-prediction challenge isn't wrongly dropped.
-            const recent = await fetchRecentResultsForClass(db, seasonUid, uid, cls, 5);
-            const available = PREDICTION_QUESTIONS.some(
-              (q) =>
-                (cls !== "soundSport" || SCORE_FREE_QUESTION_IDS.includes(q.id)) &&
-                deriveQuestionThreshold(q.id, recent) !== null
-            );
-            if (available) {
-              predictionAvailable = true;
-              break;
-            }
+    if (needsPrediction) {
+      const hasPicksToday =
+        Object.keys(pre.predictions?.[gameDayPre]?.picks || {}).length > 0;
+      if (!hasPicksToday) {
+        const classes = Object.keys(pre.corps || {});
+        predictionAvailable = false;
+        for (const cls of classes) {
+          // Class-aware source (Podium reads podium-recaps) so a podium-only
+          // director's make-prediction challenge isn't wrongly dropped.
+          const recent = await fetchRecentResultsForClass(db, seasonUid, uid, cls, 5);
+          const available = PREDICTION_QUESTIONS.some(
+            (q) =>
+              (cls !== "soundSport" || SCORE_FREE_QUESTION_IDS.includes(q.id)) &&
+              deriveQuestionThreshold(q.id, recent) !== null
+          );
+          if (available) {
+            predictionAvailable = true;
+            break;
           }
         }
       }
+    }
 
-      // Podium keeps its show picks and concept off the profile, so
-      // register-show / set-show-concept can't be verified from profileData
-      // alone. Read the podium state only when the director actually has a
-      // Podium corps this season — a fantasy-only director never pays for it.
-      if (needsPodium && pre.corps?.podiumClass?.corpsName) {
-        podiumFacts = await loadPodiumChallengeFacts(db, uid, seasonUid);
-      }
+    // Podium keeps its show picks and concept off the profile, so a
+    // Podium-verified challenge can't be checked from profileData alone. Read
+    // the podium state only when the director actually has a Podium corps
+    // this season — a fantasy-only director never pays for it.
+    if (needsPodium && pre.corps?.podiumClass?.corpsName) {
+      podiumFacts = await loadPodiumChallengeFacts(db, uid, seasonUid);
+    }
 
-      // Read the director's league pool docs for today only when the rotation
-      // includes join-league-pool and they actually belong to a league.
-      if (needsLeaguePool && Array.isArray(pre.leagueIds) && pre.leagueIds.length > 0) {
-        leaguePoolFacts = await loadLeaguePoolChallengeFacts(
-          db,
-          uid,
-          pre.leagueIds,
-          gameDayPre
-        );
-      }
+    // Read the director's league pool docs for today only when their rotation
+    // includes join-league-pool (dealt only to league members).
+    if (needsLeaguePool) {
+      leaguePoolFacts = await loadLeaguePoolChallengeFacts(db, uid, pre.leagueIds, gameDayPre);
     }
 
     const context = { predictionAvailable, podium: podiumFacts, leaguePool: leaguePoolFacts };
@@ -446,7 +439,9 @@ const completeDailyChallenge = onCall({ cors: true }, async (request) => {
       const profileData = profileDoc.data();
 
       const gameDay = getGameDay();
-      const challenge = getChallengesForGameDay(gameDay).find((c) => c.id === challengeId);
+      const challenge = getChallengesForGameDay(gameDay, profileData).find(
+        (c) => c.id === challengeId
+      );
       if (!challenge) {
         // Valid challenge, but not in today's rotation — a soft no-op so
         // client auto-claims never surface errors.
@@ -482,18 +477,21 @@ const completeDailyChallenge = onCall({ cors: true }, async (request) => {
       // Weekly arc: completing the full daily set on 5 distinct days in an
       // ET week pays a one-time bonus (pure state machine in
       // helpers/dailyChallenges.js — day-counting and payout both idempotent).
-      // The REQUIRED set drops any challenge this director genuinely can't
-      // satisfy today — make-prediction with no questions, or check-lineup for
-      // a Podium-only director — so the arc stays winnable for everyone rather
-      // than silently excluding the players it exists to hook.
+      // The rotation is dealt only from challenges this director is eligible
+      // for (no lineup review for a Podium-only director, no league pool for a
+      // leagueless one), and the REQUIRED set further drops make-prediction
+      // when no question exists yet — so the arc stays winnable for everyone
+      // rather than silently excluding the players it exists to hook.
       const requiredIds = getRequiredChallengeIds(gameDay, profileData, context);
       const completedIds = new Set(
         updatedBucket.filter((c) => c.completed).map((c) => c.id)
       );
       // Guard the vacuous case: a day with nothing required is not a completed
-      // day (it must never credit a free weekly-arc day). Today's pool always
-      // leaves at least one non-droppable challenge required, so this is a
-      // future-proofing floor, not a live branch.
+      // day (it must never credit a free weekly-arc day). Every director is
+      // eligible for the always-dealt challenges (react-to-news,
+      // applaud-design) and only make-prediction is ever excused, so a dealt
+      // pair always leaves one required — a future-proofing floor, not a live
+      // branch.
       const setComplete = requiredIds.length > 0 && requiredIds.every((id) => completedIds.has(id));
       const { weeklyLoop, bonus: weeklyArcBonus } = advanceWeeklyLoop(
         profileData.engagement?.weeklyLoop,

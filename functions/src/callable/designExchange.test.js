@@ -25,6 +25,7 @@ const {
   MAX_PUBLISHED_PER_USER,
   saverAccountOldEnough,
 } = require("./designExchange");
+const { getGameDay } = require("../helpers/dailyChallenges");
 
 const NS = process.env.DATA_NAMESPACE;
 const profilePath = (uid) => `artifacts/${NS}/users/${uid}/profile/data`;
@@ -454,6 +455,41 @@ describe("likeExchangeDesign", () => {
       writes.find((w) => w.type === "update" && w.path === entryPath("creator_d1")),
       undefined
     );
+  });
+
+  // The applaud-design daily challenge verifies off this stamp.
+  const stampOf = (writes, uid) =>
+    writes.find((w) => w.type === "update" && w.path === profilePath(uid))?.data?.[
+      "engagement.dailyActs.applaudDesign"
+    ];
+
+  test("liking someone else's design stamps today's applaud-design act", async () => {
+    const docs = new Map([
+      [entryPath("creator_d1"), { ...ENTRY }],
+      [profilePath("fan"), { uid: "fan" }],
+    ]);
+    const { db, writes } = makeFakeDb(docs);
+    setDbForTesting(db);
+
+    await likeExchangeDesign.run(authedRequest("fan", { entryId: "creator_d1", liked: true }));
+    assert.equal(stampOf(writes, "fan"), getGameDay());
+  });
+
+  test("liking your own design, unliking, or a repeat like never stamps", async () => {
+    const docs = new Map([
+      [entryPath("creator_d1"), { ...ENTRY }],
+      [`${entryPath("creator_d1")}/likes/fan`, { likedAt: "x" }],
+      [profilePath("fan"), { uid: "fan" }],
+      [profilePath("creator"), { uid: "creator" }],
+    ]);
+    const { db, writes } = makeFakeDb(docs);
+    setDbForTesting(db);
+
+    await likeExchangeDesign.run(authedRequest("creator", { entryId: "creator_d1", liked: true }));
+    await likeExchangeDesign.run(authedRequest("fan", { entryId: "creator_d1", liked: true }));
+    await likeExchangeDesign.run(authedRequest("fan", { entryId: "creator_d1", liked: false }));
+    assert.equal(stampOf(writes, "creator"), undefined);
+    assert.equal(stampOf(writes, "fan"), undefined);
   });
 });
 

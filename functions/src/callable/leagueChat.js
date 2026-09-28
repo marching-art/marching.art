@@ -25,6 +25,8 @@ const {
   assertDocId,
 } = require("../helpers/callableGuards");
 const { isLeagueCommissioner } = require("../helpers/leaguePermissions");
+const { DAILY_ACTS } = require("../helpers/dailyChallenges");
+const { recordDailyAct } = require("../helpers/dailyActs");
 
 // Post a message to league chat
 // Chat messages are stored verbatim and rendered to every league member, so
@@ -131,6 +133,8 @@ exports.postLeagueMessage = onCall({ cors: true }, async (request) => {
   };
   if (replySnapshot) messageDoc.replyTo = replySnapshot;
   await messageRef.set(messageDoc);
+  // The league-chat daily challenge (best-effort; never fails the post).
+  await recordDailyAct(db, uid, DAILY_ACTS.LEAGUE_CHAT);
 
   // The league card's unread dot compares this against the viewer's
   // per-device read marker (utils/leagueChatReads). Only a timestamp: league

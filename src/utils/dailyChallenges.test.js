@@ -10,19 +10,30 @@ import {
   getAvailableChallengesForGameDay,
   CHALLENGE_POOL,
   CHALLENGES_PER_DAY,
+  DAILY_ACTS,
+  didDailyAct,
 } from './dailyChallenges';
 
-/**
- * A game day whose real rotation offers a given challenge id.
- * @param {string} id
- */
-const findGameDayWith = (id) => {
+// Director archetypes the rotation is dealt to (same as the server tests).
+const FULL = { corps: { worldClass: { corpsName: 'W' } }, leagueIds: ['L1'] };
+const LEAGUELESS = { corps: { worldClass: { corpsName: 'W' } } };
+const PODIUM_ONLY = { corps: { podiumClass: { corpsName: 'P' } } };
+
+/** The next `n` game days from a fixed anchor. */
+const gameDays = (n = 60) => {
   const anchor = new Date('2026-07-01T12:00:00Z');
-  for (let i = 0; i < 60; i++) {
-    const day = getGameDay(new Date(anchor.getTime() + i * 86400000));
-    if (getChallengesForGameDay(day).some((c) => c.id === id)) return day;
-  }
-  throw new Error(`No game day offers ${id}`);
+  return Array.from({ length: n }, (_, i) => getGameDay(new Date(anchor.getTime() + i * 86400000)));
+};
+
+/**
+ * A game day whose real rotation (dealt to `profile`) offers a given id.
+ * @param {string} id
+ * @param {any} [profile]
+ */
+const findGameDayWith = (id, profile = FULL) => {
+  const day = gameDays().find((d) => getChallengesForGameDay(d, profile).some((c) => c.id === id));
+  if (!day) throw new Error(`No game day offers ${id}`);
+  return day;
 };
 /** @param {string} id */
 const byId = (id) => {
@@ -71,7 +82,7 @@ describe('getGameDay', () => {
 
 describe('getChallengesForGameDay', () => {
   test('returns CHALLENGES_PER_DAY distinct challenges from the pool', () => {
-    const picks = getChallengesForGameDay('Sat Jul 04 2026');
+    const picks = getChallengesForGameDay('Sat Jul 04 2026', FULL);
     expect(picks).toHaveLength(CHALLENGES_PER_DAY);
     expect(new Set(picks.map((c) => c.id)).size).toBe(CHALLENGES_PER_DAY);
     for (const pick of picks) {
@@ -80,15 +91,15 @@ describe('getChallengesForGameDay', () => {
   });
 
   test('is deterministic for the same day', () => {
-    expect(getChallengesForGameDay('Sat Jul 04 2026')).toEqual(
-      getChallengesForGameDay('Sat Jul 04 2026')
+    expect(getChallengesForGameDay('Sat Jul 04 2026', FULL)).toEqual(
+      getChallengesForGameDay('Sat Jul 04 2026', FULL)
     );
   });
 
   test('rotates across days', () => {
     const days = ['Sat Jul 04 2026', 'Sun Jul 05 2026', 'Mon Jul 06 2026', 'Tue Jul 07 2026'];
     const signatures = days.map((d) =>
-      getChallengesForGameDay(d)
+      getChallengesForGameDay(d, FULL)
         .map((c) => c.id)
         .join(',')
     );
@@ -96,11 +107,58 @@ describe('getChallengesForGameDay', () => {
   });
 
   test('pinned rotation matches the server mirror (sync check)', () => {
-    // Same expectation exists in functions/src/helpers/dailyChallenges.test.js
-    expect(getChallengesForGameDay('Wed Jan 14 2026').map((c) => c.id)).toEqual([
-      'join-league-pool',
-      'check-lineup',
-    ]);
+    // Same expectations exist in functions/src/helpers/dailyChallenges.test.js
+    const day = 'Wed Jan 14 2026';
+    const ids = (/** @type {any} */ profile) =>
+      getChallengesForGameDay(day, profile).map((c) => c.id);
+    expect(ids(FULL)).toEqual(['join-league-pool', 'applaud-design']);
+    expect(ids(LEAGUELESS)).toEqual(['applaud-design', 'check-lineup']);
+    expect(ids(PODIUM_ONLY)).toEqual(['applaud-design', 'make-prediction']);
+  });
+
+  test('deals the same rotation as the server for every archetype', async () => {
+    const server = await import('../../functions/src/helpers/dailyChallenges.js');
+    for (const profile of [FULL, LEAGUELESS, PODIUM_ONLY, {}]) {
+      for (const day of gameDays(30)) {
+        expect(getChallengesForGameDay(day, profile).map((c) => c.id)).toEqual(
+          server.getChallengesForGameDay(day, profile).map((/** @type {any} */ c) => c.id)
+        );
+      }
+    }
+  });
+
+  test('never deals a challenge the director is ineligible for', () => {
+    for (const day of gameDays()) {
+      const leagueless = getChallengesForGameDay(day, LEAGUELESS).map((c) => c.id);
+      expect(leagueless).not.toContain('join-league-pool');
+      expect(leagueless).not.toContain('league-chat');
+      expect(getChallengesForGameDay(day, PODIUM_ONLY).map((c) => c.id)).not.toContain(
+        'check-lineup'
+      );
+    }
+  });
+});
+
+describe('daily-act stamps', () => {
+  test('stamped challenges auto-claim off today’s stamp only', () => {
+    const day = 'Wed Jan 14 2026';
+    const pairs = [
+      ['react-to-news', DAILY_ACTS.REACT_TO_NEWS],
+      ['applaud-design', DAILY_ACTS.APPLAUD_DESIGN],
+      ['league-chat', DAILY_ACTS.LEAGUE_CHAT],
+    ];
+    for (const [id, act] of pairs) {
+      const stamped = { engagement: { dailyActs: { [act]: day } } };
+      const stale = { engagement: { dailyActs: { [act]: 'Tue Jan 13 2026' } } };
+      expect(byId(id).check?.(stamped, day)).toBe(true);
+      expect(byId(id).check?.(stale, day)).toBe(false);
+      expect(didDailyAct(stamped, act, day)).toBe(true);
+    }
+  });
+
+  test('act names mirror the server', async () => {
+    const server = await import('../../functions/src/helpers/dailyChallenges.js');
+    expect(DAILY_ACTS).toEqual(server.DAILY_ACTS);
   });
 });
 
@@ -129,41 +187,49 @@ describe('CHALLENGE_POOL', () => {
   });
 });
 
-describe('getAvailableChallengesForGameDay (Podium-aware required set)', () => {
-  const fantasy = { corps: { worldClass: { corpsName: 'W' } } };
-  const podiumOnly = { corps: { podiumClass: { corpsName: 'P' } } };
-
-  test('drops check-lineup for a Podium-only director', () => {
-    const day = findGameDayWith('check-lineup');
-    const ids = getAvailableChallengesForGameDay(day, podiumOnly).map((c) => c.id);
-    expect(ids).not.toContain('check-lineup');
+describe('getAvailableChallengesForGameDay (the required set)', () => {
+  test('never includes check-lineup for a Podium-only director', () => {
+    for (const day of gameDays()) {
+      const ids = getAvailableChallengesForGameDay(day, PODIUM_ONLY).map((c) => c.id);
+      expect(ids).not.toContain('check-lineup');
+    }
   });
 
   test('keeps check-lineup for a fantasy director', () => {
-    const day = findGameDayWith('check-lineup');
-    const ids = getAvailableChallengesForGameDay(day, fantasy).map((c) => c.id);
+    const day = findGameDayWith('check-lineup', LEAGUELESS);
+    const ids = getAvailableChallengesForGameDay(day, LEAGUELESS).map((c) => c.id);
     expect(ids).toContain('check-lineup');
   });
 
   test('drops make-prediction when predictions are unavailable', () => {
-    const day = findGameDayWith('make-prediction');
-    const ids = getAvailableChallengesForGameDay(day, fantasy, {
+    const day = findGameDayWith('make-prediction', LEAGUELESS);
+    const ids = getAvailableChallengesForGameDay(day, LEAGUELESS, {
       predictionAvailable: false,
     }).map((c) => c.id);
     expect(ids).not.toContain('make-prediction');
   });
 
-  test('drops join-league-pool for a director with no league', () => {
-    const day = findGameDayWith('join-league-pool');
-    const ids = getAvailableChallengesForGameDay(day, fantasy).map((c) => c.id);
-    expect(ids).not.toContain('join-league-pool');
+  test('never includes join-league-pool for a director with no league', () => {
+    for (const day of gameDays()) {
+      const ids = getAvailableChallengesForGameDay(day, LEAGUELESS).map((c) => c.id);
+      expect(ids).not.toContain('join-league-pool');
+    }
   });
 
   test('keeps join-league-pool for a league member', () => {
     const day = findGameDayWith('join-league-pool');
-    const member = { corps: { worldClass: { corpsName: 'W' } }, leagueIds: ['L1'] };
-    const ids = getAvailableChallengesForGameDay(day, member).map((c) => c.id);
+    const ids = getAvailableChallengesForGameDay(day, FULL).map((c) => c.id);
     expect(ids).toContain('join-league-pool');
+  });
+
+  test('is never empty, even with no prediction questions', () => {
+    for (const profile of [FULL, LEAGUELESS, PODIUM_ONLY]) {
+      for (const day of gameDays()) {
+        expect(
+          getAvailableChallengesForGameDay(day, profile, { predictionAvailable: false }).length
+        ).toBeGreaterThan(0);
+      }
+    }
   });
 });
 
@@ -182,20 +248,22 @@ describe('join-league-pool check + availability', () => {
     expect(byId('join-league-pool').check?.(member, 'd')).toBe(false);
   });
 
-  test('available only to directors in at least one league', () => {
-    expect(byId('join-league-pool').available?.({ leagueIds: ['L1'] })).toBe(true);
-    expect(byId('join-league-pool').available?.({ leagueIds: [] })).toBe(false);
-    expect(byId('join-league-pool').available?.({})).toBe(false);
+  test('dealt only to directors in at least one league', () => {
+    expect(byId('join-league-pool').eligible?.({ leagueIds: ['L1'] })).toBe(true);
+    expect(byId('join-league-pool').eligible?.({ leagueIds: [] })).toBe(false);
+    expect(byId('join-league-pool').eligible?.({})).toBe(false);
   });
 
-  test('available predicates mirror the server exactly', async () => {
+  test('eligible and available predicates mirror the server exactly', async () => {
     const server = await import('../../functions/src/helpers/dailyChallenges.js');
-    const droppable = CHALLENGE_POOL.filter((c) => c.available)
-      .map((c) => c.id)
-      .sort();
-    const serverDroppable = server.CHALLENGE_POOL.filter((c) => c.available)
-      .map((c) => c.id)
-      .sort();
-    expect(droppable).toEqual(serverDroppable);
+    for (const key of /** @type {const} */ (['eligible', 'available'])) {
+      const client = CHALLENGE_POOL.filter((c) => c[key])
+        .map((c) => c.id)
+        .sort();
+      const serverIds = server.CHALLENGE_POOL.filter((/** @type {any} */ c) => c[key])
+        .map((/** @type {any} */ c) => c.id)
+        .sort();
+      expect(client).toEqual(serverIds);
+    }
   });
 });

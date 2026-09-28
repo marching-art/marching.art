@@ -35,6 +35,8 @@ const {
   sanitizeDesign,
 } = require("../helpers/uniformValidation");
 const { missingPacksFor, missingPacksMessage } = require("../helpers/uniformEntitlements");
+const { DAILY_ACTS } = require("../helpers/dailyChallenges");
+const { recordDailyAct } = require("../helpers/dailyActs");
 
 // Entry ids are `${creatorUid}_${designId}` — deterministic, so re-publishing
 // a design updates its entry instead of duplicating it.
@@ -192,7 +194,7 @@ const likeExchangeDesign = onCall({ cors: true }, async (request) => {
     if (!entryDoc.exists) {
       throw new HttpsError("not-found", "That gallery entry no longer exists.");
     }
-    if (liked === likeDoc.exists) return { liked }; // already in the asked state
+    if (liked === likeDoc.exists) return { liked, applauded: false }; // already in the asked state
     if (liked) {
       tx.set(likeRef, { likedAt: new Date().toISOString() });
       tx.update(entryRef, { likes: FieldValue.increment(1) });
@@ -200,9 +202,12 @@ const likeExchangeDesign = onCall({ cors: true }, async (request) => {
       tx.delete(likeRef);
       tx.update(entryRef, { likes: FieldValue.increment(-1) });
     }
-    return { liked };
+    // Only a like on SOMEONE ELSE's design counts as applause for the daily
+    // challenge — a creator can't farm it off their own entry.
+    return { liked, applauded: liked && entryDoc.data().creatorUid !== uid };
   });
-  return { ...result, message: result.liked ? "Liked." : "Like removed." };
+  if (result.applauded) await recordDailyAct(db, uid, DAILY_ACTS.APPLAUD_DESIGN);
+  return { liked: result.liked, message: result.liked ? "Liked." : "Like removed." };
 });
 
 /**
