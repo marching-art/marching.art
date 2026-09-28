@@ -27,6 +27,7 @@ const { FREE_IMAGE_MODEL } = require("../helpers/geminiService");
 const { resolveCorpsUniform } = require("../helpers/newsUniforms");
 const { loadUniformReferenceImages } = require("../helpers/uniformReference");
 const { uploadFromUrl, buildOptimizedUrl } = require("../helpers/mediaService");
+const { safeFetchImage, SafeFetchError } = require("../helpers/safeFetch");
 const {
   assertAuth,
   assertAdmin,
@@ -65,99 +66,44 @@ const AVATAR_FETCH_TIMEOUT_MS = 15000;
 // auto quality/format, so the delivered asset stays small regardless of the
 // source, and the fixed dimensions fit the existing avatar box (object-cover).
 const CUSTOM_AVATAR_EDGE_PX = 512;
+const AVATAR_FETCH_FAILED_MESSAGE =
+  "Couldn't load an image from that link. Use a direct, public link to a PNG, JPG, WEBP, or GIF.";
 
 /**
- * Fetch a director-supplied image URL into a base64 data URL, enforcing a hard
- * byte cap and an image content-type. Streams the body so a server that lies
- * about (or omits) Content-Length can't make us buffer an unbounded response.
+ * Fetch a director-supplied image URL into a base64 data URL. The fetch goes
+ * through helpers/safeFetch: every hop (including redirects and the address
+ * each name resolves to at connect time) is refused if it isn't public, so a
+ * pasted URL can't reach the metadata server or anything else inside.
+ *
+ * Every network outcome collapses into ONE message (only "too large" and the
+ * no-network URL-syntax errors stay distinct) so the response can't be used to
+ * tell a blocked or unreachable host from a reachable one.
  *
  * @param {string} imageUrl
  * @returns {Promise<string>} `data:image/...;base64,...`
  * @throws {HttpsError} invalid-argument for any bad/oversized/non-image URL.
  */
 async function fetchImageAsDataUrl(imageUrl) {
-  let parsed;
   try {
-    parsed = new URL(imageUrl);
-  } catch {
-    throw new HttpsError("invalid-argument", "Enter a valid image URL.");
-  }
-  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-    throw new HttpsError("invalid-argument", "Image URL must start with http:// or https://.");
-  }
-
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), AVATAR_FETCH_TIMEOUT_MS);
-  let response;
-  try {
-    response = await fetch(imageUrl, {
-      signal: controller.signal,
-      redirect: "follow",
-      headers: { "User-Agent": "marching.art-avatar-fetch/1.0" },
+    const { buffer, contentType } = await safeFetchImage(imageUrl, {
+      maxBytes: MAX_AVATAR_SOURCE_BYTES,
+      timeoutMs: AVATAR_FETCH_TIMEOUT_MS,
+      userAgent: "marching.art-avatar-fetch/1.0",
     });
-  } catch {
-    clearTimeout(timeout);
-    throw new HttpsError("invalid-argument", "Could not fetch that image URL. Check the link and try again.");
-  }
-
-  try {
-    if (!response.ok) {
-      throw new HttpsError("invalid-argument", `That image URL returned an error (HTTP ${response.status}).`);
-    }
-    const contentType = (response.headers.get("content-type") || "")
-      .split(";")[0].trim().toLowerCase();
-    if (!contentType.startsWith("image/")) {
-      throw new HttpsError("invalid-argument", "That link is not an image. Use a direct link to a PNG, JPG, WEBP, or GIF.");
-    }
-    const declared = Number(response.headers.get("content-length"));
-    if (Number.isFinite(declared) && declared > MAX_AVATAR_SOURCE_BYTES) {
+    return `data:${contentType};base64,${buffer.toString("base64")}`;
+  } catch (err) {
+    const code = err instanceof SafeFetchError ? err.code : "network";
+    if (code === "too_large") {
       throw new HttpsError(
         "invalid-argument",
         `That image is too large (max ${Math.round(MAX_AVATAR_SOURCE_BYTES / 1024 / 1024)} MB).`
       );
     }
-
-    // Stream with a running byte cap; abort the moment it's exceeded.
-    const reader = response.body?.getReader?.();
-    const chunks = [];
-    let received = 0;
-    if (reader) {
-      for (;;) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        received += value.length;
-        if (received > MAX_AVATAR_SOURCE_BYTES) {
-          controller.abort();
-          throw new HttpsError(
-            "invalid-argument",
-            `That image is too large (max ${Math.round(MAX_AVATAR_SOURCE_BYTES / 1024 / 1024)} MB).`
-          );
-        }
-        chunks.push(value);
-      }
-    } else {
-      // Runtime without a streamable body — fall back to a bounded arrayBuffer.
-      const buf = Buffer.from(await response.arrayBuffer());
-      if (buf.length > MAX_AVATAR_SOURCE_BYTES) {
-        throw new HttpsError(
-          "invalid-argument",
-          `That image is too large (max ${Math.round(MAX_AVATAR_SOURCE_BYTES / 1024 / 1024)} MB).`
-        );
-      }
-      chunks.push(buf);
-      received = buf.length;
+    if (code === "invalid_url") {
+      throw new HttpsError("invalid-argument", "Enter a valid http:// or https:// image URL.");
     }
-
-    if (received === 0) {
-      throw new HttpsError("invalid-argument", "That image URL returned no data.");
-    }
-
-    const buffer = Buffer.concat(chunks.map((c) => Buffer.from(c)));
-    // Normalize to a MIME the Cloudinary/base64 upload path accepts.
-    const mime = contentType === "image/jpg" ? "image/jpeg" : contentType;
-    return `data:${mime};base64,${buffer.toString("base64")}`;
-  } finally {
-    clearTimeout(timeout);
+    logger.info("Custom avatar fetch refused", { code });
+    throw new HttpsError("invalid-argument", AVATAR_FETCH_FAILED_MESSAGE);
   }
 }
 
