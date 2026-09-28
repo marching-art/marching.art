@@ -1,9 +1,9 @@
-// Hometown picker: any real US/Canadian town, not only show cities.
+// Town picker: any real US/Canadian town, not only show cities.
 
 import { useState } from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import HometownPicker, { type SelectedHome } from './HometownPicker';
+import TownPicker, { type SelectedHome } from './TownPicker';
 
 function Harness({
   initialQuery = '',
@@ -15,7 +15,7 @@ function Harness({
   const [query, setQuery] = useState(initialQuery);
   const [selected, setSelected] = useState<SelectedHome | null>(null);
   return (
-    <HometownPicker
+    <TownPicker
       query={query}
       onQueryChange={setQuery}
       selected={selected}
@@ -27,7 +27,7 @@ function Harness({
   );
 }
 
-describe('HometownPicker', () => {
+describe('TownPicker', () => {
   it('finds and picks a small town that has never hosted a show', async () => {
     const onSelect = vi.fn();
     render(<Harness onSelect={onSelect} />);

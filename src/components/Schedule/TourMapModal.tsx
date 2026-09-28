@@ -7,7 +7,7 @@
 // it through the native share sheet; the HTML list below is the accessible,
 // tappable version of the same data and drives the poster's highlight.
 
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Check, Download, Map as MapIcon, MapPin, Share2, Trophy, X } from 'lucide-react';
 import Portal from '../Portal';
@@ -22,6 +22,7 @@ import {
   type TourSource,
 } from '../../utils/tourStops';
 import { downloadPoster, posterFilename, sharePoster } from '../../utils/posterExport';
+import { loadPlaces, makeTownResolver, type TownResolver } from '../../utils/places';
 import { shareOrCopy } from '../../utils/shareSheet';
 import { formatEventName } from '../../utils/season';
 import { isEventPast } from '../../utils/scheduleUtils';
@@ -202,6 +203,10 @@ const TourMapModal: React.FC<TourMapModalProps> = ({
   );
   const activeTab = corpsTabs.find((t) => t.corpsClass === selectedClass) || corpsTabs[0] || null;
 
+  // Towns off the historical tour map (a director-hosted show, a new DCI stop)
+  // are placed from the town index — loaded only once a stop actually needs it.
+  const [resolveTown, setResolveTown] = useState<{ fn: TownResolver } | null>(null);
+
   // The itinerary, decorated with everything both views need: display index,
   // real calendar date, and whether the show has already happened.
   const stops = useMemo<PosterStop[]>(() => {
@@ -212,6 +217,7 @@ const TourMapModal: React.FC<TourMapModalProps> = ({
       competitions,
       championshipEvents: CHAMPIONSHIP_EVENTS,
       podiumAttendance,
+      resolveTown: resolveTown?.fn ?? null,
     });
     return raw.map((stop, i) => {
       const date = getActualDate?.(stop.day) || null;
@@ -224,7 +230,21 @@ const TourMapModal: React.FC<TourMapModalProps> = ({
         isPast: date ? isEventPast(date) : false,
       };
     });
-  }, [activeTab, competitions, podiumAttendance, getActualDate]);
+  }, [activeTab, competitions, podiumAttendance, getActualDate, resolveTown]);
+
+  const needsTowns = !resolveTown && stops.some((stop) => !stop.point && stop.location);
+  useEffect(() => {
+    if (!needsTowns) return undefined;
+    let live = true;
+    loadPlaces()
+      .then((places) => live && setResolveTown({ fn: makeTownResolver(places) }))
+      .catch(() => {
+        /* unplaced stops stay listed, just not plotted */
+      });
+    return () => {
+      live = false;
+    };
+  }, [needsTowns]);
 
   const stats = useMemo<PosterStat[]>(
     () => [

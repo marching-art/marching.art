@@ -12,6 +12,7 @@ const venues = require('../helpers/podium/venues');
 const jointHelper = require('../helpers/podium/joint');
 const career = require('../helpers/podium/career');
 const divisions = require('../helpers/podium/divisions');
+const hometown = require('../helpers/podium/hometown');
 const staffMarket = require('../helpers/podium/staffMarket');
 const staffNames = require('../helpers/podium/staffNames');
 const assessment = require('../helpers/podium/assessment');
@@ -420,6 +421,8 @@ exports.getPodiumRegistrationPreview = onCall({ cors: true }, async (request) =>
                 }
               : {};
           })(),
+          // A home the old show-city-only rule forced moves free this once.
+          homeMoveFree: hometown.homeWasForced(staleSnapshot.data()),
           showConcept: staleSnapshot.data().showConcept || null,
           reputation: careerData ? careerData.reputation || 0 : 0,
           tier: engineTierLabel(careerData),
@@ -581,6 +584,13 @@ exports.getPodiumState = onCall({ cors: true }, async (request) => {
     autoDays: store.autoDaysFor(uid, seasonData.seasonUid, { division, easternAssignments }),
     routePreview,
     currentLocation,
+    // The one-time free hometown correction for a home the old show-city-only
+    // rule forced (helpers/podium/hometown.js); the dashboard offers it while
+    // `canCorrect` holds.
+    hometown: {
+      city: state.home ? `${state.home.city}, ${state.home.region}` : state.location || null,
+      canCorrect: hometown.canCorrectHome(state, seasonData.seasonUid),
+    },
     career: careerData
       ? {
           reputation: careerData.reputation,

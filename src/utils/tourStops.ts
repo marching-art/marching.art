@@ -17,13 +17,15 @@
  *      the fantasy `selectedShows` map, so the caller passes the same derived
  *      {events, autoDays} the Schedule page already computes.
  *
- * Locations resolve to map coordinates through the venue gazetteer. A stop
- * whose city isn't in the gazetteer keeps `point: null` — it stays in the
- * itinerary list and is simply not plotted, rather than being dropped or
- * pinned somewhere wrong.
+ * Locations resolve to map coordinates through the venue gazetteer, and —
+ * given `resolveTown` — through the place index for any other real town (a
+ * director-hosted show, a new DCI stop). A stop that still can't be placed
+ * keeps `point: null` — it stays in the itinerary list and is simply not
+ * plotted, rather than being dropped or pinned somewhere wrong.
  */
 
-import { locationPoint, venueLatLng, type VenuePoint } from './tourMap';
+import { locationPoint, type VenuePoint } from './tourMap';
+import type { TownResolver } from './places';
 import { CORPS_CLASS_ALIASES } from './corps';
 import { isPodiumAutoAnchor, type PodiumAttendance } from './podiumAttendance';
 import type { StopKind } from '../data/tourPosterTheme';
@@ -79,6 +81,8 @@ export interface BuildTourStopsParams {
    */
   championshipEvents?: TourSource[];
   podiumAttendance?: PodiumAttendance | null;
+  /** Places towns off the tour map (utils/places.makeTownResolver). */
+  resolveTown?: TownResolver | null;
 }
 
 /** Which marker treatment a stop earns. */
@@ -100,6 +104,7 @@ export function buildTourStops({
   competitions = [],
   championshipEvents = [],
   podiumAttendance = null,
+  resolveTown = null,
 }: BuildTourStopsParams): TourStop[] {
   const scheduleByName = new Map<string, TourSource>();
   for (const comp of competitions) {
@@ -134,7 +139,7 @@ export function buildTourStops({
       kind: stopKind({ ...scheduled, ...source }),
       multiNight: Boolean(scheduled?.multiNight?.nights && scheduled.multiNight.nights.length > 1),
       auto,
-      point: location ? locationPoint(location) : null,
+      point: location ? locationPoint(location, resolveTown) : null,
     });
   };
 
@@ -197,8 +202,7 @@ export function buildTourStops({
 export function tourDistance(stops: Array<Pick<TourStop, 'point'>>): number {
   const coords: Array<{ lat: number; lng: number }> = [];
   for (const stop of stops) {
-    const coord = stop.point ? venueLatLng(stop.point.venueId) : null;
-    if (coord) coords.push(coord);
+    if (stop.point) coords.push({ lat: stop.point.lat, lng: stop.point.lng });
   }
 
   const R = 3958.8; // Earth radius, miles

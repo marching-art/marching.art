@@ -22,6 +22,7 @@ import PodiumStaffPanel from './PodiumStaffPanel';
 import JointRehearsalPanel from './JointRehearsalPanel';
 import FanFavoriteCard from './FanFavoriteCard';
 import StaffOutlookBanner from './StaffOutlookBanner';
+import HometownCorrectionCard from './HometownCorrectionCard';
 
 // Once a director has read the mode banner they don't need it every visit, so
 // dismissing it writes a flag we honour on future loads. localStorage (not
@@ -125,6 +126,7 @@ export default function PodiumZone({ podium: podiumProp }) {
     <div className="space-y-4">
       <PodiumModeBanner />
       <StaffOutlookBanner podium={podium} />
+      <HometownCorrectionCard podium={podium} />
       {/* data-tour anchors: the first-run Podium tour (components/Dashboard/
           tourSteps PODIUM_TOUR_STEPS) highlights these four panels in turn. */}
       <div data-tour="podium-rehearsal">
