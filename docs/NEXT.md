@@ -368,7 +368,7 @@ src/scripts/buildClientVenues.js` → re-run `buildPlaceIndex.js` (see its
 
 ## Evergreen ratchets (any session, any size)
 
-- `@ts-nocheck` paydown — **22 files** at
+- `@ts-nocheck` paydown — **19 files** at
   last update; `npm run ts-nocheck:next` ranks the cheapest (no free wins
   left — the cheapest `src/` files are ~31 errors). It needs `npm ci` first
   and refuses to report on any other compiler. One per substantive task is
@@ -389,6 +389,17 @@ src/scripts/buildClientVenues.js` → re-run `buildPlaceIndex.js` (see its
 
 ## Recently shipped (context, newest first — prune when stale)
 
+- 2026-09-28: **Fan Favorite crown posts at rollover** — the Overture 2026-27
+  crown never reached #announcements the morning finals closed: the rollover
+  (3 AM seasonScheduler → settlePodiumSeasonBoundary → archivePodiumSeason)
+  crowns the winner, but the only poster was the 9 PM `podiumNightly` Fan
+  Favorite stage, ~18 h later. The scheduler now calls
+  `announceFanFavoriteCrown` between the rollover and the season-start post
+  (`nightlyStages.announcePreviousFanFavorite`, shared with the 9 PM stage,
+  which stays as the `{seasonUid}_fanfav_winner`-leased backstop).
+  Ratchet: typed `Profile/SettingsModal.jsx` (@ts-nocheck 20 → 19) — its
+  dotted Firestore field-path patches go through one narrow `fieldPathPatch`
+  cast; `PushPreferences` gains the `streakReminder` field the backend reads.
 - 2026-09-28: **Show registration locks when scores run** — `selectUserShows`
   rejects joining or withdrawing from any show whose night has been scored
   (`helpers/showRegistrationLock.js`, drop-plan instant / recap / rollover);

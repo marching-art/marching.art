@@ -1,5 +1,12 @@
 [
   {
+    "id": "2026-09-28-fan-favorite-crown-announced-at-once",
+    "date": "2026-09-28",
+    "title": "The Fan Favorite winner is announced on Discord the morning after finals",
+    "category": "fix",
+    "summary": "When a season ends, the Podium Fan Favorite winner now goes out to the Discord announcements channel as soon as the ballot is counted, ahead of the new season's kickoff post. Before, it didn't go out until the next evening, which made it look like there was no announcement at all."
+  },
+  {
     "id": "2026-09-28-show-registration-locks-at-scores",
     "date": "2026-09-28",
     "title": "Show registration now locks when scores run",

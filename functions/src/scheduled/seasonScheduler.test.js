@@ -31,13 +31,14 @@ function makeDb(seasonDoc) {
 
 // Every collaborator recorded, none of them real.
 function makeDeps(overrides = {}) {
-  const calls = { startLive: [], startOff: [], announce: 0, failures: [], alerts: [] };
+  const calls = { startLive: [], startOff: [], announce: 0, crown: 0, order: [], failures: [], alerts: [] };
   const deps = {
     startLive: async (opts) => { calls.startLive.push(opts); },
     startOff: async (opts) => { calls.startOff.push(opts); },
     isLive: () => false,
     finalsOverridesFor: async () => ({}),
-    announce: async () => { calls.announce += 1; },
+    announce: async () => { calls.announce += 1; calls.order.push("season-start"); },
+    announceCrown: async () => { calls.crown += 1; calls.order.push("crown"); },
     recordFailure: async (db, error, opts) => { calls.failures.push({ error, ...opts }); },
     alert: async (params) => { calls.alerts.push(params); },
     ...overrides,
@@ -57,10 +58,11 @@ describe("runSeasonScheduler routing", () => {
     assert.deepEqual(result, { action: "active", seasonUid: "off_2026_5" });
     assert.equal(calls.startOff.length + calls.startLive.length, 0);
     assert.equal(calls.announce, 0);
+    assert.equal(calls.crown, 0);
     assert.equal(calls.failures.length, 0);
   });
 
-  test("an ended season rolls into the phase the calendar names, then announces", async () => {
+  test("an ended season rolls into the phase the calendar names, then announces the crown and kickoff", async () => {
     const { deps, calls } = makeDeps({ isLive: () => true });
     const db = makeDb({
       seasonUid: "off_2026_5", name: "off_2026_5",
@@ -72,6 +74,9 @@ describe("runSeasonScheduler routing", () => {
     assert.deepEqual(calls.startLive, [{ force: false }]);
     assert.equal(calls.startOff.length, 0);
     assert.equal(calls.announce, 1);
+    // The rollover's archival crowned the old season's Fan Favorite: it posts
+    // now (not at the next 9 PM Podium job), ahead of the new season's kickoff.
+    assert.deepEqual(calls.order, ["crown", "season-start"]);
   });
 
   test("a missing season doc bootstraps; a malformed one is regenerated in place (force)", async () => {

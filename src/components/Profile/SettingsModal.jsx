@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // =============================================================================
 // SETTINGS MODAL
 // =============================================================================
@@ -24,6 +23,14 @@ import { useFocusTrap } from '../../hooks/useFocusTrap';
 // TOGGLE
 // =============================================================================
 
+/**
+ * @param {{
+ *   checked: boolean,
+ *   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void,
+ *   label: string,
+ *   description?: string,
+ * }} props
+ */
 const Toggle = ({ checked, onChange, label, description }) => (
   <label className="flex items-center justify-between py-2.5 cursor-pointer group">
     <div className="flex-1 mr-3">
@@ -43,12 +50,35 @@ const Toggle = ({ checked, onChange, label, description }) => (
   </label>
 );
 
+/** @typedef {import('../../api/profile').updateProfile} UpdateProfile */
+/** @typedef {import('./SupporterPanel').default} SupporterPanelComponent */
+/** @typedef {Parameters<SupporterPanelComponent>[0]['supporter']} Supporter */
+
+/**
+ * Firestore field-path patch for `updateProfile` (e.g.
+ * `'settings.pushPreferences.allPush'`). Dotted keys update one nested field
+ * without replacing its siblings, which the nested DeepPartial shape
+ * `updateProfile` declares can't express — hence the one narrow cast here.
+ *
+ * @param {Record<string, unknown>} fields
+ * @returns {Parameters<UpdateProfile>[1]}
+ */
+const fieldPathPatch = (fields) => /** @type {Parameters<UpdateProfile>[1]} */ (fields);
+
 // =============================================================================
 // SETTINGS MODAL
 // =============================================================================
 
+/**
+ * @param {{
+ *   user: import('firebase/auth').User | null | undefined,
+ *   isOpen: boolean,
+ *   onClose: () => void,
+ *   initialTab?: string,
+ * }} props
+ */
 const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
-  const { signOut } = useAuth();
+  const signOut = useAuth()?.signOut;
   useEscapeKey(onClose, isOpen);
   const dialogRef = useRef(null);
   useFocusTrap(dialogRef, isOpen);
@@ -112,7 +142,7 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
-  const [supporter, setSupporter] = useState(null);
+  const [supporter, setSupporter] = useState(/** @type {Supporter} */ (null));
 
   // Check push notification support
   useEffect(() => {
@@ -144,18 +174,22 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
       // user edits the form can't clobber their in-progress changes.
       const data = useProfileStore.getState().profile;
       if (data) {
-        setSupporter(data.supporter || null);
+        setSupporter(/** @type {Supporter} */ (data.supporter) || null);
 
         // Load account data
         const loadedAccountData = {
-          username: data.username || '',
-          email: data.email || user.email || '',
+          username: typeof data.username === 'string' ? data.username : '',
+          email: (typeof data.email === 'string' && data.email) || user?.email || '',
         };
         setAccountData(loadedAccountData);
         setOriginalData(loadedAccountData);
 
         // Load email preferences
-        const prefs = data.settings?.emailPreferences || {};
+        const settings = /** @type {import('../../types/user').UserSettings | undefined} */ (
+          data.settings
+        );
+        /** @type {Partial<import('../../types/user').EmailPreferences>} */
+        const prefs = settings?.emailPreferences || {};
         setEmailPrefs({
           allEmails: prefs.allEmails ?? true,
           streakBroken: prefs.streakBroken ?? true,
@@ -167,7 +201,8 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
         });
 
         // Load push preferences
-        const push = data.settings?.pushPreferences || {};
+        /** @type {Partial<import('../../types/user').PushPreferences>} */
+        const push = settings?.pushPreferences || {};
         setPushPrefs({
           allPush: push.allPush ?? false,
           matchupStart: push.matchupStart ?? true,
@@ -230,23 +265,35 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
     }
   };
 
+  /**
+   * @param {keyof typeof emailPrefs} key
+   * @param {boolean} value
+   */
   const updatePref = (key, value) => {
     setEmailPrefs((prev) => ({ ...prev, [key]: value }));
     setHasChanges(true);
   };
 
+  /**
+   * @param {keyof typeof pushPrefs} key
+   * @param {boolean} value
+   */
   const updatePushPref = (key, value) => {
     setPushPrefs((prev) => ({ ...prev, [key]: value }));
     setHasChanges(true);
   };
 
   const saveNotificationPrefs = async () => {
+    if (!user) return;
     setSaving(true);
     try {
-      await updateProfile(user.uid, {
-        'settings.emailPreferences': emailPrefs,
-        'settings.pushPreferences': pushPrefs,
-      });
+      await updateProfile(
+        user.uid,
+        fieldPathPatch({
+          'settings.emailPreferences': emailPrefs,
+          'settings.pushPreferences': pushPrefs,
+        })
+      );
       toast.success('Notification preferences saved');
       setHasChanges(false);
     } catch (error) {
@@ -258,6 +305,7 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
   };
 
   const handleEnablePush = async () => {
+    if (!user) return;
     if (!pushSupported) {
       toast.error('Push notifications are not supported in this browser');
       return;
@@ -272,9 +320,10 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
           // Token goes to the owner-only private doc (it's a device
           // identifier); only the preference toggle lives on the profile.
           await saveFcmToken(user.uid, token);
-          await updateProfile(user.uid, {
-            'settings.pushPreferences.allPush': true,
-          });
+          await updateProfile(
+            user.uid,
+            fieldPathPatch({ 'settings.pushPreferences.allPush': true })
+          );
           setPushPrefs((prev) => ({ ...prev, allPush: true }));
           toast.success('Push notifications enabled');
         } else {
@@ -290,10 +339,9 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
   };
 
   const handleDisablePush = async () => {
+    if (!user) return;
     try {
-      await updateProfile(user.uid, {
-        'settings.pushPreferences.allPush': false,
-      });
+      await updateProfile(user.uid, fieldPathPatch({ 'settings.pushPreferences.allPush': false }));
       setPushPrefs((prev) => ({ ...prev, allPush: false }));
       toast.success('Push notifications disabled');
     } catch (error) {
@@ -304,7 +352,7 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
 
   const handleSignOut = async () => {
     try {
-      await signOut();
+      await signOut?.();
       toast.success('Signed out');
       onClose();
     } catch {
@@ -322,7 +370,7 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
     try {
       await deleteAccount();
       toast.success('Account deleted successfully');
-      await signOut();
+      await signOut?.();
       onClose();
     } catch (error) {
       console.error('Error deleting account:', error);
