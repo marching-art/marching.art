@@ -61,6 +61,14 @@ describe("buildScheduleCoverageReport", () => {
         ],
       },
       "game-settings/season": { seasonUid: "off_2025-26" },
+      "schedules/off_2025-26": {
+        competitions: [
+          { eventName: "Tour A", location: "Canton, OH" }, // tour map
+          { eventName: "Tour B", location: "Canton, Ohio" }, // same city, counted once
+          { eventName: "New Stop", location: "Brownsburg, IN" }, // new town, auto-geocoded
+          { eventName: "Typo Show", location: "Atlantis, Ocean" }, // no real place
+        ],
+      },
       "dci-data/off_2025-26": {
         corpsValues: [
           { corpsName: "Blue Devils", sourceYear: "2015", resultDays: [12, 30] },
@@ -87,6 +95,13 @@ describe("buildScheduleCoverageReport", () => {
     assert.equal(report.totals.matched, 2);
     assert.equal(report.pool.size, 3);
     assert.deepEqual(report.pool.unmapped, ["Ghost Corps (1999)", "No Field (2000)"]);
+
+    assert.equal(report.venues.total, 3);
+    assert.equal(report.venues.tour, 1);
+    assert.deepEqual(report.venues.geocoded, [
+      { location: "Brownsburg, IN", resolvedAs: "Brownsburg, IN", eventName: "New Stop" },
+    ]);
+    assert.deepEqual(report.venues.unresolved, [{ location: "Atlantis, Ocean", eventName: "Typo Show" }]);
   });
 
   test("flags an all-age leak and a finals disambiguation failure", async () => {

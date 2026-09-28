@@ -4,12 +4,14 @@
  * stays under the max-lines guardrail; the callable re-exports these for the
  * tests that already import them from there).
  *
- * Two layers, in order:
+ * Three layers, in order:
  *   1. `validateShowSelection` — shape of the client's request (week in range,
  *      slot count, non-empty event names, no obvious same-day/duplicate picks),
  *   2. `resolveShowsAgainstSchedule` — the authoritative pass: every selection
  *      is resolved by eventName against the season schedule, and day/date/
- *      location come from the schedule, never from the client.
+ *      location come from the schedule, never from the client,
+ *   3. `assertLockedShowsUnchanged` — nights whose scores have already run
+ *      are frozen: no withdrawing from, or joining, a scored show.
  *
  * Both throw `HttpsError` so the callable can hand them the request verbatim.
  */
@@ -82,6 +84,87 @@ function validateShowSelection(week, shows, maxShowsForWeek) {
 }
 
 /**
+ * Group one week's schedule entries by event name (days (week-1)*7+1 ..
+ * week*7). A multi-night event appears once per night; every night it runs
+ * lands in `days`, and `byDay` keeps each night's own schedule entry.
+ *
+ * @param {number} week
+ * @param {Array<Object>} competitions - schedules/{seasonId}.competitions.
+ * @returns {Map<string, {days: Set<number>, byDay: Map<number, any>}>}
+ */
+function indexWeekEvents(week, competitions) {
+  const weekStartDay = (week - 1) * 7 + 1;
+  const weekEndDay = week * 7;
+  /** @type {Map<string, {days: Set<number>, byDay: Map<number, any>}>} */
+  const eventsByName = new Map();
+  for (const comp of competitions || []) {
+    if (!comp || typeof comp.name !== "string" || !comp.name) continue;
+    if (!Number.isInteger(comp.day) || comp.day < weekStartDay || comp.day > weekEndDay) continue;
+    const nights = Array.isArray(comp.multiNight?.nights) && comp.multiNight.nights.length > 0
+      ? comp.multiNight.nights
+      : [comp.day];
+    let entry = eventsByName.get(comp.name);
+    if (!entry) {
+      entry = { days: new Set(), byDay: new Map() };
+      eventsByName.set(comp.name, entry);
+    }
+    nights.filter(Number.isInteger).forEach((/** @type {number} */ night) => entry.days.add(night));
+    if (!entry.byDay.has(comp.day)) entry.byDay.set(comp.day, comp);
+  }
+  return eventsByName;
+}
+
+/**
+ * Enforce the per-night registration lock (pure — exported for tests). Once a
+ * night's scores have run, its shows are history: a corps that was registered
+ * stays registered, and one that wasn't can't join after the fact. Throws
+ * `failed-precondition` when the request would drop or add a show on a
+ * locked night; edits to the week's still-open nights pass untouched.
+ *
+ * A multi-night event is locked as soon as ANY of its nights is — the corps
+ * may already have performed on that night (its assigned night is decided at
+ * scoring time, see resolveShowsAgainstSchedule).
+ *
+ * @param {number} week - Validated week number.
+ * @param {Array<{eventName?: string, day?: number}>} previousShows - The week's stored selections.
+ * @param {Array<{eventName: string, day?: number}>} nextShows - The resolved new selections.
+ * @param {Set<number>} lockedDays - Competition days whose scores have run.
+ * @param {Array<Object>} competitions - schedules/{seasonId}.competitions.
+ */
+function assertLockedShowsUnchanged(week, previousShows, nextShows, lockedDays, competitions) {
+  if (!lockedDays || lockedDays.size === 0) return;
+  const eventsByName = indexWeekEvents(week, competitions);
+  /** @param {{eventName?: string, day?: number}} show */
+  const isLocked = (show) => {
+    const nights = eventsByName.get(/** @type {string} */ (show.eventName))?.days;
+    const days = nights && nights.size > 0
+      ? [...nights]
+      : Number.isInteger(show.day) ? [/** @type {number} */ (show.day)] : [];
+    return days.some((day) => lockedDays.has(day));
+  };
+
+  const prev = (previousShows || []).filter(
+    (show) => show && typeof show.eventName === "string" && show.eventName
+  );
+  const nextNames = new Set(nextShows.map((show) => show.eventName));
+  const prevNames = new Set(prev.map((show) => show.eventName));
+
+  for (const show of prev) {
+    if (isLocked(show) && !nextNames.has(/** @type {string} */ (show.eventName))) {
+      throw new HttpsError("failed-precondition",
+        `Scores for "${show.eventName}" have already been processed — ` +
+        "registration for that show is locked and your corps can't withdraw.");
+    }
+  }
+  for (const show of nextShows) {
+    if (isLocked(show) && !prevNames.has(show.eventName)) {
+      throw new HttpsError("failed-precondition",
+        `Registration for "${show.eventName}" closed when that night's scores were processed.`);
+    }
+  }
+}
+
+/**
  * Resolve the client's selections against the season schedule (pure —
  * exported for tests). The client's show objects are NEVER stored verbatim:
  * scoring (helpers/scoring.js) matches attendance by eventName and
@@ -105,26 +188,7 @@ function validateShowSelection(week, shows, maxShowsForWeek) {
  *   Whitelisted show objects, safe to store on the profile.
  */
 function resolveShowsAgainstSchedule(week, shows, competitions) {
-  const weekStartDay = (week - 1) * 7 + 1;
-  const weekEndDay = week * 7;
-
-  // Group this week's schedule entries by event name. A multi-night event
-  // appears once per night; all of its nights count as occupied days.
-  const eventsByName = new Map();
-  for (const comp of competitions || []) {
-    if (!comp || typeof comp.name !== "string" || !comp.name) continue;
-    if (!Number.isInteger(comp.day) || comp.day < weekStartDay || comp.day > weekEndDay) continue;
-    const nights = Array.isArray(comp.multiNight?.nights) && comp.multiNight.nights.length > 0
-      ? comp.multiNight.nights
-      : [comp.day];
-    let entry = eventsByName.get(comp.name);
-    if (!entry) {
-      entry = { days: new Set(), byDay: new Map() };
-      eventsByName.set(comp.name, entry);
-    }
-    nights.filter(Number.isInteger).forEach((night) => entry.days.add(night));
-    if (!entry.byDay.has(comp.day)) entry.byDay.set(comp.day, comp);
-  }
+  const eventsByName = indexWeekEvents(week, competitions);
 
   const daysUsed = new Set();
   const resolved = [];
@@ -164,4 +228,6 @@ module.exports = {
   getMaxShowsForWeek,
   validateShowSelection,
   resolveShowsAgainstSchedule,
+  indexWeekEvents,
+  assertLockedShowsUnchanged,
 };

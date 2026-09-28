@@ -12,6 +12,7 @@ const venues = require('../helpers/podium/venues');
 const jointHelper = require('../helpers/podium/joint');
 const career = require('../helpers/podium/career');
 const divisions = require('../helpers/podium/divisions');
+const hometown = require('../helpers/podium/hometown');
 const staffMarket = require('../helpers/podium/staffMarket');
 const staffNames = require('../helpers/podium/staffNames');
 const assessment = require('../helpers/podium/assessment');
@@ -178,6 +179,7 @@ async function buildRoutePreview(db, seasonData, state, uid, competitionDay, eas
  */
 function buildRouteLegs(state, upcoming, { jointByDay, locations, today = 0 }) {
   const legs = [];
+  const tourReduction = staffMarket.tourStaminaReduction(state, store.balance);
   let cursor = currentVenueOf(state);
   for (const day of upcoming) {
     // Joint-rehearsal day: a rehearsal leg, not a show. The partner's city
@@ -202,7 +204,10 @@ function buildRouteLegs(state, upcoming, { jointByDay, locations, today = 0 }) {
         tier: joint.travelTier || null,
         miles: move ? move.miles : null,
         coinCost: tierCfg ? tierCfg.coinCost : 0,
-        staminaCost: tierCfg ? tierCfg.staminaCost : 0,
+        // The proposer's stamina for the leg, Tour Manager applied — what the
+        // nightly run charges (capped at this booked tier; see
+        // joint.jointTravelCharge).
+        staminaCost: jointHelper.travelStaminaFor(state, tierCfg, store.balance),
         heat: 0,
         isMajor: false,
         isToday: day === today,
@@ -225,7 +230,9 @@ function buildRouteLegs(state, upcoming, { jointByDay, locations, today = 0 }) {
     const airfare = venues.airfareFor(leg, store.balance);
     const airfareFlagged = Boolean(state.airfare && state.airfare[day]);
     const airfarePurchased = Boolean(airfare.eligible && airfareFlagged);
-    const rawStamina = leg ? leg.staminaCost : 0;
+    // Tour Manager applied, rounded as the processor rounds it — the preview
+    // shows the stamina the nightly run will actually charge.
+    const rawStamina = leg ? Math.round(leg.staminaCost * (1 - tourReduction) * 10) / 10 : 0;
     legs.push({
       day,
       eventName: pick?.eventName || null,
@@ -398,9 +405,10 @@ exports.getPodiumRegistrationPreview = onCall({ cors: true }, async (request) =>
       ? {
           corpsName: staleSnapshot.data().corpsName || null,
           location: staleSnapshot.data().location || null,
-          // The current official home, resolved to a tour-map venue so the client
-          // can preselect it AND measure the distance to any new pick (the move
-          // fee). Legacy corps with only a free-text `location` resolve here too.
+          // The current official home, resolved to a venue (tour-map city or any
+          // real town) so the client can preselect it AND measure the distance to
+          // any new pick (the move fee). Legacy corps with only a free-text
+          // `location` resolve here too.
           ...(() => {
             const home =
               staleSnapshot.data().home || venues.venueFor(staleSnapshot.data().location) || null;
@@ -413,6 +421,8 @@ exports.getPodiumRegistrationPreview = onCall({ cors: true }, async (request) =>
                 }
               : {};
           })(),
+          // A home the old show-city-only rule forced moves free this once.
+          homeMoveFree: hometown.homeWasForced(staleSnapshot.data()),
           showConcept: staleSnapshot.data().showConcept || null,
           reputation: careerData ? careerData.reputation || 0 : 0,
           tier: engineTierLabel(careerData),
@@ -574,6 +584,13 @@ exports.getPodiumState = onCall({ cors: true }, async (request) => {
     autoDays: store.autoDaysFor(uid, seasonData.seasonUid, { division, easternAssignments }),
     routePreview,
     currentLocation,
+    // The one-time free hometown correction for a home the old show-city-only
+    // rule forced (helpers/podium/hometown.js); the dashboard offers it while
+    // `canCorrect` holds.
+    hometown: {
+      city: state.home ? `${state.home.city}, ${state.home.region}` : state.location || null,
+      canCorrect: hometown.canCorrectHome(state, seasonData.seasonUid),
+    },
     career: careerData
       ? {
           reputation: careerData.reputation,

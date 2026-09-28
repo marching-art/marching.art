@@ -60,6 +60,63 @@ describe("venueFor — standardized location resolution", () => {
   });
 });
 
+describe("venueFor — any real town via the hometown place index", () => {
+  test("a tour-map city resolves from the gazetteer, not the place index", () => {
+    const canton = venues.venueFor("Canton, OH");
+    assert.equal(canton.venueId, "canton-oh");
+    assert.notEqual(canton.source, "place");
+    assert.equal(venues.tourVenueFor("Canton, OH"), canton);
+  });
+
+  test("a small hometown off the tour map is geocoded with a timezone", () => {
+    const home = venues.venueFor("Brownsburg, IN");
+    assert.ok(home, "Brownsburg resolves");
+    assert.equal(home.source, "place");
+    assert.equal(home.venueId, "brownsburg-in");
+    assert.equal(`${home.city}, ${home.region}`, "Brownsburg, IN");
+    assert.ok(Math.abs(home.lat - 39.84) < 0.1 && Math.abs(home.lng + 86.4) < 0.1);
+    assert.equal(home.timezone, "America/Indiana/Indianapolis");
+    assert.equal(venues.timezoneFor("Brownsburg, IN"), "America/Indiana/Indianapolis");
+    // Hosting is tour-map only.
+    assert.equal(venues.tourVenueFor("Brownsburg, IN"), null);
+  });
+
+  test("full state names, accents and Saint/St, Mount/Mt spellings all resolve", () => {
+    assert.equal(venues.venueFor("Brownsburg, Indiana").venueId, "brownsburg-in");
+    assert.equal(venues.venueFor("Espanola, NM"), venues.venueFor("Española, NM"));
+    assert.equal(venues.venueFor("St. Marys, PA"), venues.venueFor("Saint Marys, PA"));
+    assert.equal(venues.venueFor("Mt Prospect, Illinois"), venues.venueFor("Mount Prospect, IL"));
+    assert.ok(venues.venueFor("Mount Prospect, IL"));
+  });
+
+  test("Canadian towns resolve by province code", () => {
+    const place = venues.venueFor("Moncton, NB") || venues.venueFor("Brandon, MB");
+    assert.ok(place && ["NB", "MB"].includes(place.region));
+  });
+
+  test("text that names no real town stays null", () => {
+    assert.equal(venues.venueFor("Atlantis, Ocean"), null);
+    assert.equal(venues.venueFor(""), null);
+    assert.equal(venues.placeFor(null), null);
+  });
+
+  test("travel legs price from a hometown off the tour map", () => {
+    const cfg = require("./balanceConfig.json");
+    const leg = venues.travelLeg(venues.venueFor("Brownsburg, IN"), venues.venueFor("Indianapolis, IN"), cfg);
+    assert.ok(leg && leg.miles > 0 && leg.miles < 40);
+  });
+
+  test("place index rows never shadow a tour-map venue", () => {
+    const tourIds = new Set(Object.values(gazetteer.venues).map((v) => v.venueId));
+    const index = require("./placeIndex.json");
+    for (const [city, region] of index.places) {
+      assert.equal(venues.tourVenueFor(`${city}, ${region}`), null, `${city}, ${region}`);
+    }
+    assert.ok(index.places.length > 15000);
+    assert.ok(!tourIds.has("brownsburg-in"));
+  });
+});
+
 describe("relocationFee — the home-move sink (design §5.3)", () => {
   const cfg = { home: { milesPerCoin: 2 } };
 

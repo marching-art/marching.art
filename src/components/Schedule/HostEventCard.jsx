@@ -5,23 +5,22 @@
 // the Podium rollout (game-settings/features.podiumClass) and self-hiding, so
 // the Schedule page renders it unconditionally.
 
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Landmark, Loader2, MapPin, Check } from 'lucide-react';
+import { Landmark, Loader2 } from 'lucide-react';
 import { hostEvent } from '../../api/podium';
 import { usePodiumEnabled } from '../../hooks/useFeatures';
 import { useProfileStore } from '../../store/profileStore';
 import { useSeasonStore } from '../../store/seasonStore';
 import { useScheduleStore } from '../../store/scheduleStore';
-import { HOSTABLE_VENUES, scheduledVenueIds } from '../../utils/venues';
+import { resolveVenueId } from '../../utils/venues';
+import { loadPlaces, makeTownResolver, placeIdentity } from '../../utils/places';
+import TownPicker from '../Podium/TownPicker';
 import { formatEventName } from '../../utils/season';
 import { VENUE_TIERS, HOSTING_RULES } from '../Podium/podiumConstants';
 
-// Cap the rendered dropdown so a bare focus (empty query) doesn't paint all
-// ~390 cities. A real search narrows well below this.
-const VENUE_RESULTS_LIMIT = 40;
-
-/** @typedef {(typeof HOSTABLE_VENUES)[number]} HostableVenue */
+/** @typedef {import('../Podium/TownPicker').SelectedHome} HostCity */
+/** @typedef {import('../../utils/places').HomePlace} HomePlace */
 /** @typedef {(typeof VENUE_TIERS)[number]} VenueTier */
 /** @typedef {import('../../api/podium').HostedEventRecord} HostedEventRecord */
 
@@ -43,38 +42,57 @@ export default function HostEventCard({ seasonUid, events = null, onReload }) {
   const competitions = useScheduleStore((state) => state.competitions);
 
   const [eventName, setEventName] = useState('');
-  // The location picker keeps the confirmed venue separate from the search box
-  // text, so submit only ever sends a KNOWN, un-taken city.
-  const [selectedVenue, setSelectedVenue] = useState(/** @type {HostableVenue|null} */ (null));
+  // The town picker keeps the confirmed town separate from the search box
+  // text, so submit only ever sends a REAL, un-taken town.
+  const [selectedVenue, setSelectedVenue] = useState(/** @type {HostCity|null} */ (null));
   const [venueQuery, setVenueQuery] = useState('');
-  const [venueListOpen, setVenueListOpen] = useState(false);
+  const [places, setPlaces] = useState(/** @type {HomePlace[] | null} */ (null));
   const [day, setDay] = useState('');
   const [venueTier, setVenueTier] = useState('highSchool');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(/** @type {string|null} */ (null));
   const [success, setSuccess] = useState(/** @type {string|null} */ (null));
 
-  // Cities already on the season schedule (scraped shows + other hosted events)
-  // can't be booked again — resolve each competition's location to a venueId.
-  const takenVenueIds = useMemo(() => scheduledVenueIds(competitions), [competitions]);
+  // Any real US/Canadian town can host. Load the town index (shared with the
+  // picker, fetched once) so schedule locations off the tour map resolve too.
+  useEffect(() => {
+    // Only once the card is live — the Schedule page renders it unconditionally.
+    if (!enabled || !seasonUid) return undefined;
+    let live = true;
+    loadPlaces()
+      .then((rows) => live && setPlaces(rows))
+      .catch(() => {
+        /* the picker shows its own load error */
+      });
+    return () => {
+      live = false;
+    };
+  }, [enabled, seasonUid]);
 
-  // Filter the hostable cities by the search box, taken cities last so the
-  // available ones surface first, then cap for render.
-  const venueResults = useMemo(() => {
-    const q = venueQuery.trim().toLowerCase();
-    const matches = q
-      ? HOSTABLE_VENUES.filter((v) => v.label.toLowerCase().includes(q))
-      : HOSTABLE_VENUES;
-    /** @type {HostableVenue[]} */
-    const available = [];
-    /** @type {HostableVenue[]} */
-    const taken = [];
-    for (const v of matches) {
-      (takenVenueIds.has(v.venueId) ? taken : available).push(v);
-      if (available.length >= VENUE_RESULTS_LIMIT) break;
+  const resolveTown = useMemo(() => (places ? makeTownResolver(places) : null), [places]);
+
+  // Towns already on the season schedule (scraped shows + other hosted events)
+  // can't be booked again — a tour-map city by venueId (any historical
+  // spelling), any other town by its resolved identity.
+  const takenPlaces = useMemo(() => {
+    const taken = new Set();
+    for (const comp of competitions || []) {
+      const venueId = resolveVenueId(comp?.location);
+      if (venueId) {
+        taken.add(venueId);
+        continue;
+      }
+      const town = resolveTown ? resolveTown(comp?.location) : null;
+      if (town) taken.add(placeIdentity(town));
     }
-    return [...available, ...taken].slice(0, VENUE_RESULTS_LIMIT);
-  }, [venueQuery, takenVenueIds]);
+    return taken;
+  }, [competitions, resolveTown]);
+
+  const unavailable = useCallback(
+    /** @param {HomePlace} place */
+    (place) => (takenPlaces.has(placeIdentity(place)) ? 'On schedule' : null),
+    [takenPlaces]
+  );
 
   if (!enabled || !seasonUid) return null;
 
@@ -98,18 +116,11 @@ export default function HostEventCard({ seasonUid, events = null, onReload }) {
   const tier = VENUE_TIERS.find((t) => t.id === venueTier) || VENUE_TIERS[0];
   const minDay = Math.max(1, (currentDay || 1) + HOSTING_RULES.minDaysAhead);
 
-  /** @param {HostableVenue} venue */
-  const pickVenue = (venue) => {
-    setSelectedVenue(venue);
-    setVenueQuery(venue.label);
-    setVenueListOpen(false);
-  };
-
   /** @param {React.FormEvent<HTMLFormElement>} e */
   const submit = async (e) => {
     e.preventDefault();
     if (!selectedVenue) {
-      setError('Pick a host city from the list.');
+      setError('Pick a host town from the list.');
       return;
     }
     setBusy(true);
@@ -157,9 +168,9 @@ export default function HostEventCard({ seasonUid, events = null, onReload }) {
         well-drawn show profits. Run successful shows to unlock bigger stadiums: 2 successful High
         School events open the College Bowl, 3 successful College Bowls open the NFL Stadium. Days{' '}
         {minDay}&ndash;{HOSTING_RULES.lastHostableDay}; the majors' days (
-        {HOSTING_RULES.majorDays.join(', ')}) are exclusive. One show per director per season. Pick
-        a host city from the tour map &mdash; cities already on the schedule are greyed out, since
-        each city hosts one show per season.
+        {HOSTING_RULES.majorDays.join(', ')}) are exclusive. One show per director per season. Host
+        in any US or Canadian town &mdash; towns already on the schedule are greyed out, since each
+        town hosts one show per season.
       </p>
 
       {!hasCorps && (
@@ -227,71 +238,19 @@ export default function HostEventCard({ seasonUid, events = null, onReload }) {
           required
           className={inputClass}
         />
+        {/* Host-town picker: any real town that isn't already on the
+            schedule. No free-text guessing, no double-booking a town. */}
+        <TownPicker
+          label="Host town"
+          placeholder="Any US or Canadian town"
+          tourBadge={null}
+          query={venueQuery}
+          onQueryChange={setVenueQuery}
+          selected={selectedVenue}
+          onSelect={setSelectedVenue}
+          unavailable={unavailable}
+        />
         <div className="grid grid-cols-2 gap-2">
-          {/* Host-city picker: only known cities that aren't already on the
-                  schedule. No free-text guessing, no double-booking a city. */}
-          <div className="relative">
-            <div className="relative">
-              <MapPin className="w-3 h-3 text-muted absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <input
-                type="text"
-                value={venueQuery}
-                onChange={(e) => {
-                  setVenueQuery(e.target.value);
-                  setSelectedVenue(null);
-                  setVenueListOpen(true);
-                }}
-                onFocus={() => setVenueListOpen(true)}
-                // Delay so a click on a result registers before the list closes.
-                onBlur={() => setTimeout(() => setVenueListOpen(false), 150)}
-                placeholder="Search host city"
-                autoComplete="off"
-                className={`${inputClass} pl-6 pr-6`}
-                aria-label="Host city"
-              />
-              {selectedVenue && (
-                <Check className="w-3 h-3 text-green-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
-              )}
-            </div>
-            {venueListOpen && (
-              <div className="absolute z-20 mt-1 w-full max-h-44 overflow-y-auto bg-surface-sunken border border-line rounded-none shadow-lg">
-                {venueResults.length === 0 ? (
-                  <div className="px-2 py-1.5 text-[10px] text-muted">
-                    No matching city — try a nearby one.
-                  </div>
-                ) : (
-                  venueResults.map((v) => {
-                    const taken = takenVenueIds.has(v.venueId);
-                    return (
-                      <button
-                        key={v.venueId}
-                        type="button"
-                        disabled={taken}
-                        // onMouseDown fires before the input's onBlur, so the
-                        // pick lands even though blur closes the list.
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          if (!taken) pickVenue(v);
-                        }}
-                        className={`w-full flex items-center justify-between px-2 py-1.5 text-[10px] text-left ${
-                          taken
-                            ? 'text-muted cursor-not-allowed'
-                            : 'text-secondary hover:bg-surface-sunken'
-                        }`}
-                      >
-                        <span className="truncate">{v.label}</span>
-                        {taken && (
-                          <span className="text-[8px] uppercase tracking-wider text-muted flex-shrink-0 pl-2">
-                            On schedule
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })
-                )}
-              </div>
-            )}
-          </div>
           <input
             type="number"
             value={day}

@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // =============================================================================
 // SHOW REGISTRATION MODAL - DIRECTOR'S COMMAND CENTER
 // =============================================================================
@@ -8,7 +7,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, MapPin, Check, X, AlertTriangle, Trophy, Clock, Ticket } from 'lucide-react';
-import { selectUserShows, setEncoreDecline } from '../../api/functions';
+import { selectUserShows } from '../../api/functions';
 import { getPodiumState, setPodiumShows } from '../../api/podium';
 import { usePodiumEnabled } from '../../hooks/useFeatures';
 import toast from 'react-hot-toast';
@@ -19,11 +18,13 @@ import { useIsMobile } from '../../hooks/useIsMobile';
 import { useHostedShowRegistrations } from '../../hooks/useHostedEvents';
 import { getMaxShowsForWeek } from '../../utils/captionPricing';
 import { getShowRegistrationCloseEstimate, formatEtDayTime } from '../../utils/seasonClock';
+import { useIsShowClosed } from './showClockContext';
 import { formatEventName } from '../../utils/season';
 import { useSeasonStore } from '../../store/seasonStore';
 import { compareCorpsClasses } from '../../utils/corps';
 import { useAuth } from '../../context/AuthContext';
 import DualRunningOrder from './DualRunningOrder';
+import EncoreBankingBanner from './EncoreBankingBanner';
 import CorpsSelectionItem, {
   ChampionshipEnrollmentPanel,
   PodiumSelectionRow,
@@ -41,13 +42,34 @@ import {
 } from './showRegistrationConfig';
 import { multiNightNights, podiumAutoNightFor } from '../../utils/podiumAttendance';
 
+/** @typedef {{ eventName: string, location?: string, day?: number, date?: unknown }} ShowPick */
+/**
+ * @typedef {{
+ *   selectedShows: Record<number, ShowPick>,
+ *   autoDays: number[],
+ *   easternNightFinal: boolean,
+ *   competitionDay: number,
+ *   corpsName: string,
+ * }} PodiumInfo
+ */
+
+/**
+ * One fantasy corps' registered shows for a week.
+ * @param {any} userProfile
+ * @param {string} corpsClass
+ * @param {number} week
+ * @returns {ShowPick[]}
+ */
+const weekShowsFor = (userProfile, corpsClass, week) =>
+  userProfile.corps[corpsClass].selectedShows?.[`week${week}`] || [];
+
 // =============================================================================
 // MAIN MODAL COMPONENT
 // =============================================================================
 
 /**
  * @param {{
- *   show: Record<string, any>,
+ *   show: Record<string, any> & { week: number, day: number, eventName: string, location?: string },
  *   userProfile: any,
  *   formattedDate: string,
  *   eventDate: Date|null,
@@ -65,40 +87,10 @@ const ShowRegistrationModal = ({
   onClose,
   onSuccess,
 }) => {
-  const [selectedCorps, setSelectedCorps] = useState([]);
+  const [selectedCorps, setSelectedCorps] = useState(/** @type {string[]} */ ([]));
   const [saving, setSaving] = useState(false);
-  const { user } = useAuth();
+  const user = useAuth()?.user;
   const { trigger: haptic } = useHaptic();
-
-  // Encore banking (docs/EVENT_SCHEDULES_AND_SLOTS.md §5): if the director's own
-  // corps is the (projected) encore here, they can bank their once-per-season
-  // encore for a later show. Optimistic local state; the nightly encore pass
-  // reassigns to the next-closest corps once banked.
-  const myEncore = show.encore && user?.uid && show.encore.uid === user.uid ? show.encore : null;
-  const [encoreBanked, setEncoreBanked] = useState(false);
-  const [bankingEncore, setBankingEncore] = useState(false);
-  const bankEncore = async (declined) => {
-    if (!myEncore) return;
-    setBankingEncore(true);
-    try {
-      await setEncoreDecline({
-        week: show.week,
-        eventName: show.eventName,
-        date: show.date ?? null,
-        corpsClass: myEncore.corpsClass,
-        declined,
-      });
-      setEncoreBanked(declined);
-      haptic?.('success');
-      toast.success(
-        declined ? 'Encore banked for a later show.' : 'Encore restored — this show is yours.'
-      );
-    } catch (err) {
-      toast.error(err?.message || 'Could not update the encore.');
-    } finally {
-      setBankingEncore(false);
-    }
-  };
 
   // Director-hosted show (design §5.10): rented by a director, open enrollment
   // for every class. The panel surfaces who's coming and how many of the venue's
@@ -128,6 +120,12 @@ const ShowRegistrationModal = ({
     () => getShowRegistrationCloseEstimate(eventDate, seasonData),
     [eventDate, seasonData]
   );
+  // Once the night's scores have run, attendance is frozen — the server
+  // rejects any add or withdrawal (selectUserShows), so the modal goes
+  // read-only rather than letting a save fail. Live via the Schedule page's
+  // clock, so a modal left open across the drop locks in place.
+  const isShowClosed = useIsShowClosed(seasonData);
+  const registrationClosed = !show.isChampionship && isShowClosed(eventDate);
 
   // Check if this is a championship show with auto-enrollment
   const isChampionship = show.isChampionship === true;
@@ -161,7 +159,7 @@ const ShowRegistrationModal = ({
   // single source of truth. getPodiumState (server day-context + subcollection)
   // is authoritative; we no longer gate on the profile's corps.podiumClass copy,
   // which can lag or be absent even when the corps is fielded this season.
-  const [podiumInfo, setPodiumInfo] = useState(null);
+  const [podiumInfo, setPodiumInfo] = useState(/** @type {PodiumInfo|null} */ (null));
   const [podiumAttend, setPodiumAttend] = useState(false);
   const [podiumInitial, setPodiumInitial] = useState(false);
   // True while getPodiumState() is in flight so the Podium row can reserve its
@@ -183,7 +181,9 @@ const ShowRegistrationModal = ({
         // auto-assigned majors/championship, never self-selected regular shows.
         const state = res?.data;
         if (cancelled || !state?.exists) return;
-        const selectedShows = state.state?.selectedShows || {};
+        const selectedShows = /** @type {Record<number, ShowPick>} */ (
+          state.state?.selectedShows || {}
+        );
         // Attending THIS show only when the day's pick names this exact event
         // (one show per night — a different pick that day means "not here").
         const pick = selectedShows[podiumDay];
@@ -193,7 +193,7 @@ const ShowRegistrationModal = ({
           autoDays: state.autoDays || [],
           easternNightFinal: Boolean(state.easternNightFinal),
           competitionDay: state.competitionDay ?? 0,
-          corpsName: state.state?.corpsName || 'Podium Corps',
+          corpsName: /** @type {string} */ (state.state?.corpsName) || 'Podium Corps',
         });
         setPodiumAttend(attending);
         setPodiumInitial(attending);
@@ -213,7 +213,7 @@ const ShowRegistrationModal = ({
   // its own division bracket is a subset — and never self-selectable, matching
   // the server's CHAMPIONSHIP_WEEK_DAYS guard. autoDays only lists the corps'
   // OWN bracket days, so this also covers e.g. an A/Open corps on a World day.
-  const podiumIsChampWeek = PODIUM_CHAMPIONSHIP_WEEK_DAYS.includes(podiumDay);
+  const podiumIsChampWeek = podiumDay !== null && PODIUM_CHAMPIONSHIP_WEEK_DAYS.includes(podiumDay);
   // A two-night event (the Eastern Classic) is ONE registration for the Podium
   // corps just as for a fantasy corps: it is on the bill both nights and
   // performs on its assigned one. autoDays carries only the performing night,
@@ -229,14 +229,18 @@ const ShowRegistrationModal = ({
   const podiumNightsPublishDay =
     podiumIsTwoNight && !podiumPerformNight ? podiumNights[0] - 2 : null;
   const podiumIsEasternOffNight =
-    PODIUM_EASTERN_DAYS.includes(podiumDay) && podiumInfo && !podiumIsMyAutoDay;
+    podiumDay !== null &&
+    PODIUM_EASTERN_DAYS.includes(podiumDay) &&
+    podiumInfo &&
+    !podiumIsMyAutoDay;
   // A day is "passed" only once it is strictly before the current competition
   // day — the show's own competition day is still open (it locks at the 2 AM ET
   // score processing the next day, exactly when competitionDay ticks forward),
   // matching the fantasy registration deadline. Using <= locked Podium out a
   // full day early, so a show fantasy corps could still register for read as
   // "This day has passed" for the Podium corps.
-  const podiumIsPast = podiumInfo ? podiumDay < podiumInfo.competitionDay : false;
+  const podiumIsPast =
+    podiumInfo && podiumDay !== null ? podiumDay < podiumInfo.competitionDay : false;
   const podiumMaxPicks = podiumMaxPicksForWeek(show.week);
   // The week's OTHER still-open picks (as {day, eventName, location}), re-sent
   // on save because setPodiumShows replaces the whole week. Excludes this day
@@ -295,11 +299,10 @@ const ShowRegistrationModal = ({
 
   // Initialize with already registered corps
   useEffect(() => {
+    /** @type {string[]} */
     const alreadyRegistered = [];
     userCorpsClasses.forEach((corpsClass) => {
-      const corpsData = userProfile.corps[corpsClass];
-      const weekKey = `week${show.week}`;
-      const selectedShows = corpsData.selectedShows?.[weekKey] || [];
+      const selectedShows = weekShowsFor(userProfile, corpsClass, show.week);
       // Match by eventName only - dates can have type mismatches (Timestamp vs string)
       const isRegistered = selectedShows.some((s) => s.eventName === show.eventName);
       if (isRegistered) {
@@ -309,14 +312,18 @@ const ShowRegistrationModal = ({
     setSelectedCorps(alreadyRegistered);
   }, [show, userProfile, userCorpsClasses]);
 
+  /** @param {string} corpsClass */
   const toggleCorps = (corpsClass) => {
+    if (registrationClosed) {
+      haptic('error');
+      toast.error("Registration closed — this night's scores have been processed.");
+      return;
+    }
     haptic('light');
     if (selectedCorps.includes(corpsClass)) {
       setSelectedCorps(selectedCorps.filter((c) => c !== corpsClass));
     } else {
-      const corpsData = userProfile.corps[corpsClass];
-      const weekKey = `week${show.week}`;
-      const currentShows = corpsData.selectedShows?.[weekKey] || [];
+      const currentShows = weekShowsFor(userProfile, corpsClass, show.week);
       // Match by eventName only - dates can have type mismatches (Timestamp vs string)
       const isAlreadyAtShow = currentShows.some((s) => s.eventName === show.eventName);
       const dayConflict = sameDayShowFor(currentShows, show.day, show.eventName);
@@ -338,10 +345,9 @@ const ShowRegistrationModal = ({
   };
 
   const selectAll = () => {
+    if (registrationClosed) return;
     const canSelect = userCorpsClasses.filter((corpsClass) => {
-      const corpsData = userProfile.corps[corpsClass];
-      const weekKey = `week${show.week}`;
-      const currentShows = corpsData.selectedShows?.[weekKey] || [];
+      const currentShows = weekShowsFor(userProfile, corpsClass, show.week);
       // Match by eventName only - dates can have type mismatches (Timestamp vs string)
       const isAlreadyAtShow = currentShows.some((s) => s.eventName === show.eventName);
       if (sameDayShowFor(currentShows, show.day, show.eventName) && !isAlreadyAtShow) return false;
@@ -353,18 +359,19 @@ const ShowRegistrationModal = ({
   };
 
   const clearAll = () => {
+    if (registrationClosed) return;
     setSelectedCorps([]);
   };
 
   const handleSave = async () => {
+    if (registrationClosed) return;
     haptic('medium');
     setSaving(true);
     try {
       // Prepare all updates first, then execute in parallel to avoid race conditions
+      /** @type {Promise<unknown>[]} */
       const updatePromises = userCorpsClasses.map((corpsClass) => {
-        const corpsData = userProfile.corps[corpsClass];
-        const weekKey = `week${show.week}`;
-        const currentShows = corpsData.selectedShows?.[weekKey] || [];
+        const currentShows = weekShowsFor(userProfile, corpsClass, show.week);
         // Filter by eventName only - dates can have type mismatches (Timestamp vs string)
         const filteredShows = currentShows.filter((s) => s.eventName !== show.eventName);
         const newShows = selectedCorps.includes(corpsClass)
@@ -385,7 +392,7 @@ const ShowRegistrationModal = ({
         });
       });
 
-      if (podiumChanged) {
+      if (podiumChanged && podiumDay !== null) {
         // Per-show picks: keep the week's other shows, add/remove THIS show.
         const otherPicks = podiumOtherWeekPicks.map((p) => ({
           day: p.day,
@@ -404,11 +411,11 @@ const ShowRegistrationModal = ({
 
       haptic('success');
       toast.success('Registration updated!');
-      onSuccess();
+      onSuccess?.();
     } catch (error) {
       console.error('Error updating registration:', error);
       haptic('error');
-      toast.error(error.message || 'Failed to update registration');
+      toast.error((error instanceof Error && error.message) || 'Failed to update registration');
     } finally {
       setSaving(false);
     }
@@ -417,11 +424,10 @@ const ShowRegistrationModal = ({
   // Check if any corps registered
   const hasChanges = useMemo(() => {
     const initialRegistered = userCorpsClasses.filter((corpsClass) => {
-      const corpsData = userProfile.corps[corpsClass];
-      const weekKey = `week${show.week}`;
-      const selectedShows = corpsData.selectedShows?.[weekKey] || [];
       // Match by eventName only - dates can have type mismatches (Timestamp vs string)
-      return selectedShows.some((s) => s.eventName === show.eventName);
+      return weekShowsFor(userProfile, corpsClass, show.week).some(
+        (s) => s.eventName === show.eventName
+      );
     });
     return (
       JSON.stringify(initialRegistered.sort()) !== JSON.stringify(selectedCorps.sort()) ||
@@ -494,31 +500,15 @@ const ShowRegistrationModal = ({
           when there's a field; an honest placeholder otherwise. */}
       {(show.lineup?.length > 0 || show.podiumSchedule?.lineup?.length > 0) && (
         <div className="px-4 pt-4">
-          <DualRunningOrder show={show} myUid={user?.uid} />
+          {/* Only transformed schedule shows carry a lineup — i.e. a full ShowLike. */}
+          <DualRunningOrder
+            show={/** @type {import('../../utils/showday').ShowLike} */ (show)}
+            myUid={user?.uid}
+          />
         </div>
       )}
       {/* Encore banking — only when the director's own corps is the encore here. */}
-      {myEncore && (
-        <div className="mx-4 mt-3 p-3 bg-brand/10 border border-brand/30 flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <div className="text-sm text-white font-semibold truncate">
-              {encoreBanked ? 'Encore banked' : `${myEncore.corps} is your encore`}
-            </div>
-            <div className="text-xs text-muted">
-              {encoreBanked
-                ? "You'll get your one encore at a later show."
-                : 'One encore per season — bank it for a show that matters more.'}
-            </div>
-          </div>
-          <button
-            onClick={() => bankEncore(!encoreBanked)}
-            disabled={bankingEncore}
-            className="flex-shrink-0 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider border border-brand/40 text-brand hover:bg-brand/10 disabled:opacity-50"
-          >
-            {encoreBanked ? 'Take it here' : 'Bank for later'}
-          </button>
-        </div>
-      )}
+      <EncoreBankingBanner show={show} uid={user?.uid} />
 
       {/* Who's attending — the live roster for EVERY show. Hosted shows get the
           richer panel (venue slots + host); every other non-championship show
@@ -674,17 +664,26 @@ const ShowRegistrationModal = ({
                     use these slots.
                   </p>
                 )}
-                {registrationClose && (
+                {registrationClosed ? (
                   <p className="mt-1 flex items-center gap-1">
-                    <Clock className="w-3 h-3 text-cyan-400 flex-shrink-0" aria-hidden="true" />
-                    <span>
-                      You can add or change attendance until the night&apos;s scores process
-                      {registrationClose.exact ? ':' : ' — as early as'}{' '}
-                      <span className="text-cyan-400 font-bold">
-                        {formatEtDayTime(registrationClose.at)}
-                      </span>
+                    <Clock className="w-3 h-3 text-warning flex-shrink-0" aria-hidden="true" />
+                    <span className="text-warning font-bold">
+                      Registration closed — this night&apos;s scores have been processed.
                     </span>
                   </p>
+                ) : (
+                  registrationClose && (
+                    <p className="mt-1 flex items-center gap-1">
+                      <Clock className="w-3 h-3 text-cyan-400 flex-shrink-0" aria-hidden="true" />
+                      <span>
+                        You can add or change attendance until the night&apos;s scores process
+                        {registrationClose.exact ? ':' : ' — as early as'}{' '}
+                        <span className="text-cyan-400 font-bold">
+                          {formatEtDayTime(registrationClose.at)}
+                        </span>
+                      </span>
+                    </p>
+                  )
                 )}
               </div>
             </div>
@@ -699,7 +698,8 @@ const ShowRegistrationModal = ({
               <div className="flex flex-wrap gap-2">
                 {selectedCorps.map((corpsClass) => {
                   const corpsData = userProfile.corps[corpsClass];
-                  const config = CLASS_CONFIG[corpsClass];
+                  const config =
+                    CLASS_CONFIG[/** @type {keyof typeof CLASS_CONFIG} */ (corpsClass)];
                   return (
                     <span
                       key={corpsClass}
@@ -745,7 +745,7 @@ const ShowRegistrationModal = ({
       </button>
       <button
         onClick={handleSave}
-        disabled={saving || !hasChanges}
+        disabled={saving || !hasChanges || registrationClosed}
         className="flex-1 h-12 bg-interactive text-white text-sm font-bold uppercase tracking-wider hover:bg-interactive-hover disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 active:bg-interactive-subtle press-feedback-strong"
       >
         {saving ? (
@@ -756,7 +756,11 @@ const ShowRegistrationModal = ({
         ) : (
           <>
             <Check className="w-4 h-4" />
-            {hasChanges ? 'Save Changes' : 'No Changes'}
+            {registrationClosed
+              ? 'Registration Closed'
+              : hasChanges
+                ? 'Save Changes'
+                : 'No Changes'}
           </>
         )}
       </button>

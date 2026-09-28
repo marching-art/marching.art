@@ -12,6 +12,7 @@ import { useSeasonStore } from '../store/seasonStore';
 import { useScheduleStore } from '../store/scheduleStore';
 import { useProfileStore } from '../store/profileStore';
 import { ShowRegistrationModal, HostEventCard } from '../components/Schedule';
+import { ShowClockContext } from '../components/Schedule/showClockContext';
 import { ModalLoadingFallback } from '../components/ui';
 import { lazyWithRetry } from '../utils/lazyWithRetry';
 import { formatCountdown, formatEtShort } from '../utils/seasonClock';
@@ -40,7 +41,7 @@ const TourMapModal = lazyWithRetry(
 
 const Schedule = () => {
   const user = useAuth()?.user;
-  const { scoresAt, scoresInMs, scoresExact, scoresPending } = useSeasonDeadlines();
+  const { scoresAt, scoresInMs, scoresExact, scoresPending, isShowClosed } = useSeasonDeadlines();
   const [loading, setLoading] = useState(true);
   const [selectedShow, setSelectedShow] = useState(/** @type {ScheduleShow|null} */ (null));
   const [registrationModal, setRegistrationModal] = useState(false);
@@ -291,152 +292,154 @@ const Schedule = () => {
   }
 
   return (
-    <div className="h-full flex flex-col overflow-hidden bg-background">
-      {/* FIXED HEADER */}
-      <div className="flex-shrink-0 bg-surface-card border-b border-line px-4 py-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Calendar className="w-5 h-5 text-interactive" />
-            <div>
-              <h1 className="text-sm font-bold text-white uppercase tracking-wider">
-                {formatSeasonName?.() || `${seasonData.seasonYear || new Date().getFullYear()}`}{' '}
-                Schedule
-              </h1>
-              <p className="text-[10px] text-muted">
-                Week {currentWeek} of 7 • {getWeekDateRange(currentWeek)}
-              </p>
-              {scoresPending ? (
-                <p className="text-[10px] text-warning flex items-center gap-1">
-                  <Clock className="w-2.5 h-2.5 animate-pulse" aria-hidden="true" />
-                  Scores processing — waiting on DCI results
+    <ShowClockContext.Provider value={isShowClosed}>
+      <div className="h-full flex flex-col overflow-hidden bg-background">
+        {/* FIXED HEADER */}
+        <div className="flex-shrink-0 bg-surface-card border-b border-line px-4 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Calendar className="w-5 h-5 text-interactive" />
+              <div>
+                <h1 className="text-sm font-bold text-white uppercase tracking-wider">
+                  {formatSeasonName?.() || `${seasonData.seasonYear || new Date().getFullYear()}`}{' '}
+                  Schedule
+                </h1>
+                <p className="text-[10px] text-muted">
+                  Week {currentWeek} of 7 • {getWeekDateRange(currentWeek)}
                 </p>
-              ) : (
-                <p className="text-[10px] text-cyan-400 flex items-center gap-1">
-                  <Clock className="w-2.5 h-2.5" aria-hidden="true" />
-                  Scores drop in{' '}
-                  <span className="font-bold font-data tabular-nums">
-                    {formatCountdown(scoresInMs)}
-                  </span>{' '}
-                  ({scoresExact ? '' : 'by '}
-                  {formatEtShort(scoresAt)})
-                </p>
+                {scoresPending ? (
+                  <p className="text-[10px] text-warning flex items-center gap-1">
+                    <Clock className="w-2.5 h-2.5 animate-pulse" aria-hidden="true" />
+                    Scores processing — waiting on DCI results
+                  </p>
+                ) : (
+                  <p className="text-[10px] text-cyan-400 flex items-center gap-1">
+                    <Clock className="w-2.5 h-2.5" aria-hidden="true" />
+                    Scores drop in{' '}
+                    <span className="font-bold font-data tabular-nums">
+                      {formatCountdown(scoresInMs)}
+                    </span>{' '}
+                    ({scoresExact ? '' : 'by '}
+                    {formatEtShort(scoresAt)})
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Registration Stats */}
+            <div className="flex items-center gap-4 text-xs">
+              <div className="text-right">
+                <div className="text-[10px] text-muted uppercase">This Week</div>
+                <div className="font-bold text-white font-data tabular-nums">
+                  {registrationStats.thisWeek}
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-[10px] text-muted uppercase">Total</div>
+                <div className="font-bold text-interactive font-data tabular-nums">
+                  {registrationStats.total}
+                </div>
+              </div>
+
+              {/* The season as a route: every stop this director's corps play,
+                on one shareable map. */}
+              {user && (
+                <button
+                  onClick={() => setTourMapOpen(true)}
+                  aria-label="Open tour map"
+                  title="Tour Map"
+                  className="w-9 h-9 flex items-center justify-center border border-line text-secondary hover:border-interactive hover:text-interactive active:bg-white/5 rounded-none transition-colors"
+                >
+                  <MapIcon className="w-4 h-4" aria-hidden="true" />
+                </button>
               )}
             </div>
           </div>
-
-          {/* Registration Stats */}
-          <div className="flex items-center gap-4 text-xs">
-            <div className="text-right">
-              <div className="text-[10px] text-muted uppercase">This Week</div>
-              <div className="font-bold text-white font-data tabular-nums">
-                {registrationStats.thisWeek}
-              </div>
-            </div>
-            <div className="text-right">
-              <div className="text-[10px] text-muted uppercase">Total</div>
-              <div className="font-bold text-interactive font-data tabular-nums">
-                {registrationStats.total}
-              </div>
-            </div>
-
-            {/* The season as a route: every stop this director's corps play,
-                on one shareable map. */}
-            {user && (
-              <button
-                onClick={() => setTourMapOpen(true)}
-                aria-label="Open tour map"
-                title="Tour Map"
-                className="w-9 h-9 flex items-center justify-center border border-line text-secondary hover:border-interactive hover:text-interactive active:bg-white/5 rounded-none transition-colors"
-              >
-                <MapIcon className="w-4 h-4" aria-hidden="true" />
-              </button>
-            )}
-          </div>
         </div>
-      </div>
 
-      {/* WEEK PILLS - Fixed */}
-      <div className="flex-shrink-0">
-        <WeekPills
-          weeks={weeks}
-          currentWeek={currentWeek}
-          selectedWeek={selectedWeek}
-          onSelect={setSelectedWeek}
-          getShowCount={getWeekShowCount}
-        />
-      </div>
-
-      {/* SCROLLABLE CONTENT */}
-      <div className="flex-1 overflow-y-auto min-h-0 pb-20 md:pb-4">
-        {selectedWeek === 7 ? (
-          <ChampionshipWeekDisplay
-            userProfile={userProfile}
-            getActualDate={getActualDate}
-            seasonUid={seasonUid}
-            regularShows={showsByWeek[7] || []}
-            formatDate={formatDate}
-            onRegister={handleShowClick}
-            podiumAttendance={podiumAttendance}
-            hostedByKey={hostedByKey}
+        {/* WEEK PILLS - Fixed */}
+        <div className="flex-shrink-0">
+          <WeekPills
+            weeks={weeks}
+            currentWeek={currentWeek}
+            selectedWeek={selectedWeek}
+            onSelect={setSelectedWeek}
+            getShowCount={getWeekShowCount}
           />
-        ) : (
-          <ShowsList
-            shows={(selectedWeek != null && showsByWeek[selectedWeek]) || []}
-            userProfile={userProfile}
-            formatDate={formatDate}
-            getActualDate={getActualDate}
-            onRegister={handleShowClick}
-            seasonUid={seasonUid}
-            podiumAttendance={podiumAttendance}
-            hostedByKey={hostedByKey}
-          />
-        )}
+        </div>
 
-        {/* Director-hosted events (all classes) — flag-gated, self-hiding.
+        {/* SCROLLABLE CONTENT */}
+        <div className="flex-1 overflow-y-auto min-h-0 pb-20 md:pb-4">
+          {selectedWeek === 7 ? (
+            <ChampionshipWeekDisplay
+              userProfile={userProfile}
+              getActualDate={getActualDate}
+              seasonUid={seasonUid}
+              regularShows={showsByWeek[7] || []}
+              formatDate={formatDate}
+              onRegister={handleShowClick}
+              podiumAttendance={podiumAttendance}
+              hostedByKey={hostedByKey}
+            />
+          ) : (
+            <ShowsList
+              shows={(selectedWeek != null && showsByWeek[selectedWeek]) || []}
+              userProfile={userProfile}
+              formatDate={formatDate}
+              getActualDate={getActualDate}
+              onRegister={handleShowClick}
+              seasonUid={seasonUid}
+              podiumAttendance={podiumAttendance}
+              hostedByKey={hostedByKey}
+            />
+          )}
+
+          {/* Director-hosted events (all classes) — flag-gated, self-hiding.
             Shares the hosted-events fetch with the schedule's hosted badges. */}
-        {user && (
-          <HostEventCard
-            seasonUid={seasonUid}
-            events={/** @type {HostedEventRecord[]|null} */ (hostedEvents)}
-            onReload={reloadHosted}
+          {user && (
+            <HostEventCard
+              seasonUid={seasonUid}
+              events={/** @type {HostedEventRecord[]|null} */ (hostedEvents)}
+              onReload={reloadHosted}
+            />
+          )}
+        </div>
+
+        {/* TOUR MAP */}
+        {tourMapOpen && (
+          <Suspense fallback={<ModalLoadingFallback />}>
+            <TourMapModal
+              userProfile={userProfile}
+              competitions={allShows}
+              getActualDate={getActualDate}
+              seasonName={formatSeasonName?.() || ''}
+              podiumAttendance={podiumAttendance}
+              onClose={() => setTourMapOpen(false)}
+            />
+          </Suspense>
+        )}
+
+        {/* REGISTRATION MODAL */}
+        {registrationModal && selectedShow && (
+          <ShowRegistrationModal
+            show={selectedShow}
+            userProfile={userProfile}
+            formattedDate={formatDate(selectedShow.day)}
+            eventDate={getActualDate(selectedShow.day)}
+            hostedEvent={selectedHostedEvent}
+            onClose={() => setRegistrationModal(false)}
+            onSuccess={() => {
+              // Fantasy corps update via the profileStore real-time listener, but
+              // the Podium pick lives in the podium/state subcollection read
+              // through a one-shot callable — refetch it so its badge appears
+              // immediately without a full page reload.
+              if (podiumEnabled) podium.reload();
+              setRegistrationModal(false);
+            }}
           />
         )}
       </div>
-
-      {/* TOUR MAP */}
-      {tourMapOpen && (
-        <Suspense fallback={<ModalLoadingFallback />}>
-          <TourMapModal
-            userProfile={userProfile}
-            competitions={allShows}
-            getActualDate={getActualDate}
-            seasonName={formatSeasonName?.() || ''}
-            podiumAttendance={podiumAttendance}
-            onClose={() => setTourMapOpen(false)}
-          />
-        </Suspense>
-      )}
-
-      {/* REGISTRATION MODAL */}
-      {registrationModal && selectedShow && (
-        <ShowRegistrationModal
-          show={selectedShow}
-          userProfile={userProfile}
-          formattedDate={formatDate(selectedShow.day)}
-          eventDate={getActualDate(selectedShow.day)}
-          hostedEvent={selectedHostedEvent}
-          onClose={() => setRegistrationModal(false)}
-          onSuccess={() => {
-            // Fantasy corps update via the profileStore real-time listener, but
-            // the Podium pick lives in the podium/state subcollection read
-            // through a one-shot callable — refetch it so its badge appears
-            // immediately without a full page reload.
-            if (podiumEnabled) podium.reload();
-            setRegistrationModal(false);
-          }}
-        />
-      )}
-    </div>
+    </ShowClockContext.Provider>
   );
 };
 

@@ -19,6 +19,7 @@
 import geo from '../data/tourMapGeo.json';
 import coords from '../data/venueCoords.json';
 import { HOSTABLE_VENUES, resolveVenueId } from './venues';
+import { placeIdentity, type TownResolver } from './places';
 
 const DEG = Math.PI / 180;
 
@@ -43,7 +44,10 @@ export interface MapPoint {
 export interface VenuePoint extends MapPoint {
   city: string;
   region: string;
+  /** Tour-map venueId, or `town:…` for a town placed from the place index. */
   venueId: string;
+  lat: number;
+  lng: number;
 }
 
 /** Canvas the pre-projected paths were fitted to. */
@@ -94,20 +98,36 @@ export function venueLatLng(venueId: string): { lat: number; lng: number } | nul
 
 /**
  * Poster coordinates for a schedule location string ("Allentown, PA"), or null
- * when the city isn't in the venue gazetteer. Callers must handle null — a
- * hosted event or a hand-edited schedule can name a city we have no fix for,
- * and an unplaceable stop belongs in the list, not at [0, 0] off Baja.
+ * when the city can't be placed. Tour-map cities resolve from the gazetteer;
+ * with `resolveTown` (utils/places.makeTownResolver) any other real town —
+ * a director-hosted show, a new DCI stop — is placed from the place index.
+ * Callers must handle null: an unplaceable stop belongs in the list, not at
+ * [0, 0] off Baja.
  */
-export function locationPoint(locationString: string): VenuePoint | null {
+export function locationPoint(
+  locationString: string,
+  resolveTown?: TownResolver | null
+): VenuePoint | null {
   const venueId = resolveVenueId(locationString);
-  if (!venueId) return null;
+  const coord = venueId ? venueLatLng(venueId) : null;
+  const label = venueId ? VENUE_LABELS.get(venueId) : undefined;
+  if (venueId && coord && label) {
+    const { x, y } = projectLatLng(coord.lng, coord.lat);
+    return { x, y, city: label.city, region: label.region, venueId, ...coord };
+  }
 
-  const coord = venueLatLng(venueId);
-  const label = VENUE_LABELS.get(venueId);
-  if (!coord || !label) return null;
-
-  const { x, y } = projectLatLng(coord.lng, coord.lat);
-  return { x, y, city: label.city, region: label.region, venueId };
+  const town = resolveTown ? resolveTown(locationString) : null;
+  if (!town) return null;
+  const { x, y } = projectLatLng(town.lng, town.lat);
+  return {
+    x,
+    y,
+    city: town.city,
+    region: town.region,
+    venueId: placeIdentity(town),
+    lat: town.lat,
+    lng: town.lng,
+  };
 }
 
 /**

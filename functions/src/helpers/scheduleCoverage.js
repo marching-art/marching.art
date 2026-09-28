@@ -5,6 +5,7 @@ const { assertAdmin } = require("./callableGuards");
 const { isAllAgeEvent, isPlaceholderEvent, MIN_FIELD } = require("./learnedSchedules");
 const { loadHistoricalYear } = require("./historicalScores");
 const { midnightUtc } = require("./offSeasonHeritage");
+const { auditScheduleLocations } = require("./podium/venues");
 
 /**
  * Is this a scored event we EXPECT to have a running order in the archive?
@@ -90,9 +91,14 @@ async function buildScheduleCoverageReport(db) {
   // Current season pool: corps whose picks can never light up FULL (no resultDays)
   // — the classic name-map-gap signal.
   const pool = { seasonId: null, size: 0, unmapped: [] };
+  // Current schedule's show locations: tour-map cities, new towns placed
+  // automatically from the place index, and anything that names no real place.
+  let venues = { total: 0, tour: 0, geocoded: [], unresolved: [] };
   const seasonDoc = await db.doc("game-settings/season").get();
   if (seasonDoc.exists && seasonDoc.data().seasonUid) {
     pool.seasonId = seasonDoc.data().seasonUid;
+    const scheduleDoc = await db.doc(`schedules/${pool.seasonId}`).get();
+    venues = auditScheduleLocations(scheduleDoc.exists ? scheduleDoc.data().competitions || [] : []);
     const dciDoc = await db.doc(`dci-data/${pool.seasonId}`).get();
     const corpsValues = dciDoc.exists ? (dciDoc.data().corpsValues || []) : [];
     pool.size = corpsValues.length;
@@ -101,7 +107,7 @@ async function buildScheduleCoverageReport(db) {
       .map((c) => `${c.corpsName} (${c.sourceYear})`);
   }
 
-  return { generatedAt: null, years: rows, totals, pool };
+  return { generatedAt: null, years: rows, totals, pool, venues };
 }
 
 /**

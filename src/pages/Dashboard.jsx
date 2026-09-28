@@ -643,7 +643,12 @@ const Dashboard = () => {
                         ? null
                         : 'Locked — this corps has already competed this season.'
                     }
-                    onMoveCorps={() => setShowMoveCorps(true)}
+                    // Podium Division corps are fixed to their class — the
+                    // transfer is a fantasy-lineup mechanic (the server only
+                    // accepts lineup classes), so no Move item is offered.
+                    onMoveCorps={
+                      activeCorpsClass === 'podiumClass' ? undefined : () => setShowMoveCorps(true)
+                    }
                     onRetireCorps={() => setShowRetireConfirm(true)}
                   />
                 </div>

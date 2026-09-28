@@ -19,3 +19,7 @@ functions-scraper
 # prettier-ignored with the rest of functions/) — verified by
 # scripts/checkClassRegistrySync.js. Formatting it would break parity.
 src/config/classRegistry.json
+
+# Generated hometown place index (functions/src/scripts/buildPlaceIndex.js) —
+# one compact line by design; pretty-printing it would add ~20k lines.
+src/data/placeIndex.json

@@ -457,13 +457,19 @@ free of false precision. A corps' route is the chain of legs between its consecu
 shows, and the season's first leg starts from the corps' **official home** — the `home` a director
 sets at registration, and where spring training is housed. Costs are shown in the weekly show
 picker _before_ selections are confirmed, so routing is played as an open-information puzzle, and
-hosted events (§5.10) slot in automatically because hosts choose their venue city from the same
-gazetteer.
+hosted events (§5.10) slot in automatically because hosts choose their town through the same
+resolver. Locations resolve in two layers (`venues.venueFor`): the historical show **gazetteer**
+(`venueGazetteer.json`, ~500 cities — the tour map) first, then the **place index**
+(`placeIndex.json`, `scripts/buildPlaceIndex.js`: every US/Canadian town in GeoNames cities500,
+~22k more, timezone-stamped). Any real town therefore gets travel, heat and timezone math — a
+hometown, a hosted show, or a brand-new stop DCI adds to the live schedule (logged by the schedule
+refresh and listed on the admin Schedule Coverage card).
 
 **The official home (required, gazetteer-resolved, relocatable).** Setup no longer takes a
 free-text hometown that may or may not be on the map: registration **requires** a home picked from
-the venue gazetteer, stored structurally on the corps (`state.home` = `{venueId, city, region,
-lat, lng}`), and its canonical "City, ST" label **replaces the location shown on the profile**. The
+any real US/Canadian town (gazetteer or place index, via the `TownPicker` typeahead with "Use my
+location"), stored structurally on the corps (`state.home` = `{venueId, city, region, lat, lng,
+anyTown}`), and its canonical "City, ST" label **replaces the location shown on the profile**. The
 home is corps identity that ties directly into the schedule and the tour map — every tour begins
 there and every leg is priced from it, so a director is rewarded for founding in the region they
 want to compete in and for planning a schedule that keeps the early legs short. A director may
@@ -477,6 +483,13 @@ no cost to travel from Indianapolis back home at season's end:** the return trip
 Week is never charged (travel is only priced on show days, and next season's tour re-opens from the
 home, not from Indy), so the relocation fee is purely the price of _moving_ the home base, never of
 going home.
+
+**Hometown correction.** Until 2026-09-28 the home had to be a gazetteer city, so many directors
+registered with a home they didn't want. A home without `anyTown` (or a legacy free-text one) was
+forced: its corps gets **one free mid-season move** (`correctPodiumHometown`, offered by the
+dashboard's hometown card — the route re-prices from the new town only if the tour hasn't started),
+and if unused, the **relocation fee is waived** at the next registration (`carryover.homeMoveFree`).
+Rules in `helpers/podium/hometown.js`.
 
 **Climate (deterministic):** venue latitude + calendar date produce a published **heat index** per
 show that scales that day's stamina drain — a July swing through Texas genuinely costs more than a
@@ -768,8 +781,9 @@ Podium:
 
 - **Hosting:** any director with enough CorpsCoin can host a show on an open date in the current
   season schedule: pick the day, name the event, choose a **venue tier** (high-school stadium →
-  college bowl → NFL stadium: rising rental cost, rising corps capacity and payout ceiling).
-  The event appears in the schedule subcollection alongside the historical events, selectable by
+  college bowl → NFL stadium: rising rental cost, rising corps capacity and payout ceiling), and
+  host it in **any real US/Canadian town** (§5.3's resolver — not only historical show cities),
+  one show per town per season. The event appears in the schedule subcollection alongside the historical events, selectable by
   every class through the existing `selectUserShows` flow.
 - **Open enrollment, no gatekeeping.** FMA hosts accepted/declined applicants, which let
   profit-maximizing hosts exclude low-draw groups and froze out newer players (a documented
@@ -881,8 +895,13 @@ turned into the class's social mechanic. Fully mutual, capped, and deterministic
 - **Geography gates it.** Using the venue gazetteer, each corps has a "current location" at all
   times (hometown before its first show, otherwise its most recent venue). A joint rehearsal
   requires the two corps to be within the **Day Trip tier (≤250 mi)** of each other on that day —
-  or one party pays the normal travel cost to close the gap. Tour routing thus shapes your social
-  calendar, exactly as it does in real life: you rehearse with whoever's housed nearby.
+  or the proposer pays the normal travel cost to close the gap: the tier's CorpsCoin (unaffordable →
+  the usual stamina surcharge) **and** its stamina, Tour Manager reduction applied, charged by the
+  nightly run on the joint day. It is one outbound leg — a joint never relocates the corps, so the
+  route resumes from its last show with no return leg. The tier charged is the lower of the one
+  frozen at acceptance and the real gap that night, so nobody pays more than they agreed to. Tour
+  routing thus shapes your social calendar, exactly as it does in real life: you rehearse with
+  whoever's housed nearby.
 - **What it does mechanically.** On the shared day, each corps' **Full Ensemble block yields
   +25%** and both receive a **morale bump** (+6; performing for an audience of peers). The bonus
   touches only Full Ensemble — it can sharpen ensemble captions, never substitute for balanced

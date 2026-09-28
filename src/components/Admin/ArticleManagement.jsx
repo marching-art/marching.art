@@ -173,7 +173,7 @@ const ArticleManagement = () => {
   /** @param {unknown} dateString */
   const formatDate = (dateString) => {
     if (!dateString) return 'Unknown';
-    const date = new Date(String(dateString));
+    const date = new Date(/** @type {string | number | Date} */ (dateString));
     return date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',

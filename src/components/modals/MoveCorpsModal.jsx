@@ -57,8 +57,14 @@ const MoveCorpsModal = ({
   // Trap keyboard focus inside the dialog (WCAG 2.4.3); restores on close
   useFocusTrap(dialogRef);
 
+  // Only fantasy (lineup) corps can transfer; a Podium corps has no targets.
+  const isMovable = AVAILABLE_CLASSES.some((cls) => cls.id === currentClass);
   const availableClasses = AVAILABLE_CLASSES.filter(
-    (cls) => cls.id !== currentClass && unlockedClasses.includes(cls.id) && !existingCorps[cls.id]
+    (cls) =>
+      isMovable &&
+      cls.id !== currentClass &&
+      unlockedClasses.includes(cls.id) &&
+      !existingCorps[cls.id]
   );
 
   /** @param {React.FormEvent<HTMLFormElement>} e */

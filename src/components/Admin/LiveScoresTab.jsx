@@ -294,6 +294,44 @@ const ScheduleCoverageCard = () => {
               </div>
             )}
 
+            {report.venues && report.venues.total > 0 && (
+              <div
+                className={`bg-surface-sunken border p-3 space-y-1 ${report.venues.unresolved.length > 0 ? 'border-red-500/30' : 'border-line'}`}
+              >
+                <div className="text-[10px] uppercase tracking-wider text-muted">
+                  Show locations — {report.venues.tour}/{report.venues.total} on the tour map
+                </div>
+                {report.venues.geocoded.length > 0 && (
+                  <div className="text-[11px] text-secondary">
+                    <span className="text-green-400">
+                      New towns, auto-geocoded ({report.venues.geocoded.length}):
+                    </span>{' '}
+                    {report.venues.geocoded
+                      .map((v) =>
+                        v.location === v.resolvedAs ? v.location : `${v.location} → ${v.resolvedAs}`
+                      )
+                      .join(', ')}
+                    <div className="text-[10px] text-muted">
+                      Travel, heat, timezones and the Tour Map already work. Promote them to the
+                      gazetteer (stadium names) with the venue rebuild in docs/NEXT.md.
+                    </div>
+                  </div>
+                )}
+                {report.venues.unresolved.length > 0 && (
+                  <div className="text-[11px] text-red-400">
+                    No real place found ({report.venues.unresolved.length}):{' '}
+                    {report.venues.unresolved
+                      .map((v) => `${v.location}${v.eventName ? ` (${v.eventName})` : ''}`)
+                      .join(', ')}
+                    <div className="text-[10px] text-muted">
+                      Legs to these shows are free until fixed — add a MANUAL_OVERRIDES entry in
+                      functions/src/scripts/buildVenueGazetteer.js and rebuild.
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {report.pool && report.pool.unmapped.length > 0 && (
               <div className="bg-surface-sunken border border-red-500/30 p-3">
                 <div className="text-[10px] uppercase tracking-wider text-red-400 mb-1">

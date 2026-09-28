@@ -7,6 +7,7 @@ const { getDb } = require("../config");
 const { enrichEventsWithDetails } = require("./eventDetails");
 const { archiveScheduleEvents } = require("./historicalSchedules");
 const { standardizeLocation } = require("./locationFormat");
+const { auditScheduleLocations } = require("./podium/venues");
 const {
   applyEnrichment,
   SPRING_TRAINING_DAYS,
@@ -240,6 +241,25 @@ async function refreshLiveSeasonSchedule() {
     const scrapedEventUrls = buildScrapedEventUrlIndex(scrapedEvents);
 
     await scheduleRef.set({ competitions, scrapedEventUrls }, { merge: true });
+
+    // New-town check: a city DCI has never toured before is geocoded
+    // automatically (hometown place index), so it just works — log it so the
+    // owner can promote it to the tour map on the next gazetteer rebuild. A
+    // location that names no real place can't be priced; that one needs a fix.
+    const venueAudit = auditScheduleLocations(competitions);
+    if (venueAudit.geocoded.length > 0) {
+      logger.info(
+        `Schedule has ${venueAudit.geocoded.length} new town(s) off the tour map, auto-geocoded: ` +
+          venueAudit.geocoded.map((v) => `${v.location} → ${v.resolvedAs}`).join("; ")
+      );
+    }
+    if (venueAudit.unresolved.length > 0) {
+      logger.warn(
+        `Schedule has ${venueAudit.unresolved.length} location(s) that resolve to no real place ` +
+          `(travel legs to them are free until fixed): ` +
+          venueAudit.unresolved.map((v) => `${v.location} (${v.eventName || "?"})`).join("; ")
+      );
+    }
 
     // Update the season document with refresh timestamp
     await db.doc("game-settings/season").update({

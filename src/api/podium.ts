@@ -194,10 +194,20 @@ export interface PodiumStateResponse {
   easternNightFinal?: boolean;
   routePreview?: PodiumRouteLeg[];
   currentLocation?: PodiumCurrentLocation;
+  /**
+   * The official home and whether its one-time free correction is open (a home
+   * picked while only show cities were allowed, not yet corrected).
+   */
+  hometown?: PodiumHometownStatus;
   staffOutlook?: PodiumStaffOutlook;
   staffCareer?: PodiumStaffCareer;
   staffNaming?: PodiumStaffNaming;
   state?: Record<string, unknown>;
+}
+
+export interface PodiumHometownStatus {
+  city: string | null; // "City, ST"
+  canCorrect: boolean;
 }
 
 export interface PodiumLapsedStaff {
@@ -299,13 +309,17 @@ export interface PodiumAssessment {
 export interface PodiumCarryover {
   corpsName: string | null;
   location: string | null;
-  // The corps' current official home, resolved to a tour-map venue (design
-  // §5.3). Present when the carried home is on the map; the client preselects it
-  // and measures the distance to any new pick for the relocation fee.
+  // The corps' current official home, resolved to a venue (design §5.3) — a
+  // tour-map city or any real US/Canadian town. Present when the carried home
+  // geocodes; the client preselects it and measures the distance to any new
+  // pick for the relocation fee.
   homeVenueId?: string;
   homeCity?: string; // "City, ST"
   homeLat?: number;
   homeLng?: number;
+  // True when the carried home was forced by the old show-city-only rule and
+  // never corrected — moving it at this registration is free.
+  homeMoveFree?: boolean;
   showConcept: string | null;
   reputation: number;
   tier: string;
@@ -584,6 +598,10 @@ export interface JointProposal {
   stadium?: string | null;
   proposerTravelTier?: string | null;
   milesApart?: number | null;
+  // Refreshed live by getJointRehearsals from both tours as they stand now:
+  // what accepting would cost the proposer (Tour Manager applied).
+  proposerStaminaCost?: number;
+  proposerCoinCost?: number;
   status: string;
 }
 
@@ -813,3 +831,10 @@ export const namePodiumStaff = createCallable<
     staff: Record<string, unknown>;
   }
 >('namePodiumStaff');
+
+// One-time free hometown correction for a home picked while only show cities
+// were allowed (see PodiumHometownStatus.canCorrect).
+export const correctPodiumHometown = createCallable<
+  { location: string },
+  { success: boolean; home: string; previous: string | null; touring: boolean }
+>('correctPodiumHometown');

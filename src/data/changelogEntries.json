@@ -1,10 +1,94 @@
 [
   {
-    "id": "2026-09-27-fan-favorite-crown-announced-at-once",
-    "date": "2026-09-27",
+    "id": "2026-09-28-fan-favorite-crown-announced-at-once",
+    "date": "2026-09-28",
     "title": "The Fan Favorite winner is announced on Discord the morning after finals",
     "category": "fix",
     "summary": "When a season ends, the Podium Fan Favorite winner now goes out to the Discord announcements channel as soon as the ballot is counted, ahead of the new season's kickoff post. Before, it didn't go out until the next evening, which made it look like there was no announcement at all."
+  },
+  {
+    "id": "2026-09-28-show-registration-locks-at-scores",
+    "date": "2026-09-28",
+    "title": "Show registration now locks when scores run",
+    "category": "fix",
+    "summary": "Once a night's scores have been processed, its shows are locked: you can no longer register for them or withdraw from them. Before, a show stayed open for a few hours after its scores posted.",
+    "highlights": [
+      "Shows lock at the moment that night's scores drop (9:00 PM ET in the off-season), and the schedule greys them out right then.",
+      "If you have a show open when its scores drop, it switches to \"Registration closed\" instead of letting you save.",
+      "Changes to the rest of the week's shows still work as usual."
+    ]
+  },
+  {
+    "id": "2026-09-28-host-any-town",
+    "date": "2026-09-28",
+    "title": "Host your show in any town",
+    "category": "feature",
+    "summary": "Hosted shows are no longer limited to cities that have hosted a show before. Pick any town in the US or Canada for your event, including your own hometown. Travel to and from it is priced like any other stop, and it shows up on everyone's Tour Map.",
+    "highlights": [
+      "Towns already on the schedule are greyed out, since each town hosts one show per season.",
+      "The Tour Map now plots every stop in a real town, including new stops added to the live schedule."
+    ]
+  },
+  {
+    "id": "2026-09-28-hometown-correction",
+    "date": "2026-09-28",
+    "title": "Fix your hometown for free",
+    "category": "improvement",
+    "summary": "If you founded your Podium corps when hometowns had to be a city that hosts shows, you can now move your home to your real hometown once, for free. Look for the hometown card at the top of your Podium dashboard.",
+    "highlights": [
+      "If your tour hasn't started yet, your route is priced from your new hometown. If it has, you keep going from your last show, and nothing you've already paid for changes.",
+      "Your profile shows the new hometown, and next season starts from it.",
+      "If you don't change it this season, you can still move it for free when you register next season."
+    ]
+  },
+  {
+    "id": "2026-09-28-any-hometown",
+    "date": "2026-09-28",
+    "title": "Your corps can call any town home",
+    "category": "feature",
+    "summary": "Your Podium corps' hometown is no longer limited to cities that have hosted a show. Search for any town in the US or Canada, or tap \"Use my location\" to pick the one you're in. Your tour starts there, and travel is priced from there, same as before.",
+    "highlights": [
+      "Search works with or without the state (\"Canton OH\", \"Canton, Ohio\"), and \"St.\" and \"Saint\" spellings both find the town.",
+      "Towns that host shows are marked \"Show city\" in the list.",
+      "New stops added to the live season schedule are now placed on the map automatically, so travel to them is priced correctly."
+    ]
+  },
+  {
+    "id": "2026-09-27-joint-invites-live-city",
+    "date": "2026-09-27",
+    "title": "Joint rehearsal invites stay up to date with your tour",
+    "category": "improvement",
+    "summary": "Joint rehearsal invites now show the host city and travel cost from both corps' tours as they are right now, not when the invite was sent. If you've picked new shows since, the card updates to match. Invites also spell out that accepting costs the invited corps no travel and no stamina, and never moves your corps: your route carries on from your own shows.",
+    "highlights": [
+      "The host is where the invited corps will be that day: its last show before it, or its home if it hasn't performed yet.",
+      "Proposals you've sent show what they'd cost you now, or \"free\" when you're within a day trip."
+    ]
+  },
+  {
+    "id": "2026-09-27-joint-rehearsal-travel-stamina",
+    "date": "2026-09-27",
+    "title": "Long-distance joint rehearsals now cost the stamina they show",
+    "category": "balance",
+    "summary": "When you propose a joint rehearsal with a corps more than a day trip away, you now pay that leg like any tour stop: CorpsCoin and stamina. Before, only the coin was charged, even though the stamina was shown. Joints within a day trip stay free, and you never pay more than what was shown when the joint was booked. If the other corps turns out to be closer on the day, you pay less.",
+    "highlights": [
+      "It's one trip out. Your route picks up from your last show afterward, with no extra leg to get back on tour.",
+      "A Tour Manager cuts joint travel stamina just like show travel, and the overlap list, the route and the Tour sheet all show the reduced number.",
+      "Joints booked before today are charged the smaller of their booked cost and the real distance on the day."
+    ]
+  },
+  {
+    "id": "2026-09-27-joint-rehearsal-locations",
+    "date": "2026-09-27",
+    "title": "Joint rehearsals now land where your tours actually are",
+    "category": "fix",
+    "summary": "Joint rehearsal windows were sometimes hosted in a city far from both corps' routes — two corps touring Indiana and Ohio could be offered a rehearsal in Virginia. Each corps' tour position now comes from the show it actually picked, so windows, proposals and accepted joints are hosted near where both corps really are, and the travel cost shown is the real one."
+  },
+  {
+    "id": "2026-09-27-podium-corps-no-class-move",
+    "date": "2026-09-27",
+    "title": "Podium corps no longer offer \"Move to another class\"",
+    "category": "fix",
+    "summary": "A Podium Division corps belongs to Podium for good, so its corps menu no longer shows a class-transfer option that could never work. Fantasy corps can still move between classes as before."
   },
   {
     "id": "2026-09-25-league-game-and-roleplay-style",

@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // =============================================================================
 // CORPS REGISTRATION - DATA-TERMINAL STYLE
 // =============================================================================
@@ -29,10 +28,29 @@ import {
 } from './constants';
 import { friendlyCallableError } from '../../utils/callableErrors';
 
+/**
+ * @typedef {{ corpsName?: string, location?: string }} ExistingCorps
+ * @typedef {{ corpsName?: string, totalSeasons?: number, corpsClass?: string, index: number }} RetiredCorps
+ * @typedef {{ targetClass?: string, retiredIndex?: number, corpsName?: string, location?: string }} NewCorpsEntry
+ * @typedef {{ corpsClass: string, action: string, targetClass?: string, corpsName?: string,
+ *   location?: string, retiredIndex?: number }} CorpsDecision
+ */
+
 // =============================================================================
 // MAIN CORPS REGISTRATION COMPONENT
 // =============================================================================
 
+/**
+ * @param {{
+ *   onComplete: () => void,
+ *   profile: any,
+ *   seasonData: any,
+ *   corpsNeedingSetup?: unknown[],
+ *   existingCorps?: Record<string, ExistingCorps | null | undefined>,
+ *   retiredCorps?: Array<Omit<RetiredCorps, 'index'> & { corpsClass: string }>,
+ *   unlockedClasses?: string[],
+ * }} props
+ */
 const SeasonSetupWizard = ({
   onComplete,
   profile,
@@ -43,7 +61,7 @@ const SeasonSetupWizard = ({
   unlockedClasses = ['soundSport'],
 }) => {
   // Auth and global store data
-  const { user } = useAuth();
+  const user = useAuth()?.user;
   const globalCurrentWeek = useSeasonStore((state) => state.currentWeek);
   // Per-class registration-lock rule (calendar limit): a class stops accepting
   // new corps a set number of weeks before finals. Measured from the season end,
@@ -85,12 +103,16 @@ const SeasonSetupWizard = ({
     corpsName: '',
     directorName: profile?.displayName || '',
     location: '',
-    selectedClass: null,
+    selectedClass: /** @type {string | null} */ (null),
   });
 
   // Corps management state
-  const [corpsDecisions, setCorpsDecisions] = useState({});
-  const [newCorpsData, setNewCorpsData] = useState({});
+  const [corpsDecisions, setCorpsDecisions] = useState(
+    /** @type {Record<string, string | undefined>} */ ({})
+  );
+  const [newCorpsData, setNewCorpsData] = useState(
+    /** @type {Record<string, NewCorpsEntry | undefined>} */ ({})
+  );
   const [_finalCorpsNeedingSetup, setFinalCorpsNeedingSetup] = useState(corpsNeedingSetup);
 
   // Lineup and shows state
@@ -102,6 +124,7 @@ const SeasonSetupWizard = ({
   const currentWeek = globalCurrentWeek || 1;
 
   // Group retired corps by class
+  /** @type {Record<string, RetiredCorps[]>} */
   const retiredByClass = {};
   retiredCorps.forEach((rc, idx) => {
     if (!retiredByClass[rc.corpsClass]) retiredByClass[rc.corpsClass] = [];
@@ -110,6 +133,7 @@ const SeasonSetupWizard = ({
 
   // Compute available move targets for a given class (unlocked classes without active corps)
   const getAvailableMoveTargets = useCallback(
+    /** @param {string} currentClassId */
     (currentClassId) => {
       return ALL_CLASSES.filter(
         (c) => c !== currentClassId && unlockedClasses.includes(c) && !existingCorps[c]?.corpsName
@@ -120,6 +144,7 @@ const SeasonSetupWizard = ({
 
   // Initialize corps decisions
   useEffect(() => {
+    /** @type {Record<string, string>} */
     const initialDecisions = {};
     ALL_CLASSES.forEach((classId) => {
       if (existingCorps[classId]?.corpsName) {
@@ -142,6 +167,7 @@ const SeasonSetupWizard = ({
   const handleCorpsVerificationContinue = async () => {
     setProcessing(true);
     try {
+      /** @type {CorpsDecision[]} */
       const decisions = [];
 
       // Process decisions for existing corps
@@ -186,7 +212,7 @@ const SeasonSetupWizard = ({
       if (decisions.length > 0) {
         const result = await processCorpsDecisions({ decisions });
 
-        if (result.data.corpsNeedingSetup?.length > 0) {
+        if ((result.data.corpsNeedingSetup?.length ?? 0) > 0) {
           setFinalCorpsNeedingSetup(result.data.corpsNeedingSetup);
           setStep(4); // Go to show selection
           toast.success('Corps updated successfully');
@@ -199,7 +225,7 @@ const SeasonSetupWizard = ({
       toast.success('Corps confirmed for the new season');
     } catch (error) {
       console.error('Error processing corps decisions:', error);
-      toast.error(error.message || 'Failed to process corps decisions');
+      toast.error((error instanceof Error && error.message) || 'Failed to process corps decisions');
     } finally {
       setProcessing(false);
     }
@@ -209,6 +235,7 @@ const SeasonSetupWizard = ({
   const handleSubmit = async () => {
     setProcessing(true);
     try {
+      /** @type {CorpsDecision[]} */
       const decisions = [];
 
       // New corps registration
@@ -224,7 +251,7 @@ const SeasonSetupWizard = ({
       if (decisions.length > 0) {
         const result = await processCorpsDecisions({ decisions });
 
-        if (result.data.corpsNeedingSetup?.length > 0) {
+        if ((result.data.corpsNeedingSetup?.length ?? 0) > 0) {
           setFinalCorpsNeedingSetup(result.data.corpsNeedingSetup);
           setStep(4); // Go to show selection
           toast.success('Registration saved');
@@ -566,7 +593,7 @@ const SeasonSetupWizard = ({
                     <div>
                       <div className="text-[10px] text-muted uppercase">Competition Class</div>
                       <div className="text-sm font-bold text-interactive">
-                        {getCorpsClassName(formData.selectedClass)}
+                        {getCorpsClassName(formData.selectedClass ?? '')}
                       </div>
                     </div>
                   </div>
@@ -577,7 +604,7 @@ const SeasonSetupWizard = ({
                         className="text-lg font-bold text-white tabular-nums"
                         title="Opens at the low end and grows 1 point a week to the full budget by Championship Week."
                       >
-                        {formatPointCapRange(formData.selectedClass)} pts
+                        {formatPointCapRange(formData.selectedClass ?? '')} pts
                       </span>
                     </div>
                   </div>

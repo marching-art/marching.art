@@ -84,6 +84,7 @@ const {
   hirePodiumClinician,
 } = require("./src/callable/podiumBudget");
 const { hostEvent, getHostingHistory } = require("./src/callable/podiumHost");
+const { correctPodiumHometown } = require("./src/callable/podiumHometown");
 const {
   getPodiumState,
   getPodiumRegistrationPreview,
@@ -427,6 +428,7 @@ module.exports = {
   syncClassUnlocks,
   registerCorps,
   registerPodiumCorps,
+  correctPodiumHometown,
   allocateRehearsalBlock,
   setPodiumRestDay,
   setPodiumShows,

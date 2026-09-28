@@ -5,7 +5,8 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, MapPin, Check, ChevronRight, Trophy, Landmark, Users } from 'lucide-react';
-import { isEventPast, championshipShowFor, championshipModalShow } from '../utils/scheduleUtils';
+import { championshipShowFor, championshipModalShow } from '../utils/scheduleUtils';
+import { useIsShowClosed } from '../components/Schedule/showClockContext';
 import { formatEventName } from '../utils/season';
 import { CLASS_CONFIG, CHAMPIONSHIP_EVENTS } from './scheduleConstants';
 import {
@@ -451,11 +452,12 @@ const ShowCard = ({
 
 /** @param {{ date: Date | null | undefined, dayNumber?: number | null, isMajorDay?: boolean }} props */
 const DayIndicator = ({ date, dayNumber, isMajorDay = false }) => {
+  const isShowClosed = useIsShowClosed();
   if (!date) return null;
 
   const dayOfWeek = date.toLocaleDateString('en-US', { weekday: 'short' });
   const monthDay = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  const isPast = isEventPast(date);
+  const isPast = isShowClosed(date);
 
   return (
     <div
@@ -519,8 +521,9 @@ const DayRow = ({
   podiumAttendance,
   hostedByKey,
 }) => {
+  const isShowClosed = useIsShowClosed();
   const date = getActualDate(day);
-  const isPast = isEventPast(date);
+  const isPast = isShowClosed(date);
   const isMajorDay = shows.some((show) => show.eventTier === 'regional');
 
   return (
@@ -647,8 +650,9 @@ const ChampionshipEventCard = ({
   podiumAttendance,
   onRegister,
 }) => {
+  const isShowClosed = useIsShowClosed();
   const date = getActualDate(event.day);
-  const isPast = isEventPast(date);
+  const isPast = isShowClosed(date);
   // Tapping the card opens the same registration/running-order modal a
   // regular-season card does (auto-enrollment panel, eligible classes, Podium
   // attendance, the real field once the season has stamped it). The show it
@@ -827,6 +831,7 @@ const ChampionshipWeekDisplay = ({
   podiumAttendance,
   hostedByKey,
 }) => {
+  const isShowClosed = useIsShowClosed();
   // Group championship events by day. Each card is paired with its row in the
   // season schedule (`regularShows` is the whole of week 7, championship rounds
   // included) so it can show the venue and show-time weather the backend
@@ -869,7 +874,7 @@ const ChampionshipWeekDisplay = ({
         <>
           {regularDays.map((day) => {
             const date = getActualDate(day);
-            const isPast = isEventPast(date);
+            const isPast = isShowClosed(date);
             return (
               <div key={day} className="flex gap-3 items-stretch">
                 <DayIndicator date={date} dayNumber={day} />
