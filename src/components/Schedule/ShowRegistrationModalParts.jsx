@@ -264,7 +264,7 @@ export const AttendeeRoster = ({ attendees, loading }) => (
 // The Podium corps' day-based tour pick — separate rules from fantasy lineups.
 // All state/gating is computed in the modal; this renders it.
 
-/** @param {{ performNight?: number | null, nightsPublishDay?: number | null, [key: string]: any }} props */
+/** @param {{ performNight?: number|null, nightsPublishDay?: number|null } & Record<string, any>} props */
 export const PodiumSelectionRow = ({
   info,
   attend,

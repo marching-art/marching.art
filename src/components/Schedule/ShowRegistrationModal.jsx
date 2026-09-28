@@ -7,7 +7,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, MapPin, Check, X, AlertTriangle, Trophy, Clock, Ticket } from 'lucide-react';
-import { selectUserShows, setEncoreDecline } from '../../api/functions';
+import { selectUserShows } from '../../api/functions';
 import { getPodiumState, setPodiumShows } from '../../api/podium';
 import { usePodiumEnabled } from '../../hooks/useFeatures';
 import toast from 'react-hot-toast';
@@ -24,6 +24,7 @@ import { useSeasonStore } from '../../store/seasonStore';
 import { compareCorpsClasses } from '../../utils/corps';
 import { useAuth } from '../../context/AuthContext';
 import DualRunningOrder from './DualRunningOrder';
+import EncoreBankingBanner from './EncoreBankingBanner';
 import CorpsSelectionItem, {
   ChampionshipEnrollmentPanel,
   PodiumSelectionRow,
@@ -41,15 +42,10 @@ import {
 } from './showRegistrationConfig';
 import { multiNightNights, podiumAutoNightFor } from '../../utils/podiumAttendance';
 
-// =============================================================================
-// MAIN MODAL COMPONENT
-// =============================================================================
-
-/** A stored per-week show pick, matched by event name. @typedef {{ eventName?: string }} ShowPick */
+/** @typedef {{ eventName: string, location?: string, day?: number, date?: unknown }} ShowPick */
 /**
- * The Podium row's view of getPodiumState.
  * @typedef {{
- *   selectedShows: Record<string, { eventName: string, location?: string }>,
+ *   selectedShows: Record<number, ShowPick>,
  *   autoDays: number[],
  *   easternNightFinal: boolean,
  *   competitionDay: number,
@@ -58,8 +54,22 @@ import { multiNightNights, podiumAutoNightFor } from '../../utils/podiumAttendan
  */
 
 /**
+ * One fantasy corps' registered shows for a week.
+ * @param {any} userProfile
+ * @param {string} corpsClass
+ * @param {number} week
+ * @returns {ShowPick[]}
+ */
+const weekShowsFor = (userProfile, corpsClass, week) =>
+  userProfile.corps[corpsClass].selectedShows?.[`week${week}`] || [];
+
+// =============================================================================
+// MAIN MODAL COMPONENT
+// =============================================================================
+
+/**
  * @param {{
- *   show: Record<string, any>,
+ *   show: Record<string, any> & { week: number, day: number, eventName: string, location?: string },
  *   userProfile: any,
  *   formattedDate: string,
  *   eventDate: Date|null,
@@ -81,36 +91,6 @@ const ShowRegistrationModal = ({
   const [saving, setSaving] = useState(false);
   const user = useAuth()?.user;
   const { trigger: haptic } = useHaptic();
-
-  // Encore banking (docs/EVENT_SCHEDULES_AND_SLOTS.md §5): if the director's own
-  // corps is the (projected) encore here, they can bank their once-per-season
-  // encore for a later show. Optimistic local state; the nightly encore pass
-  // reassigns to the next-closest corps once banked.
-  const myEncore = show.encore && user?.uid && show.encore.uid === user.uid ? show.encore : null;
-  const [encoreBanked, setEncoreBanked] = useState(false);
-  const [bankingEncore, setBankingEncore] = useState(false);
-  const bankEncore = async (/** @type {boolean} */ declined) => {
-    if (!myEncore) return;
-    setBankingEncore(true);
-    try {
-      await setEncoreDecline({
-        week: show.week,
-        eventName: show.eventName,
-        date: show.date ?? null,
-        corpsClass: myEncore.corpsClass,
-        declined,
-      });
-      setEncoreBanked(declined);
-      haptic?.('success');
-      toast.success(
-        declined ? 'Encore banked for a later show.' : 'Encore restored — this show is yours.'
-      );
-    } catch (err) {
-      toast.error((err instanceof Error && err.message) || 'Could not update the encore.');
-    } finally {
-      setBankingEncore(false);
-    }
-  };
 
   // Director-hosted show (design §5.10): rented by a director, open enrollment
   // for every class. The panel surfaces who's coming and how many of the venue's
@@ -179,7 +159,7 @@ const ShowRegistrationModal = ({
   // single source of truth. getPodiumState (server day-context + subcollection)
   // is authoritative; we no longer gate on the profile's corps.podiumClass copy,
   // which can lag or be absent even when the corps is fielded this season.
-  const [podiumInfo, setPodiumInfo] = useState(/** @type {PodiumInfo | null} */ (null));
+  const [podiumInfo, setPodiumInfo] = useState(/** @type {PodiumInfo|null} */ (null));
   const [podiumAttend, setPodiumAttend] = useState(false);
   const [podiumInitial, setPodiumInitial] = useState(false);
   // True while getPodiumState() is in flight so the Podium row can reserve its
@@ -201,7 +181,7 @@ const ShowRegistrationModal = ({
         // auto-assigned majors/championship, never self-selected regular shows.
         const state = res?.data;
         if (cancelled || !state?.exists) return;
-        const selectedShows = /** @type {PodiumInfo['selectedShows']} */ (
+        const selectedShows = /** @type {Record<number, ShowPick>} */ (
           state.state?.selectedShows || {}
         );
         // Attending THIS show only when the day's pick names this exact event
@@ -213,7 +193,7 @@ const ShowRegistrationModal = ({
           autoDays: state.autoDays || [],
           easternNightFinal: Boolean(state.easternNightFinal),
           competitionDay: state.competitionDay ?? 0,
-          corpsName: String(state.state?.corpsName || 'Podium Corps'),
+          corpsName: /** @type {string} */ (state.state?.corpsName) || 'Podium Corps',
         });
         setPodiumAttend(attending);
         setPodiumInitial(attending);
@@ -233,7 +213,7 @@ const ShowRegistrationModal = ({
   // its own division bracket is a subset — and never self-selectable, matching
   // the server's CHAMPIONSHIP_WEEK_DAYS guard. autoDays only lists the corps'
   // OWN bracket days, so this also covers e.g. an A/Open corps on a World day.
-  const podiumIsChampWeek = PODIUM_CHAMPIONSHIP_WEEK_DAYS.includes(podiumDay);
+  const podiumIsChampWeek = podiumDay !== null && PODIUM_CHAMPIONSHIP_WEEK_DAYS.includes(podiumDay);
   // A two-night event (the Eastern Classic) is ONE registration for the Podium
   // corps just as for a fantasy corps: it is on the bill both nights and
   // performs on its assigned one. autoDays carries only the performing night,
@@ -249,14 +229,18 @@ const ShowRegistrationModal = ({
   const podiumNightsPublishDay =
     podiumIsTwoNight && !podiumPerformNight ? podiumNights[0] - 2 : null;
   const podiumIsEasternOffNight =
-    PODIUM_EASTERN_DAYS.includes(podiumDay) && podiumInfo && !podiumIsMyAutoDay;
+    podiumDay !== null &&
+    PODIUM_EASTERN_DAYS.includes(podiumDay) &&
+    podiumInfo &&
+    !podiumIsMyAutoDay;
   // A day is "passed" only once it is strictly before the current competition
   // day — the show's own competition day is still open (it locks at the 2 AM ET
   // score processing the next day, exactly when competitionDay ticks forward),
   // matching the fantasy registration deadline. Using <= locked Podium out a
   // full day early, so a show fantasy corps could still register for read as
   // "This day has passed" for the Podium corps.
-  const podiumIsPast = podiumInfo ? podiumDay < podiumInfo.competitionDay : false;
+  const podiumIsPast =
+    podiumInfo && podiumDay !== null ? podiumDay < podiumInfo.competitionDay : false;
   const podiumMaxPicks = podiumMaxPicksForWeek(show.week);
   // The week's OTHER still-open picks (as {day, eventName, location}), re-sent
   // on save because setPodiumShows replaces the whole week. Excludes this day
@@ -315,15 +299,12 @@ const ShowRegistrationModal = ({
 
   // Initialize with already registered corps
   useEffect(() => {
-    const alreadyRegistered = /** @type {string[]} */ ([]);
+    /** @type {string[]} */
+    const alreadyRegistered = [];
     userCorpsClasses.forEach((corpsClass) => {
-      const corpsData = userProfile.corps[corpsClass];
-      const weekKey = `week${show.week}`;
-      const selectedShows = corpsData.selectedShows?.[weekKey] || [];
+      const selectedShows = weekShowsFor(userProfile, corpsClass, show.week);
       // Match by eventName only - dates can have type mismatches (Timestamp vs string)
-      const isRegistered = selectedShows.some(
-        (/** @type {ShowPick} */ s) => s.eventName === show.eventName
-      );
+      const isRegistered = selectedShows.some((s) => s.eventName === show.eventName);
       if (isRegistered) {
         alreadyRegistered.push(corpsClass);
       }
@@ -331,7 +312,8 @@ const ShowRegistrationModal = ({
     setSelectedCorps(alreadyRegistered);
   }, [show, userProfile, userCorpsClasses]);
 
-  const toggleCorps = (/** @type {string} */ corpsClass) => {
+  /** @param {string} corpsClass */
+  const toggleCorps = (corpsClass) => {
     if (registrationClosed) {
       haptic('error');
       toast.error("Registration closed — this night's scores have been processed.");
@@ -341,13 +323,9 @@ const ShowRegistrationModal = ({
     if (selectedCorps.includes(corpsClass)) {
       setSelectedCorps(selectedCorps.filter((c) => c !== corpsClass));
     } else {
-      const corpsData = userProfile.corps[corpsClass];
-      const weekKey = `week${show.week}`;
-      const currentShows = corpsData.selectedShows?.[weekKey] || [];
+      const currentShows = weekShowsFor(userProfile, corpsClass, show.week);
       // Match by eventName only - dates can have type mismatches (Timestamp vs string)
-      const isAlreadyAtShow = currentShows.some(
-        (/** @type {ShowPick} */ s) => s.eventName === show.eventName
-      );
+      const isAlreadyAtShow = currentShows.some((s) => s.eventName === show.eventName);
       const dayConflict = sameDayShowFor(currentShows, show.day, show.eventName);
       if (dayConflict && !isAlreadyAtShow) {
         haptic('error');
@@ -369,13 +347,9 @@ const ShowRegistrationModal = ({
   const selectAll = () => {
     if (registrationClosed) return;
     const canSelect = userCorpsClasses.filter((corpsClass) => {
-      const corpsData = userProfile.corps[corpsClass];
-      const weekKey = `week${show.week}`;
-      const currentShows = corpsData.selectedShows?.[weekKey] || [];
+      const currentShows = weekShowsFor(userProfile, corpsClass, show.week);
       // Match by eventName only - dates can have type mismatches (Timestamp vs string)
-      const isAlreadyAtShow = currentShows.some(
-        (/** @type {ShowPick} */ s) => s.eventName === show.eventName
-      );
+      const isAlreadyAtShow = currentShows.some((s) => s.eventName === show.eventName);
       if (sameDayShowFor(currentShows, show.day, show.eventName) && !isAlreadyAtShow) return false;
       return (
         currentShows.length < maxShows || isAlreadyAtShow || selectedCorps.includes(corpsClass)
@@ -395,35 +369,30 @@ const ShowRegistrationModal = ({
     setSaving(true);
     try {
       // Prepare all updates first, then execute in parallel to avoid race conditions
-      const updatePromises = /** @type {Promise<unknown>[]} */ (
-        userCorpsClasses.map((corpsClass) => {
-          const corpsData = userProfile.corps[corpsClass];
-          const weekKey = `week${show.week}`;
-          const currentShows = corpsData.selectedShows?.[weekKey] || [];
-          // Filter by eventName only - dates can have type mismatches (Timestamp vs string)
-          const filteredShows = currentShows.filter(
-            (/** @type {ShowPick} */ s) => s.eventName !== show.eventName
-          );
-          const newShows = selectedCorps.includes(corpsClass)
-            ? [
-                ...filteredShows,
-                {
-                  eventName: show.eventName,
-                  date: show.date,
-                  location: show.location,
-                  day: show.day,
-                },
-              ]
-            : filteredShows;
-          return selectUserShows({
-            week: show.week,
-            shows: newShows,
-            corpsClass,
-          });
-        })
-      );
+      /** @type {Promise<unknown>[]} */
+      const updatePromises = userCorpsClasses.map((corpsClass) => {
+        const currentShows = weekShowsFor(userProfile, corpsClass, show.week);
+        // Filter by eventName only - dates can have type mismatches (Timestamp vs string)
+        const filteredShows = currentShows.filter((s) => s.eventName !== show.eventName);
+        const newShows = selectedCorps.includes(corpsClass)
+          ? [
+              ...filteredShows,
+              {
+                eventName: show.eventName,
+                date: show.date,
+                location: show.location,
+                day: show.day,
+              },
+            ]
+          : filteredShows;
+        return selectUserShows({
+          week: show.week,
+          shows: newShows,
+          corpsClass,
+        });
+      });
 
-      if (podiumChanged) {
+      if (podiumChanged && podiumDay !== null) {
         // Per-show picks: keep the week's other shows, add/remove THIS show.
         const otherPicks = podiumOtherWeekPicks.map((p) => ({
           day: p.day,
@@ -455,11 +424,10 @@ const ShowRegistrationModal = ({
   // Check if any corps registered
   const hasChanges = useMemo(() => {
     const initialRegistered = userCorpsClasses.filter((corpsClass) => {
-      const corpsData = userProfile.corps[corpsClass];
-      const weekKey = `week${show.week}`;
-      const selectedShows = corpsData.selectedShows?.[weekKey] || [];
       // Match by eventName only - dates can have type mismatches (Timestamp vs string)
-      return selectedShows.some((/** @type {ShowPick} */ s) => s.eventName === show.eventName);
+      return weekShowsFor(userProfile, corpsClass, show.week).some(
+        (s) => s.eventName === show.eventName
+      );
     });
     return (
       JSON.stringify(initialRegistered.sort()) !== JSON.stringify(selectedCorps.sort()) ||
@@ -532,6 +500,7 @@ const ShowRegistrationModal = ({
           when there's a field; an honest placeholder otherwise. */}
       {(show.lineup?.length > 0 || show.podiumSchedule?.lineup?.length > 0) && (
         <div className="px-4 pt-4">
+          {/* Only transformed schedule shows carry a lineup — i.e. a full ShowLike. */}
           <DualRunningOrder
             show={/** @type {import('../../utils/showday').ShowLike} */ (show)}
             myUid={user?.uid}
@@ -539,27 +508,7 @@ const ShowRegistrationModal = ({
         </div>
       )}
       {/* Encore banking — only when the director's own corps is the encore here. */}
-      {myEncore && (
-        <div className="mx-4 mt-3 p-3 bg-brand/10 border border-brand/30 flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <div className="text-sm text-white font-semibold truncate">
-              {encoreBanked ? 'Encore banked' : `${myEncore.corps} is your encore`}
-            </div>
-            <div className="text-xs text-muted">
-              {encoreBanked
-                ? "You'll get your one encore at a later show."
-                : 'One encore per season — bank it for a show that matters more.'}
-            </div>
-          </div>
-          <button
-            onClick={() => bankEncore(!encoreBanked)}
-            disabled={bankingEncore}
-            className="flex-shrink-0 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider border border-brand/40 text-brand hover:bg-brand/10 disabled:opacity-50"
-          >
-            {encoreBanked ? 'Take it here' : 'Bank for later'}
-          </button>
-        </div>
-      )}
+      <EncoreBankingBanner show={show} uid={user?.uid} />
 
       {/* Who's attending — the live roster for EVERY show. Hosted shows get the
           richer panel (venue slots + host); every other non-championship show
