@@ -368,7 +368,7 @@ src/scripts/buildClientVenues.js` → re-run `buildPlaceIndex.js` (see its
 
 ## Evergreen ratchets (any session, any size)
 
-- `@ts-nocheck` paydown — **22 files** at
+- `@ts-nocheck` paydown — **19 files** at
   last update; `npm run ts-nocheck:next` ranks the cheapest (no free wins
   left — the cheapest `src/` files are ~31 errors). It needs `npm ci` first
   and refuses to report on any other compiler. One per substantive task is
@@ -397,7 +397,9 @@ src/scripts/buildClientVenues.js` → re-run `buildPlaceIndex.js` (see its
   `announceFanFavoriteCrown` between the rollover and the season-start post
   (`nightlyStages.announcePreviousFanFavorite`, shared with the 9 PM stage,
   which stays as the `{seasonUid}_fanfav_winner`-leased backstop).
-  Ratchet: TYPED_PLACEHOLDER
+  Ratchet: typed `Profile/SettingsModal.jsx` (@ts-nocheck 20 → 19) — its
+  dotted Firestore field-path patches go through one narrow `fieldPathPatch`
+  cast; `PushPreferences` gains the `streakReminder` field the backend reads.
 - 2026-09-28: **Show registration locks when scores run** — `selectUserShows`
   rejects joining or withdrawing from any show whose night has been scored
   (`helpers/showRegistrationLock.js`, drop-plan instant / recap / rollover);

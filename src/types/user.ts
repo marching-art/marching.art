@@ -354,6 +354,7 @@ export interface PushPreferences {
   tradeProposal?: boolean;
   showReminder?: boolean;
   lineupReminder?: boolean;
+  streakReminder?: boolean;
 }
 
 export type PushNotificationType =
