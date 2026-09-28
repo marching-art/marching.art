@@ -4,6 +4,7 @@
 // =============================================================================
 
 import { Fragment, useEffect, useRef, useState } from 'react';
+import type { HapticPattern } from '../../hooks/useHaptic';
 
 export interface PillTab {
   id: string;
@@ -27,7 +28,7 @@ export const PillTabControl = ({
   tabs: PillTab[];
   activeTab: string;
   onTabChange: (id: string) => void;
-  haptic?: (kind: string) => void;
+  haptic?: (kind: HapticPattern) => void;
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollRight, setCanScrollRight] = useState(false);

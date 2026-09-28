@@ -362,8 +362,11 @@ Access control is enforced by `firestore.rules` and `storage.rules` (both
 deployed via `firebase.json`), with regression tests in
 `firestore-tests/rules.test.mjs` that run in CI **and** as a deploy gate.
 Privileged mutations go through callables (the Admin SDK bypasses rules).
-Currency, XP, and rank fields are server-only, pinned by
-`touchesProtectedProfileFields` / `touchesProtectedCorpsFields`. Admin is the
+Owner writes to `profile/data` may touch only the top-level keys named in
+`ownerProfileKeysOk` (an allowlist — a new profile field is server-only until
+it is named there, with its client writer); currency, XP, and rank fields are
+additionally pinned by `touchesProtectedProfileFields` /
+`touchesProtectedCorpsFields`. Admin is the
 Firebase custom claim only — there is no `profile.role` path.
 
 **App Check: the client attests, the backend does not yet enforce.** The web app

@@ -365,7 +365,6 @@ const Onboarding = () => {
         location: '', // Can add later in profile
         bio: '',
         favoriteCorps: '',
-        staff: [],
         corps: {
           soundSport: {
             name: formData.corpsName.trim(),
@@ -484,7 +483,6 @@ const Onboarding = () => {
         location: '',
         bio: '',
         favoriteCorps: '',
-        staff: [],
         podiumFirstVisit: true,
         onboardingCompletedAt: new Date().toISOString(),
       });

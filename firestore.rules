@@ -36,8 +36,8 @@ function isOwner(userId) {
 // role is trusted server-side (admin email fan-out and the manual
 // leaderboard/rivals refresh callables gate on it), so a client-writable
 // role would be privilege escalation.
-function touchesProtectedProfileFields() {
-  return request.resource.data.diff(resource.data).affectedKeys().hasAny([
+function touchesProtectedProfileFields(keys) {
+  return keys.hasAny([
     'corpsCoin', 'xp', 'xpLevel', 'userTitle', 'unlockedClasses',
     'stats', 'trophies', 'username', 'usernameTemporary', 'createdAt', 'uid',
     'lifetimeStats', 'activeSeasonId', 'lastScoredDay', 'challenges',
@@ -73,6 +73,92 @@ function touchesProtectedProfileFields() {
     // milestone or a perfect week for free. Written only by Cloud Functions.
     'engagement'
   ]);
+}
+
+// Every owner update to profile/data, given the request's affected keys
+// (computed once by the caller; see the PERF note below).
+function ownerProfileUpdateOk(keys) {
+  return ownerProfileKeysOk(keys) &&
+    !touchesProtectedProfileFields(keys) &&
+    !touchesProtectedCorpsFields(keys) && corpsKeysOk(keys) && profileTextCapsOk(keys);
+}
+
+// OWNER-WRITABLE KEY ALLOWLIST. touchesProtectedProfileFields() above is a
+// denylist, and a denylist fails open: every server-trusted field it forgets
+// is client-writable. articleStats was one — newsSubmissions.js auto-publishes
+// a director's news articles and press releases off its approved counters, so
+// a forged `articleStats.approvedCount` skipped editorial review. This names
+// every top-level key an owner write may touch (each traced to its client
+// writer); anything else is server-only by default, including any field
+// added to the profile later. The denylist stays as a second line.
+//   displayName/location/bio/favoriteCorps/directorInfo — Profile page, edit
+//     modal, onboarding merge (capped by profileTextCapsOk)
+//   corps — cosmetic corps edits + onboarding's soundSport (guarded below)
+//   settings — SettingsModal email/push preferences
+//   profileAvatarCorps — Profile avatar picker
+//   isFirstVisit/podiumFirstVisit/initialSetupComplete/onboardingCompletedAt
+//     — onboarding + dashboard tour/wizard flags
+//   pendingSeasonRecap/pendingPodiumRecap — dismissing the season recap
+//     (clear only: the recap itself is staged server-side)
+//   staff — legacy onboarding seeds `staff: []`; nothing reads it (empty only)
+function ownerProfileKeysOk(keys) {
+  return keys.hasOnly([
+      'displayName', 'location', 'bio', 'favoriteCorps', 'directorInfo',
+      'corps', 'settings', 'profileAvatarCorps',
+      'isFirstVisit', 'podiumFirstVisit', 'initialSetupComplete',
+      'onboardingCompletedAt', 'pendingSeasonRecap', 'pendingPodiumRecap',
+      'staff']) &&
+    // Fast path (see the PERF note below): the profile edit modal and the
+    // cosmetic corps edits touch only text + corps, which are checked
+    // elsewhere — skip the per-flag shape checks for them.
+    (keys.hasOnly(['displayName', 'location', 'bio', 'favoriteCorps',
+                   'directorInfo', 'corps']) ||
+      (ownerFlagsOk(keys) && settingsOk(keys)));
+}
+
+// Shapes of the non-text owner keys. A deleted key reads back as the default,
+// so deleteField() on any of them stays allowed.
+function ownerFlagsOk(keys) {
+  return (!keys.hasAny(['profileAvatarCorps']) ||
+      request.resource.data.get('profileAvatarCorps', null) == null ||
+      request.resource.data.profileAvatarCorps in
+        ['worldClass', 'openClass', 'aClass', 'soundSport', 'podiumClass']) &&
+    (!keys.hasAny(['isFirstVisit']) ||
+      request.resource.data.get('isFirstVisit', false) is bool) &&
+    (!keys.hasAny(['podiumFirstVisit']) ||
+      request.resource.data.get('podiumFirstVisit', false) is bool) &&
+    (!keys.hasAny(['initialSetupComplete']) ||
+      (request.resource.data.get('initialSetupComplete', '') is string &&
+        request.resource.data.get('initialSetupComplete', '').size() < 100)) &&
+    (!keys.hasAny(['onboardingCompletedAt']) ||
+      (request.resource.data.get('onboardingCompletedAt', '') is string &&
+        request.resource.data.get('onboardingCompletedAt', '').size() < 40)) &&
+    ownerRecapAndStaffOk(keys);
+}
+
+function ownerRecapAndStaffOk(keys) {
+  return (!keys.hasAny(['pendingSeasonRecap']) ||
+      request.resource.data.get('pendingSeasonRecap', null) == null) &&
+    (!keys.hasAny(['pendingPodiumRecap']) ||
+      request.resource.data.get('pendingPodiumRecap', null) == null) &&
+    (!keys.hasAny(['staff']) ||
+      request.resource.data.get('staff', []) == []);
+}
+
+// settings holds the owner's own notification preferences (read by the email
+// and push senders). It must stay a map, and may only gain known keys —
+// keys already on the doc are grandfathered (only additions are checked, as
+// in corpsKeysOk) so a legacy settings map never locks its owner out.
+function settingsOk(keys) {
+  return !keys.hasAny(['settings']) ||
+    request.resource.data.get('settings', null) == null ||
+    (request.resource.data.settings is map &&
+      request.resource.data.settings.keys().hasOnly(
+        (resource.data.get('settings', null) is map ? resource.data.settings.keys() : []).concat(
+          ['theme', 'notifications', 'soundEffects', 'emailPreferences',
+           'pushPreferences'])) &&
+      request.resource.data.settings.get('emailPreferences', {}) is map &&
+      request.resource.data.settings.get('pushPreferences', {}) is map);
 }
 
 // The corps map itself stays client-writable because cosmetic fields
@@ -111,7 +197,9 @@ function touchesProtectedProfileFields() {
 // save ANY profile edit ("Failed to update profile"). The MapDiff form
 // below (one diff + hasAny per class) enforces the same protection at a
 // fraction of the cost. Do not revert to per-field get() pairs, and keep
-// the corps short-circuit in touchesProtectedCorpsFields().
+// the corps short-circuit in touchesProtectedCorpsFields(). The affected-key
+// set is computed ONCE per request (ownerProfileUpdateOk) and passed down —
+// each diff() of a built-out profile is itself a large share of the budget.
 
 // A corps.{class} entry as a map for diffing. Missing and explicitly-null
 // entries both normalize to {}: get()'s default only applies when the key is
@@ -162,11 +250,11 @@ function podiumStateUntouched() {
 // score is guarded; the three competitive classes get the full guard.
 // podiumClass gets the standard class guard (name/score/rank) plus the
 // podium-state guard above.
-function touchesProtectedCorpsFields() {
+function touchesProtectedCorpsFields(keys) {
   // Short-circuit (see PERF note above): writes that don't touch the corps
   // map at all — display name, director bio, settings, most profile writes —
   // skip every per-class guard.
-  return request.resource.data.diff(resource.data).affectedKeys().hasAny(['corps']) &&
+  return keys.hasAny(['corps']) &&
     (!corpsClassUntouched('worldClass') ||
      !corpsClassUntouched('openClass') ||
      !corpsClassUntouched('aClass') ||
@@ -204,8 +292,8 @@ function touchesProtectedCorpsFields() {
 // edited; the backend skips unknown classes regardless (helpers/scoring.js,
 // helpers/showRegistrations.js). Short-circuits when the write doesn't touch
 // corps at all (see the PERF note above).
-function corpsKeysOk() {
-  return !request.resource.data.diff(resource.data).affectedKeys().hasAny(['corps']) ||
+function corpsKeysOk(keys) {
+  return !keys.hasAny(['corps']) ||
     !(request.resource.data.get('corps', null) is map) ||
     request.resource.data.corps.keys().hasOnly(
       (resource.data.get('corps', null) is map ? resource.data.corps.keys() : []).concat(
@@ -279,11 +367,7 @@ function directorInfoOk(keys) {
 
 // The free-text fields the client writes today: displayName/location (Profile
 // page + edit modal), bio/favoriteCorps (onboarding merge), directorInfo (edit
-// modal). One diff feeds every per-field check.
-function profileTextFieldsValid() {
-  return profileTextCapsOk(request.resource.data.diff(resource.data).affectedKeys());
-}
-
+// modal).
 function profileTextCapsOk(keys) {
   return textFieldOk(keys, 'displayName', 100) &&
     textFieldOk(keys, 'bio', 2000) &&
@@ -344,8 +428,8 @@ match /artifacts/{appId}/users/{userId} {
     allow read: if isOwner(userId) || isAdmin();
     allow create, delete: if isAdmin();
     allow update: if isAdmin() ||
-      (isOwner(userId) && !touchesProtectedProfileFields() &&
-        !touchesProtectedCorpsFields() && corpsKeysOk() && profileTextFieldsValid());
+      (isOwner(userId) &&
+        ownerProfileUpdateOk(request.resource.data.diff(resource.data).affectedKeys()));
   }
   
   // Per-season detail (the full caption lineup + week-by-week show picks for one

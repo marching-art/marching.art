@@ -155,6 +155,167 @@ await check(
 );
 
 // =============================================================================
+// OWNER-WRITABLE KEY ALLOWLIST — every top-level key an owner write may touch
+// is named in ownerProfileKeysOk(); anything else is server-only by default.
+// =============================================================================
+
+// articleStats slipped the old denylist: newsSubmissions.js auto-publishes
+// off its approved counters, so a forged count skipped editorial review.
+await freshSeed();
+await check(
+  'owner cannot forge articleStats (auto-publish gate)',
+  assertFails(updateDoc(doc(authed(), profilePath), { 'articleStats.approvedCount': 99 }))
+);
+
+await freshSeed();
+await check(
+  'owner cannot plant an unknown top-level key',
+  assertFails(updateDoc(doc(authed(), profilePath), { junk: 'x'.repeat(1000) }))
+);
+
+for (const [key, value] of [
+  ['photoURL', 'https://evil.example/pixel.png'],
+  ['lastActive', new Date()],
+  ['moderation', { staffNaming: { revoked: false } }],
+]) {
+  await freshSeed();
+  await check(
+    `owner cannot write server-only ${key}`,
+    assertFails(updateDoc(doc(authed(), profilePath), { [key]: value }))
+  );
+}
+
+// Every client writer's payload, as it ships.
+await freshSeed();
+await check(
+  'owner saves notification preferences (SettingsModal)',
+  assertSucceeds(
+    updateDoc(doc(authed(), profilePath), {
+      'settings.emailPreferences': { allEmails: true, weeklyDigest: false },
+      'settings.pushPreferences': { allPush: true, matchupResult: true },
+    })
+  )
+);
+
+await freshSeed();
+await check(
+  'owner toggles push via a nested field path (SettingsModal)',
+  assertSucceeds(
+    updateDoc(doc(authed(), profilePath), { 'settings.pushPreferences.allPush': false })
+  )
+);
+
+await freshSeed();
+await check(
+  'owner cannot add an unknown settings key',
+  assertFails(updateDoc(doc(authed(), profilePath), { 'settings.junk': 'x' }))
+);
+
+await freshSeed();
+await check(
+  'owner cannot replace settings with a non-map',
+  assertFails(updateDoc(doc(authed(), profilePath), { settings: 'x' }))
+);
+
+await testEnv.clearFirestore();
+await testEnv.withSecurityRulesDisabled(async (ctx) => {
+  await setDoc(doc(ctx.firestore(), profilePath), {
+    ...seedProfile,
+    settings: { fcmToken: 'legacy-token', emailPreferences: { allEmails: true } },
+  });
+});
+await check(
+  'a legacy settings key is grandfathered (prefs still save)',
+  assertSucceeds(
+    updateDoc(doc(authed(), profilePath), { 'settings.emailPreferences.allEmails': false })
+  )
+);
+
+await freshSeed();
+await check(
+  'owner picks a profile avatar corps (Profile page)',
+  assertSucceeds(updateDoc(doc(authed(), profilePath), { profileAvatarCorps: 'worldClass' }))
+);
+
+await freshSeed();
+await check(
+  'owner cannot set profileAvatarCorps to a non-class value',
+  assertFails(updateDoc(doc(authed(), profilePath), { profileAvatarCorps: 'x'.repeat(500) }))
+);
+
+await freshSeed();
+await check(
+  'owner clears tour + recap flags (dashboard modals)',
+  assertSucceeds(
+    updateDoc(doc(authed(), profilePath), {
+      isFirstVisit: false,
+      podiumFirstVisit: false,
+      pendingSeasonRecap: null,
+      pendingPodiumRecap: null,
+      initialSetupComplete: 'season-1',
+    })
+  )
+);
+
+await freshSeed();
+await check(
+  'owner cannot stage a forged season recap',
+  assertFails(
+    updateDoc(doc(authed(), profilePath), { pendingSeasonRecap: { placement: 1, coins: 1e6 } })
+  )
+);
+
+await freshSeed();
+await check(
+  'owner cannot write a non-boolean tour flag',
+  assertFails(updateDoc(doc(authed(), profilePath), { isFirstVisit: 'x'.repeat(1000) }))
+);
+
+await freshSeed();
+await check(
+  'onboarding merge (SoundSport path) passes the allowlist',
+  assertSucceeds(
+    setDoc(
+      doc(authed(), profilePath),
+      {
+        location: '',
+        bio: '',
+        favoriteCorps: '',
+        corps: { soundSport: { corpsName: 'My SS', lineup: { GE1: 'Genesis' } } },
+        isFirstVisit: true,
+        onboardingCompletedAt: new Date().toISOString(),
+      },
+      { merge: true }
+    )
+  )
+);
+
+await freshSeed();
+await check(
+  'onboarding merge from a cached older client (staff: []) still passes',
+  assertSucceeds(
+    setDoc(
+      doc(authed(), profilePath),
+      {
+        location: '',
+        bio: '',
+        favoriteCorps: '',
+        staff: [],
+        podiumFirstVisit: true,
+        onboardingCompletedAt: new Date().toISOString(),
+      },
+      { merge: true }
+    )
+  )
+);
+
+await freshSeed();
+await check(
+  'owner cannot fill the legacy staff list',
+  assertFails(updateDoc(doc(authed(), profilePath), { staff: [{ name: 'x' }] }))
+);
+
+// =============================================================================
 // FREE-TEXT SIZE/TYPE CAPS — profile/data is mirrored to the public
 // profile/public doc and the SSR /d/ pages, so owner-writable
 // free-text fields (bio, displayName, location, favoriteCorps, directorInfo)
@@ -737,6 +898,32 @@ await check(
       'corps.aClass.ensembleInfo': { mission: 'm', notableShows: [] },
       'corps.soundSport.ensembleInfo': { mission: 'm', notableShows: [] },
       'corps.podiumClass.ensembleInfo': { mission: 'm', notableShows: [] },
+    })
+  )
+);
+
+// The writes that miss ownerProfileKeysOk's fast path run every flag and
+// settings shape check — they must fit the budget on the same five-class doc.
+await freshFullPortfolioSeed();
+await check(
+  'owner with all five classes can save notification preferences',
+  assertSucceeds(
+    updateDoc(doc(authed(), profilePath), {
+      'settings.emailPreferences': { allEmails: true, weeklyDigest: false },
+      'settings.pushPreferences': { allPush: true, matchupResult: true },
+    })
+  )
+);
+
+await freshFullPortfolioSeed();
+await check(
+  'owner with all five classes can dismiss recaps + pick an avatar corps',
+  assertSucceeds(
+    updateDoc(doc(authed(), profilePath), {
+      pendingSeasonRecap: null,
+      pendingPodiumRecap: null,
+      isFirstVisit: false,
+      profileAvatarCorps: 'podiumClass',
     })
   )
 );
