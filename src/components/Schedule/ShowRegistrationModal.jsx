@@ -18,6 +18,7 @@ import { useIsMobile } from '../../hooks/useIsMobile';
 import { useHostedShowRegistrations } from '../../hooks/useHostedEvents';
 import { getMaxShowsForWeek } from '../../utils/captionPricing';
 import { getShowRegistrationCloseEstimate, formatEtDayTime } from '../../utils/seasonClock';
+import { useIsShowClosed } from './showClockContext';
 import { formatEventName } from '../../utils/season';
 import { useSeasonStore } from '../../store/seasonStore';
 import { compareCorpsClasses } from '../../utils/corps';
@@ -119,6 +120,12 @@ const ShowRegistrationModal = ({
     () => getShowRegistrationCloseEstimate(eventDate, seasonData),
     [eventDate, seasonData]
   );
+  // Once the night's scores have run, attendance is frozen — the server
+  // rejects any add or withdrawal (selectUserShows), so the modal goes
+  // read-only rather than letting a save fail. Live via the Schedule page's
+  // clock, so a modal left open across the drop locks in place.
+  const isShowClosed = useIsShowClosed(seasonData);
+  const registrationClosed = !show.isChampionship && isShowClosed(eventDate);
 
   // Check if this is a championship show with auto-enrollment
   const isChampionship = show.isChampionship === true;
@@ -307,6 +314,11 @@ const ShowRegistrationModal = ({
 
   /** @param {string} corpsClass */
   const toggleCorps = (corpsClass) => {
+    if (registrationClosed) {
+      haptic('error');
+      toast.error("Registration closed — this night's scores have been processed.");
+      return;
+    }
     haptic('light');
     if (selectedCorps.includes(corpsClass)) {
       setSelectedCorps(selectedCorps.filter((c) => c !== corpsClass));
@@ -333,6 +345,7 @@ const ShowRegistrationModal = ({
   };
 
   const selectAll = () => {
+    if (registrationClosed) return;
     const canSelect = userCorpsClasses.filter((corpsClass) => {
       const currentShows = weekShowsFor(userProfile, corpsClass, show.week);
       // Match by eventName only - dates can have type mismatches (Timestamp vs string)
@@ -346,10 +359,12 @@ const ShowRegistrationModal = ({
   };
 
   const clearAll = () => {
+    if (registrationClosed) return;
     setSelectedCorps([]);
   };
 
   const handleSave = async () => {
+    if (registrationClosed) return;
     haptic('medium');
     setSaving(true);
     try {
@@ -649,17 +664,26 @@ const ShowRegistrationModal = ({
                     use these slots.
                   </p>
                 )}
-                {registrationClose && (
+                {registrationClosed ? (
                   <p className="mt-1 flex items-center gap-1">
-                    <Clock className="w-3 h-3 text-cyan-400 flex-shrink-0" aria-hidden="true" />
-                    <span>
-                      You can add or change attendance until the night&apos;s scores process
-                      {registrationClose.exact ? ':' : ' — as early as'}{' '}
-                      <span className="text-cyan-400 font-bold">
-                        {formatEtDayTime(registrationClose.at)}
-                      </span>
+                    <Clock className="w-3 h-3 text-warning flex-shrink-0" aria-hidden="true" />
+                    <span className="text-warning font-bold">
+                      Registration closed — this night&apos;s scores have been processed.
                     </span>
                   </p>
+                ) : (
+                  registrationClose && (
+                    <p className="mt-1 flex items-center gap-1">
+                      <Clock className="w-3 h-3 text-cyan-400 flex-shrink-0" aria-hidden="true" />
+                      <span>
+                        You can add or change attendance until the night&apos;s scores process
+                        {registrationClose.exact ? ':' : ' — as early as'}{' '}
+                        <span className="text-cyan-400 font-bold">
+                          {formatEtDayTime(registrationClose.at)}
+                        </span>
+                      </span>
+                    </p>
+                  )
                 )}
               </div>
             </div>
@@ -721,7 +745,7 @@ const ShowRegistrationModal = ({
       </button>
       <button
         onClick={handleSave}
-        disabled={saving || !hasChanges}
+        disabled={saving || !hasChanges || registrationClosed}
         className="flex-1 h-12 bg-interactive text-white text-sm font-bold uppercase tracking-wider hover:bg-interactive-hover disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 active:bg-interactive-subtle press-feedback-strong"
       >
         {saving ? (
@@ -732,7 +756,11 @@ const ShowRegistrationModal = ({
         ) : (
           <>
             <Check className="w-4 h-4" />
-            {hasChanges ? 'Save Changes' : 'No Changes'}
+            {registrationClosed
+              ? 'Registration Closed'
+              : hasChanges
+                ? 'Save Changes'
+                : 'No Changes'}
           </>
         )}
       </button>

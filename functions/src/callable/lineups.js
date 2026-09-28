@@ -17,7 +17,9 @@ const {
   getMaxShowsForWeek,
   validateShowSelection,
   resolveShowsAgainstSchedule,
+  assertLockedShowsUnchanged,
 } = require("../helpers/showSelection");
+const { getLockedRegistrationDays } = require("../helpers/showRegistrationLock");
 const { FieldValue } = require("firebase-admin/firestore");
 
 /**
@@ -359,33 +361,43 @@ exports.selectUserShows = onCall({ cors: true }, async (request) => {
     }
   }
 
+  const userProfileRef = db.doc(paths.userProfile(uid));
+
+  // Read the profile first: the week's previous selections drive both the
+  // per-night lock below and the registration-index diff, and corpsName/
+  // username denormalize into the index entries.
+  const profileSnap = await userProfileRef.get();
+  const profile = profileSnap.exists ? profileSnap.data() : {};
+  /** @type {Array<{eventName?: string, day?: number, date?: any}>} */
+  const previousShows = profile.corps?.[corpsClass]?.selectedShows?.[`week${week}`] || [];
+
   // Resolve every selection against the season schedule; only the resolved,
   // whitelisted objects are ever stored (clearing a week with [] needs no
   // schedule). See resolveShowsAgainstSchedule for why the client's objects
   // must never be trusted.
   let resolvedShows = [];
-  if (shows.length > 0) {
-    if (!seasonData.seasonUid) {
+  if (shows.length > 0 || previousShows.length > 0) {
+    if (shows.length > 0 && !seasonData.seasonUid) {
       throw new HttpsError("failed-precondition", "No active season found.");
     }
-    const scheduleDoc = await db.doc(`schedules/${seasonData.seasonUid}`).get();
-    if (!scheduleDoc.exists) {
+    const scheduleDoc = seasonData.seasonUid
+      ? await db.doc(`schedules/${seasonData.seasonUid}`).get()
+      : null;
+    if (shows.length > 0 && !scheduleDoc?.exists) {
       throw new HttpsError("failed-precondition", "The season schedule is not available yet.");
     }
-    resolvedShows = resolveShowsAgainstSchedule(
-      week, shows, scheduleDoc.data().competitions || []
-    );
+    const competitions = (scheduleDoc?.exists && scheduleDoc.data().competitions) || [];
+    if (shows.length > 0) {
+      resolvedShows = resolveShowsAgainstSchedule(week, shows, competitions);
+    }
+
+    // Registration for a night closes when its scores run — a scored show
+    // can be neither joined nor dropped (helpers/showRegistrationLock.js).
+    const lockedDays = await getLockedRegistrationDays({ db, seasonData, competitions, week });
+    assertLockedShowsUnchanged(week, previousShows, resolvedShows, lockedDays, competitions);
   }
 
-  const userProfileRef = db.doc(paths.userProfile(uid));
-
   try {
-    // Read the profile first: the previous week's selections drive the
-    // registration-index diff below, and corpsName/username denormalize into
-    // the index entries.
-    const profileSnap = await userProfileRef.get();
-    const profile = profileSnap.exists ? profileSnap.data() : {};
-    const previousShows = profile.corps?.[corpsClass]?.selectedShows?.[`week${week}`] || [];
     const newlyRegistered =
       Boolean(seasonData.seasonUid) &&
       profile.corps?.[corpsClass]?.seasonUid !== seasonData.seasonUid;

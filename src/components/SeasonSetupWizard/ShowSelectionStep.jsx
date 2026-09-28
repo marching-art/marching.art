@@ -105,8 +105,8 @@ const ShowSelectionStep = ({
   // never be satisfied — so we explain that and let the director proceed rather
   // than leaving them stuck on this step.
   const hasUpcomingShows = useMemo(() => {
-    return sortedDays.some((day) => !isEventPast(getActualDate(day)));
-  }, [sortedDays, getActualDate]);
+    return sortedDays.some((day) => !isEventPast(getActualDate(day), seasonData));
+  }, [sortedDays, getActualDate, seasonData]);
 
   // Check if a corps is registered for a show
   const isCorpsRegisteredForShow = useCallback(
@@ -264,7 +264,7 @@ const ShowSelectionStep = ({
             <div className="space-y-3">
               {sortedDays.map((day) => {
                 const date = getActualDate(day);
-                const isPast = isEventPast(date);
+                const isPast = isEventPast(date, seasonData);
                 const dayOfWeek = date
                   ? date.toLocaleDateString('en-US', { weekday: 'short' })
                   : '';

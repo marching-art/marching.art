@@ -4,6 +4,8 @@
 
 import { selectUserShows } from '../api/functions';
 import type { ScheduleShow } from '../store/scheduleStore';
+import { competitionDayToDate } from '../utils/competitionCalendar';
+import { isEventPast } from '../utils/scheduleUtils';
 
 /** How many of the week's shows a new corps is signed up for automatically. */
 export const AUTO_REGISTER_SHOW_LIMIT = 4;
@@ -14,7 +16,14 @@ export async function autoRegisterForShows({
   currentWeek,
   getWeekShows,
 }: {
-  season: { schedule?: unknown; seasonUid?: string } | null | undefined;
+  season:
+    | {
+        schedule?: { startDate?: unknown; springTrainingDays?: number } | null;
+        seasonUid?: string;
+        status?: string;
+      }
+    | null
+    | undefined;
   corpsClass: string;
   currentWeek: number;
   getWeekShows: (week: number, options?: { skipChampionship?: boolean }) => ScheduleShow[];
@@ -22,7 +31,11 @@ export async function autoRegisterForShows({
   if (!season?.schedule || !season?.seasonUid) return;
 
   try {
-    const weekShows = getWeekShows(currentWeek, { skipChampionship: true });
+    // Skip nights whose scores have already run — the server rejects joining
+    // a scored show, which would fail the whole registration.
+    const weekShows = getWeekShows(currentWeek, { skipChampionship: true }).filter(
+      (show) => !isEventPast(competitionDayToDate(season.schedule, show.day), season)
+    );
     if (weekShows.length === 0) {
       console.log('[Onboarding] No shows found for week', currentWeek);
       return;

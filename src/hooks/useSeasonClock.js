@@ -7,7 +7,12 @@ import { useQuery } from '@tanstack/react-query';
 import { useSeasonStore } from '../store/seasonStore';
 import { getDropPlan } from '../api/season';
 import { queryKeys } from '../lib/queryClient';
-import { getScoreDropEstimate, getShowDateKey, getCaptionChangeInfo } from '../utils/seasonClock';
+import {
+  getScoreDropEstimate,
+  getShowDateKey,
+  getCaptionChangeInfo,
+  isShowRegistrationClosed,
+} from '../utils/seasonClock';
 // useNow lives in its own Firebase-free module; re-exported here so existing
 // `import { useNow } from './useSeasonClock'` call sites keep working.
 import { useNow } from './useNow';
@@ -51,7 +56,7 @@ function toDate(raw) {
  *
  * @param {Date} now
  * @returns {{dropAt: Date, dropLabel: string|null, pending: boolean,
- *   done: boolean, windowEndsAt: Date}|null}
+ *   done: boolean, windowEndsAt: Date, showDateKey: string}|null}
  */
 export function useDropPlan(now) {
   const showDateKey = getShowDateKey(now);
@@ -69,7 +74,7 @@ export function useDropPlan(now) {
     const windowEndsAt =
       toDate(plan.scrapeRetryUntil) || new Date(dropAt.getTime() + DEFAULT_PENDING_WINDOW_MS);
     const dropLabel = plan.dropLabel || null;
-    const base = { dropAt, dropLabel, windowEndsAt };
+    const base = { dropAt, dropLabel, windowEndsAt, showDateKey };
 
     if (toDate(plan.scoredAt)) return { ...base, pending: false, done: true };
     if (dropAt.getTime() > now.getTime()) return { ...base, pending: false, done: false };
@@ -78,7 +83,7 @@ export function useDropPlan(now) {
     // closes; after that the 4:30 AM watchdog owns the problem, not the UI.
     if (now.getTime() < windowEndsAt.getTime()) return { ...base, pending: true, done: false };
     return null;
-  }, [plan, now]);
+  }, [plan, now, showDateKey]);
 }
 
 /**
@@ -90,6 +95,10 @@ export function useDropPlan(now) {
  * the off-season; the conservative "by 2 AM ET" bound on live nights —
  * `scoresExact` tells surfaces which wording to use). Caption-change windows
  * (`trade`) keep their own 2 AM ET reopen boundary independent of the drop.
+ *
+ * `isShowClosed(eventDate)` reports whether a show's registration has closed —
+ * the instant its night's scores run (tonight's plan when published), matching
+ * the server lock in selectUserShows.
  *
  * `scoresPending` is the state in between: tonight's planned instant has passed
  * and the backend is still waiting on DCI to post the recap. Surfaces MUST show
@@ -112,6 +121,7 @@ export function useDropPlan(now) {
  *   scoresExact: boolean,
  *   scoresPending: boolean,
  *   trade: ReturnType<typeof getCaptionChangeInfo>,
+ *   isShowClosed: (eventDate: Date|null|undefined) => boolean,
  * }}
  */
 export function useSeasonDeadlines(intervalMs = 30000, corpsClass = null) {
@@ -132,6 +142,8 @@ export function useSeasonDeadlines(intervalMs = 30000, corpsClass = null) {
       scoresExact: usePlanInstant ? true : estimate.exact,
       scoresPending: Boolean(plan?.pending),
       trade: getCaptionChangeInfo(seasonData, now, corpsClass),
+      isShowClosed: (/** @type {Date|null|undefined} */ eventDate) =>
+        isShowRegistrationClosed(eventDate ?? null, seasonData, plan, now),
     };
   }, [seasonData, now, corpsClass, plan]);
 }
