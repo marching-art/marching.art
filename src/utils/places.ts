@@ -171,6 +171,44 @@ export function exactPlaceMatches(places: HomePlace[], query: string): HomePlace
   return places.filter((p) => p.key === city && regionMatches(p.region, region));
 }
 
+/** Region code for a folded region query ("oh", "ohio"), or null. */
+function regionCodeFor(regionQuery: string): string | null {
+  const upper = regionQuery.toUpperCase();
+  if (upper.length === 2 && upper in REGION_NAMES) return upper;
+  for (const [code, name] of Object.entries(REGION_NAMES)) if (name === regionQuery) return code;
+  return null;
+}
+
+export type TownResolver = (location: string | null | undefined) => HomePlace | null;
+
+/**
+ * An O(1) "City, Region" → place lookup over the whole index, for resolving
+ * many schedule locations at once (the Tour Map's stops, the host picker's
+ * already-on-the-schedule check). Accepts "City, ST" and "City, State Name";
+ * tour-map cities win a name collision since they come first in the data.
+ */
+export function makeTownResolver(places: HomePlace[]): TownResolver {
+  const index = new Map<string, HomePlace>();
+  for (const place of places) {
+    const key = `${place.key}|${place.region}`;
+    if (!index.has(key)) index.set(key, place);
+  }
+  return (location) => {
+    if (!location) return null;
+    const { city, region } = splitQuery(location);
+    const code = region ? regionCodeFor(region) : null;
+    return (city && code && index.get(`${city}|${code}`)) || null;
+  };
+}
+
+/**
+ * A stable identity for "one place": the tour-map venueId when it has one,
+ * else the folded label — what the one-show-per-city rule compares.
+ */
+export function placeIdentity(place: Pick<HomePlace, 'venueId' | 'label'>): string {
+  return place.venueId || `town:${foldPlaceText(place.label)}`;
+}
+
 /**
  * Great-circle miles between two points and the CorpsCoin move fee at
  * `milesPerCoin` — the client preview of the server's venues.relocationFee.

@@ -87,11 +87,13 @@ function validateHostRequest({ eventName, venueTier, day, location }, currentCom
   if (store.MAJOR_DAYS.includes(day)) {
     throw new Error("The majors' days are exclusive — pick another date.");
   }
-  // Hosting stays on the tour map (a known show city); hometowns and live-
-  // schedule towns may be anywhere, but a director-booked show may not.
-  const venue = venues.tourVenueFor(location);
+  // Any real US/Canadian town can host (tour-map city first, then the hometown
+  // place index) — the same resolver hometowns and live-schedule stops use, so
+  // the hosted show gets real travel, heat and timezone math. Text that names
+  // no real place is refused rather than booked as a free, unmappable leg.
+  const venue = venues.venueFor(location);
   if (!venue) {
-    throw new Error("Venue city not recognized — use a \"City, State\" from the tour map.");
+    throw new Error("Host city not recognized — pick a town from the list (any US or Canadian town).");
   }
   return { eventName: brandEventName(eventName.trim()), venueTier, tier, day, venue };
 }

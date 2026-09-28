@@ -194,10 +194,20 @@ export interface PodiumStateResponse {
   easternNightFinal?: boolean;
   routePreview?: PodiumRouteLeg[];
   currentLocation?: PodiumCurrentLocation;
+  /**
+   * The official home and whether its one-time free correction is open (a home
+   * picked while only show cities were allowed, not yet corrected).
+   */
+  hometown?: PodiumHometownStatus;
   staffOutlook?: PodiumStaffOutlook;
   staffCareer?: PodiumStaffCareer;
   staffNaming?: PodiumStaffNaming;
   state?: Record<string, unknown>;
+}
+
+export interface PodiumHometownStatus {
+  city: string | null; // "City, ST"
+  canCorrect: boolean;
 }
 
 export interface PodiumLapsedStaff {
@@ -307,6 +317,9 @@ export interface PodiumCarryover {
   homeCity?: string; // "City, ST"
   homeLat?: number;
   homeLng?: number;
+  // True when the carried home was forced by the old show-city-only rule and
+  // never corrected — moving it at this registration is free.
+  homeMoveFree?: boolean;
   showConcept: string | null;
   reputation: number;
   tier: string;
@@ -818,3 +831,10 @@ export const namePodiumStaff = createCallable<
     staff: Record<string, unknown>;
   }
 >('namePodiumStaff');
+
+// One-time free hometown correction for a home picked while only show cities
+// were allowed (see PodiumHometownStatus.canCorrect).
+export const correctPodiumHometown = createCallable<
+  { location: string },
+  { success: boolean; home: string; previous: string | null; touring: boolean }
+>('correctPodiumHometown');

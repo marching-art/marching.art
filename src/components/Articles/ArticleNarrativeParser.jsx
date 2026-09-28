@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // =============================================================================
 // ARTICLE NARRATIVE PARSER - Structured rendering for article narratives
 // =============================================================================
@@ -132,8 +131,13 @@ const SECTION_CONFIG = {
   },
 };
 
+/** @typedef {{ corps: string, caption: string, score: number, reason: string }} Recommendation */
+/** @typedef {{ buy: Recommendation[], hold: Recommendation[], sell: Recommendation[] }} Recommendations */
+
 // Parse BUY/HOLD/SELL recommendations from text content
+/** @param {string} content */
 function parseRecommendations(content) {
+  /** @type {Recommendations} */
   const recommendations = { buy: [], hold: [], sell: [] };
 
   // Match patterns for emoji-prefixed recommendations (capture until next emoji or end)
@@ -141,8 +145,10 @@ function parseRecommendations(content) {
   const holdMatch = content.match(/🟡\s*HOLD[^:]*:?\s*([\s\S]*?)(?=🟢|🔴|$)/i);
   const sellMatch = content.match(/🔴\s*SELL[^:]*:?\s*([\s\S]*?)(?=🟢|🟡|$)/i);
 
+  /** @param {string | undefined} text */
   const parseItems = (text) => {
     if (!text) return [];
+    /** @type {Recommendation[]} */
     const items = [];
 
     // Pattern: "- Corps Caption @ Score ↑/↓/→ - Reason"
@@ -177,6 +183,7 @@ function parseRecommendations(content) {
 }
 
 // Render recommendation cards
+/** @param {{ recs: Recommendations | null }} props */
 function RecommendationList({ recs }) {
   if (!recs || (recs.buy.length === 0 && recs.hold.length === 0 && recs.sell.length === 0)) {
     return null;
@@ -273,11 +280,12 @@ function RecommendationList({ recs }) {
 }
 
 // Render a single section with proper styling (Fantasy style - colored boxes)
+/** @param {{ title: string, content: string, isFirst?: boolean }} props */
 function FantasyNarrativeSection({ title, content, isFirst }) {
   // Normalize title for config lookup
   const normalizedTitle = title.toUpperCase().trim();
 
-  const config = SECTION_CONFIG[normalizedTitle] || {
+  const config = SECTION_CONFIG[/** @type {keyof typeof SECTION_CONFIG} */ (normalizedTitle)] || {
     icon: Eye,
     bgClass: 'bg-charcoal-500/10',
     borderClass: 'border-charcoal-500/30',
@@ -330,6 +338,7 @@ function FantasyNarrativeSection({ title, content, isFirst }) {
 }
 
 // Format content - handle paragraphs and clean up markdown artifacts
+/** @param {string} content */
 function formatContent(content) {
   if (!content) return null;
 
@@ -356,6 +365,7 @@ function formatContent(content) {
 }
 
 // Parse sections from narrative text - ONLY for fantasy articles
+/** @param {string} narrative */
 function parseSections(narrative) {
   const sections = [];
 
@@ -432,6 +442,7 @@ function parseSections(narrative) {
 // Editorial-style articles render as clean prose with understated inline
 // subheads (magazine style), NOT the colored section boxes used for the fantasy
 // market report. DCI pieces and the fantasy results recap all use this style.
+/** @param {string | undefined} articleType */
 function isEditorialArticle(articleType) {
   return [
     'dci_recap',
@@ -442,14 +453,17 @@ function isEditorialArticle(articleType) {
     // The Podium Report is a commentative magazine column — clean prose with
     // understated **subheads**, never the fantasy market-report boxes.
     'podium_report',
-  ].includes(articleType);
+  ].includes(articleType ?? '');
 }
 
 /**
  * ArticleNarrativeParser - Parses and renders narrative with visual sections
- * @param {string} narrative - The full narrative text
- * @param {string} summary - The article summary (shown if narrative unavailable)
- * @param {string} articleType - The article type (for type-specific handling)
+ * @param {{
+ *   narrative?: string | null,
+ *   summary?: string | null,
+ *   articleType?: string,
+ * }} props - `narrative` is the full text; `summary` shows when it's missing;
+ *   `articleType` picks the editorial vs. fantasy-box rendering.
  */
 export default function ArticleNarrativeParser({ narrative, summary, articleType }) {
   if (!narrative || typeof narrative !== 'string') {
@@ -518,11 +532,13 @@ export default function ArticleNarrativeParser({ narrative, summary, articleType
 // giving DCI/fantasy-results pieces a scannable structure without colored boxes.
 // Paragraphs without a lead-in render as normal prose, so the styling degrades
 // cleanly whether or not the model emitted subheads.
+/** @param {string} narrative */
 function formatEditorialContent(narrative) {
   const paragraphs = narrative
     .trim()
     .split(/\n\n+/)
     .filter((p) => p.trim());
+  /** @param {string} s */
   const strip = (s) => s.replace(/\*\*/g, '').replace(/\*/g, '').trim();
 
   return paragraphs.map((para, idx) => {

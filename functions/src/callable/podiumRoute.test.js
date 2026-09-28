@@ -282,3 +282,40 @@ describe("today's show is on the route (the nightly run hasn't ridden it yet)", 
     assert.equal(legs[0].isToday, false);
   });
 });
+
+describe('buildRouteLegs — towns off the tour map are real stops', () => {
+  // Home in Brownsburg, IN and a director-hosted show in Noblesville, IN:
+  // neither is a historical show city, both resolve from the place index.
+  const home = venues.venueFor('Brownsburg, IN');
+  const state = {
+    seasonUid: 'season-1',
+    division: 'worldClass',
+    home,
+    location: 'Brownsburg, IN',
+    selectedShows: {
+      5: { eventName: 'Noblesville Invitational', location: 'Noblesville, IN' },
+      12: { eventName: 'Dallas Show', location: 'Dallas, Texas' },
+    },
+  };
+
+  test('the tour starts at the hometown and chains through the hosted town', () => {
+    assert.equal(venues.tourVenueFor('Brownsburg, IN'), null);
+    assert.equal(venues.tourVenueFor('Noblesville, IN'), null);
+    const legs = buildRouteLegs(state, [5, 12], { jointByDay: {}, locations: {} });
+    assert.equal(legs.length, 2);
+    const [toHosted, onward] = legs;
+    // Brownsburg -> Noblesville is a short, priced hop (not a free unmapped leg).
+    assert.ok(toHosted.miles > 15 && toHosted.miles < 60, `hop was ${toHosted.miles} mi`);
+    // The next leg departs FROM the hosted town: Noblesville -> Dallas.
+    const expected = venues.travelLeg(venues.venueFor('Noblesville, IN'), venues.venueFor('Dallas, Texas'), store.balance);
+    assert.equal(onward.miles, expected.miles);
+    assert.equal(onward.tier, expected.tier);
+  });
+
+  test('the current-location row shows the mapped hometown before the first show', () => {
+    const where = buildCurrentLocation(state, UID, 1, null);
+    assert.equal(where.city, 'Brownsburg, IN');
+    assert.equal(where.mapped, true);
+    assert.equal(where.atHome, true);
+  });
+});

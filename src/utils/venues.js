@@ -50,18 +50,3 @@ export function normalizeVenueKey(raw) {
 export function resolveVenueId(locationString) {
   return KEY_TO_ID[normalizeVenueKey(locationString)] || null;
 }
-
-/**
- * The set of venueIds already claimed by shows on the schedule, so the picker
- * can exclude them (a city can host at most one show per season).
- * @param {Array<{location?: string}>} competitions schedule competitions/shows
- * @returns {Set<string>}
- */
-export function scheduledVenueIds(competitions) {
-  const taken = new Set();
-  for (const comp of competitions || []) {
-    const id = resolveVenueId(comp?.location);
-    if (id) taken.add(id);
-  }
-  return taken;
-}

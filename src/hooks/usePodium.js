@@ -20,6 +20,7 @@ import {
   commitPodiumBudget,
   hirePodiumClinician,
   acknowledgePodiumStaffOutlook,
+  correctPodiumHometown,
   retirePodiumCorps,
   unretirePodiumCorps,
 } from '../api/podium';
@@ -265,6 +266,16 @@ export function usePodium(enabled) {
     [reload]
   );
 
+  /** @type {(location: string) => Promise<{ success: boolean, home: string, previous: string | null, touring: boolean }>} */
+  const correctHometown = useCallback(
+    async (location) => {
+      const result = await correctPodiumHometown({ location });
+      await reload();
+      return result.data;
+    },
+    [reload]
+  );
+
   const acknowledgeStaffOutlook = useCallback(async () => {
     const result = await acknowledgePodiumStaffOutlook();
     await reload();
@@ -317,6 +328,7 @@ export function usePodium(enabled) {
     commitBudget,
     hireClinician,
     acknowledgeStaffOutlook,
+    correctHometown,
     retireCorps,
     previewUnretire,
     unretireCorps,

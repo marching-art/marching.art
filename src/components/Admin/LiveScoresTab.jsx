@@ -312,8 +312,8 @@ const ScheduleCoverageCard = () => {
                       )
                       .join(', ')}
                     <div className="text-[10px] text-muted">
-                      Travel, heat and timezones already work. Promote them to the tour map
-                      (hostable, plotted) with the venue rebuild in docs/NEXT.md.
+                      Travel, heat, timezones and the Tour Map already work. Promote them to the
+                      gazetteer (stadium names) with the venue rebuild in docs/NEXT.md.
                     </div>
                   </div>
                 )}
