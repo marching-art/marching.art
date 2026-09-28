@@ -368,9 +368,9 @@ src/scripts/buildClientVenues.js` → re-run `buildPlaceIndex.js` (see its
 
 ## Evergreen ratchets (any session, any size)
 
-- `@ts-nocheck` paydown — **37 files** at
+- `@ts-nocheck` paydown — **22 files** at
   last update; `npm run ts-nocheck:next` ranks the cheapest (no free wins
-  left — the cheapest `src/` files are ~14 errors). It needs `npm ci` first
+  left — the cheapest `src/` files are ~31 errors). It needs `npm ci` first
   and refuses to report on any other compiler. One per substantive task is
   the CLAUDE.md habit; batches welcome.
 - Frontend coverage floor upward — floors now sit just under actual
@@ -389,6 +389,15 @@ src/scripts/buildClientVenues.js` → re-run `buildPlaceIndex.js` (see its
 
 ## Recently shipped (context, newest first — prune when stale)
 
+- 2026-09-28 (dependencies): Dependabot sweep — #1597–#1602 consolidated
+  into one branch (all minor/patch: firebase-admin 14.5 everywhere,
+  firebase-tools 15.31, puppeteer-core 25.12, @google/genai 2.24, eslint
+  10.11, typescript-eslint 8.70, vite 8.3.1, prettier 3.9.9, tsx 4.23.15,
+  framer-motion 13.4.3, lucide-react 1.48). Every lockfile merged clean and
+  `npm ci` verified; `scripts/package.json` floor raised to match its
+  lockfile. Ratchet: `ArticleComments.jsx` typed — it destructured
+  `useAuth()` without the null guard and read a `profile` the auth context
+  never provides (the avatar initial now uses the display name).
 - 2026-09-28: **Hometowns: any real town** — Podium registration accepts any
   US/Canadian town (GeoNames place index behind the gazetteer, server + lazy
   client copy, "Use my location"); the same fallback geocodes new live-schedule
