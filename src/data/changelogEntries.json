@@ -1,5 +1,16 @@
 [
   {
+    "id": "2026-09-28-host-any-town",
+    "date": "2026-09-28",
+    "title": "Host your show in any town",
+    "category": "feature",
+    "summary": "Hosted shows are no longer limited to cities that have hosted a show before. Pick any town in the US or Canada for your event, including your own hometown. Travel to and from it is priced like any other stop, and it shows up on everyone's Tour Map.",
+    "highlights": [
+      "Towns already on the schedule are greyed out, since each town hosts one show per season.",
+      "The Tour Map now plots every stop in a real town, including new stops added to the live schedule."
+    ]
+  },
+  {
     "id": "2026-09-28-hometown-correction",
     "date": "2026-09-28",
     "title": "Fix your hometown for free",

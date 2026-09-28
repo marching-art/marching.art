@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { buildTourStops, tourDistance, tourRegions, type TourSource } from './tourStops';
 import { locationPoint, projectLatLng, legPath, legMidpoint, placeLabels } from './tourMap';
+import { loadPlaces, makeTownResolver } from './places';
 
 const CHAMPIONSHIP_EVENTS: TourSource[] = [
   {
@@ -279,7 +280,15 @@ describe('tourDistance', () => {
 
 describe('tourRegions', () => {
   it('lists distinct regions in first-visit order', () => {
-    const point = (region: string) => ({ x: 0, y: 0, city: '', region, venueId: '' });
+    const point = (region: string) => ({
+      x: 0,
+      y: 0,
+      city: '',
+      region,
+      venueId: '',
+      lat: 0,
+      lng: 0,
+    });
     const stops = [
       { point: point('IA') },
       { point: null },
@@ -316,6 +325,40 @@ describe('tourMap geometry', () => {
     });
     expect(locationPoint('Atlantis, XX')).toBeNull();
     expect(locationPoint('')).toBeNull();
+  });
+
+  it('places a town off the tour map when given the town resolver', async () => {
+    const resolveTown = makeTownResolver(await loadPlaces());
+    // Not a historical show city: unplaceable without the resolver…
+    expect(locationPoint('Brownsburg, IN')).toBeNull();
+    const point = locationPoint('Brownsburg, IN', resolveTown);
+    expect(point).toMatchObject({
+      city: 'Brownsburg',
+      region: 'IN',
+      venueId: 'town:brownsburg in',
+    });
+    // …and it lands just west of Indianapolis on the poster.
+    const indy = locationPoint('Indianapolis, IN');
+    expect(point && indy && point.x < indy.x && Math.abs(point.x - indy.x) < 10).toBe(true);
+    // A tour-map city still resolves from the gazetteer, resolver or not.
+    expect(locationPoint('Indianapolis, IN', resolveTown)?.venueId).toBe(indy?.venueId);
+  });
+
+  it('routes a hosted show in an off-map town onto the itinerary', async () => {
+    const resolveTown = makeTownResolver(await loadPlaces());
+    const stops = buildTourStops({
+      corps: {
+        selectedShows: {
+          week1: [{ eventName: 'Brownsburg Invitational', day: 3, location: 'Brownsburg, IN' }],
+          week2: [{ eventName: 'Indy Classic', day: 10, location: 'Indianapolis, IN' }],
+        },
+      },
+      corpsClass: 'worldClass',
+      resolveTown,
+    });
+    expect(stops.every((s) => s.point)).toBe(true);
+    expect(tourDistance(stops)).toBeGreaterThan(5);
+    expect(tourDistance(stops)).toBeLessThan(30);
   });
 
   it('draws a curved leg and finds its midpoint heading', () => {

@@ -11,7 +11,7 @@ import {
   AUDITION_PRESETS,
 } from './podiumConstants';
 import { relocationFeeBetween } from '../../utils/places';
-import HometownPicker from './HometownPicker';
+import TownPicker from './TownPicker';
 import PodiumSeasonAssessment from './PodiumSeasonAssessment';
 import PodiumRegistrationDone from './PodiumRegistrationDone';
 import PodiumStaffRetention from './PodiumStaffRetention';
@@ -21,7 +21,7 @@ const STEPS = ['Corps', 'Show', 'Design', 'March'];
 /** @typedef {ReturnType<typeof import('../../hooks/usePodium').usePodium>} PodiumApi */
 /** @typedef {NonNullable<Awaited<ReturnType<PodiumApi['loadRegistrationPreview']>>>} RegistrationPreview */
 /** @typedef {import('../../api/podium').PodiumStaffProjection} StaffProjection */
-/** @typedef {import('./HometownPicker').SelectedHome} SelectedHome */
+/** @typedef {import('./TownPicker').SelectedHome} SelectedHome */
 
 /** @param {{ podium: PodiumApi }} props */
 export default function PodiumRegistration({ podium }) {
@@ -351,7 +351,7 @@ export default function PodiumRegistration({ podium }) {
               from the place index — every tour starts here and every travel leg
               is priced from it. */}
           <div>
-            <HometownPicker
+            <TownPicker
               query={homeQuery}
               onQueryChange={setHomeQuery}
               selected={selectedHome}

@@ -41,9 +41,12 @@ describe("validateHostRequest", () => {
     assert.throws(() => validateHostRequest({ ...good, venueTier: "colosseum" }, 10));
     assert.throws(() => validateHostRequest({ ...good, eventName: "ab" }, 10));
     assert.throws(() => validateHostRequest({ ...good, location: "Atlantis, Ocean" }, 10));
-    // A real town that isn't a show city geocodes as a hometown, but hosting
-    // stays on the tour map.
-    assert.throws(() => validateHostRequest({ ...good, location: "Brownsburg, IN" }, 10));
+  });
+
+  test("any real town can host, not only historical show cities", () => {
+    const result = validateHostRequest({ ...good, location: "Brownsburg, Indiana" }, 10);
+    assert.equal(result.venue.venueId, "brownsburg-in");
+    assert.equal(`${result.venue.city}, ${result.venue.region}`, "Brownsburg, IN");
   });
 
   test("rejects the majors' exclusive days and too-soon/too-late dates", () => {
@@ -68,6 +71,11 @@ describe("scheduledVenueIds", () => {
     assert.ok(taken.has(canton.venueId));
     assert.ok(taken.has(allentown.venueId));
     assert.equal(taken.size, 2);
+  });
+
+  test("a town off the tour map is claimed too, so it hosts once per season", () => {
+    const taken = scheduledVenueIds([{ location: "Brownsburg, IN" }]);
+    assert.ok(taken.has(venues.venueFor("Brownsburg, Indiana").venueId));
   });
 
   test("handles empty/undefined input", () => {

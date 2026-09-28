@@ -8,7 +8,7 @@
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { Home, Loader2 } from 'lucide-react';
-import HometownPicker, { type SelectedHome } from './HometownPicker';
+import TownPicker, { type SelectedHome } from './TownPicker';
 import type { PodiumHometownStatus } from '../../api/podium';
 
 interface HometownCorrectionCardProps {
@@ -126,7 +126,7 @@ export default function HometownCorrectionCard({ podium }: HometownCorrectionCar
         </div>
       </div>
 
-      <HometownPicker
+      <TownPicker
         query={query}
         onQueryChange={setQuery}
         selected={selected}
