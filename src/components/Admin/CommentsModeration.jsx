@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // src/components/Admin/CommentsModeration.jsx
 // Admin interface for moderating article comments
 // Follows Admin panel dark theme: bg-background, bg-surface-card, bg-surface-raised
@@ -14,7 +13,26 @@ import {
   bulkModerateComments,
 } from '../../api/functions';
 
+/**
+ * @typedef {import('../../types/news').CommentStatus} CommentStatus
+ * @typedef {CommentStatus | 'all'} StatusFilter
+ * @typedef {import('../../api/articleSocial').ModerateCommentData['action']} ModerationAction
+ * @typedef {import('../../api/articleSocial').ListCommentsForModerationResult['counts']} ModerationCounts
+ * @typedef {import('../../api/articleSocial').ListCommentsForModerationResult['comments'][number]} ModerationComment
+ */
+
+/** @type {StatusFilter[]} */
+const STATUS_TABS = ['pending', 'approved', 'rejected', 'hidden', 'all'];
+
+/** @param {unknown} error */
+const errorMessage = (error) => (error instanceof Error ? error.message : '');
+
+/** @param {ModerationAction} action */
+const actionPastTense = (action) =>
+  action === 'approve' ? 'approved' : action === 'reject' ? 'rejected' : 'hidden';
+
 // Status badge colors
+/** @type {Record<CommentStatus, string>} */
 const STATUS_COLORS = {
   pending: 'bg-warning/20 text-warning',
   approved: 'bg-green-500/20 text-green-400',
@@ -22,11 +40,13 @@ const STATUS_COLORS = {
   hidden: 'bg-charcoal-500/20 text-muted',
 };
 
-// Format relative time
+/**
+ * Format relative time
+ * @param {string} dateString
+ */
 function formatRelativeTime(dateString) {
   const date = new Date(dateString);
-  const now = new Date();
-  const diffInMs = now - date;
+  const diffInMs = Date.now() - date.getTime();
   const diffInMins = Math.floor(diffInMs / (1000 * 60));
   const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
   const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
@@ -40,21 +60,25 @@ function formatRelativeTime(dateString) {
 }
 
 const CommentsModeration = () => {
-  const [comments, setComments] = useState([]);
+  const [comments, setComments] = useState(/** @type {ModerationComment[]} */ ([]));
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [statusFilter, setStatusFilter] = useState('pending');
-  const [selectedComments, setSelectedComments] = useState(new Set());
-  const [previewComment, setPreviewComment] = useState(null);
-  const [processingId, setProcessingId] = useState(null);
+  const [statusFilter, setStatusFilter] = useState(/** @type {StatusFilter} */ ('pending'));
+  const [selectedComments, setSelectedComments] = useState(/** @type {Set<string>} */ (new Set()));
+  const [previewComment, setPreviewComment] = useState(
+    /** @type {ModerationComment | null} */ (null)
+  );
+  const [processingId, setProcessingId] = useState(/** @type {string | null} */ (null));
   const [bulkProcessing, setBulkProcessing] = useState(false);
-  const [counts, setCounts] = useState({
-    pending: 0,
-    approved: 0,
-    rejected: 0,
-    hidden: 0,
-    total: 0,
-  });
+  const [counts, setCounts] = useState(
+    /** @type {ModerationCounts} */ ({
+      pending: 0,
+      approved: 0,
+      rejected: 0,
+      hidden: 0,
+      total: 0,
+    })
+  );
 
   const loadComments = useCallback(async () => {
     try {
@@ -84,34 +108,34 @@ const CommentsModeration = () => {
     toast.success('Comments refreshed');
   };
 
+  /**
+   * @param {string} commentId
+   * @param {ModerationAction} action
+   * @param {string} [reason]
+   */
   const handleModerate = async (commentId, action, reason = '') => {
     setProcessingId(commentId);
     try {
       const result = await moderateComment({ commentId, action, reason });
       if (result.data.success) {
-        toast.success(
-          `Comment ${action === 'approve' ? 'approved' : action === 'reject' ? 'rejected' : 'hidden'}`
-        );
+        toast.success(`Comment ${actionPastTense(action)}`);
         // Remove from list if status doesn't match filter
         setComments((prev) => prev.filter((c) => c.id !== commentId));
         setPreviewComment(null);
-        // Update counts
-        setCounts((prev) => ({
-          ...prev,
-          [statusFilter === 'all' ? result.data.comment.status : statusFilter]:
-            statusFilter === 'all'
-              ? prev[result.data.comment.status]
-              : Math.max(0, prev[statusFilter] - 1),
-        }));
+        // Update counts (the "all" tab has no per-status tally to adjust)
+        if (statusFilter !== 'all') {
+          setCounts((prev) => ({ ...prev, [statusFilter]: Math.max(0, prev[statusFilter] - 1) }));
+        }
       }
     } catch (error) {
       console.error('Error moderating comment:', error);
-      toast.error(error.message || 'Failed to moderate comment');
+      toast.error(errorMessage(error) || 'Failed to moderate comment');
     } finally {
       setProcessingId(null);
     }
   };
 
+  /** @param {ModerationAction} action */
   const handleBulkModerate = async (action) => {
     if (selectedComments.size === 0) return;
 
@@ -123,7 +147,7 @@ const CommentsModeration = () => {
       });
       if (result.data.success) {
         toast.success(
-          `${result.data.moderated} comment${result.data.moderated > 1 ? 's' : ''} ${action === 'approve' ? 'approved' : action === 'reject' ? 'rejected' : 'hidden'}`
+          `${result.data.moderated} comment${result.data.moderated > 1 ? 's' : ''} ${actionPastTense(action)}`
         );
         // Remove moderated comments from list
         setComments((prev) => prev.filter((c) => !selectedComments.has(c.id)));
@@ -133,7 +157,7 @@ const CommentsModeration = () => {
       }
     } catch (error) {
       console.error('Error bulk moderating:', error);
-      toast.error(error.message || 'Failed to bulk moderate');
+      toast.error(errorMessage(error) || 'Failed to bulk moderate');
     } finally {
       setBulkProcessing(false);
     }
@@ -147,6 +171,7 @@ const CommentsModeration = () => {
     }
   };
 
+  /** @param {string} id */
   const toggleSelectComment = (id) => {
     const newSelected = new Set(selectedComments);
     if (newSelected.has(id)) {
@@ -170,7 +195,7 @@ const CommentsModeration = () => {
       {/* Header with status tabs */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2 flex-wrap">
-          {['pending', 'approved', 'rejected', 'hidden', 'all'].map((status) => (
+          {STATUS_TABS.map((status) => (
             <button
               key={status}
               onClick={() => setStatusFilter(status)}
@@ -181,7 +206,7 @@ const CommentsModeration = () => {
               }`}
             >
               {status.charAt(0).toUpperCase() + status.slice(1)}
-              {counts[status] > 0 && status !== 'all' && (
+              {status !== 'all' && counts[status] > 0 && (
                 <span
                   className={`ml-1.5 px-1.5 py-0.5 text-[10px] font-bold rounded-full ${
                     status === 'pending' ? 'bg-warning text-black' : 'bg-line text-secondary'
@@ -299,7 +324,19 @@ const CommentsModeration = () => {
   );
 };
 
-// Comment row component
+/**
+ * Comment row component
+ * @param {{
+ *   comment: ModerationComment,
+ *   isSelected: boolean,
+ *   onToggleSelect: () => void,
+ *   onPreview: () => void,
+ *   onApprove: () => void,
+ *   onReject: () => void,
+ *   onHide: () => void,
+ *   isProcessing: boolean,
+ * }} props
+ */
 const CommentRow = ({
   comment,
   isSelected,
@@ -310,7 +347,8 @@ const CommentRow = ({
   onHide,
   isProcessing,
 }) => {
-  const hasReports = comment.reportCount > 0;
+  const reportCount = comment.reportCount ?? 0;
+  const hasReports = reportCount > 0;
 
   return (
     <div
@@ -337,7 +375,7 @@ const CommentRow = ({
           {hasReports && (
             <span className="flex items-center gap-1 text-[10px] text-red-400">
               <Flag className="w-3 h-3" />
-              {comment.reportCount} report{comment.reportCount > 1 ? 's' : ''}
+              {reportCount} report{reportCount > 1 ? 's' : ''}
             </span>
           )}
         </div>
@@ -400,8 +438,19 @@ const CommentRow = ({
   );
 };
 
-// Comment preview modal
+/**
+ * Comment preview modal
+ * @param {{
+ *   comment: ModerationComment,
+ *   onClose: () => void,
+ *   onApprove: () => void,
+ *   onReject: (reason: string) => void,
+ *   onHide: () => void,
+ *   isProcessing: boolean,
+ * }} props
+ */
 const CommentPreviewModal = ({ comment, onClose, onApprove, onReject, onHide, isProcessing }) => {
+  const reportCount = comment.reportCount ?? 0;
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectForm, setShowRejectForm] = useState(false);
 
@@ -450,10 +499,10 @@ const CommentPreviewModal = ({ comment, onClose, onApprove, onReject, onHide, is
                 {comment.status}
               </span>
               <span className="text-xs text-muted">{formatRelativeTime(comment.createdAt)}</span>
-              {comment.reportCount > 0 && (
+              {reportCount > 0 && (
                 <span className="flex items-center gap-1 text-xs text-red-400">
                   <Flag className="w-3 h-3" />
-                  {comment.reportCount} report{comment.reportCount > 1 ? 's' : ''}
+                  {reportCount} report{reportCount > 1 ? 's' : ''}
                 </span>
               )}
             </div>
