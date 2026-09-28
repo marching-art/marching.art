@@ -449,6 +449,14 @@ const EasternCombinedSheet = memo(({ shows, viewer }) => {
  *    the materialized standings and only the selected day's recap doc is
  *    fetched (one read, cached per day) — the Scores page's default path.
  */
+/**
+ * @param {{
+ *   shows?: import('../types/recap').NormalizedShow[] | null,
+ *   seasonId?: string | null,
+ *   availableDays?: number[] | null,
+ *   viewer?: import('../utils/corps').ViewerCorpsMatcher | null,
+ * }} props
+ */
 const FantasyRecapsView = ({
   shows = null,
   seasonId = null,
@@ -610,6 +618,14 @@ const FantasyRecapsView = ({
 // STANDINGS SHEET FOR CLASS TABS
 // =============================================================================
 
+/**
+ * @param {{
+ *   standings: import('../hooks/useScoresData').LeaderboardEntry[],
+ *   className: string,
+ *   viewer?: import('../utils/corps').ViewerCorpsMatcher | null,
+ *   referenceDay?: number | null,
+ * }} props
+ */
 const ClassStandingsGrid = ({ standings, className, viewer = null, referenceDay = null }) => {
   const [sortBy, setSortBy] = useState('total');
 

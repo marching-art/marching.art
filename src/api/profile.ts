@@ -99,7 +99,9 @@ export async function getCorps(uid: string, corpsClass: CorpsClass): Promise<Cor
 // Cloud Functions callables (createUserProfile, claimDailyLogin,
 // syncClassUnlocks, unlockClassWithCorpsCoin, ...) or scheduled scoring runs,
 // and are blocked for clients by Firestore security rules. The helpers below
-// may only touch cosmetic/preference fields.
+// may only touch cosmetic/preference fields — the top-level keys an owner may
+// write are an allowlist (`ownerProfileKeysOk` in firestore.rules); a new
+// client-written profile field must be added there, with a rules test.
 // =============================================================================
 
 /**

@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // =============================================================================
 // SCORES - CONSOLIDATED RECAP TERMINAL
 // =============================================================================
@@ -43,6 +42,7 @@ const PodiumScoresPanel = lazyWithRetry(
 // CONSTANTS
 // =============================================================================
 
+/** @type {import('../components/scores/PillTabControl').PillTab[]} */
 const TABS = [
   { id: 'fantasy', label: 'Fantasy' },
   // Archive/Supporters are utility views, not games — groupStart draws a divider
@@ -58,6 +58,7 @@ const TABS = [
 // Podium shows ALL 8 captions (its scores are earned, not drafted); the
 // fantasy tabs stay condensed to GE/VIS/MUS — the anti-lineup-harvesting
 // rule (design §5.4).
+/** @type {import('../components/scores/PillTabControl').PillTab} */
 const PODIUM_TAB = { id: 'podium', label: 'Podium', accent: 'brand' };
 
 // Sub-tabs nested under the Fantasy tab — the DCI-style fantasy recaps plus the
@@ -89,7 +90,7 @@ const FANTASY_SUB_IDS = FANTASY_SUB_TABS.map((t) => t.id);
 
 const Scores = () => {
   const profile = useProfileStore((state) => state.profile);
-  const { user } = useAuth();
+  const user = useAuth()?.user;
   const formatSeasonName = useSeasonStore((state) => state.formatSeasonName);
   const [searchParams] = useSearchParams();
   const { trigger: haptic } = useHaptic();
@@ -106,15 +107,17 @@ const Scores = () => {
   }, [podiumEnabled]);
   const validTabIds = useMemo(() => tabs.map((t) => t.id), [tabs]);
   const [activeTab, setActiveTab] = useState(() => {
-    if (validTabIds.includes(targetTab)) return targetTab;
+    if (targetTab && validTabIds.includes(targetTab)) return targetTab;
     // Back-compat: old ?tab=world|open|aclass|latest deep links now live as
     // sub-tabs under Fantasy, so land on the Fantasy tab.
-    if (FANTASY_SUB_IDS.includes(targetTab)) return 'fantasy';
+    if (targetTab && FANTASY_SUB_IDS.includes(targetTab)) return 'fantasy';
     return 'fantasy';
   });
   // Which view is showing inside the Fantasy tab (Recaps / World / Open / A Class)
   const [fantasyViewTab, setFantasyViewTab] = useState(() =>
-    FANTASY_SUB_IDS.includes(targetTab) && targetTab !== 'fantasy' ? targetTab : 'latest'
+    targetTab && FANTASY_SUB_IDS.includes(targetTab) && targetTab !== 'fantasy'
+      ? targetTab
+      : 'latest'
   );
 
   // React to ?tab= changes when navigating within the app.
@@ -131,8 +134,12 @@ const Scores = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [targetTab, validTabIds]);
-  const [selectedArchiveSeason, setSelectedArchiveSeason] = useState(null);
-  const [selectedArchiveYear, setSelectedArchiveYear] = useState(null);
+  const [selectedArchiveSeason, setSelectedArchiveSeason] = useState(
+    /** @type {string | null} */ (null)
+  );
+  const [selectedArchiveYear, setSelectedArchiveYear] = useState(
+    /** @type {string | null} */ (null)
+  );
   const [archiveViewTab, setArchiveViewTab] = useState('latest'); // Sub-tab within archive
 
   const {
@@ -219,19 +226,21 @@ const Scores = () => {
   // falling back to the archivedAt year). Years render newest-first; seasons
   // within each year keep their archivedAt-desc order.
   const archivedSeasonsByYear = useMemo(() => {
+    /** @param {import('../api/season').SeasonChampions} season */
     const yearOf = (season) => {
       const parts = season.id.split('_');
       const suffix = parts.length > 1 ? parts.slice(1).join('_') : '';
       if (/^\d{4}/.test(suffix)) return suffix;
-      return season.archivedAt instanceof Date && !isNaN(season.archivedAt)
+      return season.archivedAt instanceof Date && !isNaN(season.archivedAt.getTime())
         ? String(season.archivedAt.getFullYear())
         : 'Unknown';
     };
+    /** @type {Map<string, import('../api/season').SeasonChampions[]>} */
     const map = new Map();
     archivedSeasons.forEach((season) => {
       const year = yearOf(season);
       if (!map.has(year)) map.set(year, []);
-      map.get(year).push(season);
+      map.get(year)?.push(season);
     });
     return Array.from(map.entries())
       .sort((a, b) => b[0].localeCompare(a[0]))
@@ -291,11 +300,13 @@ const Scores = () => {
   }, [archivedSeasonsByYear, selectedArchiveSeason, selectedArchiveYear]);
 
   // Handle archive season selection change
+  /** @param {string} seasonId */
   const handleArchiveSeasonChange = (seasonId) => {
     setSelectedArchiveSeason(seasonId);
     selectSeason(seasonId);
   };
 
+  /** @param {string} year */
   const handleArchiveYearChange = (year) => {
     setSelectedArchiveYear(year);
     const group = archivedSeasonsByYear.find((g) => g.year === year);
@@ -522,7 +533,7 @@ const Scores = () => {
                 >
                   <PodiumScoresPanel
                     seasonUid={currentSeasonUid}
-                    seasonName={formatSeasonName?.(displayedSeasonId) || undefined}
+                    seasonName={formatSeasonName?.() || undefined}
                     viewer={viewerCorps}
                   />
                 </Suspense>
