@@ -666,8 +666,8 @@ const ShowRegistrationModal = ({
                 )}
                 {registrationClosed ? (
                   <p className="mt-1 flex items-center gap-1">
-                    <Clock className="w-3 h-3 text-amber-400 flex-shrink-0" aria-hidden="true" />
-                    <span className="text-amber-400 font-bold">
+                    <Clock className="w-3 h-3 text-warning flex-shrink-0" aria-hidden="true" />
+                    <span className="text-warning font-bold">
                       Registration closed — this night&apos;s scores have been processed.
                     </span>
                   </p>
