@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // =============================================================================
 // ARTICLE COMMENTS - Comment System with Moderation
 // =============================================================================
@@ -29,14 +28,17 @@ import {
 } from '../../api/functions';
 import toast from 'react-hot-toast';
 
+/** @typedef {import('../../types').ArticleComment} ArticleComment */
+
 // Maximum comment length
 const MAX_COMMENT_LENGTH = 1000;
 
 // Format relative time
+/** @param {string | number | Date} dateString */
 function formatRelativeTime(dateString) {
   const date = new Date(dateString);
   const now = new Date();
-  const diffInMs = now - date;
+  const diffInMs = now.getTime() - date.getTime();
   const diffInMins = Math.floor(diffInMs / (1000 * 60));
   const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
   const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
@@ -51,13 +53,20 @@ function formatRelativeTime(dateString) {
 
 /**
  * Single comment component
+ * @param {{
+ *   comment: ArticleComment,
+ *   currentUserId: string | undefined,
+ *   onEdit: (comment: ArticleComment) => void,
+ *   onDelete: (commentId: string) => void,
+ *   onReport: (commentId: string, reason: string) => Promise<void>,
+ * }} props
  */
 function Comment({ comment, currentUserId, onEdit, onDelete, onReport }) {
   const [showMenu, setShowMenu] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportReason, setReportReason] = useState('');
   const [reporting, setReporting] = useState(false);
-  const menuRef = useRef(null);
+  const menuRef = useRef(/** @type {HTMLDivElement | null} */ (null));
 
   const isOwner = currentUserId === comment.userId;
   const isPending = comment.status === 'pending';
@@ -65,8 +74,9 @@ function Comment({ comment, currentUserId, onEdit, onDelete, onReport }) {
 
   // Close menu when clicking outside
   useEffect(() => {
+    /** @param {MouseEvent} e */
     const handleClickOutside = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
+      if (menuRef.current && !menuRef.current.contains(/** @type {Node} */ (e.target))) {
         setShowMenu(false);
       }
     };
@@ -255,6 +265,13 @@ function Comment({ comment, currentUserId, onEdit, onDelete, onReport }) {
 
 /**
  * ArticleComments - Full comments section
+ * @param {{
+ *   articleId: string,
+ *   initialComments?: ArticleComment[] | null,
+ *   initialCount?: number,
+ *   onCommentCountChange?: (count: number) => void,
+ *   autoExpand?: boolean,
+ * }} props
  */
 export default function ArticleComments({
   articleId,
@@ -263,18 +280,18 @@ export default function ArticleComments({
   onCommentCountChange,
   autoExpand = false,
 }) {
-  const { user, profile } = useAuth();
-  const [comments, setComments] = useState(initialComments || []);
+  const user = useAuth()?.user;
+  const [comments, setComments] = useState(/** @type {ArticleComment[]} */ (initialComments || []));
   const [commentCount, setCommentCount] = useState(initialCount);
   const [loading, setLoading] = useState(!initialComments);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [newComment, setNewComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [editingComment, setEditingComment] = useState(null);
+  const [editingComment, setEditingComment] = useState(/** @type {ArticleComment | null} */ (null));
   const [editContent, setEditContent] = useState('');
   const [isExpanded, setIsExpanded] = useState(autoExpand);
-  const textareaRef = useRef(null);
+  const textareaRef = useRef(/** @type {HTMLTextAreaElement | null} */ (null));
 
   // Auto-expand when prop changes
   useEffect(() => {
@@ -400,6 +417,7 @@ export default function ArticleComments({
     }
   };
 
+  /** @param {string} commentId */
   const handleDelete = async (commentId) => {
     if (!window.confirm('Delete this comment?')) return;
 
@@ -416,6 +434,10 @@ export default function ArticleComments({
     }
   };
 
+  /**
+   * @param {string} commentId
+   * @param {string} reason
+   */
   const handleReport = async (commentId, reason) => {
     const result = await reportArticleComment({ commentId, reason });
     if (!result.data?.success) {
@@ -423,6 +445,7 @@ export default function ArticleComments({
     }
   };
 
+  /** @param {ArticleComment} comment */
   const startEditing = (comment) => {
     setEditingComment(comment);
     setEditContent(comment.content);
@@ -512,7 +535,7 @@ export default function ArticleComments({
             <div className="space-y-3">
               <div className="flex items-start gap-3">
                 <div className="w-7 h-7 bg-line rounded-full flex items-center justify-center text-xs font-bold text-muted flex-shrink-0">
-                  {profile?.username?.charAt(0)?.toUpperCase() ||
+                  {user.displayName?.charAt(0)?.toUpperCase() ||
                     user.email?.charAt(0)?.toUpperCase() ||
                     '?'}
                 </div>
@@ -605,6 +628,7 @@ export default function ArticleComments({
 
 /**
  * Compact comment count for article cards
+ * @param {{ count: number, onClick?: () => void }} props
  */
 export function CommentCount({ count, onClick }) {
   if (count === 0) return null;
