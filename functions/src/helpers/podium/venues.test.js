@@ -187,3 +187,97 @@ describe("airfareFor — the fly-a-long-leg sink (design §5.3)", () => {
     assert.equal(air.coinCost, 0);
   });
 });
+
+describe("travelStaminaForMiles — proportional, uncapped travel stamina", () => {
+  const { balance } = require("./store");
+  const stamina = (miles) => venues.travelStaminaForMiles(miles, balance);
+
+  test("local legs are free and tier ceilings cost exactly the tier's stamina", () => {
+    assert.equal(stamina(0), 0);
+    assert.equal(stamina(75), 0);
+    for (const tier of balance.travel.tiers.slice(1, -1)) {
+      assert.equal(stamina(tier.maxMiles), tier.staminaCost, tier.key);
+    }
+  });
+
+  test("interpolates inside a tier instead of charging a flat bucket", () => {
+    const mid = stamina(425); // halfway between the day-trip (250) and overnight (600) ceilings
+    assert.ok(mid > 3 && mid < 6, `got ${mid}`);
+  });
+
+  test("keeps climbing past the old cross-country cap", () => {
+    const legacyCap = balance.travel.tiers[balance.travel.tiers.length - 1].staminaCost;
+    assert.ok(stamina(3000) > legacyCap);
+    assert.ok(stamina(6000) > stamina(3000));
+    const perMile = balance.travel.staminaPerMileBeyond;
+    assert.equal(stamina(2200), Math.round((10 + 1000 * perMile) * 10) / 10);
+  });
+
+  test("monotonic in distance", () => {
+    let prior = -1;
+    for (let miles = 0; miles <= 8000; miles += 37) {
+      const cost = stamina(miles);
+      assert.ok(cost >= prior, `${miles} mi`);
+      prior = cost;
+    }
+  });
+
+  test("a config without staminaPerMileBeyond keeps the legacy flat buckets", () => {
+    const legacy = { travel: { ...balance.travel, staminaPerMileBeyond: undefined } };
+    assert.equal(venues.travelStaminaForMiles(5000, legacy), 15);
+    assert.equal(venues.travelStaminaForMiles(300, legacy), 6);
+  });
+
+  test("a mainland-to-Hawaii leg costs the membership dearly", () => {
+    const leg = venues.travelLeg(venues.venueFor("Indianapolis, IN"), venues.venueFor("Honolulu, HI"), balance);
+    assert.ok(leg.staminaCost >= 35, `got ${leg.staminaCost}`);
+  });
+});
+
+describe("over-ocean legs — mandatory flights", () => {
+  const { balance } = require("./store");
+
+  test("legs to, from, and between Hawaiian towns are overwater; mainland legs are not", () => {
+    const honolulu = venues.venueFor("Honolulu, HI");
+    const hilo = venues.venueFor("Hilo, HI");
+    const indy = venues.venueFor("Indianapolis, IN");
+    assert.equal(venues.isOverwaterLeg(indy, honolulu), true);
+    assert.equal(venues.isOverwaterLeg(honolulu, indy), true);
+    assert.equal(venues.isOverwaterLeg(honolulu, hilo), true);
+    assert.equal(venues.isOverwaterLeg(honolulu, honolulu), false);
+    assert.equal(venues.isOverwaterLeg(indy, venues.venueFor("Denver, CO")), false);
+    assert.equal(venues.travelLeg(indy, honolulu, balance).overwater, true);
+    assert.equal(venues.travelLeg(indy, venues.venueFor("Denver, CO"), balance).overwater, undefined);
+  });
+
+  test("the flight is mandatory, fully fared, and carries no stamina discount", () => {
+    const leg = venues.travelLeg(venues.venueFor("Los Angeles, CA"), venues.venueFor("Honolulu, HI"), balance);
+    const air = venues.airfareFor(leg, balance);
+    assert.equal(air.mandatory, true);
+    assert.equal(air.eligible, false); // nothing to opt into
+    assert.equal(air.staminaMultiplier, 1);
+    assert.equal(air.coinCost, Math.ceil(leg.miles / balance.travel.airfare.milesPerCoin));
+  });
+});
+
+describe("northern Mexico towns", () => {
+  test("resolve by ISO state code and by spelled-out state name", () => {
+    const monterrey = venues.venueFor("Monterrey, NLE");
+    assert.ok(monterrey);
+    assert.equal(monterrey.region, "NLE");
+    assert.equal(monterrey.timezone, "America/Monterrey");
+    assert.equal(venues.venueFor("Monterrey, Nuevo León").venueId, monterrey.venueId);
+    assert.equal(venues.venueFor("Torreon, Coahuila").region, "COA");
+    assert.equal(venues.venueFor("Ciudad Juarez, CHH").region, "CHH");
+    assert.equal(venues.venueFor("Tijuana, Baja California").region, "BCN");
+  });
+
+  test("never shadow Canadian BC/NL towns", () => {
+    assert.equal(venues.venueFor("Vancouver, BC").region, "BC");
+    assert.equal(venues.venueFor("Mexicali, BC"), null);
+  });
+
+  test("stop at the tour map's southern edge", () => {
+    assert.equal(venues.venueFor("Tampico, TAM"), null);
+  });
+});

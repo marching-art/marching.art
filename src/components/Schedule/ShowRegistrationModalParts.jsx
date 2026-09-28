@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Show registration sub-parts: the per-corps selection rows (fantasy + Podium)
 // and the championship auto-enrollment panel.
 // Extracted from ShowRegistrationModal.jsx for file-size hygiene.
@@ -6,7 +5,15 @@
 import { Link } from 'react-router-dom';
 import { AlertTriangle, Check, Landmark, Trophy, Users, X } from 'lucide-react';
 import { formatEventName } from '../../utils/season';
-import { CLASS_CONFIG, sameDayShowFor } from './showRegistrationConfig';
+import { CLASS_CONFIG as CLASS_CONFIG_BY_ID, sameDayShowFor } from './showRegistrationConfig';
+
+/** @typedef {{ name: string, shortName: string, color: string, bgColor: string }} ClassDisplay */
+/** @typedef {{ corpsName?: string, name?: string, selectedShows?: Record<string, Array<{day?: number, eventName: string}>> }} CorpsEntry */
+/** @typedef {{ corpsName?: string, corpsClass?: string, username?: string }} AttendeeRow */
+
+// Indexed by runtime class ids (strings from profile/corps maps), so widen the
+// literal-keyed config to a string lookup.
+const CLASS_CONFIG = /** @type {Record<string, ClassDisplay | undefined>} */ (CLASS_CONFIG_BY_ID);
 
 // =============================================================================
 // CHAMPIONSHIP ENROLLMENT PANEL
@@ -16,6 +23,16 @@ import { CLASS_CONFIG, sameDayShowFor } from './showRegistrationConfig';
 // not, and which classes the event admits. The modal computes the splits and
 // passes them in; this only renders.
 
+/**
+ * @param {{
+ *   enrolledCorps: string[],
+ *   ineligibleCorps: string[],
+ *   userCorpsClasses: string[],
+ *   eligibleClasses: string[],
+ *   corps: Record<string, CorpsEntry>,
+ *   onClose: () => void,
+ * }} props
+ */
 export const ChampionshipEnrollmentPanel = ({
   enrolledCorps,
   ineligibleCorps,
@@ -57,8 +74,8 @@ export const ChampionshipEnrollmentPanel = ({
                   <span className="font-bold text-white text-sm">
                     {corpsData.corpsName || corpsData.name || 'Unnamed Corps'}
                   </span>
-                  <span className={`ml-2 text-[10px] font-bold uppercase ${config.color}`}>
-                    {config.shortName}
+                  <span className={`ml-2 text-[10px] font-bold uppercase ${config?.color}`}>
+                    {config?.shortName}
                   </span>
                 </div>
                 <span className="text-[10px] text-green-400 font-bold px-2 py-1 bg-green-500/20">
@@ -92,8 +109,8 @@ export const ChampionshipEnrollmentPanel = ({
                   <span className="font-medium text-muted text-sm">
                     {corpsData.corpsName || corpsData.name || 'Unnamed Corps'}
                   </span>
-                  <span className={`ml-2 text-[10px] font-bold uppercase ${config.color}`}>
-                    {config.shortName}
+                  <span className={`ml-2 text-[10px] font-bold uppercase ${config?.color}`}>
+                    {config?.shortName}
                   </span>
                 </div>
                 <span className="text-[10px] text-muted font-medium">Class not eligible</span>
@@ -151,6 +168,17 @@ export const ChampionshipEnrollmentPanel = ({
 // hosting payout are both measured in (the alt-farm guard). The modal computes
 // the slot math and passes it in; this only renders.
 
+/**
+ * @param {{
+ *   hostName?: string|null,
+ *   capacity: number|null,
+ *   slotsFilled: number,
+ *   slotsAvailable: number|null,
+ *   full: boolean,
+ *   attendees: AttendeeRow[]|null,
+ *   loading: boolean,
+ * }} props
+ */
 export const HostedShowPanel = ({
   hostName,
   capacity,
@@ -217,7 +245,7 @@ export const HostedShowPanel = ({
  * header and empty state; drop it into any panel.
  *
  * @param {Object} props
- * @param {Array<Object>|null} props.attendees - registered corps rows (null = not loaded yet).
+ * @param {AttendeeRow[]|null} props.attendees - registered corps rows (null = not loaded yet).
  * @param {boolean} props.loading
  */
 export const AttendeeRoster = ({ attendees, loading }) => (
@@ -231,7 +259,8 @@ export const AttendeeRoster = ({ attendees, loading }) => (
     ) : attendees && attendees.length > 0 ? (
       <div className="space-y-1 max-h-40 overflow-y-auto">
         {attendees.map((a, i) => {
-          const config = CLASS_CONFIG[a.corpsClass] || {};
+          const config =
+            CLASS_CONFIG[a.corpsClass || ''] || /** @type {Partial<ClassDisplay>} */ ({});
           return (
             <div
               key={`${a.username || a.corpsName}_${a.corpsClass}_${i}`}
@@ -333,6 +362,17 @@ export const PodiumSelectionRow = ({
 // CORPS SELECTION ITEM
 // =============================================================================
 
+/**
+ * @param {{
+ *   corpsClass: string,
+ *   corpsData: CorpsEntry,
+ *   isSelected: boolean,
+ *   onToggle: (corpsClass: string) => void,
+ *   show: { week: number, day: number, eventName: string },
+ *   isDisabled: boolean,
+ *   maxShows: number,
+ * }} props
+ */
 const CorpsSelectionItem = ({
   corpsClass,
   corpsData,
@@ -342,7 +382,12 @@ const CorpsSelectionItem = ({
   isDisabled,
   maxShows,
 }) => {
-  const config = CLASS_CONFIG[corpsClass] || { name: corpsClass, color: 'text-muted' };
+  const config = CLASS_CONFIG[corpsClass] || {
+    name: corpsClass,
+    shortName: corpsClass,
+    color: 'text-muted',
+    bgColor: '',
+  };
   const weekKey = `week${show.week}`;
   const currentShows = corpsData.selectedShows?.[weekKey] || [];
   const showsThisWeek = currentShows.length;

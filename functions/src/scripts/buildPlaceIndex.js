@@ -1,6 +1,8 @@
 /**
- * Build the hometown place index — every populated place in the US and Canada
- * (GeoNames cities500: population ≥ 500 or a county/municipal seat), geocoded
+ * Build the hometown place index — every populated place in the US and Canada,
+ * plus the six northern-Mexico border states down to the Tour Map poster's
+ * southern edge (GeoNames cities500: population ≥ 500 or a county/municipal
+ * seat), geocoded
  * and timezone-stamped, so a director can name ANY real hometown and have it
  * placed on the map instead of being forced onto one of the ~500 historical
  * DCI show cities in the venue gazetteer.
@@ -36,6 +38,7 @@ const path = require("node:path");
 const gazetteer = require("../helpers/podium/venueGazetteer.json");
 const { normalizeKey, tourVenueFor } = require("../helpers/podium/venues");
 const { US_STATES } = require("../helpers/locationFormat");
+const { isHostableArea } = require("../helpers/podium/hostingArea");
 
 const SERVER_OUT = path.join(__dirname, "../helpers/podium/placeIndex.json");
 const CLIENT_OUT = path.join(__dirname, "../../../src/data/placeIndex.json");
@@ -53,6 +56,17 @@ const CA_ADMIN_TO_POSTAL = {
   "09": "PE",
   "10": "QC",
   "11": "SK",
+};
+
+// GeoNames admin1 for the six US-border states -> ISO 3166-2:MX code (three
+// letters, so Baja California and Nuevo León never collide with BC / NL).
+const MX_ADMIN_TO_ISO = {
+  "02": "BCN",
+  "26": "SON",
+  "06": "CHH",
+  "07": "COA",
+  "19": "NLE",
+  "28": "TAM",
 };
 
 // Real towns only: drop neighbourhood sections (PPLX — "Hyde Park" would shadow
@@ -116,7 +130,11 @@ function main() {
     let region = null;
     if (country === "US" && US_STATES[admin1]) region = admin1;
     else if (country === "CA" && CA_ADMIN_TO_POSTAL[admin1]) region = CA_ADMIN_TO_POSTAL[admin1];
+    else if (country === "MX" && MX_ADMIN_TO_ISO[admin1]) region = MX_ADMIN_TO_ISO[admin1];
     if (!region || !Number.isFinite(lat) || !Number.isFinite(lng)) continue;
+    // Mexico stops at the poster's southern edge (southern Tamaulipas, e.g.
+    // Tampico, would plot off the map) — the same rule hosted shows obey.
+    if (country === "MX" && !isHostableArea({ region, lat, lng })) continue;
     const ascii = asciiName || foldAccents(name);
     const venueId = placeVenueId(ascii, region);
     if (!venueId || venueId.startsWith("-")) continue;
@@ -158,7 +176,7 @@ function main() {
 
   const meta = {
     source: "GeoNames cities500 (https://www.geonames.org), CC-BY 4.0",
-    countries: ["US", "CA"],
+    countries: ["US", "CA", "MX"],
     note:
       "Hometown fallback behind venueGazetteer.json. Built by scripts/buildPlaceIndex.js; " +
       "tour-map cities are excluded here because the gazetteer resolves them first.",

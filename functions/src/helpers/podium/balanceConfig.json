@@ -202,6 +202,7 @@
         "staminaCost": 15
       }
     ],
+    "staminaPerMileBeyond": 0.0075,
     "airfare": {
       "milesPerCoin": 2,
       "staminaMultiplier": 0.5,
@@ -394,6 +395,7 @@
     },
     "maxEventsPerDay": 2,
     "maxEventsPerSeasonPerHost": 1,
+    "minHostXP": 3000,
     "minDaysAhead": 2,
     "lastHostableDay": 44,
     "nameMin": 3,

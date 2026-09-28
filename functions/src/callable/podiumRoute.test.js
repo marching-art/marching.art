@@ -319,3 +319,43 @@ describe('buildRouteLegs — towns off the tour map are real stops', () => {
     assert.equal(where.atHome, true);
   });
 });
+
+describe('buildRouteLegs — over-ocean legs are mandatory flights', () => {
+  const state = {
+    seasonUid: 'season-1',
+    division: 'worldClass',
+    location: 'Canton, Ohio',
+    lastVenue: venues.venueFor('Canton, Ohio'),
+  };
+
+  test('a Hawaii show and the leg back are required flights at full stamina', () => {
+    const legs = buildRouteLegs(state, [12, 14], {
+      jointByDay: {},
+      locations: { 12: 'Honolulu, HI', 14: 'Dallas, Texas' },
+    });
+    for (const leg of legs) {
+      const fare = Math.ceil(leg.miles / store.balance.travel.airfare.milesPerCoin);
+      assert.equal(leg.mandatoryFlight, true, leg.city);
+      assert.equal(leg.coinCost, fare, 'the fare replaces the bus fare');
+      assert.equal(leg.airfareEligible, false, 'nothing to opt into');
+      assert.equal(leg.airfareStaminaCost, null, 'no flight discount');
+      assert.ok(leg.staminaCost > 30, `${leg.city}: ${leg.staminaCost}`);
+    }
+  });
+
+  test('a stale airfare flag on a mandatory leg is not reported as stranded', () => {
+    const [leg] = buildRouteLegs({ ...state, airfare: { 12: true } }, [12], {
+      jointByDay: {},
+      locations: { 12: 'Honolulu, HI' },
+    });
+    assert.equal(leg.airfareStranded, false);
+  });
+
+  test('a mainland leg is not a mandatory flight', () => {
+    const [leg] = buildRouteLegs(state, [12], {
+      jointByDay: {},
+      locations: { 12: 'Dallas, Texas' },
+    });
+    assert.equal(leg.mandatoryFlight, false);
+  });
+});

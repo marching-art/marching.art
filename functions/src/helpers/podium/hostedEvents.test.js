@@ -7,6 +7,7 @@ const assert = require("node:assert/strict");
 
 const {
   validateHostRequest,
+  hostEligibilityReason,
   scheduledVenueIds,
   collectAttendees,
   summarizeHosting,
@@ -49,11 +50,38 @@ describe("validateHostRequest", () => {
     assert.equal(`${result.venue.city}, ${result.venue.region}`, "Brownsburg, IN");
   });
 
+  test("refuses towns that would plot off the tour map", () => {
+    assert.throws(() => validateHostRequest({ ...good, location: "Anchorage, AK" }, 10), /off the tour map/);
+    assert.throws(() => validateHostRequest({ ...good, location: "Honolulu, HI" }, 10), /off the tour map/);
+    assert.throws(() => validateHostRequest({ ...good, location: "Halifax, NS" }, 10), /off the tour map/);
+    assert.equal(validateHostRequest({ ...good, location: "Toronto, ON" }, 10).venue.region, "ON");
+  });
+
   test("rejects the majors' exclusive days and too-soon/too-late dates", () => {
     assert.throws(() => validateHostRequest({ ...good, day: 28 }, 10)); // Southwestern
     assert.throws(() => validateHostRequest({ ...good, day: 41 }, 10)); // Eastern N1
     assert.throws(() => validateHostRequest({ ...good, day: 11 }, 10)); // < 2 days ahead
     assert.throws(() => validateHostRequest({ ...good, day: 45 }, 10)); // champ week
+  });
+});
+
+describe("hostEligibilityReason", () => {
+  const cfg = { hostedEvents: { minHostXP: 3000 } };
+
+  test("blocks accounts under the XP bar with the requirement spelled out", () => {
+    assert.match(hostEligibilityReason({ xp: 900 }, cfg), /3,000 XP \(you have 900\)/);
+    assert.match(hostEligibilityReason(null, cfg), /you have 0/);
+    assert.match(hostEligibilityReason({ xp: "junk" }, cfg), /you have 0/);
+  });
+
+  test("clears accounts at or above the bar", () => {
+    assert.equal(hostEligibilityReason({ xp: 3000 }, cfg), null);
+    assert.equal(hostEligibilityReason({ xp: 12000 }, cfg), null);
+  });
+
+  test("the committed balance config sets a real bar", () => {
+    const { balance } = require("./store");
+    assert.ok(balance.hostedEvents.minHostXP >= 2000);
   });
 });
 

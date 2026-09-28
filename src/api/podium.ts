@@ -72,6 +72,10 @@ export interface PodiumRouteLeg {
   airfareStaminaCost?: number | null; // the halved travel stamina if flown
   airfarePurchased?: boolean; // director has booked the flight for this leg
   airfareStranded?: boolean; // booked to fly, but the leg rerouted under the floor
+  // Over-ocean leg (to/from Hawaii): the corps MUST fly. `coinCost` is the
+  // fare (charged even on a major) and `staminaCost` is the full, undiscounted
+  // travel stamina — there is no booking to make or decline.
+  mandatoryFlight?: boolean;
   // Set on a joint-rehearsal leg (design §5.12).
   isJoint?: boolean;
   partnerCorpsName?: string | null;

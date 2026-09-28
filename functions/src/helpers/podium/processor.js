@@ -401,9 +401,7 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
         // can't cover the fare the corps drives anyway (full stamina, no charge):
         // an optional upgrade has a free floor, never the ground surcharge.
         const airfare = venues.airfareFor(leg, store.balance);
-        const wantsToFly = Boolean(
-          airfare.eligible && state.airfare && state.airfare[competitionDay]
-        );
+        const wantsToFly = airfare.eligible && Boolean(state.airfare?.[competitionDay]);
         let paidTravel = true;
         let flew = false;
         let coinCharged = 0;
@@ -411,11 +409,16 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
           flew = true;
           coinCharged = airfare.coinCost;
           travelStamina = Math.round(travelStamina * airfare.staminaMultiplier * 10) / 10;
-        } else if (leg && !isMajor && leg.coinCost > 0) {
-          // Ground charge (majors are subsidized). Free floor: an unaffordable
-          // leg becomes a stamina surcharge — the bus still rolls (decision 24).
-          paidTravel = store.debitBudget(state, leg.coinCost, "travel", competitionDay);
-          if (paidTravel) coinCharged = leg.coinCost;
+        } else if (airfare.mandatory || (leg && !isMajor && leg.coinCost > 0)) {
+          // Ground charge (majors are subsidized), or an over-ocean leg's
+          // MANDATORY flight (to/from Hawaii — no bus exists): its fare is owed
+          // even on a major and carries no stamina discount. Free floor: an
+          // unaffordable fare becomes a stamina surcharge — the corps still
+          // travels (decision 24).
+          const fare = airfare.mandatory ? airfare.coinCost : leg.coinCost;
+          flew = Boolean(airfare.mandatory);
+          paidTravel = store.debitBudget(state, fare, flew ? "airfare" : "travel", competitionDay);
+          if (paidTravel) coinCharged = fare;
           else travelStamina += store.balance.travel.unaffordableStaminaSurcharge;
         }
         state.condition.stamina = Math.max(

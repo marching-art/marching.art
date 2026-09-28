@@ -34,6 +34,7 @@ const { paths } = require("../paths");
 const { brandEventName } = require("../branding");
 const venues = require("./venues");
 const store = require("./store");
+const { isHostableArea } = require("./hostingArea");
 
 function eventsCollection(db, seasonUid) {
   return db.collection(`hosted-events/${seasonUid}/events`);
@@ -54,6 +55,30 @@ function tierLockReason(profileData, venueTier, cfg) {
     `${tier.label} unlocks after ${tier.unlock.successful} successful ` +
     `${neededLabel} events (you have ${successful}). Success = drawing at least ` +
     `${cfg.hostedEvents.venueTiers[tier.unlock.tier].successAttendance} corps.`
+  );
+}
+
+/**
+ * The anti-alt experience gate (pure). Booking a show puts it on EVERY
+ * director's schedule, and a fresh account's 1,000-CC starting grant covers a
+ * High School rental — so without a gate, throwaway accounts could flood the
+ * schedule with shows. Hosting needs `minHostXP` lifetime XP: onboarding pays
+ * under a third of it, the rest takes roughly a month of real play (daily
+ * logins, shows, weekly participation), which is cheap for a genuine director
+ * and prohibitive to repeat across a stable of alts. Returns null when the
+ * profile clears the bar, else a human-readable requirement.
+ * @param {{xp?: unknown}|null|undefined} profileData
+ * @param {{hostedEvents: {minHostXP?: number}}} cfg
+ * @returns {string|null}
+ */
+function hostEligibilityReason(profileData, cfg) {
+  const required = cfg.hostedEvents.minHostXP || 0;
+  const xp = Math.max(0, Math.floor(Number(profileData && profileData.xp) || 0));
+  if (xp >= required) return null;
+  return (
+    `Hosting a show requires ${required.toLocaleString("en-US")} XP ` +
+    `(you have ${xp.toLocaleString("en-US")}). Keep playing — XP comes from ` +
+    `competing, daily logins, and weekly participation.`
   );
 }
 
@@ -87,13 +112,21 @@ function validateHostRequest({ eventName, venueTier, day, location }, currentCom
   if (store.MAJOR_DAYS.includes(day)) {
     throw new Error("The majors' days are exclusive — pick another date.");
   }
-  // Any real US/Canadian town can host (tour-map city first, then the hometown
-  // place index) — the same resolver hometowns and live-schedule stops use, so
+  // Any real town can host (tour-map city first, then the hometown place
+  // index) — the same resolver hometowns and live-schedule stops use, so
   // the hosted show gets real travel, heat and timezone math. Text that names
   // no real place is refused rather than booked as a free, unmappable leg.
   const venue = venues.venueFor(location);
   if (!venue) {
-    throw new Error("Host city not recognized — pick a town from the list (any US or Canadian town).");
+    throw new Error("Host city not recognized — pick a town from the list.");
+  }
+  // Shows stay on the Tour Map poster: the lower 48, southern Canada and
+  // northern Mexico. Alaska, Hawaii, the Maritimes east of the frame and the
+  // far north would plot off the map (helpers/podium/hostingArea.js).
+  if (!isHostableArea(venue)) {
+    throw new Error(
+      `${venue.city}, ${venue.region} is off the tour map — shows are limited to the lower 48 states, southern Canada and northern Mexico.`
+    );
   }
   return { eventName: brandEventName(eventName.trim()), venueTier, tier, day, venue };
 }
@@ -371,6 +404,7 @@ async function payoutHostedEvents(db, seasonData, competitionDay) {
 module.exports = {
   eventsCollection,
   tierLockReason,
+  hostEligibilityReason,
   validateHostRequest,
   scheduledVenueIds,
   collectAttendees,

@@ -1,5 +1,6 @@
 /**
- * Hometown search — any real US or Canadian town, not just tour-map cities.
+ * Hometown search — any real US or Canadian town (plus northern Mexico's border
+ * states down to the tour map's southern edge), not just tour-map cities.
  *
  * Backed by src/data/placeIndex.json (functions/src/scripts/buildPlaceIndex.js,
  * GeoNames cities500): the ~500 tour-map cities that host shows, then ~22k
@@ -45,6 +46,9 @@ const REGION_NAMES: Record<string, string> = {
   AB: 'alberta', BC: 'british columbia', MB: 'manitoba', NB: 'new brunswick',
   NL: 'newfoundland and labrador', NS: 'nova scotia', ON: 'ontario',
   PE: 'prince edward island', QC: 'quebec', SK: 'saskatchewan',
+  // Northern Mexico, by ISO 3166-2:MX code (BC/NL are already Canadian).
+  BCN: 'baja california', SON: 'sonora', CHH: 'chihuahua', COA: 'coahuila',
+  NLE: 'nuevo leon', TAM: 'tamaulipas',
 }; // prettier-ignore
 
 /**
@@ -127,7 +131,8 @@ function splitQuery(raw: string): { city: string; region: string } {
   // A trailing region with no comma: "canton oh", "springfield new jersey".
   for (let span = Math.min(4, words.length - 1); span >= 1; span--) {
     const tail = words.slice(-span).join(' ');
-    const isCode = span === 1 && tail.length === 2 && tail.toUpperCase() in REGION_NAMES;
+    const isCode =
+      span === 1 && (tail.length === 2 || tail.length === 3) && tail.toUpperCase() in REGION_NAMES;
     const isName = Object.values(REGION_NAMES).includes(tail);
     if (isCode || isName) return { city: words.slice(0, -span).join(' '), region: tail };
   }
@@ -174,7 +179,7 @@ export function exactPlaceMatches(places: HomePlace[], query: string): HomePlace
 /** Region code for a folded region query ("oh", "ohio"), or null. */
 function regionCodeFor(regionQuery: string): string | null {
   const upper = regionQuery.toUpperCase();
-  if (upper.length === 2 && upper in REGION_NAMES) return upper;
+  if ((upper.length === 2 || upper.length === 3) && upper in REGION_NAMES) return upper;
   for (const [code, name] of Object.entries(REGION_NAMES)) if (name === regionQuery) return code;
   return null;
 }

@@ -1,5 +1,40 @@
 [
   {
+    "id": "2026-09-28-hawaii-travel-costs",
+    "date": "2026-09-28",
+    "title": "Long trips cost more stamina, and ocean legs mean a flight",
+    "category": "balance",
+    "summary": "Travel stamina now grows with distance and has no ceiling. Before, every trip past about 1,200 miles cost the same. A cross-country haul now costs more than a 1,300-mile hop, and a trip to Hawaii costs a lot.",
+    "highlights": [
+      "Short and mid-length trips cost about what they did before. Most trips cost a bit less, and a trip at the far end of its range costs the same as before.",
+      "Legs to or from Hawaii have to fly. The airfare comes out of your Corps Budget even on a major, and flying doesn't halve the stamina hit on these legs.",
+      "The route planner shows the required flight, its fare, and the stamina it costs before you commit."
+    ]
+  },
+  {
+    "id": "2026-09-28-hosting-guardrails",
+    "date": "2026-09-28",
+    "title": "Hosting a show now needs 3,000 XP and a town on the tour map",
+    "category": "improvement",
+    "summary": "To book a show you now need 3,000 lifetime XP, which is about a month of regular play. This keeps throwaway accounts from flooding everyone's schedule. Hosted shows also have to be somewhere on the tour map: the lower 48 states, southern Canada, or northern Mexico.",
+    "highlights": [
+      "The hosting card shows your progress toward 3,000 XP until you reach it.",
+      "Towns that would fall off the map, like Alaska, Hawaii, the Maritimes, and the far north, are greyed out in the town picker.",
+      "Shows that are already booked are staying put."
+    ]
+  },
+  {
+    "id": "2026-09-28-northern-mexico-towns",
+    "date": "2026-09-28",
+    "title": "Northern Mexico towns are on the map",
+    "category": "feature",
+    "summary": "You can now choose a town in Mexico's border states as your hometown or as a place to host a show. That covers Baja California, Sonora, Chihuahua, Coahuila, Nuevo León and Tamaulipas, down to about Monterrey.",
+    "highlights": [
+      "Search by name, like \"Monterrey\" or \"Hermosillo\". State codes are BCN, SON, CHH, COA, NLE and TAM, so they don't get mixed up with British Columbia or Newfoundland.",
+      "Travel, heat, and local show times work for these towns like they do for any other."
+    ]
+  },
+  {
     "id": "2026-09-28-more-daily-challenges",
     "date": "2026-09-28",
     "title": "More variety in your daily challenges",

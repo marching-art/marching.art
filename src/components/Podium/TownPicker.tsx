@@ -41,7 +41,7 @@ export default function TownPicker({
   selected,
   onSelect,
   label = 'Hometown',
-  placeholder = 'Any US or Canadian town (e.g., Brownsburg, IN)',
+  placeholder = 'Any US, Canadian or northern-Mexico town (e.g., Brownsburg, IN)',
   tourBadge = 'Show city',
   unavailable,
 }: TownPickerProps) {
