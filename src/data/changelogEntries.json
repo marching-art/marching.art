@@ -1,5 +1,17 @@
 [
   {
+    "id": "2026-09-28-any-hometown",
+    "date": "2026-09-28",
+    "title": "Your corps can call any town home",
+    "category": "feature",
+    "summary": "Your Podium corps' hometown is no longer limited to cities that have hosted a show. Search for any town in the US or Canada, or tap \"Use my location\" to pick the one you're in. Your tour starts there, and travel is priced from there, same as before.",
+    "highlights": [
+      "Search works with or without the state (\"Canton OH\", \"Canton, Ohio\"), and \"St.\" and \"Saint\" spellings both find the town.",
+      "Towns that host shows are marked \"Show city\" in the list.",
+      "New stops added to the live season schedule are now placed on the map automatically, so travel to them is priced correctly."
+    ]
+  },
+  {
     "id": "2026-09-27-joint-invites-live-city",
     "date": "2026-09-27",
     "title": "Joint rehearsal invites stay up to date with your tour",

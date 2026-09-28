@@ -299,9 +299,10 @@ export interface PodiumAssessment {
 export interface PodiumCarryover {
   corpsName: string | null;
   location: string | null;
-  // The corps' current official home, resolved to a tour-map venue (design
-  // §5.3). Present when the carried home is on the map; the client preselects it
-  // and measures the distance to any new pick for the relocation fee.
+  // The corps' current official home, resolved to a venue (design §5.3) — a
+  // tour-map city or any real US/Canadian town. Present when the carried home
+  // geocodes; the client preselects it and measures the distance to any new
+  // pick for the relocation fee.
   homeVenueId?: string;
   homeCity?: string; // "City, ST"
   homeLat?: number;

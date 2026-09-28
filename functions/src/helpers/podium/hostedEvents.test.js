@@ -41,6 +41,9 @@ describe("validateHostRequest", () => {
     assert.throws(() => validateHostRequest({ ...good, venueTier: "colosseum" }, 10));
     assert.throws(() => validateHostRequest({ ...good, eventName: "ab" }, 10));
     assert.throws(() => validateHostRequest({ ...good, location: "Atlantis, Ocean" }, 10));
+    // A real town that isn't a show city geocodes as a hometown, but hosting
+    // stays on the tour map.
+    assert.throws(() => validateHostRequest({ ...good, location: "Brownsburg, IN" }, 10));
   });
 
   test("rejects the majors' exclusive days and too-soon/too-late dates", () => {

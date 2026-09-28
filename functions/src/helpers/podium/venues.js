@@ -66,17 +66,113 @@ for (const venue of Object.values(gazetteer.venues)) {
 }
 
 /**
- * Resolve a location string to a gazetteer venue, or null. Accepts the
- * historical full-name spelling ("Allentown, Pennsylvania"), the canonical
- * "City, ST" label ("Allentown, PA"), and the state-code-standardized form of
- * any historical spelling even when the gazetteer corrected the city (a typo'd
- * "Severieville, TN" still resolves to the Sevierville venue).
+ * Resolve a location string to a TOUR-MAP venue (a city in the historical show
+ * gazetteer), or null. Accepts the historical full-name spelling ("Allentown,
+ * Pennsylvania"), the canonical "City, ST" label ("Allentown, PA"), and the
+ * state-code-standardized form of any historical spelling even when the
+ * gazetteer corrected the city (a typo'd "Severieville, TN" still resolves to
+ * the Sevierville venue). Strict on purpose: hosting a show is limited to these
+ * cities. Everything else wants `venueFor`, which also knows every real town.
  * @param {string} locationString
  * @returns {{venueId, city, region, lat, lng, timezone?: (string|null)}|null}
  */
-function venueFor(locationString) {
+function tourVenueFor(locationString) {
   const key = normalizeKey(locationString);
   return gazetteer.venues[key] || canonicalIndex[key] || standardizedIndex[key] || null;
+}
+
+// The hometown place index (scripts/buildPlaceIndex.js): every populated place
+// in the US and Canada that ISN'T already a tour-map city — ~24k towns. Loaded
+// on first miss, not at require time, so a function that only ever resolves
+// tour-map cities never pays to parse it.
+let placeIndex = null;
+
+/** key -> venue-shaped place, built once from the committed artifact. */
+function loadPlaceIndex() {
+  if (placeIndex) return placeIndex;
+  const data = require("./placeIndex.json");
+  // Row: [city, region, lat, lng, zoneIndex (-1 = none), asciiName?].
+  const rows = /** @type {Array<[string, string, number, number, number, string?]>} */ (
+    /** @type {unknown} */ (data.places)
+  );
+  const index = new Map();
+  for (const [city, region, lat, lng, zone, ascii] of rows) {
+    const place = {
+      venueId: `${String(ascii || city)
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "")}-${region.toLowerCase()}`,
+      city,
+      region,
+      lat,
+      lng,
+      timezone: zone >= 0 ? data.zones[zone] : null,
+      source: "place",
+    };
+    // Rows are largest-first, so on a (rare) normalized-key collision the more
+    // populous town keeps the name.
+    for (const name of ascii ? [city, ascii] : [city]) {
+      const key = normalizeKey(`${name}, ${region}`);
+      if (key && !index.has(key)) index.set(key, place);
+    }
+  }
+  placeIndex = index;
+  return index;
+}
+
+// "Saint Charles" and "St. Charles" (and Mount/Mt, Fort/Ft) are the same town;
+// GeoNames spells some one way and directors type the other.
+/** @type {Array<[RegExp, string]>} */
+const NAME_ALIASES = [
+  [/\bsaint\b/g, "st"],
+  [/\bsainte\b/g, "ste"],
+  [/\bmount\b/g, "mt"],
+  [/\bfort\b/g, "ft"],
+];
+/** @type {Array<[RegExp, string]>} */
+const REVERSE_ALIASES = [
+  [/\bst\b/g, "saint"],
+  [/\bste\b/g, "sainte"],
+  [/\bmt\b/g, "mount"],
+  [/\bft\b/g, "fort"],
+];
+
+/**
+ * Resolve a location string to ANY real US/Canadian town from the place index
+ * (never a tour-map city — those resolve via `tourVenueFor` first), or null.
+ * Accepts "City, ST", "City, State Name", and Saint/St-style spelling swaps.
+ * @param {string} locationString
+ * @returns {{venueId, city, region, lat, lng, timezone: (string|null), source: string}|null}
+ */
+function placeFor(locationString) {
+  if (!locationString || typeof locationString !== "string") return null;
+  const index = loadPlaceIndex();
+  const keys = new Set([normalizeKey(locationString), normalizeKey(standardizeLocation(locationString))]);
+  for (const key of [...keys]) {
+    for (const table of [NAME_ALIASES, REVERSE_ALIASES]) {
+      let swapped = key;
+      for (const [pattern, replacement] of table) swapped = swapped.replace(pattern, replacement);
+      keys.add(swapped);
+    }
+  }
+  for (const key of keys) {
+    const hit = key && index.get(key);
+    if (hit) return hit;
+  }
+  return null;
+}
+
+/**
+ * Resolve a location string to a venue: the tour-map city when there is one,
+ * else any real US/Canadian town from the place index, else null. This is the
+ * resolver for hometowns, travel legs, heat and timezones — so a director's
+ * small hometown, a legacy free-text location, or a brand-new city DCI adds to
+ * the live schedule is placed on the map with no rebuild.
+ * @param {string} locationString
+ * @returns {{venueId, city, region, lat, lng, timezone?: (string|null), source?: string}|null}
+ */
+function venueFor(locationString) {
+  return tourVenueFor(locationString) || placeFor(locationString);
 }
 
 /**
@@ -209,6 +305,41 @@ function heatStamina(venue, cfg) {
   return Math.min(maxExtraStamina, Math.round(degreesSouth * staminaPerDegreeSouth * 10) / 10);
 }
 
+/**
+ * How a schedule's show locations resolve (pure) — the "new towns" check for a
+ * live season. `tour` cities are on the historical tour map; `geocoded` towns
+ * are real places the tour map has never seen (DCI added a new stop) and were
+ * placed automatically from the hometown place index, so travel, heat and
+ * timezone already work; `unresolved` names no real place — those shows price
+ * as free legs until fixed (a MANUAL_OVERRIDES entry in
+ * scripts/buildVenueGazetteer.js, then a rebuild). Each distinct place is
+ * listed once, however many spellings the schedule uses for it.
+ * @param {Array<{location?: string, eventName?: string}>} competitions
+ * @returns {{total: number, tour: number,
+ *   geocoded: Array<{location: string, resolvedAs: string, eventName: (string|null)}>,
+ *   unresolved: Array<{location: string, eventName: (string|null)}>}}
+ */
+function auditScheduleLocations(competitions) {
+  const seen = new Set();
+  const report = { total: 0, tour: 0, geocoded: [], unresolved: [] };
+  for (const comp of competitions || []) {
+    const location = comp && typeof comp.location === "string" ? comp.location.trim() : "";
+    if (!normalizeKey(location)) continue;
+    const tour = tourVenueFor(location);
+    const place = tour ? null : placeFor(location);
+    // One row per real place ("Canton, OH" and "Canton, Ohio" are one city).
+    const key = (tour || place || {}).venueId || `?${normalizeKey(location)}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    report.total += 1;
+    const eventName = (comp && comp.eventName) || null;
+    if (tour) report.tour += 1;
+    else if (place) report.geocoded.push({ location, resolvedAs: `${place.city}, ${place.region}`, eventName });
+    else report.unresolved.push({ location, eventName });
+  }
+  return report;
+}
+
 // The branded majors' fixed sites (schedule generator hard-codes these),
 // plus Championship Week in Indianapolis — subsidized travel like every
 // major (isMajor derives from membership here).
@@ -225,6 +356,8 @@ const MAJOR_VENUES = {
 module.exports = {
   normalizeKey,
   venueFor,
+  tourVenueFor,
+  placeFor,
   stadiumFor,
   timezoneFor,
   haversineMiles,
@@ -233,5 +366,6 @@ module.exports = {
   relocationFee,
   airfareFor,
   heatStamina,
+  auditScheduleLocations,
   MAJOR_VENUES,
 };
