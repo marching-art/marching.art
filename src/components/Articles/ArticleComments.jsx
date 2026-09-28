@@ -33,8 +33,10 @@ import toast from 'react-hot-toast';
 // Maximum comment length
 const MAX_COMMENT_LENGTH = 1000;
 
-// Format relative time
-/** @param {string | number | Date} dateString */
+/**
+ * Format relative time
+ * @param {string} dateString
+ */
 function formatRelativeTime(dateString) {
   const date = new Date(dateString);
   const now = new Date();
@@ -54,11 +56,11 @@ function formatRelativeTime(dateString) {
 /**
  * Single comment component
  * @param {{
- *   comment: ArticleComment,
- *   currentUserId: string | undefined,
- *   onEdit: (comment: ArticleComment) => void,
- *   onDelete: (commentId: string) => void,
- *   onReport: (commentId: string, reason: string) => Promise<void>,
+ *   comment: ArticleComment;
+ *   currentUserId: string | undefined;
+ *   onEdit: (comment: ArticleComment) => void;
+ *   onDelete: (commentId: string) => void;
+ *   onReport: (commentId: string, reason: string) => Promise<void>;
  * }} props
  */
 function Comment({ comment, currentUserId, onEdit, onDelete, onReport }) {
@@ -266,11 +268,11 @@ function Comment({ comment, currentUserId, onEdit, onDelete, onReport }) {
 /**
  * ArticleComments - Full comments section
  * @param {{
- *   articleId: string,
- *   initialComments?: ArticleComment[] | null,
- *   initialCount?: number,
- *   onCommentCountChange?: (count: number) => void,
- *   autoExpand?: boolean,
+ *   articleId: string;
+ *   initialComments?: ArticleComment[] | null;
+ *   initialCount?: number;
+ *   onCommentCountChange?: (count: number) => void;
+ *   autoExpand?: boolean;
  * }} props
  */
 export default function ArticleComments({
@@ -280,6 +282,7 @@ export default function ArticleComments({
   onCommentCountChange,
   autoExpand = false,
 }) {
+  // Public article pages render outside AuthProvider, where useAuth() is null.
   const user = useAuth()?.user;
   const [comments, setComments] = useState(/** @type {ArticleComment[]} */ (initialComments || []));
   const [commentCount, setCommentCount] = useState(initialCount);
@@ -628,7 +631,7 @@ export default function ArticleComments({
 
 /**
  * Compact comment count for article cards
- * @param {{ count: number, onClick?: () => void }} props
+ * @param {{ count: number; onClick?: () => void }} props
  */
 export function CommentCount({ count, onClick }) {
   if (count === 0) return null;
