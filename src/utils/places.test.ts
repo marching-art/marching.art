@@ -3,6 +3,7 @@ import {
   exactPlaceMatches,
   foldPlaceText,
   loadPlaces,
+  makeTownResolver,
   nearestPlace,
   relocationFeeBetween,
   searchPlaces,
@@ -112,5 +113,20 @@ describe('exactPlaceMatches', () => {
     expect(labels(exactPlaceMatches(places, 'Brownsburg, Indiana'))).toEqual(['Brownsburg, IN']);
     expect(exactPlaceMatches(places, 'Brownsburg')).toEqual([]);
     expect(exactPlaceMatches(places, 'Browns, IN')).toEqual([]);
+  });
+});
+
+describe('northern Mexico towns', () => {
+  it('searches by ISO state code or state name without clashing with Canada', () => {
+    expect(labels(searchPlaces(places, 'monterrey, nle', 5))[0]).toBe('Monterrey, NLE');
+    expect(labels(searchPlaces(places, 'monterrey nuevo leon', 5))[0]).toBe('Monterrey, NLE');
+    expect(labels(searchPlaces(places, 'hermosillo', 5))).toContain('Hermosillo, SON');
+    expect(labels(searchPlaces(places, 'vancouver, bc', 5))[0]).toBe('Vancouver, BC');
+  });
+
+  it('resolves schedule locations through the town resolver', () => {
+    const resolve = makeTownResolver(places);
+    expect(resolve('Saltillo, COA')?.region).toBe('COA');
+    expect(resolve('Ciudad Juarez, Chihuahua')?.region).toBe('CHH');
   });
 });

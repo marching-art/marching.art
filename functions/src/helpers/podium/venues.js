@@ -229,8 +229,74 @@ function travelTierFor(miles, cfg) {
 }
 
 /**
+ * Travel stamina for a leg of `roadMiles`, proportional to distance and with
+ * NO ceiling (pure). The finite tiers' upper bounds are the curve's anchors —
+ * (local max, 0), (day-trip max, its stamina), … (long-haul max, its stamina)
+ * — interpolated linearly between them, so a leg at the top of a tier costs
+ * exactly that tier's stamina and a shorter leg proportionally less. Past the
+ * last finite tier the cost keeps climbing at `travel.staminaPerMileBeyond`
+ * per road mile: a coast-to-coast bus costs more than a 1,300-mile hop, and a
+ * mainland-to-Hawaii leg (and the leg back) costs the membership dearly
+ * instead of topping out at the old flat Cross-Country figure.
+ *
+ * An override doc that predates `staminaPerMileBeyond` keeps the legacy step
+ * behavior (the bucket's flat stamina) so a stale config never reprices tours
+ * mid-season by accident.
+ * @param {number} roadMiles
+ * @param {object} cfg balanceConfig
+ * @returns {number} stamina, rounded to a tenth
+ */
+function travelStaminaForMiles(roadMiles, cfg) {
+  const travel = cfg.travel;
+  const perMileBeyond = travel.staminaPerMileBeyond;
+  if (!(roadMiles > 0)) return 0;
+  if (!(perMileBeyond >= 0)) return travelTierFor(roadMiles / travel.roadFactor, cfg).staminaCost;
+  // Finite tiers only; the open-ended last tier is the per-mile tail.
+  const anchors = travel.tiers
+    .slice(0, -1)
+    .map((tier, index) => [tier.maxMiles, index === 0 ? 0 : tier.staminaCost]);
+  if (!anchors.length) return Math.round(roadMiles * perMileBeyond * 10) / 10;
+  if (roadMiles <= anchors[0][0]) return 0;
+  let stamina = null;
+  for (let i = 1; i < anchors.length; i += 1) {
+    const [loMiles, loStamina] = anchors[i - 1];
+    const [hiMiles, hiStamina] = anchors[i];
+    if (roadMiles <= hiMiles) {
+      stamina = loStamina + ((roadMiles - loMiles) / (hiMiles - loMiles)) * (hiStamina - loStamina);
+      break;
+    }
+  }
+  if (stamina === null) {
+    const [lastMiles, lastStamina] = anchors[anchors.length - 1];
+    stamina = lastStamina + (roadMiles - lastMiles) * perMileBeyond;
+  }
+  return Math.round(stamina * 10) / 10;
+}
+
+// Regions no bus reaches: any leg to or from one crosses open ocean, so it is a
+// MANDATORY flight (airfareFor) — fare always charged, no stamina discount.
+const OVERWATER_REGIONS = new Set(["HI"]);
+
+/**
+ * True when a leg between two distinct venues crosses open ocean (either end
+ * is in an OVERWATER_REGION — the mainland to Hawaii, or island to island).
+ * @param {{venueId?: string, region?: string}|null} fromVenue
+ * @param {{venueId?: string, region?: string}|null} toVenue
+ * @returns {boolean}
+ */
+function isOverwaterLeg(fromVenue, toVenue) {
+  if (!fromVenue || !toVenue || fromVenue.venueId === toVenue.venueId) return false;
+  const regionOf = (venue) => String(venue.region || "").toUpperCase();
+  return OVERWATER_REGIONS.has(regionOf(fromVenue)) || OVERWATER_REGIONS.has(regionOf(toVenue));
+}
+
+/**
  * Travel leg between two venues (either may be null -> null leg, no cost).
- * @returns {{tier: string, miles: number, coinCost: number, staminaCost: number}|null}
+ * The tier labels the leg and prices its bus fare; stamina is the uncapped
+ * distance curve (travelStaminaForMiles). An over-ocean leg is flagged
+ * `overwater` — airfareFor turns it into a mandatory, full-stamina flight.
+ * @returns {{tier: string, miles: number, coinCost: number, staminaCost: number,
+ *   overwater?: boolean}|null}
  */
 function travelLeg(fromVenue, toVenue, cfg) {
   if (!fromVenue || !toVenue) return null;
@@ -242,7 +308,8 @@ function travelLeg(fromVenue, toVenue, cfg) {
     tier: tier.key,
     miles: tier.roadMiles,
     coinCost: tier.coinCost,
-    staminaCost: tier.staminaCost,
+    staminaCost: travelStaminaForMiles(tier.roadMiles, cfg),
+    ...(isOverwaterLeg(fromVenue, toVenue) ? { overwater: true } : {}),
   };
 }
 
@@ -274,12 +341,28 @@ function relocationFee(fromVenue, toVenue, cfg) {
  * true, and eligibility is a config-driven tier list (the ~600-mile floor is
  * tunable, never a magic number). Defensive against an override doc that
  * predates the airfare config: no config → nothing is flyable.
- * @param {{tier: string, miles: number}|null} leg a travelLeg result
+ *
+ * An OVER-OCEAN leg (leg.overwater — to or from Hawaii) is different: there is
+ * no bus, so the flight is MANDATORY. It returns `mandatory: true` with the
+ * same per-mile fare and a stamina multiplier of 1 — the fare is always
+ * charged and the membership still eats the full travel-stamina hit. It is
+ * never `eligible` (there's nothing to opt into), so the route portal can't
+ * book or un-book it.
+ * @param {{tier: string, miles: number, overwater?: boolean}|null} leg a travelLeg result
  * @param {object} cfg balanceConfig
- * @returns {{eligible: boolean, coinCost: number, staminaMultiplier: number}}
+ * @returns {{eligible: boolean, coinCost: number, staminaMultiplier: number, mandatory?: boolean}}
  */
 function airfareFor(leg, cfg) {
   const air = cfg.travel && cfg.travel.airfare;
+  if (leg && leg.overwater && leg.miles > 0) {
+    const milesPerCoin = (air && air.milesPerCoin) || 2;
+    return {
+      eligible: false,
+      mandatory: true,
+      coinCost: Math.ceil(leg.miles / milesPerCoin),
+      staminaMultiplier: 1,
+    };
+  }
   if (!leg || !air || !Array.isArray(air.eligibleTiers) || !air.eligibleTiers.includes(leg.tier)) {
     return { eligible: false, coinCost: 0, staminaMultiplier: 1 };
   }
@@ -362,7 +445,9 @@ module.exports = {
   timezoneFor,
   haversineMiles,
   travelTierFor,
+  travelStaminaForMiles,
   travelLeg,
+  isOverwaterLeg,
   relocationFee,
   airfareFor,
   heatStamina,

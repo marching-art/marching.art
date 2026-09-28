@@ -1,6 +1,9 @@
 /**
  * Location string standardization: convert a show location to the canonical
- * "City, ST" form, where ST is the two-letter US state / Canadian province code.
+ * "City, ST" form, where ST is the two-letter US state / Canadian province code
+ * (or, for the northern-Mexico border states, the three-letter ISO 3166-2:MX
+ * code — "Monterrey, NLE" — since Mexico's customary "BC"/"NL" would collide
+ * with British Columbia / Newfoundland).
  *
  * WHY: schedule locations enter the game from two eras that spell the region
  * differently. The From The Pressbox archive (2000-2012) spells states out in
@@ -42,14 +45,27 @@ const CA_PROVINCES = {
   PE: "Prince Edward Island", QC: "Quebec", SK: "Saskatchewan",
 };
 
-// Lowercased full name -> two-letter code (US state codes and CA province codes
-// do not overlap, so a single map is unambiguous).
-const CODE_BY_NAME = {};
-for (const [code, name] of Object.entries(US_STATES)) CODE_BY_NAME[name.toLowerCase()] = code;
-for (const [code, name] of Object.entries(CA_PROVINCES)) CODE_BY_NAME[name.toLowerCase()] = code;
+// Northern Mexico — the six US-border states, keyed by ISO 3166-2:MX code.
+const MX_STATES = {
+  BCN: "Baja California", SON: "Sonora", CHH: "Chihuahua", COA: "Coahuila",
+  NLE: "Nuevo Leon", TAM: "Tamaulipas",
+};
+// Other spellings the full name arrives in (accents are folded before lookup).
+const MX_NAME_ALIASES = { "coahuila de zaragoza": "COA", "baja california norte": "BCN" };
 
-// Set of valid two-letter codes (upper-case) for the "already abbreviated" path.
-const VALID_CODES = new Set([...Object.keys(US_STATES), ...Object.keys(CA_PROVINCES)]);
+// Lowercased, accent-folded full name -> code (US, CA and MX codes do not
+// overlap, so a single map is unambiguous).
+const CODE_BY_NAME = { ...MX_NAME_ALIASES };
+for (const regions of [US_STATES, CA_PROVINCES, MX_STATES]) {
+  for (const [code, name] of Object.entries(regions)) CODE_BY_NAME[name.toLowerCase()] = code;
+}
+
+// Set of valid region codes (upper-case) for the "already abbreviated" path.
+const VALID_CODES = new Set([
+  ...Object.keys(US_STATES),
+  ...Object.keys(CA_PROVINCES),
+  ...Object.keys(MX_STATES),
+]);
 
 // State/province names run one to three words ("Ohio", "New Jersey",
 // "District of Columbia"), so region detection tries trailing spans up to 3.
@@ -62,7 +78,12 @@ function cleanCity(text) {
 
 /** Fold a candidate region token to a two-letter code, or null. */
 function regionToCode(candidate) {
-  const name = candidate.toLowerCase().replace(/\.$/, "").trim();
+  const name = candidate
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\.$/, "")
+    .trim();
   if (CODE_BY_NAME[name]) return CODE_BY_NAME[name];
   const code = candidate.toUpperCase().replace(/[.\s]/g, "");
   if (VALID_CODES.has(code)) return code;
@@ -143,4 +164,4 @@ function isUnknownLocation(location) {
   return /^unknown(\s+location)?$/i.test(trimmed);
 }
 
-module.exports = { standardizeLocation, isUnknownLocation, US_STATES, CA_PROVINCES };
+module.exports = { standardizeLocation, isUnknownLocation, US_STATES, CA_PROVINCES, MX_STATES };

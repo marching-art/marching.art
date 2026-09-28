@@ -111,6 +111,24 @@ const ROUTE_COLS = 'grid grid-cols-[2.25rem_minmax(0,1fr)_auto_auto_auto] gap-x-
 // priced against the leg the corps actually flies. Shown only on eligible
 // (over-the-floor) legs; disabled to book when the Budget can't cover the fare.
 /**
+ * An over-ocean leg (to/from Hawaii): the flight isn't optional, so there's no
+ * toggle — just the fare the nightly run will charge and the full stamina hit.
+ * @param {{ leg: PodiumRouteLeg }} props
+ */
+function MandatoryFlightNote({ leg }) {
+  return (
+    <div className="px-3 py-1 border-t border-line-subtle bg-surface-sunken/40 flex items-center gap-1.5 text-[9px] text-muted">
+      <Plane className="w-3 h-3 shrink-0 text-red-400" />
+      <span className="truncate">
+        Over-ocean flight required —{' '}
+        <span className="text-red-400 font-bold">{leg.coinCost} CC</span> from Budget, full −
+        {leg.staminaCost} travel stamina (no flight discount).
+      </span>
+    </div>
+  );
+}
+
+/**
  * @param {{
  *   leg: PodiumRouteLeg,
  *   budgetBalance: number,
@@ -721,6 +739,13 @@ export default function CorpsConditionPanel({ podium }) {
                         >
                           <Plane className="w-3 h-3" /> −{leg.airfareStaminaCost}
                         </span>
+                      ) : leg.mandatoryFlight ? (
+                        <span
+                          className="inline-flex items-center gap-0.5"
+                          title="Over-ocean flight — required, and no stamina discount"
+                        >
+                          <Plane className="w-3 h-3" /> −{leg.staminaCost}
+                        </span>
                       ) : leg.staminaCost > 0 ? (
                         `−${leg.staminaCost}`
                       ) : (
@@ -728,7 +753,9 @@ export default function CorpsConditionPanel({ podium }) {
                       )}
                     </span>
                   </div>
-                  {leg.airfareEligible && leg.isToday ? (
+                  {leg.mandatoryFlight ? (
+                    <MandatoryFlightNote leg={leg} />
+                  ) : leg.airfareEligible && leg.isToday ? (
                     <TodayAirfareNote leg={leg} />
                   ) : leg.airfareEligible ? (
                     <AirfareRow
@@ -759,7 +786,8 @@ export default function CorpsConditionPanel({ podium }) {
           <span className="text-brand font-bold">Gold</span> stops — majors &amp; championship week
           — are attended automatically. Every other stop is a show you added on the Schedule page.
           Long legs offer <span className="text-interactive font-bold">airfare</span> (1 CC per 2
-          miles from the Corps Budget) to halve their travel-stamina hit.
+          miles from the Corps Budget) to halve their travel-stamina hit. Legs over the ocean (to or
+          from Hawaii) must fly: the fare is always charged and there&apos;s no stamina discount.
         </p>
       </div>
 

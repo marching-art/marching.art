@@ -126,6 +126,8 @@ export const HOSTING_RULES = {
   nameMin: 3,
   nameMax: 60,
   maxEventsPerSeasonPerHost: 1,
+  // Anti-alt gate: lifetime XP needed before a director can host a show.
+  minHostXP: 3000,
 };
 
 // Podium Rookie Journey — client mirror of PODIUM_JOURNEY_STEPS in

@@ -60,6 +60,15 @@ exports.hostEvent = onCall({ cors: true, secrets: [discordEventsWebhookUrl] }, a
   if (Object.values(corpsMap).filter(Boolean).length === 0) {
     throw new HttpsError("failed-precondition", "Field a corps before hosting events.");
   }
+  // Experience gate (anti-alt): a throwaway account can't put shows on the
+  // schedule until it has played long enough to earn minHostXP.
+  const eligibilityReason = hostedEvents.hostEligibilityReason(
+    profileSnapshotPre.exists ? profileSnapshotPre.data() : null,
+    store.balance
+  );
+  if (eligibilityReason) {
+    throw new HttpsError("failed-precondition", eligibilityReason);
+  }
   // Venue ladder (decision 27): bigger stadiums are earned by running
   // successful smaller shows, never bought outright.
   const lockReason = hostedEvents.tierLockReason(

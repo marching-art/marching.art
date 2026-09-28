@@ -241,7 +241,9 @@ function buildRouteLegs(state, upcoming, { jointByDay, locations, today = 0 }) {
       label: store.championshipEventFor(day) || MAJOR_ROUTE_LABELS[day] || null,
       tier: leg ? leg.tier : null,
       miles: leg ? leg.miles : null,
-      coinCost: leg && !isMajor ? leg.coinCost : 0,
+      // An over-ocean leg is a mandatory flight: its fare replaces the bus fare
+      // and is owed even on a major (the subsidy covers ground travel only).
+      coinCost: airfare.mandatory ? airfare.coinCost : leg && !isMajor ? leg.coinCost : 0,
       staminaCost: rawStamina,
       heat: venues.heatStamina(venue, store.balance),
       isMajor,
@@ -254,12 +256,15 @@ function buildRouteLegs(state, upcoming, { jointByDay, locations, today = 0 }) {
         ? Math.round(rawStamina * airfare.staminaMultiplier * 10) / 10
         : null,
       airfarePurchased,
+      // Over-ocean leg (to/from Hawaii): the corps must fly — fare charged,
+      // full travel stamina, nothing to book or decline.
+      mandatoryFlight: Boolean(airfare.mandatory),
       // A stored fly intent whose leg has since rerouted under the airfare floor
       // (design §5.3): the flag lingers but the leg can no longer fly, so the
       // nightly processor will never charge it. Surfaced so the portal can say
       // so rather than silently dropping the booking — which reads like a lost
       // purchase and leaves the director wondering where their CorpsCoin went.
-      airfareStranded: airfareFlagged && !airfare.eligible,
+      airfareStranded: airfareFlagged && !airfare.eligible && !airfare.mandatory,
     });
     if (venue) cursor = venue;
   }

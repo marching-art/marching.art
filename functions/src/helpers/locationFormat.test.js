@@ -102,3 +102,18 @@ describe("isUnknownLocation", () => {
     assert.equal(isUnknownLocation("Unknown City, TN"), false);
   });
 });
+
+describe("standardizeLocation — northern Mexico", () => {
+  test("folds border-state names (accented or not) to ISO 3166-2:MX codes", () => {
+    assert.equal(standardizeLocation("Monterrey, Nuevo León"), "Monterrey, NLE");
+    assert.equal(standardizeLocation("Monterrey, Nuevo Leon"), "Monterrey, NLE");
+    assert.equal(standardizeLocation("Saltillo, Coahuila de Zaragoza"), "Saltillo, COA");
+    assert.equal(standardizeLocation("Hermosillo, sonora"), "Hermosillo, SON");
+    assert.equal(standardizeLocation("Reynosa, tam"), "Reynosa, TAM");
+  });
+
+  test("leaves Canadian BC/NL untouched", () => {
+    assert.equal(standardizeLocation("Vancouver, British Columbia"), "Vancouver, BC");
+    assert.equal(standardizeLocation("Gander, NL"), "Gander, NL");
+  });
+});

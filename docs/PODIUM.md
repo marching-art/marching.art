@@ -451,9 +451,15 @@ is stamped with its resolved `venueId` + coordinates, so schedule docs are self-
 downstream distance math is trivial and deterministic. A never-seen live-season city falls back in
 tiers: fuzzy match → one cached geocoding call → state centroid + admin-review flag; scoring never
 blocks on it. Distance itself is haversine × 1.2 road factor, then **bucketed into travel tiers**
-(Local &lt;75 mi / Day Trip / Overnight Haul / Long Haul / Cross-Country &gt;1,200 mi) — buckets, not raw
-mileage, are the gameplay interface: legible to players, tunable in `podium-config/balance`, and
-free of false precision. A corps' route is the chain of legs between its consecutive attended
+(Local &lt;75 mi / Day Trip / Overnight Haul / Long Haul / Cross-Country &gt;1,200 mi). The tier names
+the leg and prices its bus fare; **stamina is proportional and uncapped**
+(`venues.travelStaminaForMiles`): linear between the tiers' ceilings (a leg at a tier's ceiling
+costs exactly that tier's stamina) and `travel.staminaPerMileBeyond` per road mile past Long Haul,
+so a coast-to-coast haul out-costs a 1,300-mile hop and a mainland↔Hawaii leg costs ~25–45.
+**Over-ocean legs** (either end in Hawaii — `venues.isOverwaterLeg`) are **mandatory flights**:
+`airfareFor` returns `mandatory`, the fare (1 CC per 2 mi) is charged even on a major (surcharge
+if the Budget can't cover it), and there is no stamina discount. Joint rehearsals still price by
+tier. A corps' route is the chain of legs between its consecutive attended
 shows, and the season's first leg starts from the corps' **official home** — the `home` a director
 sets at registration, and where spring training is housed. Costs are shown in the weekly show
 picker _before_ selections are confirmed, so routing is played as an open-information puzzle, and
@@ -461,7 +467,8 @@ hosted events (§5.10) slot in automatically because hosts choose their town thr
 resolver. Locations resolve in two layers (`venues.venueFor`): the historical show **gazetteer**
 (`venueGazetteer.json`, ~500 cities — the tour map) first, then the **place index**
 (`placeIndex.json`, `scripts/buildPlaceIndex.js`: every US/Canadian town in GeoNames cities500,
-~22k more, timezone-stamped). Any real town therefore gets travel, heat and timezone math — a
+~22k more, plus the six northern-Mexico border states down to the poster's southern edge — ISO
+codes `BCN/SON/CHH/COA/NLE/TAM` so they never collide with BC/NL — timezone-stamped). Any real town therefore gets travel, heat and timezone math — a
 hometown, a hosted show, or a brand-new stop DCI adds to the live schedule (logged by the schedule
 refresh and listed on the admin Schedule Coverage card).
 
@@ -797,7 +804,9 @@ Podium:
   writes a real achievement to the winners' trophy cases. Leagues can host from the league bank
   (FMA's league-championship culture, productized).
 - **Guardrails:** hosted-event cap per day (protects schedule legibility), host must field a corps
-  that season, payouts tuned so the average host roughly breaks even and a _good_ host profits —
+  that season and hold `hostedEvents.minHostXP` (3,000) lifetime XP — the anti-alt bar, since a
+  fresh account's starting CC covers a rental — and the town must land on the Tour Map poster
+  (lower 48, southern Canada, northern Mexico; `helpers/podium/hostingArea.js`), payouts tuned so the average host roughly breaks even and a _good_ host profits —
   hosting is a skill sink, not a faucet. Scores at hosted events are computed identically to any
   other show; hosting confers zero competitive advantage.
 

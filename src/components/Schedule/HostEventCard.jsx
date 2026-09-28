@@ -15,6 +15,7 @@ import { useSeasonStore } from '../../store/seasonStore';
 import { useScheduleStore } from '../../store/scheduleStore';
 import { resolveVenueId } from '../../utils/venues';
 import { loadPlaces, makeTownResolver, placeIdentity } from '../../utils/places';
+import { isHostableArea } from '../../utils/hostingArea';
 import TownPicker from '../Podium/TownPicker';
 import { formatEventName } from '../../utils/season';
 import { VENUE_TIERS, HOSTING_RULES } from '../Podium/podiumConstants';
@@ -53,7 +54,7 @@ export default function HostEventCard({ seasonUid, events = null, onReload }) {
   const [error, setError] = useState(/** @type {string|null} */ (null));
   const [success, setSuccess] = useState(/** @type {string|null} */ (null));
 
-  // Any real US/Canadian town can host. Load the town index (shared with the
+  // Any real town on the tour map can host. Load the town index (shared with the
   // picker, fetched once) so schedule locations off the tour map resolve too.
   useEffect(() => {
     // Only once the card is live — the Schedule page renders it unconditionally.
@@ -71,8 +72,9 @@ export default function HostEventCard({ seasonUid, events = null, onReload }) {
 
   const resolveTown = useMemo(() => (places ? makeTownResolver(places) : null), [places]);
 
-  // Towns already on the season schedule (scraped shows + other hosted events)
-  // can't be booked again — a tour-map city by venueId (any historical
+  // Towns off the tour map (Alaska, Hawaii, the Maritimes, the far north) can't
+  // host (server-enforced in validateHostRequest). Towns already on the season
+  // schedule (scraped shows + other hosted events) can't be booked again — a tour-map city by venueId (any historical
   // spelling), any other town by its resolved identity.
   const takenPlaces = useMemo(() => {
     const taken = new Set();
@@ -90,7 +92,10 @@ export default function HostEventCard({ seasonUid, events = null, onReload }) {
 
   const unavailable = useCallback(
     /** @param {HomePlace} place */
-    (place) => (takenPlaces.has(placeIdentity(place)) ? 'On schedule' : null),
+    (place) => {
+      if (!isHostableArea(place)) return 'Off the map';
+      return takenPlaces.has(placeIdentity(place)) ? 'On schedule' : null;
+    },
     [takenPlaces]
   );
 
@@ -98,6 +103,10 @@ export default function HostEventCard({ seasonUid, events = null, onReload }) {
 
   const corpsCoin = profile?.corpsCoin || 0;
   const hasCorps = Object.values(profile?.corps || {}).filter(Boolean).length > 0;
+  // Experience gate (server-enforced in the hostEvent callable): fresh accounts
+  // can't put shows on everyone's schedule until they've played a while.
+  const xp = Math.max(0, Math.floor(Number(profile?.xp) || 0));
+  const needsXP = xp < HOSTING_RULES.minHostXP;
   // One show per director per season (server-enforced in the hostEvent
   // callable; mirrored here so the form self-disables once you've hosted).
   const myEventsThisSeason = (events || []).filter((e) => e.hostUid === currentUid).length;
@@ -169,15 +178,38 @@ export default function HostEventCard({ seasonUid, events = null, onReload }) {
         School events open the College Bowl, 3 successful College Bowls open the NFL Stadium. Days{' '}
         {minDay}&ndash;{HOSTING_RULES.lastHostableDay}; the majors' days (
         {HOSTING_RULES.majorDays.join(', ')}) are exclusive. One show per director per season. Host
-        in any US or Canadian town &mdash; towns already on the schedule are greyed out, since each
-        town hosts one show per season.
+        in any town on the tour map &mdash; the lower 48 states, southern Canada and northern
+        Mexico. Towns already on the schedule are greyed out, since each town hosts one show per
+        season. Hosting unlocks at {HOSTING_RULES.minHostXP.toLocaleString()} XP.
       </p>
 
       {!hasCorps && (
         <div className="text-[10px] text-warning">Field a corps before hosting events.</div>
       )}
 
-      {hasCorps && seasonLimitReached && (
+      {hasCorps && needsXP && (
+        <div className="space-y-1">
+          <div className="text-[10px] text-warning">
+            Hosting unlocks at {HOSTING_RULES.minHostXP.toLocaleString()} XP — you have{' '}
+            {xp.toLocaleString()}. Keep competing, logging in, and playing weekly to get there.
+          </div>
+          <div
+            className="h-1 bg-surface-sunken border border-line-subtle"
+            role="progressbar"
+            aria-label="XP toward hosting"
+            aria-valuemin={0}
+            aria-valuemax={HOSTING_RULES.minHostXP}
+            aria-valuenow={xp}
+          >
+            <div
+              className="h-full bg-warning"
+              style={{ width: `${Math.min(100, (xp / HOSTING_RULES.minHostXP) * 100)}%` }}
+            />
+          </div>
+        </div>
+      )}
+
+      {hasCorps && !needsXP && seasonLimitReached && (
         <div className="text-[10px] text-warning">
           You&apos;ve already hosted a show this season — directors can host one show per season.
         </div>
@@ -242,7 +274,7 @@ export default function HostEventCard({ seasonUid, events = null, onReload }) {
             schedule. No free-text guessing, no double-booking a town. */}
         <TownPicker
           label="Host town"
-          placeholder="Any US or Canadian town"
+          placeholder="Lower 48, southern Canada or northern Mexico"
           tourBadge={null}
           query={venueQuery}
           onQueryChange={setVenueQuery}
@@ -270,7 +302,12 @@ export default function HostEventCard({ seasonUid, events = null, onReload }) {
           <button
             type="submit"
             disabled={
-              busy || !hasCorps || seasonLimitReached || !selectedVenue || corpsCoin < tier.rentalCC
+              busy ||
+              !hasCorps ||
+              needsXP ||
+              seasonLimitReached ||
+              !selectedVenue ||
+              corpsCoin < tier.rentalCC
             }
             className="px-3 py-1.5 rounded-none text-[10px] font-bold uppercase tracking-wider
                   bg-interactive text-white disabled:bg-line disabled:text-muted press-feedback"

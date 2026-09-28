@@ -196,7 +196,7 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
   if (!homeVenue) {
     throw new HttpsError(
       "invalid-argument",
-      "We couldn't place that hometown — pick your town from the list (any US or Canadian town works)."
+      "We couldn't place that hometown — pick your town from the list (any US, Canadian or northern-Mexico town works)."
     );
   }
   const homeLabel = `${homeVenue.city}, ${homeVenue.region}`;
