@@ -65,7 +65,13 @@ function touchesProtectedProfileFields() {
     // setAccountRestriction admin callable; the zero-sum callables trust it via
     // assertNotRestricted, so a client write would let a restricted alt lift
     // its own block and resume farming votes/pools.
-    'moderation'
+    'moderation',
+    // Login streak, Streak Freeze, weekly challenge arc and the daily-act
+    // stamps (helpers/dailyActs.js). claimDailyLogin pays streak milestones
+    // off loginStreak and completeDailyChallenge pays the weekly arc off
+    // weeklyLoop.countedDays, so a client write would mint a 100-day
+    // milestone or a perfect week for free. Written only by Cloud Functions.
+    'engagement'
   ]);
 }
 
@@ -315,7 +321,7 @@ match /artifacts/{appId}/users/{userId} {
   // allowlist (helpers/publicProfilePages.js). Bulk enumeration is closed
   // separately: the `profile` collection-group rule below is admin-only.
   // Owners may update cosmetic/preference fields (corps details, settings,
-  // display name, engagement, etc.) but NOT the protected
+  // display name, etc.) but NOT the protected
   // economy/progression fields (including the challenges ledger) — those
   // change only via Cloud Functions.
   // Creation is owned by the createUserProfile callable, which atomically

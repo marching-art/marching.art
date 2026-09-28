@@ -11,8 +11,8 @@
  */
 
 /**
- * The full pool of rotating challenges. Three are offered per game day.
- * XP values are intentionally small next to dailyLogin (25 XP) so the
+ * The full pool of rotating challenges. CHALLENGES_PER_DAY are offered per
+ * game day, drawn only from the ones this director is eligible for. XP values are intentionally small next to dailyLogin (25 XP) so the
  * challenge loop supplements rather than replaces the streak loop.
  *
  * Every challenge is a DECISION with a server-verifiable outcome — the
@@ -46,12 +46,53 @@
  * @property {string} label
  * @property {number} xp
  * @property {(profile: any, gameDay?: string, context?: ChallengeContext) => boolean} verify
+ * @property {((profile: any) => boolean)} [eligible]
+ *   - Whether this challenge belongs in this director's rotation at all — a
+ *     STABLE fact of the profile (fields a lineup corps, belongs to a league).
+ *     Ineligible challenges never enter the day's draw, so a director is only
+ *     ever dealt things they can do (see getChallengesForGameDay).
  * @property {((profile: any, context?: ChallengeContext) => boolean)} [available]
- *   - Whether this director could satisfy the challenge at all today. A
- *     challenge that is unavailable drops out of the day's REQUIRED set (see
- *     getRequiredChallengeIds) so the weekly arc stays winnable; it can still
- *     be claimed if somehow satisfied.
+ *   - Whether an eligible challenge can be satisfied TODAY, from facts that
+ *     change within a season (no prediction question exists yet for a
+ *     brand-new director). An unavailable challenge stays dealt but drops out
+ *     of the day's REQUIRED set (see getRequiredChallengeIds) so the weekly arc
+ *     stays winnable; it can still be claimed if somehow satisfied.
  */
+
+/**
+ * Same-day acts that leave no per-day trace of their own (a reaction doc is
+ * overwritten, a like is a boolean), so the callable that performs each one
+ * stamps the game day onto the director's profile at
+ * `engagement.dailyActs.<act>` (helpers/dailyActs.recordDailyAct). The
+ * `engagement` map is server-only in firestore.rules, so the stamp is proof
+ * the act went through the callable — a verifier reads one field and needs no
+ * cross-document query.
+ */
+const DAILY_ACTS = Object.freeze({
+  REACT_TO_NEWS: "reactToNews",
+  APPLAUD_DESIGN: "applaudDesign",
+  LEAGUE_CHAT: "leagueChat",
+});
+
+/**
+ * Whether the director performed a stamped daily act on this game day.
+ * @param {any} profile
+ * @param {string} act - A DAILY_ACTS value
+ * @param {string} [gameDay]
+ * @returns {boolean}
+ */
+function didDailyAct(profile, act, gameDay) {
+  return Boolean(gameDay) && profile?.engagement?.dailyActs?.[act] === gameDay;
+}
+
+/**
+ * True when the director belongs to at least one league.
+ * @param {any} profile
+ * @returns {boolean}
+ */
+function isLeagueMember(profile) {
+  return Array.isArray(profile?.leagueIds) && profile.leagueIds.length > 0;
+}
 
 /** Classes that draft a caption lineup (registry capability, not a literal). */
 const { FANTASY_CLASSES } = require("./classRegistry");
@@ -98,9 +139,8 @@ const CHALLENGE_POOL = [
         (c) => c && c.lineup && Object.keys(c.lineup).length > 0
       ),
     // A Podium-only director has no lineup and never will — Podium's daily
-    // verb is allocating rehearsal blocks. Requiring this of them made their
-    // full set impossible, which silently locked them out of the weekly arc.
-    available: (profile) => hasLineupBearingCorps(profile),
+    // verb is allocating rehearsal blocks — so this is never dealt to them.
+    eligible: (profile) => hasLineupBearingCorps(profile),
   },
   {
     id: "make-prediction",
@@ -124,11 +164,37 @@ const CHALLENGE_POOL = [
     // fact off the profile, surfaced through context.leaguePool (loaded by
     // loadLeaguePoolChallengeFacts) exactly as the Podium facts were.
     verify: (_profile, _gameDay, context) => Boolean(context?.leaguePool?.hasEntered),
-    // Only a director in at least one league can enter a pool; drop it for
-    // everyone else so their required set stays winnable (the same reason
-    // check-lineup drops for a Podium-only director).
-    available: (profile) =>
-      Array.isArray(profile?.leagueIds) && profile.leagueIds.length > 0,
+    // Only a director in at least one league can enter a pool; it is never
+    // dealt to anyone else.
+    eligible: (profile) => isLeagueMember(profile),
+  },
+  {
+    id: "league-chat",
+    // Talking shop with the league is the social half of the nightly loop.
+    // Stamped by postLeagueMessage, so only a message that actually posted
+    // (rate limit and membership passed) counts.
+    label: "Talk shop in your league chat",
+    xp: 10,
+    verify: (profile, gameDay) => didDailyAct(profile, DAILY_ACTS.LEAGUE_CHAT, gameDay),
+    eligible: (profile) => isLeagueMember(profile),
+  },
+  {
+    id: "react-to-news",
+    // Every director — leagueless, Podium-only, brand-new — can read the
+    // day's coverage and weigh in. Stamped by toggleArticleReaction when a
+    // reaction is added or changed (never when one is taken back).
+    label: "React to a news story",
+    xp: 10,
+    verify: (profile, gameDay) => didDailyAct(profile, DAILY_ACTS.REACT_TO_NEWS, gameDay),
+  },
+  {
+    id: "applaud-design",
+    // A judgment call on another director's uniform. Stamped by
+    // likeExchangeDesign only when liking SOMEONE ELSE's design, so a creator
+    // can't farm it off their own gallery entry.
+    label: "Applaud a design on the Exchange",
+    xp: 10,
+    verify: (profile, gameDay) => didDailyAct(profile, DAILY_ACTS.APPLAUD_DESIGN, gameDay),
   },
 ];
 
@@ -290,17 +356,29 @@ function hashString(str) {
 }
 
 /**
- * The three challenges offered on a given game day, deterministic from the
- * day string so client and server always agree without a round trip.
+ * The challenges dealt to a director on a given game day: the pool in an
+ * order hashed from the day string, filtered to the ones this director is
+ * eligible for, first CHALLENGES_PER_DAY taken. Deterministic from the day and
+ * the profile, so client and server always agree without a round trip.
+ *
+ * Filtering BEFORE the slice (rather than dealing a global pair and dropping
+ * the impossible ones) is what keeps a leagueless or Podium-only director from
+ * being dealt a one-item or empty day: every director draws a full set from
+ * what they can actually do. Eligibility reads only stable profile facts, so
+ * the deal only moves mid-day when the director's situation does (they join
+ * their first league).
+ *
  * @param {string} gameDay - Value from getGameDay()
+ * @param {any} profile - The director's profile document data
  * @returns {Challenge[]}
  */
-function getChallengesForGameDay(gameDay) {
+function getChallengesForGameDay(gameDay, profile) {
   const seed = hashString(gameDay);
-  return CHALLENGE_POOL.map((challenge) => ({
-    challenge,
-    order: hashString(`${seed}:${challenge.id}`) & 0x7fffffff,
-  }))
+  return CHALLENGE_POOL.filter((challenge) => !challenge.eligible || challenge.eligible(profile))
+    .map((challenge) => ({
+      challenge,
+      order: hashString(`${seed}:${challenge.id}`) & 0x7fffffff,
+    }))
     .sort((a, b) => a.order - b.order)
     .slice(0, CHALLENGES_PER_DAY)
     .map((entry) => entry.challenge);
@@ -321,7 +399,7 @@ function getChallengesForGameDay(gameDay) {
  * @returns {string[]}
  */
 function getRequiredChallengeIds(gameDay, profile, context = {}) {
-  return getChallengesForGameDay(gameDay)
+  return getChallengesForGameDay(gameDay, profile)
     .filter((challenge) => !challenge.available || challenge.available(profile, context))
     .map((challenge) => challenge.id);
 }
@@ -335,10 +413,11 @@ function getRequiredChallengeIds(gameDay, profile, context = {}) {
  * as the single gate the callable checks, so re-introducing a Podium-verified
  * challenge only touches this function and the pool.
  * @param {string} gameDay - Value from getGameDay()
+ * @param {any} profile - The director's profile document data
  * @returns {boolean}
  */
-function rotationNeedsPodiumContext(gameDay) {
-  const ids = getChallengesForGameDay(gameDay).map((c) => c.id);
+function rotationNeedsPodiumContext(gameDay, profile) {
+  const ids = getChallengesForGameDay(gameDay, profile).map((c) => c.id);
   return ids.includes("register-show") || ids.includes("set-show-concept");
 }
 
@@ -346,10 +425,11 @@ function rotationNeedsPodiumContext(gameDay) {
  * Whether today's rotation contains the join-league-pool challenge, so the
  * callable only reads the director's league pool docs when it can matter.
  * @param {string} gameDay - Value from getGameDay()
+ * @param {any} profile - The director's profile document data
  * @returns {boolean}
  */
-function rotationNeedsLeaguePoolContext(gameDay) {
-  return getChallengesForGameDay(gameDay).some((c) => c.id === "join-league-pool");
+function rotationNeedsLeaguePoolContext(gameDay, profile) {
+  return getChallengesForGameDay(gameDay, profile).some((c) => c.id === "join-league-pool");
 }
 
 /**
@@ -373,6 +453,7 @@ function pruneOldChallenges(challenges) {
 module.exports = {
   CHALLENGE_POOL,
   CHALLENGES_PER_DAY,
+  DAILY_ACTS,
   MAX_CHALLENGE_DAYS_KEPT,
   WEEKLY_LOOP_TARGET_DAYS,
   WEEKLY_LOOP_MILESTONES,
@@ -384,5 +465,7 @@ module.exports = {
   rotationNeedsPodiumContext,
   rotationNeedsLeaguePoolContext,
   hasLineupBearingCorps,
+  isLeagueMember,
+  didDailyAct,
   pruneOldChallenges,
 };

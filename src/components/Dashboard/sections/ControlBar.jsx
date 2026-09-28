@@ -63,7 +63,7 @@ const ControlBar = memo(
   /**
    * @param {{
    *   corps: Record<string, any> | null | undefined,
-   *   activeCorpsClass: string,
+   *   activeCorpsClass: string | null,
    *   unlockedClasses?: string[],
    *   profile: any,
    *   onSwitch: (corpsClass: string) => void,

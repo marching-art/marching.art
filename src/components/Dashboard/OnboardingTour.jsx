@@ -51,7 +51,7 @@ const ICONS = {
  *   isOpen: boolean,
  *   onClose: () => void,
  *   onComplete: () => void,
- *   onRequestZone?: (zone: string) => void,
+ *   onRequestZone?: (zone: import('../../utils/dashboardZones').DashboardZoneId) => void,
  *   variant?: 'fantasy' | 'podium',
  * }} props
  */

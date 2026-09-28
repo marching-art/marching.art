@@ -23,6 +23,7 @@ const {
   reportLeagueMessage,
   LEAGUE_CHAT_REACTIONS,
 } = require("./leagueChat");
+const { getGameDay } = require("../helpers/dailyChallenges");
 
 const NS = process.env.DATA_NAMESPACE;
 const leaguePath = (id) => `artifacts/${NS}/leagues/${id}`;
@@ -140,6 +141,19 @@ describe("postLeagueMessage replies and lastChatAt", () => {
     await postLeagueMessage.run(authedRequest("u1", { leagueId: "league-1", message: "hi" }));
     const chatWrite = writes.find((w) => w.type === "set" && w.path.includes("/chat/"));
     assert.equal("replyTo" in chatWrite.data, false);
+  });
+
+  test("a posted message stamps today's league-chat daily act", async () => {
+    // The league-chat daily challenge verifies off this server-written stamp.
+    const docs = chatDocs();
+    docs.set(`artifacts/${NS}/users/u1/profile/data`, { uid: "u1" });
+    const { db, writes } = makeFakeDb(docs);
+    setDbForTesting(db);
+    await postLeagueMessage.run(authedRequest("u1", { leagueId: "league-1", message: "hi" }));
+    const stamp = writes.find(
+      (w) => w.type === "update" && w.path === `artifacts/${NS}/users/u1/profile/data`
+    );
+    assert.equal(stamp?.data["engagement.dailyActs.leagueChat"], getGameDay());
   });
 
   test("rejects a reply to a message that isn't there, and a non-string target", async () => {

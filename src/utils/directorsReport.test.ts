@@ -59,7 +59,7 @@ describe('computeDirectorsReport — the day’s set', () => {
   });
 
   it('counts only completed challenges that are in today’s rotation', () => {
-    const todays = getChallengesForGameDay(GAME_DAY);
+    const todays = getChallengesForGameDay(GAME_DAY, { corps: { worldClass: { corpsName: 'W' } } });
     const state = computeDirectorsReport({
       // A lineup-bearing corps keeps check-lineup available so a completed
       // in-rotation challenge is actually counted.
@@ -191,7 +191,7 @@ describe('computeDirectorsReport — a brand-new director', () => {
       profile: {
         engagement: { lastLogin: NOW },
         challenges: {
-          [GAME_DAY]: getChallengesForGameDay(GAME_DAY)
+          [GAME_DAY]: getChallengesForGameDay(GAME_DAY, {})
             .filter((c) => c.id !== 'make-prediction')
             .map((c) => ({ id: c.id, completed: true })),
         },
@@ -206,13 +206,12 @@ describe('computeDirectorsReport — a brand-new director', () => {
 });
 
 describe('computeDirectorsReport — a Podium-only director', () => {
-  // No lineup-bearing corps. On GAME_DAY the rotation is check-lineup +
-  // make-prediction; with no lineup and no results, a Podium-only director with
-  // no league has nothing to do beyond the login — the set must stay winnable.
+  // No lineup-bearing corps, so check-lineup is never dealt; with no results
+  // make-prediction drops out too — the set must stay winnable off what's left.
   const podiumProfile = { corps: { podiumClass: { corpsName: 'Riverside' } } };
 
   it('drops check-lineup from the set — Podium has no lineup', () => {
-    const rotation = getChallengesForGameDay(GAME_DAY).map((c) => c.id);
+    const rotation = getChallengesForGameDay(GAME_DAY, podiumProfile).map((c) => c.id);
     const state = computeDirectorsReport({
       profile: podiumProfile,
       recentResults: [],
@@ -255,7 +254,8 @@ describe('computeDirectorsReport — a Podium-only director', () => {
     const anchor = new Date('2026-07-01T12:00:00Z');
     for (let i = 0; i < 60; i++) {
       const d = new Date(anchor.getTime() + i * 86400000);
-      if (getChallengesForGameDay(getGameDay(d)).some((c) => c.id === 'join-league-pool')) {
+      const member = { ...podiumProfile, leagueIds: ['L1'] };
+      if (getChallengesForGameDay(getGameDay(d), member).some((c) => c.id === 'join-league-pool')) {
         poolDay = getGameDay(d);
         // Reconstruct a NOW well past the 2 AM boundary for that game day.
         const state = computeDirectorsReport({

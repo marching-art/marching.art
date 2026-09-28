@@ -10,7 +10,13 @@ const assert = require("node:assert/strict");
 
 const { setDbForTesting } = require("../config");
 const { completeDailyChallenge } = require("./dailyOps");
-const { getGameDay, getChallengesForGameDay } = require("../helpers/dailyChallenges");
+const {
+  CHALLENGE_POOL,
+  DAILY_ACTS,
+  getGameDay,
+  getChallengesForGameDay,
+  getWeekKey,
+} = require("../helpers/dailyChallenges");
 
 const NS = process.env.DATA_NAMESPACE;
 const profilePath = (uid) => `artifacts/${NS}/users/${uid}/profile/data`;
@@ -18,16 +24,15 @@ const profilePath = (uid) => `artifacts/${NS}/users/${uid}/profile/data`;
 // a director who has "entered today's pool" needs that doc in the fake db.
 const leaguePoolPath = (leagueId, day) => `artifacts/${NS}/leagues/${leagueId}/pools/${day}`;
 
-// Today's real rotation — the callable uses the real clock, so tests pick
-// challenge ids relative to the actual current game day.
+// Today's real game day — the callable uses the real clock, so tests pick
+// challenge ids relative to the rotation actually dealt today.
 const gameDay = getGameDay();
-const todaysChallenges = getChallengesForGameDay(gameDay);
-const offeredToday = todaysChallenges[0];
-// A valid pool member that is NOT in today's rotation (pool of 3, 2 offered),
-// used to exercise the "valid challenge, not offered today" soft no-op.
-const notOfferedToday = ["check-lineup", "make-prediction", "join-league-pool"].find(
-  (id) => !todaysChallenges.some((c) => c.id === id)
-);
+
+// Every stamped daily act done today (react-to-news, applaud-design,
+// league-chat verify off these server-written stamps).
+const allActsToday = () => ({
+  dailyActs: Object.fromEntries(Object.values(DAILY_ACTS).map((act) => [act, gameDay])),
+});
 
 function makeFakeDb(docs = new Map(), recaps = []) {
   const writes = [];
@@ -95,10 +100,11 @@ function authedRequest(uid, data = {}) {
 }
 
 // Satisfies EVERY current challenge: a fielded lineup (check-lineup), a saved
-// prediction pick (make-prediction), and league membership (join-league-pool's
-// availability). The matching entered-pool doc lives in `u1Docs` so the
-// challenge also verifies. worldClass carries a corpsName so check-lineup is
-// AVAILABLE (hasLineupBearingCorps), not just verifiable.
+// prediction pick (make-prediction), league membership (so the league
+// challenges are dealt), and today's daily-act stamps. The matching
+// entered-pool doc lives in `u1Docs` so join-league-pool also verifies.
+// worldClass carries a corpsName so check-lineup is ELIGIBLE
+// (hasLineupBearingCorps), not just verifiable.
 const baseProfile = () => ({
   uid: "u1",
   xp: 100,
@@ -110,7 +116,17 @@ const baseProfile = () => ({
     worldClass: { corpsName: "Blue Coats", lineup: { GE1: "Blue Devils|2024" } },
   },
   predictions: { [gameDay]: { picks: { podium: { pick: "Yes" } } } },
+  engagement: allActsToday(),
 });
+
+// The rotation dealt to baseProfile today.
+const todaysChallenges = getChallengesForGameDay(gameDay, baseProfile());
+const offeredToday = todaysChallenges[0];
+// A valid pool member that is NOT dealt today, used to exercise the "valid
+// challenge, not offered today" soft no-op.
+const notOfferedToday = CHALLENGE_POOL.map((c) => c.id).find(
+  (id) => !todaysChallenges.some((c) => c.id === id)
+);
 
 // Today's pool doc for u1's league, marking them entered — so join-league-pool
 // verifies whenever it is part of today's rotation.
@@ -331,9 +347,10 @@ describe("completeDailyChallenge", () => {
     const priorDays = ["d1", "d2", "d3", "d4"]; // 4 counted days this week
     const docs = u1Docs({
       engagement: {
+        ...allActsToday(),
         weeklyLoop: {
           // Same week as today by construction
-          weekKey: require("../helpers/dailyChallenges").getWeekKey(gameDay),
+          weekKey: getWeekKey(gameDay),
           countedDays: priorDays,
           rewarded: false,
         },
@@ -356,5 +373,47 @@ describe("completeDailyChallenge", () => {
     const history = writes.find((w) => w.data?.type === "weekly_arc");
     assert.ok(history, "weekly_arc coin-history entry expected");
     assert.equal(history.data.amount, result.weeklyArcBonus.coin);
+  });
+  test("a stamped challenge verifies only off today's daily-act stamp", async () => {
+    const stamped = todaysChallenges.find((c) =>
+      ["react-to-news", "applaud-design", "league-chat"].includes(c.id)
+    );
+    if (!stamped) return; // today's deal has no stamped challenge
+    // Yesterday's stamps must not pay today.
+    const docs = u1Docs({
+      engagement: {
+        dailyActs: Object.fromEntries(Object.values(DAILY_ACTS).map((a) => [a, "Mon Jan 01 2001"])),
+      },
+    });
+    const { db, writes } = makeFakeDb(docs);
+    setDbForTesting(db);
+    const stale = await completeDailyChallenge.run(
+      authedRequest("u1", { challengeId: stamped.id })
+    );
+    assert.equal(stale.success, false);
+    assert.equal(stale.notDoneYet, true);
+    assert.equal(writes.length, 0);
+
+    const fresh = makeFakeDb(u1Docs());
+    setDbForTesting(fresh.db);
+    const result = await completeDailyChallenge.run(
+      authedRequest("u1", { challengeId: stamped.id })
+    );
+    assert.equal(result.success, true);
+    assert.equal(result.xpAwarded, stamped.xp);
+  });
+
+  test("never deals a league challenge to a leagueless director", async () => {
+    const leagueless = { ...baseProfile(), leagueIds: [] };
+    const dealt = getChallengesForGameDay(gameDay, leagueless).map((c) => c.id);
+    const { db, writes } = makeFakeDb(new Map([[profilePath("u1"), leagueless]]));
+    setDbForTesting(db);
+    for (const id of ["join-league-pool", "league-chat"]) {
+      assert.ok(!dealt.includes(id));
+      const result = await completeDailyChallenge.run(authedRequest("u1", { challengeId: id }));
+      assert.equal(result.success, false);
+      assert.equal(result.notInRotation, true);
+    }
+    assert.equal(writes.length, 0);
   });
 });

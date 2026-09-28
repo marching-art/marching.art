@@ -46,7 +46,8 @@ export const getGameDay = (date = new Date()) => {
 };
 
 /**
- * The full pool of rotating challenges. Three are offered per game day.
+ * The full pool of rotating challenges. CHALLENGES_PER_DAY are dealt per game
+ * day, drawn only from the ones this director is eligible for.
  *
  * MUST STAY IN SYNC with the server catalog in
  * functions/src/helpers/dailyChallenges.js — the completeDailyChallenge
@@ -74,8 +75,37 @@ import { CORPS_CLASS_ORDER } from './corps';
  * @property {string} [action]
  * @property {number} xp
  * @property {(profile: any, gameDay: string, context?: ChallengeContext) => boolean} [check]
+ * @property {(profile: any) => boolean} [eligible]
  * @property {(profile: any, context?: ChallengeContext) => boolean} [available]
  */
+
+/**
+ * Stamped same-day acts — mirrors DAILY_ACTS on the server. The callable that
+ * performs each act writes today's game day to
+ * `profile.engagement.dailyActs.<act>` (server-only), which is what the
+ * matching challenge's `check` reads.
+ */
+export const DAILY_ACTS = Object.freeze({
+  REACT_TO_NEWS: 'reactToNews',
+  APPLAUD_DESIGN: 'applaudDesign',
+  LEAGUE_CHAT: 'leagueChat',
+});
+
+/**
+ * Whether the director performed a stamped daily act on this game day.
+ * @param {any} profile
+ * @param {string} act - A DAILY_ACTS value
+ * @param {string} gameDay
+ */
+export const didDailyAct = (profile, act, gameDay) =>
+  Boolean(gameDay) && profile?.engagement?.dailyActs?.[act] === gameDay;
+
+/**
+ * True when the director belongs to at least one league.
+ * @param {{ leagueIds?: unknown }|null|undefined} profile
+ */
+const isLeagueMember = (profile) =>
+  Array.isArray(profile?.leagueIds) && profile.leagueIds.length > 0;
 
 /**
  * True when the director has at least one lineup-drafting corps.
@@ -89,10 +119,12 @@ const hasLineupBearingCorps = (profile) =>
  *
  * `check(profile, gameDay, context)` is the client's optimistic "is this done"
  * predicate (drives auto-claim and the Today count); the server re-verifies.
- * `available(profile, context)` is whether this director could satisfy it at
- * all today — an unavailable challenge drops out of the required set so the
- * count and the weekly arc stay winnable (Podium-only directors have no
- * lineup; a brand-new director has no prediction questions).
+ * `eligible(profile)` is a stable profile fact deciding whether the challenge
+ * is ever dealt to this director (Podium-only directors have no lineup;
+ * leagueless ones have no pool or chat). `available(profile, context)` is
+ * whether a dealt challenge can be satisfied today — an unavailable one drops
+ * out of the required set so the count and the weekly arc stay winnable (a
+ * brand-new director has no prediction questions).
  *
  * `context` carries the two facts the profile alone can't answer: Podium keeps
  * its show picks and (as a string) its concept in a server-only subcollection,
@@ -117,9 +149,9 @@ export const CHALLENGE_POOL = [
     // click, handled in DailyChallenges), not by auto-claiming off a lineup
     // that merely exists — that is what made it phantom-complete every day.
     // Podium is a director simulation with no caption lineup — its daily verb
-    // is allocating rehearsal blocks. Requiring this of a Podium-only director
-    // once made their full set impossible.
-    available: (profile) => hasLineupBearingCorps(profile),
+    // is allocating rehearsal blocks — so this is never dealt to a
+    // Podium-only director.
+    eligible: (profile) => hasLineupBearingCorps(profile),
   },
   {
     id: 'make-prediction',
@@ -142,9 +174,35 @@ export const CHALLENGE_POOL = [
     // the per-day fact is surfaced through context.leaguePool (computed by
     // useLeaguePoolFacts and threaded down like the Podium facts).
     check: (_profile, _gameDay, context) => Boolean(context?.leaguePool?.hasEntered),
-    // Only a league member can enter a pool; dropped otherwise so the count
-    // and weekly arc stay winnable.
-    available: (profile) => Array.isArray(profile?.leagueIds) && profile.leagueIds.length > 0,
+    // Only a league member can enter a pool; never dealt to anyone else.
+    eligible: (profile) => isLeagueMember(profile),
+  },
+  {
+    id: 'league-chat',
+    label: 'Talk shop in your league chat',
+    link: '/leagues',
+    xp: 10,
+    // Stamped by postLeagueMessage once a message actually posts.
+    check: (profile, gameDay) => didDailyAct(profile, DAILY_ACTS.LEAGUE_CHAT, gameDay),
+    eligible: (profile) => isLeagueMember(profile),
+  },
+  {
+    id: 'react-to-news',
+    label: 'React to a news story',
+    // The news feed lives on the home page; each story's reactions are on
+    // the feed card and the article page.
+    link: '/',
+    xp: 10,
+    // Stamped by toggleArticleReaction on a new or changed reaction.
+    check: (profile, gameDay) => didDailyAct(profile, DAILY_ACTS.REACT_TO_NEWS, gameDay),
+  },
+  {
+    id: 'applaud-design',
+    label: 'Applaud a design on the Exchange',
+    link: '/exchange',
+    xp: 10,
+    // Stamped by likeExchangeDesign when liking someone else's design.
+    check: (profile, gameDay) => didDailyAct(profile, DAILY_ACTS.APPLAUD_DESIGN, gameDay),
   },
 ];
 
@@ -190,18 +248,22 @@ const hashString = (str) => {
 };
 
 /**
- * The three challenges offered on a given game day — deterministic from the
- * day string so this always matches the server's rotation without a round
- * trip.
+ * The challenges dealt to a director on a given game day: the pool in an
+ * order hashed from the day string, filtered to the ones this director is
+ * eligible for, first CHALLENGES_PER_DAY taken — deterministic from the day
+ * and the profile, so this always matches the server's rotation without a
+ * round trip.
  * @param {string} gameDay - Value from getGameDay()
+ * @param {any} profile - The director's profile document data
  * @returns {Challenge[]}
  */
-export const getChallengesForGameDay = (gameDay) => {
+export const getChallengesForGameDay = (gameDay, profile) => {
   const seed = hashString(gameDay);
-  return CHALLENGE_POOL.map((challenge) => ({
-    challenge,
-    order: hashString(`${seed}:${challenge.id}`) & 0x7fffffff,
-  }))
+  return CHALLENGE_POOL.filter((challenge) => !challenge.eligible || challenge.eligible(profile))
+    .map((challenge) => ({
+      challenge,
+      order: hashString(`${seed}:${challenge.id}`) & 0x7fffffff,
+    }))
     .sort((a, b) => a.order - b.order)
     .slice(0, CHALLENGES_PER_DAY)
     .map((entry) => entry.challenge);
@@ -219,6 +281,6 @@ export const getChallengesForGameDay = (gameDay) => {
  * @returns {Challenge[]}
  */
 export const getAvailableChallengesForGameDay = (gameDay, profile, context = {}) =>
-  getChallengesForGameDay(gameDay).filter(
+  getChallengesForGameDay(gameDay, profile).filter(
     (challenge) => !challenge.available || challenge.available(profile, context)
   );

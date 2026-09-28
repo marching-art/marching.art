@@ -48,6 +48,17 @@ export interface Engagement {
   weeklyProgress: unknown[];
   /** Server-owned weekly challenge arc (functions/src/helpers/dailyChallenges.js). */
   weeklyLoop?: { weekKey?: string; countedDays?: string[]; rewardedDays?: number[] };
+  /**
+   * Server-stamped game day of each daily act (helpers/dailyActs.js) — what
+   * the react-to-news / applaud-design / league-chat challenges verify.
+   */
+  dailyActs?: Record<string, string>;
+}
+
+/** One class's corps entry on the profile (`profile.corps[class]`). */
+export interface ProfileCorpsEntry {
+  corpsName?: string;
+  [key: string]: unknown;
 }
 
 /**
@@ -72,7 +83,15 @@ export interface ProfileDoc {
   xp?: number;
   xpLevel?: number;
   corpsCoin?: number;
-  corps?: Record<string, unknown> | null;
+  /**
+   * Per-class corps entries. Values are open records (lineups, shows, scores,
+   * cosmetics…), but every entry is an object — declared so the profile can be
+   * handed to the typed readers (nextAction, directorsReport, journeyProgress)
+   * that look up `corpsName` without a cast.
+   */
+  corps?: Record<string, ProfileCorpsEntry | null> | null;
+  /** League membership ids (server-maintained). */
+  leagueIds?: string[];
   /** Corps Identity Shop state (server-written): owned ids + equipped slots. */
   cosmetics?: { owned?: string[]; equipped?: Record<string, string | null> } | null;
   unlockedClasses?: string[];

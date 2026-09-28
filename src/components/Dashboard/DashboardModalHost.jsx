@@ -69,7 +69,7 @@ const ShowConceptModal = lazyWithRetry(
  *   modals: any,
  *   data: any,
  *   rehearsalIncomplete?: boolean,
- *   onRequestZone?: (zone: string) => void,
+ *   onRequestZone?: (zone: import('../../utils/dashboardZones').DashboardZoneId) => void,
  *   onRevealPanel?: (panel: string) => void,
  * }} props
  */

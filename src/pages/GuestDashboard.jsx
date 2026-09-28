@@ -219,13 +219,19 @@ const LineupRow = ({ caption, value, pointsCost, isLast, isPlayable, onClick }) 
 // callable; a guest has no profile, so this read-only version shows the same
 // catalog with one pre-completed and routes taps to the registration gate.
 
-// Seed for the demo's fixed trio of challenges (getChallengesForGameDay hashes
+// Seed for the demo's fixed pair of challenges (getChallengesForGameDay hashes
 // a game-day string; a number here hashed to 0 by accident).
 const DEMO_CHALLENGE_DAY = 'demo-day-5';
+// The rotation is dealt per director, so the demo deals it to a stand-in
+// fantasy director in a league — the full pool is in play.
+const DEMO_CHALLENGE_PROFILE = {
+  corps: { worldClass: { corpsName: 'Demo' } },
+  leagueIds: ['demo'],
+};
 
 /** @param {{ onGate: (gateType: string) => void }} props */
 const DemoDailyChallenges = ({ onGate }) => {
-  const challenges = getChallengesForGameDay(DEMO_CHALLENGE_DAY) || [];
+  const challenges = getChallengesForGameDay(DEMO_CHALLENGE_DAY, DEMO_CHALLENGE_PROFILE) || [];
   const completedIds = new Set(challenges.slice(0, 1).map((c) => c.id));
   const totalCount = challenges.length || 1;
   const completedCount = completedIds.size;

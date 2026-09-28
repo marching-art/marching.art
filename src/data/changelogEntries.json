@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-09-28-more-daily-challenges",
+    "date": "2026-09-28",
+    "title": "More variety in your daily challenges",
+    "category": "improvement",
+    "summary": "Daily challenges now draw from six activities instead of three, and you're only dealt ones you can actually do. If you're not in a league, you won't get league tasks anymore, so you won't see the same single challenge day after day.",
+    "highlights": [
+      "New challenges: react to a news story, applaud another director's design on the Exchange, and post in your league chat.",
+      "They complete on their own once you've done the thing. Head back to the dashboard to collect the XP.",
+      "Podium-only directors are no longer dealt the lineup review, and directors without a league no longer get league tasks.",
+      "Liking your own design on the Exchange doesn't count."
+    ]
+  },
+  {
     "id": "2026-09-28-fan-favorite-crown-announced-at-once",
     "date": "2026-09-28",
     "title": "The Fan Favorite winner is announced on Discord the morning after finals",

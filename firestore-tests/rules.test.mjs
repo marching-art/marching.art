@@ -336,6 +336,33 @@ await check(
   )
 );
 
+// engagement carries the login streak and the weekly challenge arc, both of
+// which pay XP + CorpsCoin milestones server-side, plus the daily-act stamps
+// the daily challenges verify against.
+await freshSeed();
+await check(
+  'owner cannot forge a login streak (free milestone)',
+  assertFails(updateDoc(doc(authed(), profilePath), { 'engagement.loginStreak': 99 }))
+);
+
+await freshSeed();
+await check(
+  'owner cannot forge weekly-arc days',
+  assertFails(
+    updateDoc(doc(authed(), profilePath), {
+      engagement: { weeklyLoop: { weekKey: 'Mon Jan 12 2026', countedDays: ['a', 'b', 'c'] } },
+    })
+  )
+);
+
+await freshSeed();
+await check(
+  'owner cannot stamp a daily act',
+  assertFails(
+    updateDoc(doc(authed(), profilePath), { 'engagement.dailyActs.reactToNews': 'Wed Jan 14 2026' })
+  )
+);
+
 // customAvatarBanned gates the setCorpsAvatarFromUrl callable; a banned director
 // must not be able to lift their own block by writing the field directly.
 await freshSeed();

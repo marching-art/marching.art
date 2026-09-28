@@ -37,7 +37,7 @@ import { useModalRoute } from './useModalRoute';
 export const DASHBOARD_PANELS = ['lineup', 'concept', 'register', 'streak'];
 
 /**
- * @param {{ uid: string }} user
+ * @param {{ uid: string } | null | undefined} user
  * @param {any} dashboardData - Aggregated dashboard state (from useDashboardData).
  * @param {{ isPodiumSelected?: boolean, podiumExists?: boolean }} [podiumContext]
  *   Podium surface signals, owned by pages/Dashboard (podium state is hoisted
@@ -88,8 +88,10 @@ export function useDashboardModals(user, dashboardData, podiumContext = {}) {
     (next) => (next ? openPanel('concept') : closePanel()),
     [openPanel, closePanel]
   );
-  const [registrationDefaultClass, setRegistrationDefaultClass] = useState(null);
-  const [slotPickerClass, setSlotPickerClass] = useState(null);
+  const [registrationDefaultClass, setRegistrationDefaultClass] = useState(
+    /** @type {string|null} */ (null)
+  );
+  const [slotPickerClass, setSlotPickerClass] = useState(/** @type {string|null} */ (null));
   const [unretiring, setUnretiring] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showMoveCorps, setShowMoveCorps] = useState(false);
@@ -330,6 +332,7 @@ export function useDashboardModals(user, dashboardData, podiumContext = {}) {
   }, [handleSeasonSetupComplete, handleSeasonSetupClose, user?.uid, seasonData?.seasonUid]);
 
   const handleDeleteCorps = useCallback(async () => {
+    if (!user?.uid) return;
     try {
       await updateProfile(user.uid, { [`corps.${activeCorpsClass}`]: null });
       toast.success('Corps deleted');
@@ -451,6 +454,7 @@ export function useDashboardModals(user, dashboardData, podiumContext = {}) {
   // `captionId` rides along as ?slot=, so a link can open the editor already
   // focused on the slot that needs attention.
   const openCaptionSelection = useCallback(
+    /** @param {string|null} [captionId] */
     (captionId = null) => openPanel('lineup', captionId),
     [openPanel]
   );
