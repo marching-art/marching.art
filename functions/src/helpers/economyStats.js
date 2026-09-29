@@ -6,7 +6,7 @@
  * circulation was earned by playing, so if minted consistently outruns sunk,
  * prices need a nudge — and the per-type breakdown says which faucet or sink
  * to nudge. Written weekly (and on demand via the admin manualTrigger) to
- * admin-stats/economy, an admin-only doc the Admin > Jobs tab renders.
+ * admin-stats/economy, an admin-only doc the Admin > Insights section renders.
  *
  * Iterates users via listDocuments (the users/{uid} docs are implicit
  * ancestors — see scheduled/lifetimeLeaderboard.js) and queries each

@@ -6,6 +6,30 @@ const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
 const { assertAdmin, clampLimit } = require("../helpers/callableGuards");
+const { resolveReportsForContent } = require("./reportsModeration");
+
+/**
+ * A moderation decision answers every open report on the comment: approving
+ * keeps it (no action), rejecting or hiding removes it. Without this the
+ * article_comments_reports rows stayed "pending" forever and the digest kept
+ * counting them. Best-effort — the decision itself already landed.
+ */
+async function resolveCommentReports(db, commentIds, action, adminUid, reason) {
+  const resolution = action === "approve" ? "no_action" : "content_removed";
+  await Promise.all(
+    commentIds.map((contentId) =>
+      resolveReportsForContent(db, {
+        type: "article_comment",
+        contentId,
+        adminUid,
+        resolution,
+        note: reason || null,
+      }).catch((error) => {
+        logger.warn(`[reports] could not resolve reports for comment ${contentId}: ${error.message}`);
+      })
+    )
+  );
+}
 
 // =============================================================================
 // ADMIN MODERATION FUNCTIONS
@@ -171,6 +195,7 @@ exports.moderateComment = onCall(
       };
 
       await commentRef.update(updates);
+      await resolveCommentReports(db, [commentId], action, request.auth.uid, reason);
 
       logger.info("Comment moderated:", {
         commentId,
@@ -258,6 +283,7 @@ exports.bulkModerateComments = onCall(
       }
 
       await batch.commit();
+      await resolveCommentReports(db, commentIds, action, request.auth.uid, reason);
 
       logger.info("Bulk moderation completed:", {
         action,

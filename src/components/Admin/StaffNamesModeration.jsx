@@ -1,4 +1,4 @@
-// Admin > Content > Podium staff names. The game-wide registry of names
+// Admin > Moderation > Podium staff names. The game-wide registry of names
 // directors have given their Podium staff (one row per claimed name), with
 // the moderation controls: remove one name (a strike — three strikes turn
 // naming off for that director automatically), revoke naming for a director

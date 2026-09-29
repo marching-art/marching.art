@@ -1,5 +1,17 @@
 [
   {
+    "id": "2026-09-29-reports-reviewed",
+    "date": "2026-09-29",
+    "title": "Reports you file now land in a real moderation queue",
+    "category": "improvement",
+    "summary": "When you report a profile comment, a league chat message or an article comment, it now goes into a single review queue on the admin side. Each report gets reviewed and closed out, instead of relying on an email being noticed.",
+    "highlights": [
+      "If a moderator removes a league chat message, your league's activity feed says so, the same way it does when a commissioner removes one.",
+      "When several directors report the same message, removing it closes every one of those reports together.",
+      "Article comments that get reported are hidden rather than deleted, so a mistaken call can be undone."
+    ]
+  },
+  {
     "id": "2026-09-29-league-invite-stuck",
     "date": "2026-09-29",
     "title": "Accepted league invitations no longer get stuck on your profile",

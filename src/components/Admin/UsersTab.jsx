@@ -1,4 +1,5 @@
-// Admin > Users tab. Extracted from pages/Admin.jsx.
+// Admin > Players > Directors: telemetry, the user browser, roles, and
+// profile repair.
 
 import { useState, useEffect } from 'react';
 import { getUserEngagementStats, getAllUserProfiles } from '../../api/admin';

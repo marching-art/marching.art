@@ -347,8 +347,8 @@ off-seasons carry tempo-named narrative themes (adagio, allegro, …).
 
 ### Instrumentation — the two dashboards
 
-Both are admin-only docs rendered side by side in **Admin > Jobs**, and both can
-be recomputed on demand from that tab.
+Both are admin-only docs rendered side by side in **Admin > Insights**, and both can
+be recomputed on demand from the panel header (Recompute).
 
 | Doc                     | Job                                   | Answers                                                                                                      |
 | ----------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------ |

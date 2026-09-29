@@ -12,6 +12,7 @@
 // (accounts hit by two or more independent signals) is the row worth a look.
 
 import { useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
 import toast from 'react-hot-toast';
 import { doc, getDoc } from 'firebase/firestore';
 import { AlertTriangle, ShieldOff, ShieldCheck, Users } from 'lucide-react';
@@ -95,7 +96,15 @@ function MemberChips({ members }: { members: Member[] }) {
   );
 }
 
-const IntegrityPanel = ({ refreshKey }: { refreshKey?: number }) => {
+interface IntegrityPanelProps {
+  refreshKey?: number;
+  /** Anchor id for the section jump bar. */
+  id?: string;
+  /** Header controls, e.g. the Recompute button in the Moderation section. */
+  headerActions?: ReactNode;
+}
+
+const IntegrityPanel = ({ refreshKey, id, headerActions }: IntegrityPanelProps) => {
   const [stats, setStats] = useState<IntegrityStats | null>(null);
 
   useEffect(() => {
@@ -139,13 +148,20 @@ const IntegrityPanel = ({ refreshKey }: { refreshKey?: number }) => {
   };
 
   return (
-    <div className="bg-surface-card border border-line overflow-hidden">
-      <SectionHeader title="Integrity — Alt & Multi-Account Signals" icon={AlertTriangle} />
+    <section
+      id={id}
+      aria-label="Account integrity"
+      className="bg-surface-card border border-line overflow-hidden scroll-mt-4"
+    >
+      <SectionHeader
+        title="Integrity — Alt & Multi-Account Signals"
+        icon={AlertTriangle}
+        actions={headerActions}
+      />
       <div className="p-3">
         {!stats ? (
           <p className="text-[11px] text-muted">
-            No signals yet — run “Refresh Integrity Signals” below (also runs weekly, Monday 6 AM
-            ET).
+            No signals yet — press Recompute (also runs weekly, Monday 6 AM ET).
           </p>
         ) : (
           <>
@@ -314,7 +330,7 @@ const IntegrityPanel = ({ refreshKey }: { refreshKey?: number }) => {
           </>
         )}
       </div>
-    </div>
+    </section>
   );
 };
 

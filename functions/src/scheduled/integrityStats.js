@@ -1,5 +1,5 @@
 // Weekly account-integrity instrumentation: refresh the alt/multi-account
-// signal doc the Admin > Jobs tab renders (helpers/integrityStats.js).
+// signal doc the Admin > Moderation section renders (helpers/integrityStats.js).
 //
 // 06:00 ET Monday, after economyStats (04:00 Mon) and the nightly retention
 // scan (05:00 daily), so the three operator dashboards refresh in a tidy block

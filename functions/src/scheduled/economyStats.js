@@ -1,5 +1,5 @@
 // Weekly economy instrumentation: refresh the mint-vs-sink stats doc the
-// Admin > Jobs tab renders (helpers/economyStats.js). Monday 04:00 ET, after
+// Admin > Insights section renders (helpers/economyStats.js). Monday 04:00 ET, after
 // the Sunday-night scoring/matchup cycle has fully landed.
 
 const { onSchedule } = require("firebase-functions/v2/scheduler");

@@ -16,7 +16,7 @@
  *   createdAt              - signup date, written by createUserProfile
  *
  * Written nightly to admin-stats/retention (admin-only per firestore.rules) and
- * rendered in Admin > Jobs beside the mint-vs-sink panel.
+ * rendered in Admin > Insights beside the mint-vs-sink panel.
  *
  * Cost note: one projected collection-group scan of profile docs per night,
  * three fields wide. That is the same shape as the lifetime-leaderboard job and

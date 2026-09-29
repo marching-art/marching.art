@@ -648,7 +648,7 @@ replaces ownership with **employment** — and an employment market never maxes 
   corps (in-season release, a lapsed/released/retired contract at re-registration, a fresh-start
   registration, account deletion). Admins review the registry and can clear a name (a strike —
   three revoke naming automatically) or revoke/restore naming outright
-  (`podiumStaffModeration.js`, Admin → Content); the director is notified in-app.
+  (`podiumStaffModeration.js`, Admin → Moderation); the director is notified in-app.
 - **Retirement cycles the seat.** A 30-season career retires and the seat reopens — the
   decade-scale economy is built into staff _mortality_, so there is no terminal maxed-staff
   state. The staff panel warns from `retirementNoticeSeasons` (3) out and names each staffer's

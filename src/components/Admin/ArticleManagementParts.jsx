@@ -485,7 +485,9 @@ const ArticleEditorModal = ({ article, onClose, onSave, onRegenerateImage }) => 
                   <div className="text-center py-8 text-muted">
                     <AlertCircle className="w-8 h-8 mx-auto mb-2 opacity-50" />
                     <p className="text-sm">No structured sections available for this article</p>
-                    <p className="text-xs mt-1">Use the Content tab to edit the full story</p>
+                    <p className="text-xs mt-1">
+                      Use Newsroom → Published Articles to edit the full story
+                    </p>
                   </div>
                 )}
               </div>

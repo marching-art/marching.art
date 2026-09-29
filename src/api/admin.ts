@@ -1,5 +1,5 @@
 // Admin API - Firestore access for the admin panel
-// Backs src/pages/Admin.jsx and the components in src/components/Admin/.
+// Backs src/pages/Admin.tsx and the components in src/components/Admin/.
 //
 // NOTE: These functions intentionally do NOT use withErrorHandling — the admin
 // components have their own try/catch + toast handling that depends on the
@@ -56,7 +56,7 @@ export interface AdminOverviewStats {
 // The full-database profile scan is the most expensive read the client can
 // issue (one billed read per registered user, growing forever). Every admin
 // stats/listing function derives from the same scan, so it runs through a
-// single shared react-query entry: opening the overview and the Users tab in
+// single shared react-query entry: opening Home and the Players section in
 // one admin session costs one scan, not four.
 const ADMIN_PROFILE_SCAN_KEY = ['admin', 'profileScan'] as const;
 const ADMIN_PRIVATE_SCAN_KEY = ['admin', 'privateScan'] as const;
@@ -405,3 +405,102 @@ export async function getScoredRecapDays(seasonUid: string): Promise<Set<number>
   });
   return days;
 }
+
+// =============================================================================
+// ADMIN HOME INBOX + PLAYER REPORTS QUEUE
+// =============================================================================
+
+/** A lease the scoring watchdog flags as failed or stalled (last 36h). */
+export interface AdminUnhealthyRun {
+  id: string;
+  kind: string | null;
+  stage: string | null;
+  status: 'failed' | 'stale-running';
+  seasonUid: string | null;
+  scoredDay: number | null;
+  lastError: string | null;
+}
+
+export interface AdminInbox {
+  success: boolean;
+  queues: { submissions: number; comments: number; reports: number; available: boolean };
+  health: {
+    /** null when the watchdog read itself failed (unknown, not healthy). */
+    unhealthyRuns: AdminUnhealthyRun[] | null;
+    scrapeCanary: {
+      healthy: boolean;
+      problems: string[];
+      warnings: string[];
+      checkedAt: string | null;
+    } | null;
+  };
+  checkedAt: string;
+}
+
+/** Live queue counts + scoring/scrape health for the Admin home. */
+export const getAdminInbox = createCallable<void, AdminInbox>('getAdminInbox');
+
+export type ReportStatus = 'new' | 'reviewed' | 'resolved';
+export type ReportType = 'comment' | 'league_message' | 'article_comment';
+export type ReportSource = 'reports' | 'article_comments_reports';
+
+/** One player report, normalized across both report collections. */
+export interface PlayerReport {
+  id: string;
+  source: ReportSource;
+  type: ReportType;
+  status: ReportStatus;
+  reason: string | null;
+  text: string;
+  contentId: string | null;
+  authorUid: string | null;
+  authorName: string | null;
+  reporterUid: string | null;
+  reporterName: string | null;
+  context: {
+    profileUid?: string | null;
+    profileName?: string | null;
+    leagueId?: string | null;
+    leagueName?: string | null;
+    articleId?: string | null;
+  };
+  /** true live, false removed/hidden, null unknown. */
+  contentLive: boolean | null;
+  createdAt: string | null;
+  resolution: 'no_action' | 'content_removed' | null;
+  adminNote: string | null;
+  resolvedAt: string | null;
+  resolvedBy: string | null;
+}
+
+export interface ListReportsResult {
+  success: boolean;
+  reports: PlayerReport[];
+  hasMore: boolean;
+  counts: Record<ReportStatus, number>;
+}
+
+export const listReports = createCallable<
+  { status?: ReportStatus | 'all'; type?: ReportType | 'all'; limit?: number },
+  ListReportsResult
+>('listReports');
+
+export interface ResolveReportData {
+  reportId: string;
+  source: ReportSource;
+  status?: ReportStatus;
+  note?: string;
+  /** Delete (or, for article comments, hide) the content and resolve every report on it. */
+  removeContent?: boolean;
+}
+
+export const resolveReport = createCallable<
+  ResolveReportData,
+  {
+    success: boolean;
+    status: ReportStatus;
+    resolution: PlayerReport['resolution'];
+    contentRemoved: boolean;
+    siblingsResolved: number;
+  }
+>('resolveReport');

@@ -1,4 +1,5 @@
-// Admin > Live Scores tab. Extracted from pages/Admin.jsx.
+// Admin > Season & Scoring > Live DCI feed: score verification, deep scrapes,
+// and schedule coverage.
 
 import { useState } from 'react';
 import { Activity, AlertTriangle, Calendar, Database, RefreshCw } from 'lucide-react';
@@ -382,13 +383,13 @@ const ScheduleCoverageCard = () => {
 };
 
 const LiveScoresTab = () => (
-  <div className="space-y-4">
+  <div id="live-feed" className="space-y-4 scroll-mt-4">
     <div className="bg-surface-card border border-line overflow-hidden">
       <SectionHeader title="Live Season Score Verification" icon={Activity} />
       <div className="px-4 py-3 border-b border-line bg-surface-sunken">
         <p className="text-[11px] text-muted leading-relaxed">
-          The Scores Reference (Content tab) shows the prior-year selectable corps. This view shows
-          the
+          The Scores Reference (further down this section) shows the prior-year selectable corps.
+          This view shows the
           <span className="text-secondary"> current DCI season's scraped scores</span> — the data
           the game actually scores live lineups against — so you can confirm the daily scrape is
           correct, each event maps to the right competition day, and recaps are generated.
