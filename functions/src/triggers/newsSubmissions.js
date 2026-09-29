@@ -22,6 +22,7 @@ const {
   submissionForAuthor,
 } = require("../helpers/newsSubmissionsShared");
 const { invalidateNewsCache } = require("./newsFeed");
+const { parseDirectorArticleId, softRemoveDirectorArticle } = require("../helpers/directorArticles");
 
 const geminiApiKey = defineSecret("GOOGLE_GENERATIVE_AI_API_KEY");
 
@@ -405,10 +406,6 @@ exports.publishPressRelease = onCall(
   }
 );
 
-// Composite article id shape the feed uses: {seasonId}_day_{n}_press_{id}.
-// seasonId may itself contain underscores, so the day marker anchors the parse.
-const PRESS_ARTICLE_ID_RE = /^(.+)_(day_\d+)_(press_[A-Za-z0-9_-]+)$/;
-
 /**
  * Delete a press release the caller authored (admins may delete any). The
  * article is soft-removed — unpublished and marked, not hard-deleted — so any
@@ -434,12 +431,11 @@ exports.deleteMyPressRelease = onCall(
       throw new HttpsError("invalid-argument", "articleId is required");
     }
 
-    const match = articleId.match(PRESS_ARTICLE_ID_RE);
-    if (!match) {
+    const parsed = parseDirectorArticleId(articleId);
+    if (!parsed || parsed.kind !== "press") {
       throw new HttpsError("invalid-argument", "Not a press-release article id");
     }
-    const [, seasonId, dayId, articleType] = match;
-    const articlePath = `news_hub/${seasonId}/days/${dayId}/articles/${articleType}`;
+    const { articleType, articlePath } = parsed;
 
     try {
       const ref = db.doc(articlePath);
@@ -456,34 +452,17 @@ exports.deleteMyPressRelease = onCall(
 
       const removedByAdmin = isAdmin && data.authorUid !== request.auth.uid;
 
-      await ref.update({
-        isPublished: false,
-        status: "removed",
+      // An admin taking down someone else's release (the "declined" outcome
+      // for an instantly-published release) bells the author; a self-delete
+      // doesn't.
+      await softRemoveDirectorArticle(db, {
+        ref,
+        data,
+        articleType,
+        kind: "press",
         removedBy: request.auth.uid,
         removedByAdmin,
-        removedAt: new Date(),
-        updatedAt: new Date(),
       });
-
-      // When an admin takes down someone else's release (the "declined" outcome
-      // for an instantly-published release), bell the author. A self-delete
-      // needs no notification. Best-effort.
-      if (removedByAdmin) {
-        try {
-          const { createUserNotification } = require("../helpers/userNotifications");
-          await createUserNotification(db, data.authorUid, {
-            type: "press_release_removed",
-            title: "Your press release was removed",
-            message:
-              `An admin removed your press release${data.headline ? `: “${data.headline}”` : ""}. ` +
-              `Reach out if you think this was a mistake.`,
-            link: "/profile",
-            dedupeKey: `press_release_removed_${articleType}`,
-          });
-        } catch (notifyErr) {
-          logger.warn("Failed to notify author of press-release removal:", notifyErr.message);
-        }
-      }
 
       await invalidateNewsCache(db);
 

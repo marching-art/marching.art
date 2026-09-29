@@ -373,3 +373,70 @@ describe("helpers", () => {
     assert.equal(await countNewReports(makeFakeDb(seed())), 4);
   });
 });
+
+describe("article reports", () => {
+  const ARTICLE_ID = "live_day_4_press_p1";
+  const ARTICLE_PATH = "news_hub/live/days/day_4/articles/press_p1";
+  const articleSeed = () => ({
+    [profilePath("author")]: { username: "loudhorn" },
+    [profilePath("reporter")]: { displayName: "Quiet Snare" },
+    [ARTICLE_PATH]: { headline: "Fake news", authorUid: "author", isPublished: true },
+    [`reports/article_${ARTICLE_ID}_reporter`]: {
+      type: "article",
+      articleId: ARTICLE_ID,
+      articleKind: "press",
+      headline: "Fake news",
+      commentText: "Fake news\n\nBody",
+      commentAuthorUid: "author",
+      reporterUid: "reporter",
+      reason: "impersonation",
+      status: "new",
+      createdAt: t("2026-09-25T10:00:00Z"),
+    },
+    [`reports/article_${ARTICLE_ID}_other`]: {
+      type: "article",
+      articleId: ARTICLE_ID,
+      commentText: "Fake news",
+      commentAuthorUid: "author",
+      reporterUid: "other",
+      reason: "also bad",
+      status: "new",
+      createdAt: t("2026-09-25T11:00:00Z"),
+    },
+  });
+
+  beforeEach(() => setDbForTesting(null));
+
+  test("listReports normalizes and filters article reports", async () => {
+    setDbForTesting(makeFakeDb(articleSeed()));
+    const res = await listReports.run(adminReq({ type: "article" }));
+    assert.equal(res.reports.length, 2);
+    const report = res.reports.find((r) => r.reporterUid === "reporter");
+    assert.equal(report.type, "article");
+    assert.equal(report.contentId, ARTICLE_ID);
+    assert.equal(report.context.articleId, ARTICLE_ID);
+    assert.equal(report.context.articleKind, "press");
+    assert.equal(report.contentLive, true);
+    assert.equal(report.authorName, "loudhorn");
+  });
+
+  test("removing an article soft-removes it and resolves its sibling reports", async () => {
+    const db = makeFakeDb(articleSeed());
+    setDbForTesting(db);
+    const res = await resolveReport.run(
+      adminReq({ reportId: `article_${ARTICLE_ID}_reporter`, source: "reports", removeContent: true })
+    );
+    assert.equal(res.contentRemoved, true);
+    assert.equal(res.siblingsResolved, 1);
+    const article = db._docs.get(ARTICLE_PATH);
+    assert.equal(article.isPublished, false);
+    assert.equal(article.status, "removed");
+    assert.equal(article.removedByAdmin, true);
+    assert.equal(db._docs.get(`reports/article_${ARTICLE_ID}_other`).status, "resolved");
+
+    const again = await resolveReport.run(
+      adminReq({ reportId: `article_${ARTICLE_ID}_other`, source: "reports", removeContent: true })
+    );
+    assert.equal(again.contentRemoved, false, "an already-removed article reports no removal");
+  });
+});

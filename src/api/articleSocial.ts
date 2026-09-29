@@ -131,6 +131,47 @@ export const reportArticleComment = createCallable<
 >('reportArticleComment');
 
 // =============================================================================
+// ARTICLE REPORTS (director-written articles)
+// =============================================================================
+
+/**
+ * Director-written feed articles — press releases (`press_*`) and published
+ * community submissions (`community_*`) — addressed by the feed's composite id
+ * `{seasonId}_day_{n}_{articleType}`. Mirrors the server's
+ * `helpers/directorArticles.DIRECTOR_ARTICLE_ID_RE`; generated articles have
+ * no author to report and are not accepted.
+ */
+const DIRECTOR_ARTICLE_ID_RE = /^(.+)_(day_\d+)_((press|community)_[A-Za-z0-9_-]+)$/;
+
+/** True when `articleId` names a director-written article the report control applies to. */
+export function isReportableArticleId(articleId: string | null | undefined): boolean {
+  return typeof articleId === 'string' && DIRECTOR_ARTICLE_ID_RE.test(articleId);
+}
+
+/** "press release" or "article", for the report control's copy. */
+export function reportableArticleNoun(articleId: string): 'press release' | 'article' {
+  return DIRECTOR_ARTICLE_ID_RE.exec(articleId)?.[4] === 'press' ? 'press release' : 'article';
+}
+
+export interface ReportArticleData {
+  articleId: string;
+  /** 5–500 characters. */
+  reason: string;
+}
+
+export interface ReportArticleResult {
+  success: boolean;
+  /** True when this director had already reported the article (no new row). */
+  alreadyReported: boolean;
+  message: string;
+}
+
+/** Flag a press release or community article for admin review. */
+export const reportArticle = createCallable<ReportArticleData, ReportArticleResult>(
+  'reportArticle'
+);
+
+// =============================================================================
 // ARTICLE ENGAGEMENT (Combined reactions + comments count)
 // =============================================================================
 

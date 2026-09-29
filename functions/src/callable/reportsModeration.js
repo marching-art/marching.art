@@ -1,15 +1,17 @@
 /**
  * Admin Reports queue — the moderation surface for every player report.
  *
- * Reports land in two collections, written by three callables:
+ * Reports land in two collections, written by four callables:
  *   - `reports` (type "comment")        ← reportComment (profile comments)
  *   - `reports` (type "league_message") ← reportLeagueMessage (league chat)
+ *   - `reports` (type "article")        ← reportArticle (press releases and
+ *                                         community articles)
  *   - `article_comments_reports`        ← reportArticleComment
  *
  * Until this module nothing in the admin UI read either collection: reports
  * reached admins only as an email, and the article reports stayed "pending"
  * forever (so the twice-daily digest nagged about them indefinitely). These
- * callables normalize all three into one queue with one status vocabulary
+ * callables normalize all of them into one queue with one status vocabulary
  * (new → reviewed → resolved) and let an admin remove the reported content in
  * the same step, which also resolves every other open report on that content.
  *
@@ -26,9 +28,14 @@ const { getDb } = require("../config");
 const { paths } = require("../helpers/paths");
 const { assertAdmin, assertDocId, clampLimit } = require("../helpers/callableGuards");
 const { createLeagueActivity } = require("../helpers/leagueHelpers");
+const {
+  parseDirectorArticleId,
+  isArticleLive,
+  softRemoveDirectorArticle,
+} = require("../helpers/directorArticles");
 
 const REPORT_STATUSES = ["new", "reviewed", "resolved"];
-const REPORT_TYPES = ["comment", "league_message", "article_comment"];
+const REPORT_TYPES = ["comment", "league_message", "article", "article_comment"];
 const SOURCES = { reports: "reports", article: "article_comments_reports" };
 const MAX_NOTE_LENGTH = 500;
 
@@ -74,6 +81,29 @@ function normalizeReport(source, doc) {
       resolvedBy: data.resolvedBy || null,
     };
   }
+  if (data.type === "article") {
+    return {
+      id: doc.id,
+      source,
+      type: "article",
+      status: data.status || "new",
+      reason: data.reason || null,
+      text: typeof data.commentText === "string" ? data.commentText : "",
+      contentId: data.articleId || null,
+      authorUid: data.commentAuthorUid || null,
+      reporterUid: data.reporterUid || null,
+      context: {
+        articleId: data.articleId || null,
+        articleKind: data.articleKind || null,
+        headline: data.headline || null,
+      },
+      createdAt: isoOf(data.createdAt),
+      resolution: data.resolution || null,
+      adminNote: data.adminNote || null,
+      resolvedAt: isoOf(data.resolvedAt),
+      resolvedBy: data.resolvedBy || null,
+    };
+  }
   const isLeague = data.type === "league_message";
   return {
     id: doc.id,
@@ -101,6 +131,10 @@ function contentRefFor(db, report) {
   if (!report.contentId) return null;
   if (report.type === "article_comment") {
     return db.collection("article_comments").doc(report.contentId);
+  }
+  if (report.type === "article") {
+    const parsed = parseDirectorArticleId(report.contentId);
+    return parsed ? db.doc(parsed.articlePath) : null;
   }
   if (report.type === "league_message") {
     const leagueId = report.context.leagueId;
@@ -150,6 +184,8 @@ async function enrichReports(db, reports) {
       report.text = String(content.content || content.text || "");
       report.contentLive = content.status !== "hidden" && content.status !== "rejected";
       if (!report.authorUid) report.authorUid = content.userId || null;
+    } else if (report.type === "article") {
+      report.contentLive = isArticleLive(content);
     } else {
       report.contentLive = true;
     }
@@ -296,7 +332,8 @@ exports.listReports = onCall({ cors: true, timeoutSeconds: 60 }, async (request)
 async function resolveReportsForContent(db, { type, contentId, adminUid, resolution, note = null, excludeId = null }) {
   if (!contentId) return 0;
   const source = type === "article_comment" ? SOURCES.article : SOURCES.reports;
-  const field = type === "league_message" ? "messageId" : "commentId";
+  const field =
+    type === "league_message" ? "messageId" : type === "article" ? "articleId" : "commentId";
   const snap = await db.collection(source).where(field, "==", contentId).limit(200).get();
 
   const now = FieldValue.serverTimestamp();
@@ -330,6 +367,28 @@ async function removeReportedContent(db, report, adminUid, note) {
   }
   const snap = await ref.get();
   if (!snap.exists) return false;
+
+  if (report.type === "article") {
+    // Soft-removed like an author's own delete: unpublished and marked, so a
+    // shared link degrades gracefully. The author is belled.
+    const data = snap.data() || {};
+    if (!isArticleLive(data)) return false;
+    const parsed = parseDirectorArticleId(report.contentId);
+    await softRemoveDirectorArticle(db, {
+      ref,
+      data,
+      articleType: parsed ? parsed.articleType : ref.id,
+      kind: parsed ? parsed.kind : "community",
+      removedBy: adminUid,
+      removedByAdmin: data.authorUid !== adminUid,
+      reason: note || "Removed after a player report",
+    });
+    // Drop the feed cache so the article leaves the hub now, not in 5 minutes
+    // (invalidateNewsCache never throws).
+    const { invalidateNewsCache } = require("../triggers/newsFeed");
+    await invalidateNewsCache(db);
+    return true;
+  }
 
   if (report.type === "article_comment") {
     // Article comments are hidden, not deleted — the Comments queue keeps the

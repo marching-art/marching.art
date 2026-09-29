@@ -557,19 +557,6 @@ export const respondToLeagueInvitation = createCallable<
     status?: 'accepted' | 'declined' | 'rescinded' | 'expired';
   }
 >('respondToLeagueInvitation');
-// Server derives the commenter's display name from their own profile and
-// rate-limits per sender — the payload is just the recipient.
-export const sendCommentNotification = createCallable<
-  { recipientUid: string },
-  { success: boolean; message: string }
->('sendCommentNotification');
-export const deleteComment = createCallable<{ commentId: string }, { success: boolean }>(
-  'deleteComment'
-);
-export const reportComment = createCallable<
-  { commentId: string; reason: string },
-  { success: boolean }
->('reportComment');
 
 // =============================================================================
 // ADMIN

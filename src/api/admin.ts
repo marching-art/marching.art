@@ -441,7 +441,7 @@ export interface AdminInbox {
 export const getAdminInbox = createCallable<void, AdminInbox>('getAdminInbox');
 
 export type ReportStatus = 'new' | 'reviewed' | 'resolved';
-export type ReportType = 'comment' | 'league_message' | 'article_comment';
+export type ReportType = 'comment' | 'league_message' | 'article' | 'article_comment';
 export type ReportSource = 'reports' | 'article_comments_reports';
 
 /** One player report, normalized across both report collections. */
@@ -463,6 +463,9 @@ export interface PlayerReport {
     leagueId?: string | null;
     leagueName?: string | null;
     articleId?: string | null;
+    /** Article reports: which kind of director-written article. */
+    articleKind?: 'press' | 'community' | null;
+    headline?: string | null;
   };
   /** true live, false removed/hidden, null unknown. */
   contentLive: boolean | null;
@@ -490,7 +493,10 @@ export interface ResolveReportData {
   source: ReportSource;
   status?: ReportStatus;
   note?: string;
-  /** Delete (or, for article comments, hide) the content and resolve every report on it. */
+  /**
+   * Remove the content and resolve every report on it: comments and chat are
+   * deleted, article comments hidden, articles unpublished (author notified).
+   */
   removeContent?: boolean;
 }
 

@@ -1,5 +1,17 @@
 [
   {
+    "id": "2026-09-29-report-articles",
+    "date": "2026-09-29",
+    "title": "You can now report press releases and director articles",
+    "category": "feature",
+    "summary": "Press releases and articles written by other directors now have a Report flag next to the Share button. Some directors' posts go live without review first, so this lets you point an admin to one that crosses a line.",
+    "highlights": [
+      "Say briefly what's wrong, and an admin reviews it in the same queue as reported comments and chat.",
+      "If an admin takes the article down, it disappears from the news feed right away, and its author is told.",
+      "The author isn't told who reported it, and reporting the same article twice doesn't file a second report."
+    ]
+  },
+  {
     "id": "2026-09-29-reports-reviewed",
     "date": "2026-09-29",
     "title": "Reports you file now land in a real moderation queue",
