@@ -219,6 +219,8 @@ export interface NewsSubmission {
   status: 'pending' | 'scheduled' | 'approved' | 'rejected';
   /** Author's header-image preference, honored on publish. */
   imageOption?: 'generate' | 'submitted' | 'none';
+  /** "press_release" for a corps press release (no AI image; corps byline). */
+  kind?: 'press_release';
   /** True for a trusted author's submission, which publishes itself at 2 PM ET. */
   autoPublish?: boolean;
   scheduledPublishAt?: string | null;

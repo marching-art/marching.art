@@ -74,7 +74,7 @@ test("admin submission email escapes headline, summary, author, and category", (
   // The submission id is URL-encoded into the review link, not interpolated raw.
   assert.ok(html.includes("submission=sub%3C%3E%26123"));
   // A new author's article waits in the Pending queue; the link lands there.
-  assert.ok(html.includes("/admin?tab=content&status=pending&"));
+  assert.ok(html.includes("/admin?tab=newsroom&status=pending&"));
   assert.ok(html.includes("New article needs review"));
 });
 
@@ -90,7 +90,7 @@ test("admin submission email for a trusted author says scheduled and links the S
   });
   assert.ok(html.includes("Trusted-author article scheduled"));
   assert.ok(html.includes("2:00 PM ET"));
-  assert.ok(html.includes("/admin?tab=content&status=scheduled&submission=abc123"));
+  assert.ok(html.includes("/admin?tab=newsroom&status=scheduled&submission=abc123"));
   assert.ok(!html.includes("New article needs review"));
 });
 
@@ -121,10 +121,10 @@ test("pending-approvals digest renders per-queue counts, links, and total", () =
   assert.ok(html.includes(">5<"));
   assert.ok(html.includes(">1<"));
   // Deep links to the two admin tabs.
-  assert.ok(html.includes("https://marching.art/admin?tab=submissions"));
+  assert.ok(html.includes("https://marching.art/admin?tab=newsroom"));
   assert.ok(html.includes("https://marching.art/admin?tab=moderation"));
   // Singular vs. plural is respected.
-  assert.ok(html.includes("reported comment to review"));
+  assert.ok(html.includes("player report to review"));
   assert.ok(html.includes("comments awaiting moderation"));
 });
 

@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // src/components/Admin/SubmissionsManagement.jsx
 // Admin interface for reviewing and managing user-submitted articles
 // Follows Admin panel dark theme: bg-background, bg-surface-card, bg-surface-raised
@@ -22,7 +21,19 @@ import Portal from '../Portal';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
 import { listPendingSubmissions, approveSubmission, rejectSubmission } from '../../api/functions';
 
+/**
+ * @typedef {import('../../api/articleAdmin').NewsSubmission} NewsSubmission
+ * @typedef {NonNullable<import('../../api/articleAdmin').ListPendingSubmissionsData['status']>} StatusFilter
+ * @typedef {NonNullable<import('../../api/articleAdmin').ApproveSubmissionData['imageOption']>} ImageOption
+ * @typedef {(dateString: string | null | undefined) => string} FormatDate
+ */
+
+/** @param {unknown} error @param {string} fallback */
+const errorMessage = (error, fallback) =>
+  error instanceof Error && error.message ? error.message : fallback;
+
 // Status badge colors
+/** @type {Record<NewsSubmission['status'], string>} */
 const STATUS_COLORS = {
   pending: 'bg-warning/20 text-warning',
   scheduled: 'bg-purple-500/20 text-purple-400',
@@ -31,6 +42,7 @@ const STATUS_COLORS = {
 };
 
 // Category badge colors
+/** @type {Record<string, string>} */
 const CATEGORY_COLORS = {
   dci: 'bg-blue-500/20 text-blue-400',
   fantasy: 'bg-purple-500/20 text-purple-400',
@@ -41,6 +53,7 @@ const CATEGORY_COLORS = {
   press: 'bg-teal-500/20 text-teal-400',
 };
 
+/** @type {Record<string, string>} */
 const CATEGORY_LABELS = {
   dci: 'DCI News',
   fantasy: 'Fantasy',
@@ -49,28 +62,35 @@ const CATEGORY_LABELS = {
   press: 'Press Release',
 };
 
+/** @type {StatusFilter[]} */
 const STATUS_FILTERS = ['pending', 'scheduled', 'approved', 'rejected', 'all'];
+
+/** @param {string | null} value @returns {value is StatusFilter} */
+const isStatusFilter = (value) =>
+  value !== null && /** @type {string[]} */ (STATUS_FILTERS).includes(value);
 
 const SubmissionsManagement = () => {
   // Deep link from the admin notification email:
-  //   /admin?tab=content&status=scheduled&submission=<id>
+  //   /admin?tab=newsroom&status=scheduled&submission=<id>
   // `status` opens the right tab (a trusted author's article sits under
   // Scheduled, never Pending) and `submission` highlights the row.
   const [searchParams] = useSearchParams();
   const linkedStatus = searchParams.get('status');
   const linkedSubmissionId = searchParams.get('submission');
 
-  const [submissions, setSubmissions] = useState([]);
+  const [submissions, setSubmissions] = useState(/** @type {NewsSubmission[]} */ ([]));
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [statusFilter, setStatusFilter] = useState(
-    STATUS_FILTERS.includes(linkedStatus) ? linkedStatus : 'pending'
+    /** @type {StatusFilter} */ (isStatusFilter(linkedStatus) ? linkedStatus : 'pending')
   );
   // Once the linked submission is not found under its emailed status (it was
   // approved, rejected, or auto-published since), widen to All exactly once.
   const widenedForLinkRef = useRef(false);
-  const [previewSubmission, setPreviewSubmission] = useState(null);
-  const [processingId, setProcessingId] = useState(null);
+  const [previewSubmission, setPreviewSubmission] = useState(
+    /** @type {NewsSubmission | null} */ (null)
+  );
+  const [processingId, setProcessingId] = useState(/** @type {string | null} */ (null));
 
   const loadSubmissions = useCallback(async () => {
     try {
@@ -114,6 +134,7 @@ const SubmissionsManagement = () => {
     toast.success('Submissions refreshed');
   };
 
+  /** @param {NewsSubmission} submission @param {ImageOption} [imageOption] */
   const handleApprove = async (submission, imageOption) => {
     setProcessingId(submission.id);
     try {
@@ -139,12 +160,13 @@ const SubmissionsManagement = () => {
       }
     } catch (error) {
       console.error('Error approving submission:', error);
-      toast.error(error.message || 'Failed to approve submission');
+      toast.error(errorMessage(error, 'Failed to approve submission'));
     } finally {
       setProcessingId(null);
     }
   };
 
+  /** @param {NewsSubmission} submission @param {string} [reason] */
   const handleReject = async (submission, reason = '') => {
     setProcessingId(submission.id);
     try {
@@ -159,12 +181,13 @@ const SubmissionsManagement = () => {
       }
     } catch (error) {
       console.error('Error rejecting submission:', error);
-      toast.error(error.message || 'Failed to reject submission');
+      toast.error(errorMessage(error, 'Failed to reject submission'));
     } finally {
       setProcessingId(null);
     }
   };
 
+  /** @type {FormatDate} */
   const formatDate = (dateString) => {
     if (!dateString) return 'Unknown';
     const date = new Date(dateString);
@@ -261,7 +284,27 @@ const SubmissionsManagement = () => {
   );
 };
 
+/**
+ * @typedef {object} SubmissionActionProps
+ * @property {NewsSubmission} submission
+ * @property {(submission: NewsSubmission, imageOption?: ImageOption) => void} onApprove
+ * @property {(submission: NewsSubmission, reason?: string) => void} onReject
+ * @property {FormatDate} formatDate
+ * @property {boolean} isProcessing
+ */
+
 // Submission row component
+/**
+ * @param {{
+ *   submission: NewsSubmission,
+ *   onPreview: () => void,
+ *   onApprove: () => void,
+ *   onReject: () => void,
+ *   formatDate: FormatDate,
+ *   isProcessing: boolean,
+ *   isLinked?: boolean,
+ * }} props
+ */
 const SubmissionRow = ({
   submission,
   onPreview,
@@ -353,6 +396,7 @@ const SubmissionRow = ({
 );
 
 // Preview modal component
+/** @param {SubmissionActionProps & { onClose: () => void }} props */
 const PreviewModal = ({ submission, onClose, onApprove, onReject, isProcessing, formatDate }) => {
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectForm, setShowRejectForm] = useState(false);
@@ -506,7 +550,7 @@ const PreviewModal = ({ submission, onClose, onApprove, onReject, isProcessing, 
                               name="imageOption"
                               value="submitted"
                               checked={imageOption === 'submitted'}
-                              onChange={(e) => setImageOption(e.target.value)}
+                              onChange={() => setImageOption('submitted')}
                               className="text-interactive focus:ring-interactive bg-surface-raised border-line-strong"
                             />
                             <Image className="w-4 h-4 text-blue-400" />
@@ -521,7 +565,7 @@ const PreviewModal = ({ submission, onClose, onApprove, onReject, isProcessing, 
                             name="imageOption"
                             value="generate"
                             checked={imageOption === 'generate'}
-                            onChange={(e) => setImageOption(e.target.value)}
+                            onChange={() => setImageOption('generate')}
                             className="text-interactive focus:ring-interactive bg-surface-raised border-line-strong"
                           />
                           <Sparkles className="w-4 h-4 text-secondary" />
@@ -535,7 +579,7 @@ const PreviewModal = ({ submission, onClose, onApprove, onReject, isProcessing, 
                             name="imageOption"
                             value="none"
                             checked={imageOption === 'none'}
-                            onChange={(e) => setImageOption(e.target.value)}
+                            onChange={() => setImageOption('none')}
                             className="text-interactive focus:ring-interactive bg-surface-raised border-line-strong"
                           />
                           <X className="w-4 h-4 text-muted" />

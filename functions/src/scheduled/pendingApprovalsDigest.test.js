@@ -24,7 +24,8 @@ function makeDb(counts, { throwOn } = {}) {
         where(field, op, value) {
           assert.equal(field, "status");
           assert.equal(op, "==");
-          assert.equal(value, "pending");
+          // `reports` rows start "new"; every other queue starts "pending".
+          assert.equal(value, name === "reports" ? "new" : "pending");
           return {
             count() {
               return {
@@ -54,12 +55,13 @@ describe("computePendingApprovals", () => {
       news_submissions: 2,
       article_comments: 5,
       article_comments_reports: 1,
+      reports: 3,
     });
     assert.deepEqual(await computePendingApprovals(db), {
       pendingArticles: 2,
       pendingComments: 5,
-      pendingReports: 1,
-      total: 8,
+      pendingReports: 4,
+      total: 11,
     });
   });
 

@@ -29,7 +29,7 @@
  * watchlist — that is the row an operator should actually look at.
  *
  * Written weekly to admin-stats/integrity (admin-only per firestore.rules) and
- * rendered in Admin > Jobs. Weekly, not nightly: like economyStats this is a
+ * rendered in Admin > Moderation. Weekly, not nightly: like economyStats this is a
  * heavier cross-account correlation, and an alt ring does not need same-night
  * detection the way a scoring bug does.
  *

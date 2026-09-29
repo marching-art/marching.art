@@ -33,11 +33,11 @@ const SITE_URL = "https://marching.art";
  * @returns {Promise<{pendingArticles:number,pendingComments:number,pendingReports:number,total:number}>}
  */
 async function computePendingApprovals(db) {
-  const countPending = async (collection, describe) => {
+  const countPending = async (collection, describe, status = "pending") => {
     try {
       const snap = await db
         .collection(collection)
-        .where("status", "==", "pending")
+        .where("status", "==", status)
         .count()
         .get();
       return snap.data().count || 0;
@@ -47,11 +47,16 @@ async function computePendingApprovals(db) {
     }
   };
 
-  const [pendingArticles, pendingComments, pendingReports] = await Promise.all([
+  // Reports live in two collections: article-comment reports ("pending") and
+  // the profile-comment / league-chat `reports` rows ("new") — the Moderation
+  // tab's Reports queue reads both, so the digest counts both.
+  const [pendingArticles, pendingComments, articleReports, playerReports] = await Promise.all([
     countPending("news_submissions", "pending article submissions"),
     countPending("article_comments", "pending comments"),
     countPending("article_comments_reports", "pending comment reports"),
+    countPending("reports", "new player reports", "new"),
   ]);
+  const pendingReports = articleReports + playerReports;
 
   return {
     pendingArticles,
@@ -114,13 +119,13 @@ async function runPendingApprovalsDigest(db, opsWebhookUrl) {
     summary: "Items are sitting in the moderation queues on marching.art.",
     details: [
       counts.pendingArticles > 0
-        ? `${counts.pendingArticles} article submission(s) pending — ${SITE_URL}/admin?tab=submissions`
+        ? `${counts.pendingArticles} article submission(s) pending — ${SITE_URL}/admin?tab=newsroom`
         : null,
       counts.pendingComments > 0
         ? `${counts.pendingComments} comment(s) awaiting moderation — ${SITE_URL}/admin?tab=moderation`
         : null,
       counts.pendingReports > 0
-        ? `${counts.pendingReports} reported comment(s) to review — ${SITE_URL}/admin?tab=moderation`
+        ? `${counts.pendingReports} player report(s) to review — ${SITE_URL}/admin?tab=moderation`
         : null,
     ].filter(Boolean),
   });

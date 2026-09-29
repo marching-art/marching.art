@@ -336,7 +336,7 @@ function adminArticleSubmissionEmailTemplate({
 }) {
   const status = autoPublish ? "scheduled" : "pending";
   const reviewUrl =
-    `${EMAIL_CONFIG.appUrl}/admin?tab=content&status=${status}` +
+    `${EMAIL_CONFIG.appUrl}/admin?tab=newsroom&status=${status}` +
     `&submission=${encodeURIComponent(submissionId || "")}`;
   const safeHeadline = escapeHtml(headline || "(no headline)");
   const safeAuthor = escapeHtml(authorName || "A user");
@@ -442,7 +442,7 @@ function adminPendingApprovalsDigestEmailTemplate({
   const reports = Math.max(0, Number(pendingReports) || 0);
   const total = articles + comments + reports;
 
-  const submissionsUrl = `${EMAIL_CONFIG.appUrl}/admin?tab=submissions`;
+  const submissionsUrl = `${EMAIL_CONFIG.appUrl}/admin?tab=newsroom`;
   const moderationUrl = `${EMAIL_CONFIG.appUrl}/admin?tab=moderation`;
 
   // One stat row per non-empty queue. label/url are trusted constants; count is
@@ -469,7 +469,7 @@ function adminPendingApprovalsDigestEmailTemplate({
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin: 16px 0;">
         ${row(articles, "article submission" + (articles === 1 ? "" : "s") + " pending approval", submissionsUrl)}
         ${row(comments, "comment" + (comments === 1 ? "" : "s") + " awaiting moderation", moderationUrl)}
-        ${row(reports, "reported comment" + (reports === 1 ? "" : "s") + " to review", moderationUrl)}
+        ${row(reports, "player report" + (reports === 1 ? "" : "s") + " to review", moderationUrl)}
       </table>
 
       <p style="text-align: center;">

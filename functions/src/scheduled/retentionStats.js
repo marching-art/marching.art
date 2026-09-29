@@ -1,5 +1,5 @@
 // Nightly retention instrumentation: refresh the DAU/WAU/MAU, cohort-retention
-// and streak-distribution doc the Admin > Jobs tab renders
+// and streak-distribution doc the Admin > Insights section renders
 // (helpers/retentionStats.js).
 //
 // 05:00 ET, deliberately after the whole nightly chain has landed: scoring
