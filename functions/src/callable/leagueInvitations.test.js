@@ -15,6 +15,7 @@ const {
   validateInviteRequest,
   assertCanSendInvitation,
   assertCanRespondToInvitation,
+  settledInvitationResponse,
   INVITATION_TTL_MS,
 } = require("./leagueInvitations");
 
@@ -181,15 +182,13 @@ describe("assertCanRespondToInvitation", () => {
     );
   });
 
-  test("an already-answered invitation cannot be answered again", () => {
+  test("an already-answered invitation is not an error for its addressee", () => {
     for (const status of ["accepted", "declined", "rescinded", "expired"]) {
-      assert.throws(
-        () =>
-          assertCanRespondToInvitation({
-            invitation: { inviteeUid: "invitee", status },
-            uid: "invitee",
-          }),
-        new RegExp(`already ${status}`)
+      assert.doesNotThrow(() =>
+        assertCanRespondToInvitation({
+          invitation: { inviteeUid: "invitee", status },
+          uid: "invitee",
+        })
       );
     }
   });
@@ -201,5 +200,32 @@ describe("assertCanRespondToInvitation", () => {
         uid: "invitee",
       })
     );
+  });
+});
+
+describe("settledInvitationResponse", () => {
+  test("a pending invitation is still answerable", () => {
+    assert.equal(settledInvitationResponse({ status: "pending" }), null);
+    assert.equal(settledInvitationResponse({}), null);
+  });
+
+  test("re-answering an accepted invitation reports the acceptance, never undoes it", () => {
+    assert.deepEqual(settledInvitationResponse({ status: "accepted" }), {
+      success: true,
+      accepted: true,
+      alreadyResolved: true,
+      status: "accepted",
+    });
+  });
+
+  test("every other settled state resolves as not-joined so the row can clear", () => {
+    for (const status of ["declined", "rescinded", "expired"]) {
+      assert.deepEqual(settledInvitationResponse({ status }), {
+        success: true,
+        accepted: false,
+        alreadyResolved: true,
+        status,
+      });
+    }
   });
 });

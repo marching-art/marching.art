@@ -123,17 +123,47 @@ function assertCanSendInvitation({
 }
 
 /**
- * The invitee-side guards for accepting or declining, in order: an invitation
- * can only be answered by its addressee, and only while it is still pending.
- * Expiry is checked separately by the caller because an expired invitation is
- * also *written* to 'expired' before the rejection.
+ * The invitee-side guard for accepting or declining: an invitation can only be
+ * answered by its addressee. Whether it is still answerable is decided by
+ * settledInvitationResponse, not here — a settled invitation is not an error.
  */
 function assertCanRespondToInvitation({ invitation, uid }) {
   if (invitation.inviteeUid !== uid) {
     throw new HttpsError("permission-denied", "This invitation is not for you.");
   }
-  if (invitation.status !== "pending") {
-    throw new HttpsError("failed-precondition", `Invitation already ${invitation.status}.`);
+}
+
+/**
+ * Responding is idempotent. An invitation that is no longer pending has
+ * already been settled, so a repeat Accept or a late Decline returns the
+ * settled outcome instead of throwing. It used to throw "Invitation already
+ * accepted" for both buttons, which stranded the row on the invitee's profile
+ * with no way to clear it whenever the first response committed but its
+ * reply never reached the client. Declining never undoes an acceptance —
+ * leaving the league is its own action.
+ *
+ * @param {{ status?: string }} invitation
+ * @returns {null | { success: true, accepted: boolean, alreadyResolved: true, status: string }}
+ *   null while the invitation is still pending (the caller proceeds normally).
+ */
+function settledInvitationResponse(invitation) {
+  const status = invitation?.status || "pending";
+  if (status === "pending") return null;
+  return { success: true, accepted: status === "accepted", alreadyResolved: true, status };
+}
+
+/**
+ * Run a post-commit side effect without letting it fail the response. Once the
+ * join transaction commits, the director IS in the league; reporting an error
+ * because an activity-feed write or notification hiccupped is what made the
+ * client keep offering an invitation that had already been accepted.
+ */
+async function bestEffort(label, fn) {
+  try {
+    return await fn();
+  } catch (error) {
+    logger.warn(`respondToLeagueInvitation: ${label} failed (non-fatal)`, error);
+    return undefined;
   }
 }
 
@@ -236,11 +266,15 @@ exports.respondToLeagueInvitation = onCall({ cors: true }, async (request) => {
   if (!invitationDoc.exists) throw new HttpsError("not-found", "No invitation found.");
   const invitation = invitationDoc.data();
   assertCanRespondToInvitation({ invitation, uid });
+  const settled = settledInvitationResponse(invitation);
+  if (settled) return settled;
   if (isInvitationExpired(invitation)) {
     await invitationRef.update({
       status: 'expired',
       respondedAt: FieldValue.serverTimestamp(),
     });
+    // Declining an expired offer is just clearing it off the list.
+    if (!accept) return settledInvitationResponse({ status: 'expired' });
     throw new HttpsError("failed-precondition", "This invitation has expired.");
   }
 
@@ -257,14 +291,22 @@ exports.respondToLeagueInvitation = onCall({ cors: true }, async (request) => {
   const userProfileRef = db.doc(paths.userProfile(uid));
   const standingsRef = leagueRef.collection('standings').doc('current');
 
-  await db.runTransaction(async (transaction) => {
+  // Resolves to the settled response when a racing call already answered the
+  // invitation, false when the director was already a member, true on a join.
+  const outcome = await db.runTransaction(async (transaction) => {
     const leagueDoc = await transaction.get(leagueRef);
     if (!leagueDoc.exists) {
       throw new HttpsError("not-found", "This league no longer exists.");
     }
     const standingsDoc = await transaction.get(standingsRef);
     const profileDoc = await transaction.get(userProfileRef);
+    // Re-read inside the transaction: a double-tap or a retry racing the
+    // first response must not charge the entry fee twice.
+    const liveInvitation = await transaction.get(invitationRef);
     const leagueData = leagueDoc.data();
+
+    const settledMeanwhile = settledInvitationResponse(liveInvitation.data());
+    if (settledMeanwhile) return settledMeanwhile;
 
     if ((leagueData.members || []).includes(uid)) {
       // Already a member — just mark invitation accepted
@@ -272,7 +314,7 @@ exports.respondToLeagueInvitation = onCall({ cors: true }, async (request) => {
         status: 'accepted',
         respondedAt: FieldValue.serverTimestamp(),
       });
-      return;
+      return false;
     }
     if ((leagueData.members || []).length >= (leagueData.maxMembers || 20)) {
       throw new HttpsError("failed-precondition", "This league is now full.");
@@ -314,38 +356,51 @@ exports.respondToLeagueInvitation = onCall({ cors: true }, async (request) => {
       status: 'accepted',
       respondedAt: FieldValue.serverTimestamp(),
     });
+    return true;
   });
 
-  // Roster changed — recompute season participation so discovery and the
-  // matchup generators see the new member right away, exactly as joinLeague
-  // and joinLeagueByCode do. Only this path skipped it, so a league that
-  // filled entirely through invitations stayed stale until the nightly job.
-  await refreshLeagueActivity(db, leagueId);
+  if (typeof outcome === 'object') return outcome;
+  const joined = outcome;
 
-  // Activity event outside transaction
-  const userProfileDoc = await db.doc(paths.userProfile(uid)).get();
-  const userDisplayName = userProfileDoc.exists
-    ? (userProfileDoc.data().displayName || userProfileDoc.data().username || 'New Member')
-    : 'New Member';
-  await createLeagueActivity(db, leagueId, {
-    type: 'member_joined',
-    title: 'New Member Joined',
-    message: `${userDisplayName} has joined the league!`,
-    userId: uid,
-  });
+  // Everything below runs after the join committed, so none of it may turn a
+  // successful join into an error response (see bestEffort).
+  if (joined) {
+    // Roster changed — recompute season participation so discovery and the
+    // matchup generators see the new member right away, exactly as joinLeague
+    // and joinLeagueByCode do. Only this path skipped it, so a league that
+    // filled entirely through invitations stayed stale until the nightly job.
+    await bestEffort("refreshLeagueActivity", () => refreshLeagueActivity(db, leagueId));
 
-  // Tell the inviter their invitation was accepted (cross-user, Admin SDK).
-  if (invitation.inviterUid && invitation.inviterUid !== uid) {
-    await createUserLeagueNotification(db, invitation.inviterUid, {
-      leagueId,
-      leagueName: invitation.leagueName || "your league",
-      type: "member_joined",
-      title: "Invitation Accepted",
-      message: `${userDisplayName} accepted your invitation to ${invitation.leagueName || "your league"}.`,
-    });
+    const userProfileDoc = await bestEffort("profile read", () =>
+      db.doc(paths.userProfile(uid)).get()
+    );
+    const userDisplayName = userProfileDoc?.exists
+      ? (userProfileDoc.data().displayName || userProfileDoc.data().username || 'New Member')
+      : 'New Member';
+    await bestEffort("createLeagueActivity", () =>
+      createLeagueActivity(db, leagueId, {
+        type: 'member_joined',
+        title: 'New Member Joined',
+        message: `${userDisplayName} has joined the league!`,
+        userId: uid,
+      })
+    );
+
+    // Tell the inviter their invitation was accepted (cross-user, Admin SDK).
+    if (invitation.inviterUid && invitation.inviterUid !== uid) {
+      await bestEffort("inviter notification", () =>
+        createUserLeagueNotification(db, invitation.inviterUid, {
+          leagueId,
+          leagueName: invitation.leagueName || "your league",
+          type: "member_joined",
+          title: "Invitation Accepted",
+          message: `${userDisplayName} accepted your invitation to ${invitation.leagueName || "your league"}.`,
+        })
+      );
+    }
   }
 
-  return { success: true, accepted: true };
+  return { success: true, accepted: true, alreadyResolved: !joined, status: 'accepted' };
 });
 
 module.exports.INVITATION_TTL_MS = INVITATION_TTL_MS;
@@ -353,3 +408,4 @@ module.exports.isInvitationExpired = isInvitationExpired;
 module.exports.validateInviteRequest = validateInviteRequest;
 module.exports.assertCanSendInvitation = assertCanSendInvitation;
 module.exports.assertCanRespondToInvitation = assertCanRespondToInvitation;
+module.exports.settledInvitationResponse = settledInvitationResponse;
