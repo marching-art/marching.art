@@ -405,6 +405,18 @@ src/scripts/buildClientVenues.js` → re-run `buildPlaceIndex.js` (see its
 
 ## Recently shipped (context, newest first — prune when stale)
 
+- 2026-09-29: **League invitations are idempotent** (Discord #bug-reports) —
+  `respondToLeagueInvitation` returns the settled outcome
+  (`settledInvitationResponse`: `alreadyResolved`, `accepted`, `status`) for a
+  non-pending invitation instead of throwing "Invitation already accepted", so
+  a row whose first Accept committed but whose reply was lost can always be
+  cleared; Decline never undoes an acceptance. The accept transaction re-reads
+  the invitation (no double entry fee on a double-tap/retry) and post-commit
+  side effects (activity refresh, feed entry, inviter notification) are
+  best-effort, so a committed join can't surface as an error. Client
+  (`PendingLeagueInvitations`) toasts the real outcome and re-fetches on error;
+  `getPendingInvitations` drops rows past `expiresAt`. Ratchet: `NewsFeed.jsx`
+  typed, `@ts-nocheck` 15 → 14.
 - 2026-09-28: **Hosting guardrails + travel realism** — `hostEvent` refuses
   accounts under `hostedEvents.minHostXP` (3,000 XP ≈ a month of real play;
   onboarding pays ~900) and towns off the Tour Map poster

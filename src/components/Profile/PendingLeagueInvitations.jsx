@@ -49,22 +49,42 @@ const PendingLeagueInvitations = ({ userId, onChange }) => {
   }, [userId]);
 
   /**
+   * The toast for a response. A settled invitation (answered on another
+   * device, or a first tap whose reply never arrived) reports what actually
+   * happened rather than echoing the button that was pressed.
+   * @param {Invitation} invitation
+   * @param {boolean} accept
+   * @param {{ accepted?: boolean, alreadyResolved?: boolean, status?: string }} result
+   */
+  const responseMessage = (invitation, accept, result) => {
+    const name = invitation.leagueName || 'the league';
+    if (!result?.alreadyResolved) return accept ? `Joined ${name}` : 'Invitation declined';
+    if (result.accepted) return `You're already in ${name}`;
+    if (result.status === 'expired') return 'That invitation had expired — cleared';
+    if (result.status === 'rescinded') return 'That invitation was withdrawn — cleared';
+    return 'Invitation cleared';
+  };
+
+  /**
    * @param {Invitation} invitation
    * @param {boolean} accept
    */
   const handleRespond = async (invitation, accept) => {
     setRespondingId(invitation.id);
     try {
-      await respondToLeagueInvitation({
+      const { data: result } = await respondToLeagueInvitation({
         leagueId: invitation.leagueId,
         accept,
       });
-      toast.success(accept ? `Joined ${invitation.leagueName}` : 'Invitation declined');
+      toast.success(responseMessage(invitation, accept, result));
       // Optimistic remove
       setInvitations((prev) => prev.filter((i) => i.id !== invitation.id));
       onChange?.();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to respond');
+      // Re-sync with the server so a row that can no longer be answered
+      // (expired, league deleted) drops off instead of lingering.
+      fetchInvitations();
     } finally {
       setRespondingId(null);
     }

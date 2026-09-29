@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 /**
  * NewsFeed Component - Professional News Hub
  *
@@ -39,11 +38,20 @@ import {
 } from './NewsFeedCards';
 import { TrendingBadge, FantasyValueBadge } from './NewsFeedBadges';
 
+/** @typedef {import('./NewsFeedCards').FeedStory} FeedStory */
+/** @typedef {import('../../api/functions').GetRecentNewsResult} GetRecentNewsResult */
+/** @typedef {NonNullable<GetRecentNewsResult['engagement']>} EngagementMap */
+/**
+ * What newsCache holds for this feed.
+ * @typedef {{ news: FeedStory[], hasMore: boolean, engagement?: EngagementMap }} CachedFeed
+ */
+
 // =============================================================================
 // REQUEST DEDUPLICATION
 // Prevents multiple concurrent fetches for the same data
 // =============================================================================
 
+/** @type {Promise<GetRecentNewsResult> | null} */
 let pendingRequest = null;
 
 // =============================================================================
@@ -60,8 +68,13 @@ let pendingRequest = null;
 
 const MAX_AUTO_LOADS = 2; // Only auto-load 2 times, then require manual click
 
+/**
+ * @param {() => void} callback
+ * @param {boolean} enabled
+ * @param {IntersectionObserverInit} [options]
+ */
 function useIntersectionObserver(callback, enabled, options = {}) {
-  const targetRef = useRef(null);
+  const targetRef = useRef(/** @type {HTMLDivElement | null} */ (null));
 
   useEffect(() => {
     // Don't observe if disabled (e.g., max auto-loads reached)
@@ -136,15 +149,16 @@ function useIntersectionObserver(callback, enabled, options = {}) {
 // MAIN COMPONENT
 // =============================================================================
 
+/** @param {{ maxItems?: number }} props */
 export default function NewsFeed({ maxItems = 4 }) {
   const navigate = useNavigate();
-  const [news, setNews] = useState([]);
+  const [news, setNews] = useState(/** @type {FeedStory[]} */ ([]));
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState(/** @type {string | null} */ (null));
   const [hasMore, setHasMore] = useState(true);
   const [activeCategory, setActiveCategory] = useState('all');
-  const [engagement, setEngagement] = useState({}); // Map of articleId -> engagement data
+  const [engagement, setEngagement] = useState(/** @type {EngagementMap} */ ({})); // Map of articleId -> engagement data
   const [autoLoadCount, setAutoLoadCount] = useState(0); // Track auto-loads to prevent sidebar racing
 
   // Day-gating: prevent articles from spoiling scores before they appear on
@@ -171,7 +185,7 @@ export default function NewsFeed({ maxItems = 4 }) {
   const fetchNews = async (forceRefresh = false) => {
     // If cache is fresh and not forcing refresh, use it directly
     if (!forceRefresh && newsCache.isFresh(maxItems)) {
-      const cached = newsCache.get();
+      const cached = /** @type {CachedFeed} */ (newsCache.get());
       setNews(cached.news);
       setHasMore(cached.hasMore);
       setEngagement(cached.engagement || {});
@@ -183,7 +197,7 @@ export default function NewsFeed({ maxItems = 4 }) {
     // This is the key to instant perceived load times
     const isStale = newsCache.isStale(maxItems);
     if (isStale && !forceRefresh) {
-      const cached = newsCache.get();
+      const cached = /** @type {CachedFeed} */ (newsCache.get());
       setNews(cached.news);
       setHasMore(cached.hasMore);
       setEngagement(cached.engagement || {});
@@ -259,7 +273,7 @@ export default function NewsFeed({ maxItems = 4 }) {
       if (!isStale) {
         setNews([]);
         setHasMore(false);
-        setError(err.message);
+        setError(err instanceof Error ? err.message : String(err));
       }
     } finally {
       pendingRequest = null;
@@ -308,7 +322,8 @@ export default function NewsFeed({ maxItems = 4 }) {
       const startAfter = lastArticle?.createdAt;
 
       // Check prefetch cache first for instant pagination (like news sites)
-      const prefetched = prefetchCache.get(startAfter);
+      const prefetched = /** @type {GetRecentNewsResult | null} */ (prefetchCache.get(startAfter));
+      /** @type {{ data: GetRecentNewsResult }} */
       let result;
 
       if (prefetched) {
@@ -405,6 +420,7 @@ export default function NewsFeed({ maxItems = 4 }) {
     });
   }, [news]);
 
+  /** @param {FeedStory} story */
   const handleStoryClick = (story) => {
     // Navigate to full article page with article data in state
     navigate(`/article/${story.id}`, {
@@ -507,6 +523,19 @@ export default function NewsFeed({ maxItems = 4 }) {
 // FANTASY IMPACT WIDGET (Standalone for sidebar use)
 // =============================================================================
 
+/**
+ * A feed story as the widget reads it: the optional fantasy analytics block
+ * narrowed to the fields rendered here.
+ * @typedef {Omit<FeedStory, 'fantasyMetrics'> & {
+ *   fantasyMetrics?: {
+ *     topROI?: { corps: string, caption: string, pointsGained: number, roiPercent: number },
+ *     buyLow?: Array<{ corps: string, projectedGain: number }>,
+ *     sellHigh?: Array<{ corps: string, riskLevel: string }>,
+ *   } | null,
+ * }} FantasyImpactEntry
+ */
+
+/** @param {{ news?: FantasyImpactEntry[] }} props */
 export function FantasyImpactWidget({ news }) {
   const latestWithImpact = news?.find((n) => n.fantasyImpact);
 
@@ -553,7 +582,7 @@ export function FantasyImpactWidget({ news }) {
         </p>
 
         {/* Buy Low Opportunities */}
-        {metrics?.buyLow?.length > 0 && (
+        {metrics?.buyLow && metrics.buyLow.length > 0 && (
           <div className="mb-3">
             <div className="text-[10px] text-green-400 uppercase font-bold mb-1.5 flex items-center gap-1">
               <ArrowUpRight className="w-3 h-3" />
@@ -569,7 +598,7 @@ export function FantasyImpactWidget({ news }) {
         )}
 
         {/* Sell High Warnings */}
-        {metrics?.sellHigh?.length > 0 && (
+        {metrics?.sellHigh && metrics.sellHigh.length > 0 && (
           <div className="mb-3">
             <div className="text-[10px] text-red-400 uppercase font-bold mb-1.5 flex items-center gap-1">
               <ArrowDownRight className="w-3 h-3" />
@@ -595,7 +624,7 @@ export function FantasyImpactWidget({ news }) {
         )}
 
         {/* Trending Corps */}
-        {latestWithImpact.trendingCorps?.length > 0 && (
+        {latestWithImpact.trendingCorps && latestWithImpact.trendingCorps.length > 0 && (
           <div className="pt-3 border-t border-line/50">
             <div className="text-xs text-muted uppercase mb-2">Trending Corps</div>
             <div className="space-y-1.5">

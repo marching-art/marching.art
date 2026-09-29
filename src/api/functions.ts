@@ -546,9 +546,16 @@ export const inviteDirectorToLeague = createCallable<
   { leagueId: string; inviteeUid: string; message?: string },
   { success: boolean }
 >('inviteDirectorToLeague');
+// Idempotent: answering an invitation that was already settled returns that
+// settled outcome (`alreadyResolved: true`) instead of an error.
 export const respondToLeagueInvitation = createCallable<
   { leagueId: string; accept: boolean },
-  { success: boolean }
+  {
+    success: boolean;
+    accepted: boolean;
+    alreadyResolved?: boolean;
+    status?: 'accepted' | 'declined' | 'rescinded' | 'expired';
+  }
 >('respondToLeagueInvitation');
 // Server derives the commenter's display name from their own profile and
 // rate-limits per sender — the payload is just the recipient.

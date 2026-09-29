@@ -619,7 +619,9 @@ export async function getLeaguesByCreator(
  * Fetch a user's pending league invitations, newest first.
  *
  * Uses a simple equality query and sorts client-side to avoid requiring a
- * composite Firestore index.
+ * composite Firestore index. Offers past their `expiresAt` are dropped here —
+ * the server only flips them to 'expired' when answered, and an offer that can
+ * no longer be accepted shouldn't sit on the profile waiting to be clicked.
  */
 export async function getPendingInvitations(
   userId: string
@@ -630,10 +632,13 @@ export async function getPendingInvitations(
     where('status', '==', 'pending')
   );
   const snapshot = await getDocs(q);
-  const rows: Array<{ id: string } & DocumentData> = snapshot.docs.map((d) => ({
-    id: d.id,
-    ...d.data(),
-  }));
+  const now = Date.now();
+  const rows: Array<{ id: string } & DocumentData> = snapshot.docs
+    .map((d): { id: string } & DocumentData => ({ id: d.id, ...d.data() }))
+    .filter((row) => {
+      const expiresAt = row.expiresAt?.toMillis?.();
+      return typeof expiresAt !== 'number' || expiresAt >= now;
+    });
   return rows.sort((a, b) => {
     const aTime = a.invitedAt?.toMillis?.() || 0;
     const bTime = b.invitedAt?.toMillis?.() || 0;

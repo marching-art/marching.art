@@ -1,5 +1,17 @@
 [
   {
+    "id": "2026-09-29-league-invite-stuck",
+    "date": "2026-09-29",
+    "title": "Accepted league invitations no longer get stuck on your profile",
+    "category": "fix",
+    "summary": "Sometimes an invitation you'd already accepted stayed on your profile. Tapping Accept or Decline again just said \"Invitation already accepted\", so there was no way to clear it. Both buttons now clear it and tell you where things stand.",
+    "highlights": [
+      "If you're already in the league, you'll see \"You're already in\" plus the league name, and the invitation goes away. Declining never takes you out of a league you've joined.",
+      "Invitations that have expired or been withdrawn clear the same way, and expired ones no longer show up on your profile.",
+      "Accepting an invitation now reliably shows success once you've joined, and a double-tap can't charge the entry fee twice."
+    ]
+  },
+  {
     "id": "2026-09-28-hawaii-travel-costs",
     "date": "2026-09-28",
     "title": "Long trips cost more stamina, and ocean legs mean a flight",
