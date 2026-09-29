@@ -247,15 +247,18 @@ describe("completeDailyChallenge", () => {
 
   test("soft-fails when the decision was not actually made (server verification)", async () => {
     // A bare profile satisfies no verify predicate — claiming any of today's
-    // challenges must pay nothing.
-    const docs = new Map([
-      [profilePath("u1"), { uid: "u1", xp: 100, xpLevel: 1, unlockedClasses: ["soundSport"] }],
-    ]);
+    // challenges must pay nothing. The claim must come from the rotation dealt
+    // to THIS profile: baseProfile is eligible for gated challenges (e.g.
+    // check-lineup) a bare profile is never dealt, and on days one of those
+    // leads baseProfile's rotation the claim is a notInRotation no-op instead.
+    const bareProfile = { uid: "u1", xp: 100, xpLevel: 1, unlockedClasses: ["soundSport"] };
+    const [dealtToBare] = getChallengesForGameDay(gameDay, bareProfile);
+    const docs = new Map([[profilePath("u1"), bareProfile]]);
     const { db, writes } = makeFakeDb(docs);
     setDbForTesting(db);
 
     const result = await completeDailyChallenge.run(
-      authedRequest("u1", { challengeId: offeredToday.id })
+      authedRequest("u1", { challengeId: dealtToBare.id })
     );
     assert.equal(result.success, false);
     assert.equal(result.notDoneYet, true);
