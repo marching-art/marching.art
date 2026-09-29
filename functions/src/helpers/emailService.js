@@ -301,9 +301,10 @@ async function sendAdminArticleSubmissionEmail(email, data) {
  */
 async function sendAdminCommentReportEmail(email, data) {
   const html = adminCommentReportEmailTemplate(data);
+  const kind = String(data?.contentKind || "comment");
   return sendEmail({
     to: email,
-    subject: `[Admin] Comment flagged for review`,
+    subject: `[Admin] ${kind.charAt(0).toUpperCase()}${kind.slice(1)} flagged for review`,
     html,
     emailType: EMAIL_TYPES.ADMIN_COMMENT_REPORT,
   });

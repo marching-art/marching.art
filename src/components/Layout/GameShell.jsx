@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // =============================================================================
 // GAME SHELL - DATA-GRID LAYOUT
 // =============================================================================
@@ -42,8 +41,9 @@ import {
 // TOP NAV - Clean, minimal header focused on navigation
 // =============================================================================
 
+/** @param {{ tickerCollapsed: boolean, onToggleTicker: () => void }} props */
 const TopNav = ({ tickerCollapsed, onToggleTicker }) => {
-  const { user } = useAuth();
+  const user = useAuth()?.user;
   const [isAdmin, setIsAdmin] = useState(false);
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -168,6 +168,7 @@ const TopNav = ({ tickerCollapsed, onToggleTicker }) => {
 const NAV_ITEM_BASE =
   'relative flex items-center gap-2 px-3 py-2.5 min-h-touch text-sm font-medium transition-all duration-150 press-feedback';
 
+/** @param {{ Icon: import('lucide-react').LucideIcon, label: string, isActive: boolean }} props */
 const NavItemContent = ({ Icon, label, isActive }) => (
   <>
     <Icon
@@ -181,6 +182,10 @@ const NavItemContent = ({ Icon, label, isActive }) => (
   </>
 );
 
+/**
+ * @param {{ to: string, icon: import('lucide-react').LucideIcon, label: string,
+ *   active?: boolean, end?: boolean }} props
+ */
 const NavItem = ({ to, icon: Icon, label, active, end = false }) => {
   if (active !== undefined) {
     return (
@@ -215,6 +220,7 @@ const NavItem = ({ to, icon: Icon, label, active, end = false }) => {
 // compiler only sees class names that appear verbatim in the source. The old
 // interpolated form (`bg-${color}-500/20`) was purged from the build, so the
 // Open Class (emerald) chips in particular rendered with no color at all.
+/** @type {Record<string, { chip: string, text: string }>} */
 const CLASS_STYLES = {
   worldClass: { chip: 'bg-blue-500/20 border-blue-500/30', text: 'text-blue-400' },
   openClass: { chip: 'bg-emerald-500/20 border-emerald-500/30', text: 'text-emerald-400' },
@@ -233,6 +239,7 @@ const DEFAULT_CLASS_STYLE = {
 };
 
 // Medal colors for SoundSport
+/** @type {Record<string, string>} */
 const MEDAL_COLORS = {
   Gold: 'text-brand',
   Silver: 'text-secondary',
@@ -241,11 +248,17 @@ const MEDAL_COLORS = {
 
 // Hoisted out of TickerBar: defined inside render it was a new component type
 // every tick, so React unmounted and remounted every icon on each update.
+/** @param {{ trend?: string | null }} props */
 const TrendIndicator = ({ trend }) => {
   if (trend === 'up') return <TrendingUp className="w-3 h-3 text-green-500" />;
   if (trend === 'down') return <TrendingDown className="w-3 h-3 text-red-500" />;
   return <Minus className="w-3 h-3 text-muted" />;
 };
+
+/**
+ * One segment of the ticker stream: a label chip plus its items.
+ * @typedef {{ type: string, classKey?: string | null, divisionKey?: string, label?: string }} TickerSection
+ */
 
 const TickerBar = () => {
   const { tickerData, podiumData, loading, hasData } = useTickerData();
@@ -253,13 +266,13 @@ const TickerBar = () => {
 
   // Measure the width of one content copy so the marquee scrolls at a
   // consistent speed regardless of how many items are present.
-  const trackRef = useRef(null);
+  const trackRef = useRef(/** @type {HTMLDivElement | null} */ (null));
   const [duration, setDuration] = useState(40);
 
   // Pause the scroll while the user is hovering (desktop) or touching
   // (mobile) so they can read a specific item.
   const [isPaused, setIsPaused] = useState(false);
-  const resumeTimer = useRef(null);
+  const resumeTimer = useRef(/** @type {ReturnType<typeof setTimeout> | undefined} */ (undefined));
   const pauseNow = () => {
     clearTimeout(resumeTimer.current);
     setIsPaused(true);
@@ -272,6 +285,7 @@ const TickerBar = () => {
 
   // Build dynamic sections based on available data
   const tickerSections = useMemo(() => {
+    /** @type {TickerSection[]} */
     const sections = [];
 
     // Add sections for each class that has data
@@ -305,13 +319,13 @@ const TickerBar = () => {
     }
 
     // Add combined caption leaders by type (GE, VIS, MUS)
-    if (tickerData.combinedCaptionLeaders?.ge?.length > 0) {
+    if ((tickerData.combinedCaptionLeaders?.ge?.length ?? 0) > 0) {
       sections.push({ type: 'captions_ge', classKey: null, label: 'GE' });
     }
-    if (tickerData.combinedCaptionLeaders?.visual?.length > 0) {
+    if ((tickerData.combinedCaptionLeaders?.visual?.length ?? 0) > 0) {
       sections.push({ type: 'captions_vis', classKey: null, label: 'Visual' });
     }
-    if (tickerData.combinedCaptionLeaders?.music?.length > 0) {
+    if ((tickerData.combinedCaptionLeaders?.music?.length ?? 0) > 0) {
       sections.push({ type: 'captions_mus', classKey: null, label: 'Music' });
     }
 
@@ -369,6 +383,7 @@ const TickerBar = () => {
 
   // Render one section (label chip + its items) as an inline segment of the
   // continuous ticker stream.
+  /** @param {TickerSection | null | undefined} section */
   const renderSegment = (section) => {
     if (!section) return null;
 
@@ -455,7 +470,7 @@ const TickerBar = () => {
                 className="flex items-center gap-2 flex-shrink-0"
               >
                 <span
-                  className={`text-[11px] sm:text-[10px] font-bold ${MEDAL_COLORS[item.medal] || 'text-muted'}`}
+                  className={`text-[11px] sm:text-[10px] font-bold ${(item.medal && MEDAL_COLORS[item.medal]) || 'text-muted'}`}
                 >
                   {item.medal}
                 </span>
@@ -529,7 +544,7 @@ const TickerBar = () => {
                   {item.fullName}
                 </span>
                 <span className="text-brand tabular-nums font-mono text-xs">{item.score}</span>
-                {idx < tickerData.combinedCaptionLeaders.ge.length - 1 && (
+                {idx < (tickerData.combinedCaptionLeaders?.ge.length ?? 0) - 1 && (
                   <div className="w-px h-3 bg-line ml-1" />
                 )}
               </div>
@@ -556,7 +571,7 @@ const TickerBar = () => {
                   {item.fullName}
                 </span>
                 <span className="text-cyan-300 tabular-nums font-mono text-xs">{item.score}</span>
-                {idx < tickerData.combinedCaptionLeaders.visual.length - 1 && (
+                {idx < (tickerData.combinedCaptionLeaders?.visual.length ?? 0) - 1 && (
                   <div className="w-px h-3 bg-line ml-1" />
                 )}
               </div>
@@ -583,7 +598,7 @@ const TickerBar = () => {
                   {item.fullName}
                 </span>
                 <span className="text-pink-300 tabular-nums font-mono text-xs">{item.score}</span>
-                {idx < tickerData.combinedCaptionLeaders.music.length - 1 && (
+                {idx < (tickerData.combinedCaptionLeaders?.music.length ?? 0) - 1 && (
                   <div className="w-px h-3 bg-line ml-1" />
                 )}
               </div>
@@ -647,6 +662,7 @@ const TickerBar = () => {
 
   // Render one full pass of every section as a single inline row. Two of
   // these sit side by side inside the marquee track so the loop is seamless.
+  /** @param {'a' | 'b'} copyKey */
   const renderTrack = (copyKey) => (
     <div
       ref={copyKey === 'a' ? trackRef : undefined}
@@ -718,6 +734,7 @@ const TickerBar = () => {
 // GAME SHELL COMPONENT
 // =============================================================================
 
+/** @param {{ children: React.ReactNode }} props */
 const GameShell = ({ children }) => {
   const isMobile = useIsMobile();
   const [tickerCollapsed, toggleTicker] = useTickerCollapsed();

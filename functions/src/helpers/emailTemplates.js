@@ -382,14 +382,17 @@ function adminCommentReportEmailTemplate({
   articleId,
   reportId,
   leagueName,
+  contentKind = "comment",
 }) {
+  const noun = String(contentKind || "comment");
+  const Noun = noun.charAt(0).toUpperCase() + noun.slice(1);
   const queueUrl = `${EMAIL_CONFIG.appUrl}/admin?tab=moderation`;
   const articleUrl = articleId ? `${EMAIL_CONFIG.appUrl}/article/${encodeURIComponent(articleId)}` : null;
   const content = `
     <div class="content">
-      <h2 style="color: #ffffff; margin-bottom: 8px;">Comment flagged for review</h2>
+      <h2 style="color: #ffffff; margin-bottom: 8px;">${escapeHtml(Noun)} flagged for review</h2>
       <p style="color: #cbd5e1;">
-        <strong>${escapeHtml(reporterName || "A user")}</strong> reported a comment by
+        <strong>${escapeHtml(reporterName || "A user")}</strong> reported ${noun === "article" ? "an" : "a"} ${escapeHtml(noun)} by
         <strong>${escapeHtml(commentAuthor || "an unknown user")}</strong>${
           leagueName ? ` in the league chat of <strong>${escapeHtml(leagueName)}</strong>` : ""
         }.
@@ -404,7 +407,7 @@ function adminCommentReportEmailTemplate({
 
       ${commentExcerpt ? `
       <div style="margin: 16px 0; padding: 12px 14px; background-color: #0f172a; border-radius: 4px;">
-        <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin-bottom: 6px;">Comment</div>
+        <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin-bottom: 6px;">${escapeHtml(Noun)}</div>
         <div style="color: #cbd5e1; font-style: italic;">"${escapeHtml(commentExcerpt)}"</div>
       </div>
       ` : ""}
@@ -417,7 +420,7 @@ function adminCommentReportEmailTemplate({
       ${reportId ? `<p style="font-size: 11px; color: #64748b; margin-top: 16px;">Report ID: ${escapeHtml(reportId)}</p>` : ""}
     </div>
   `;
-  return emailWrapper(content, `Comment reported: ${escapeHtml(reason || "see admin queue")}`);
+  return emailWrapper(content, `${escapeHtml(Noun)} reported: ${escapeHtml(reason || "see admin queue")}`);
 }
 
 /**

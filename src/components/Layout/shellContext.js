@@ -6,7 +6,9 @@
 
 import { createContext, useContext } from 'react';
 
-export const ShellContext = createContext(null);
+/** @typedef {{ headerHeight: number, headerHeightMobile: number }} ShellContextValue */
+
+export const ShellContext = createContext(/** @type {ShellContextValue | null} */ (null));
 
 export const useShell = () => {
   const context = useContext(ShellContext);

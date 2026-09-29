@@ -1,12 +1,13 @@
 // Player Reports queue — every report a director has filed, in one place.
 //
-// Profile-comment and league-chat reports (`reports`) and article-comment
-// reports (`article_comments_reports`) used to reach admins only as an email;
-// nothing in the panel read them. The queue normalizes all three
-// (functions/src/callable/reportsModeration.js) and moves each through
+// Profile-comment, league-chat and director-article reports (`reports`) and
+// article-comment reports (`article_comments_reports`) used to reach admins
+// only as an email; nothing in the panel read them. The queue normalizes all
+// four (functions/src/callable/reportsModeration.js) and moves each through
 // new → reviewed → resolved. "Remove content" deletes the reported comment or
 // chat message (article comments are hidden, restorable from the Comments
-// queue) and resolves every other report on the same content.
+// queue; press releases and community articles are unpublished and the author
+// is notified) and resolves every other report on the same content.
 
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -14,6 +15,7 @@ import toast from 'react-hot-toast';
 import {
   Check,
   Eye,
+  FileText,
   Flag,
   MessageCircle,
   MessagesSquare,
@@ -47,6 +49,7 @@ const STATUS_TABS: { id: StatusFilter; label: string }[] = [
 const TYPE_META: Record<ReportType, { label: string; icon: typeof Flag }> = {
   comment: { label: 'Profile comment', icon: MessageCircle },
   league_message: { label: 'League chat', icon: MessagesSquare },
+  article: { label: 'Director article', icon: FileText },
   article_comment: { label: 'Article comment', icon: Newspaper },
 };
 
@@ -71,6 +74,12 @@ function contextLink(report: PlayerReport): { to: string; label: string } | null
     return {
       to: `/profile/${context.profileUid}`,
       label: `${who(context.profileName ?? null, context.profileUid)}'s profile`,
+    };
+  }
+  if (report.type === 'article' && context.articleId) {
+    return {
+      to: `/article/${encodeURIComponent(context.articleId)}`,
+      label: context.articleKind === 'press' ? 'Press release' : 'Community article',
     };
   }
   if (report.type === 'article_comment' && context.articleId) {
@@ -236,7 +245,9 @@ export default function ReportsQueue({ id }: { id?: string }) {
       !window.confirm(
         report.type === 'article_comment'
           ? 'Hide this article comment and resolve every report on it?'
-          : 'Permanently delete this content and resolve every report on it?'
+          : report.type === 'article'
+            ? 'Unpublish this article (the author is notified) and resolve every report on it?'
+            : 'Permanently delete this content and resolve every report on it?'
       )
     ) {
       return;
@@ -286,7 +297,7 @@ export default function ReportsQueue({ id }: { id?: string }) {
       id={id}
       title="Player Reports"
       icon={Flag}
-      description="Reports filed on profile comments, league chat and article comments. Remove the content or dismiss the report; duplicates on the same content resolve together."
+      description="Reports filed on league chat, press releases, community articles and article comments. Remove the content or dismiss the report; duplicates on the same content resolve together."
       flush
       actions={
         <button
@@ -331,6 +342,7 @@ export default function ReportsQueue({ id }: { id?: string }) {
             <option value="all">All</option>
             <option value="comment">Profile comments</option>
             <option value="league_message">League chat</option>
+            <option value="article">Director articles</option>
             <option value="article_comment">Article comments</option>
           </select>
         </label>

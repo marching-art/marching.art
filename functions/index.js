@@ -199,6 +199,7 @@ const {
   bulkModerateComments,
 } = require("./src/callable/commentModeration");
 const { listReports, resolveReport } = require("./src/callable/reportsModeration");
+const { reportArticle } = require("./src/callable/articleReports");
 const { getAdminInbox } = require("./src/callable/adminInbox");
 const { setAccountRestriction } = require("./src/callable/accountModeration");
 const {
@@ -411,6 +412,7 @@ module.exports = {
   bulkModerateComments,
   listReports,
   resolveReport,
+  reportArticle,
   getAdminInbox,
   setAccountRestriction,
   getArticleEngagement,

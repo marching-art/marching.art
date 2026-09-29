@@ -16,6 +16,8 @@ import GuestActionBar from '../components/Landing/GuestActionBar';
 import { useAuth } from '../context/AuthContext';
 import ArticleSidebarAuth from '../components/Articles/ArticleSidebarAuth';
 import ArticleComments from '../components/Articles/ArticleComments';
+import ReportArticleButton from '../components/Articles/ReportArticleButton';
+import { isReportableArticleId } from '../api/articleSocial';
 import { OptimizedImage } from '../components/ui/OptimizedImage';
 import { Heading } from '../components/ui';
 import ArticleNarrativeParser from '../components/Articles/ArticleNarrativeParser';
@@ -500,6 +502,14 @@ const Article = () => {
                       >
                         <Share2 className="w-4 h-4" />
                       </button>
+                      {/* Director-written articles publish without review for
+                          trusted authors, so signed-in readers can flag one. */}
+                      {user &&
+                        article.authorUid &&
+                        article.authorUid !== user.uid &&
+                        isReportableArticleId(article.id) && (
+                          <ReportArticleButton articleId={article.id} headline={article.headline} />
+                        )}
                       <ReactionsBar
                         articleId={article.id}
                         initialCounts={engagement?.reactionCounts}
