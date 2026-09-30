@@ -51,6 +51,7 @@ import ChestSection from './StudioChestControls';
 import ShouldersSection from './StudioShouldersControls';
 import HeadwearSection from './StudioHeadwearControls';
 import TorsoSplitControls from './StudioPrismControls';
+import WildwoodTorsoControls from './StudioWildwoodControls';
 import { StudioColorwayContext } from './studioColorContext';
 import {
   STUDIO_SECTIONS,
@@ -58,6 +59,18 @@ import {
   type StudioSectionId,
   type StudioTabId,
 } from './studioSections';
+
+/** Torso prints sold in a design-house pack (🔒 until owned). */
+const PRINT_PACKS: Record<string, string> = {
+  shatter: 'pack_prism_forge',
+  brocade: 'pack_wildwood',
+};
+
+/** Pack prints with their own def flag, and the title of their color rows. */
+const PACK_PRINTS: Array<['shatter' | 'brocade', string]> = [
+  ['shatter', 'Shatter colors'],
+  ['brocade', 'Brocade colors'],
+];
 
 // ---------------------------------------------------------------------------
 // per-side editors
@@ -339,7 +352,10 @@ export default function StudioEditor({
               <Pills
                 options={TORSO_PRINT_OPTIONS.map((o) => ({
                   value: o.value,
-                  label: o.value === 'shatter' ? packLabel(o.label, 'pack_prism_forge') : o.label,
+                  label:
+                    o.value && PRINT_PACKS[o.value]
+                      ? packLabel(o.label, PRINT_PACKS[o.value])
+                      : o.label,
                 }))}
                 value={torsoPrint}
                 onSelect={(v) => setTorsoPrint(v)}
@@ -351,12 +367,12 @@ export default function StudioEditor({
                 <PrintColorRows figure={figure} surface={figure.print} onSlot={setPrintColor} />
               </div>
             )}
-            {figure.shatter && (
-              <div className="mt-2">
-                <span className={LABEL}>Shatter colors</span>
-                <PrintColorRows figure={figure} surface="shatter" onSlot={setPrintColor} />
+            {PACK_PRINTS.filter(([surface]) => figure[surface]).map(([surface, title]) => (
+              <div key={surface} className="mt-2">
+                <span className={LABEL}>{title}</span>
+                <PrintColorRows figure={figure} surface={surface} onSlot={setPrintColor} />
               </div>
-            )}
+            ))}
             {!figure.torsoFill && (
               <ChannelRow
                 label="Jacket"
@@ -409,6 +425,12 @@ export default function StudioEditor({
               />
             )}
             <TorsoSplitControls
+              figure={figure}
+              colorway={design.colorway}
+              onPatch={setFigure}
+              packLabel={packLabel}
+            />
+            <WildwoodTorsoControls
               figure={figure}
               colorway={design.colorway}
               onPatch={setFigure}

@@ -88,10 +88,19 @@ export const PRINT_PALETTES = {
     bg: '#16181d',
     line: '#c9ced6',
   },
+  /** Wildwood patina brocade: oxidized-teal damask with bronze flecks. */
+  brocade: {
+    bg: '#1d4a4f',
+    motif: '#3f7f78',
+    fleck: '#b88a4a',
+  },
 } as const;
 
 /** Prism Forge light streak: the hot core line when no core color is set. */
 export const STREAK_CORE_DEFAULT = '#fbfbf4';
+
+/** Wildwood bioluminescent veins: the glow a director starts from. */
+export const VEIN_GLOW_DEFAULT = '#5ff0dc';
 
 /** Skin tones offered for the previewed corps member (figure, not director). */
 export const FIGURE_SKIN_TONES: string[] = [

@@ -53,11 +53,14 @@ import {
 } from './uniformFigureParts';
 import { chest } from './uniformFigureChest';
 import { cuffGlow, legsPrism, prismDefs, torsoSplit } from './uniformFigurePrism';
+import { armVeins, drape, legsWildwood, torsoVeins, wildwoodDefs } from './uniformFigureWildwood';
 
 const DETACHED_SLEEVE_D =
   'M64,132 Q58,166 60,200 Q61,228 64,244 L82,246 Q80,216 80,190 Q80,156 86,134 Q75,126 64,132 Z';
 const HALF_SLEEVE_D =
   'M78,103 Q66,111 62,134 Q60,152 60,168 L82,170 Q80,146 88,118 Q85,107 78,103 Z';
+const GAUNTLET_D = 'M54,210 L86,212 L83,248 Q71,253 61,247 Z';
+const HAND_D = 'M63,246 Q60,260 66,267 Q74,271 79,264 Q83,256 82,246 Q72,251 63,246 Z';
 
 function armSide(a: ArmConfig, cw: NormalizedFigure, uid: string, kp: string): Node[] {
   if (a.type === 'none') return [];
@@ -118,7 +121,7 @@ function armSide(a: ArmConfig, cw: NormalizedFigure, uid: string, kp: string): N
     const c = safeHex(a.gauntlet.color);
     // Bell opens toward the elbow, snug at the wrist (real gauntlets taper down).
     out.push(
-      p(`${kp}-ga`, 'M54,210 L86,212 L83,248 Q71,253 61,247 Z', c),
+      p(`${kp}-ga`, GAUNTLET_D, c),
       strokeP(`${kp}-gat`, 'M54,212 L86,214', darkenHex(c, 0.35), 2.2),
       shade(`${kp}-gas`, 'M80,213 L83,248 L77,251 L74,214 Z', 0.15)
     );
@@ -126,8 +129,19 @@ function armSide(a: ArmConfig, cw: NormalizedFigure, uid: string, kp: string): N
   }
   const handC = a.glove ? safeHex(a.glove) : safeHex(cw.skin);
   out.push(
-    p(`${kp}-hd`, 'M63,246 Q60,260 66,267 Q74,271 79,264 Q83,256 82,246 Q72,251 63,246 Z', handC),
+    p(`${kp}-hd`, HAND_D, handC),
     shade(`${kp}-hds`, 'M76,248 Q79,258 75,265 Q80,259 80,248 Z', 0.15)
+  );
+  // Wildwood veins run over everything that covers the arm, never bare skin
+  const covered = [sleeveD, a.gauntlet ? GAUNTLET_D : null, a.glove ? HAND_D : null];
+  out.push(
+    ...armVeins(
+      a,
+      covered.filter((d): d is string => Boolean(d)),
+      cw,
+      uid,
+      kp
+    )
   );
   return out;
 }
@@ -655,18 +669,26 @@ function aiguillette(cw: NormalizedFigure): Node[] {
 export function figureLayers(raw: FigureConfig, uid: string): Node[] {
   const cw = normalizeFigure(raw);
   const flared = Boolean(cw.legL.flare || cw.legR.flare);
-  const layers: Node[] = [buildDefs(cw, uid), prismDefs(cw, uid), ...ground()];
+  const layers: Node[] = [
+    buildDefs(cw, uid),
+    prismDefs(cw, uid),
+    wildwoodDefs(cw, uid),
+    ...ground(),
+  ];
   if (flared) layers.push(<g key="shoes">{shoes(cw)}</g>);
   layers.push(<g key="legs">{legs(cw, uid)}</g>);
   layers.push(<g key="legPrism">{legsPrism(cw, uid)}</g>);
+  layers.push(<g key="legWild">{legsWildwood(cw, uid)}</g>);
   layers.push(<g key="swl">{swashLeg(cw)}</g>);
   layers.push(<g key="stream">{streamers(cw)}</g>);
   if (!flared) layers.push(<g key="shoes">{shoes(cw)}</g>);
+  layers.push(<g key="drape">{drape(cw)}</g>);
   layers.push(<g key="torso">{torso(cw, uid, torsoSplit(cw, uid))}</g>);
   if (cw.satin) layers.push(<g key="satin">{satinSheen()}</g>);
   if (cw.velvet) layers.push(<g key="velvet">{velvetSheen()}</g>);
   if (cw.iridescent) layers.push(<g key="irid">{iridescentSheen(uid)}</g>);
   if (cw.lame) layers.push(<g key="lame">{lameField()}</g>);
+  layers.push(<g key="veins">{torsoVeins(cw, uid)}</g>);
   layers.push(
     <g key="chest">{chest(cw, uid)}</g>,
     <g key="chestBadge">{chestBadge(cw)}</g>,

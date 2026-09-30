@@ -512,3 +512,58 @@ describe("Prism Forge fields", () => {
     }
   });
 });
+
+describe("Wildwood fields", () => {
+  function grove() {
+    const d = validDesign();
+    Object.assign(d.figure, {
+      torsoFill: "url:brocade",
+      brocade: true,
+      printColors: { brocade: ["#1d4a4f", "#3f7f78", "#b88a4a"] },
+      veins: { color: "#e4dccb", flip: true },
+      veinGlow: "#5ff0dc",
+      glow: true,
+      chest: "gill",
+      gill: "#b06a3a",
+      chestReverse: true,
+      drape: { color: "#5c4960", flip: false },
+      armL: { type: "sleeve", color: "#2b231d", veins: "#e4dccb", glove: "#141414" },
+      armR: { type: "bare", veins: "#e4dccb", gauntlet: { color: "#b06a3a" } },
+      legL: { color: "#141414", veins: "#e4dccb" },
+      legR: { fill: "url:brocade" },
+    });
+    return d;
+  }
+
+  test("accepts and round-trips the full living-forest look", () => {
+    const d = grove();
+    assert.deepEqual(validateDesign(d), []);
+    const clean = sanitizeDesign(d);
+    assert.deepEqual(clean.figure.veins, d.figure.veins);
+    assert.deepEqual(clean.figure.drape, d.figure.drape);
+    assert.deepEqual(clean.figure.armR, d.figure.armR);
+    assert.equal(clean.figure.chest, "gill");
+    assert.equal(clean.figure.veinGlow, "#5ff0dc");
+    assert.ok(!hasNestedArray(clean));
+  });
+
+  test("rejects malformed Wildwood pieces", () => {
+    const bad = [
+      (f) => (f.veins = "#e4dccb"),
+      (f) => (f.veins = { color: "bark" }),
+      (f) => (f.veins = { color: "#e4dccb", side: "left" }),
+      (f) => (f.drape = { color: "#5c4960", flip: "yes" }),
+      (f) => (f.veinGlow = "aqua"),
+      (f) => (f.gill = 12),
+      (f) => (f.printColors = { brocade: ["#1d4a4f", "#3f7f78"] }),
+      (f) => (f.torsoFill = "url:brocades"),
+      (f) => (f.armL = { type: "sleeve", veins: "gold" }),
+      (f) => (f.legL = { veins: ["#e4dccb"] }),
+    ];
+    for (const mutate of bad) {
+      const d = grove();
+      mutate(d.figure);
+      assert.ok(validateDesign(d).length > 0, mutate.toString());
+    }
+  });
+});

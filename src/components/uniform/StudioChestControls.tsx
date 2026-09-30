@@ -13,6 +13,11 @@ import { ChannelRow, Pills, SECTION_LABEL, Toggle } from './StudioControls';
 
 /** Chest treatments that run on the diagonal (reversible, fadeable). */
 const DIAGONALS = new Set(['sash', 'baldric', 'swash', 'streak']);
+/** Chest treatments sold in a design-house pack (🔒 until owned). */
+const CHEST_PACKS: Record<string, string> = {
+  streak: 'pack_prism_forge',
+  gill: 'pack_wildwood',
+};
 
 export default function ChestSection({
   figure,
@@ -39,7 +44,7 @@ export default function ChestSection({
       <Pills
         options={CHEST_OPTIONS.map((o) => ({
           value: o.value,
-          label: o.value === 'streak' ? packLabel(o.label, 'pack_prism_forge') : o.label,
+          label: CHEST_PACKS[o.value] ? packLabel(o.label, CHEST_PACKS[o.value]) : o.label,
         }))}
         value={figure.chest || 'none'}
         onSelect={(v) => {
@@ -59,6 +64,7 @@ export default function ChestSection({
                 : figure.panelTrim,
             swash: v === 'swash' ? figure.swash || colorway.secondary : figure.swash,
             streak: v === 'streak' ? figure.streak || colorway.secondary : figure.streak,
+            gill: v === 'gill' ? figure.gill || colorway.accent : figure.gill,
           });
         }}
       />
@@ -169,6 +175,21 @@ export default function ChestSection({
               value={figure.streakCore}
               onChange={(v) => onPatch({ streakCore: v })}
               clearable
+            />
+          </>
+        )}
+        {figure.chest === 'gill' && (
+          <>
+            <ChannelRow
+              label="Gill fan"
+              value={figure.gill}
+              onChange={(v) => v && onPatch({ gill: v })}
+            />
+            {/* the fan isn't a band (no fade), but it sits on either shoulder */}
+            <Toggle
+              label="Other shoulder"
+              checked={Boolean(figure.chestReverse)}
+              onChange={(v) => onPatch({ chestReverse: v })}
             />
           </>
         )}

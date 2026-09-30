@@ -2,14 +2,16 @@
 // UNIFORM FIGURE PARTS — chest treatments
 // =============================================================================
 // The chest layer builder (braid, sash, baldric, plastron, buttons, swash,
-// vinyl panel, and the Prism Forge light streak). Split from uniformFigureParts.tsx so that file stays under the
-// max-lines guardrail; see UniformFigure.tsx for the architecture notes.
+// vinyl panel, the Prism Forge light streak, and the Wildwood gill fan).
+// Split from uniformFigureParts.tsx so that file stays under the max-lines
+// guardrail; see UniformFigure.tsx for the architecture notes.
 
 import React from 'react';
 import { darkenHex, safeHex, type NormalizedFigure } from '../../utils/uniform';
 import { FIGURE_INK } from '../../data/uniformRenderTheme';
 import { light, mirrored, p, sequinField, shade, strokeP, type Node } from './uniformFigureParts';
 import { lightStreak } from './uniformFigurePrism';
+import { gillFan } from './uniformFigureWildwood';
 
 export function chest(cw: NormalizedFigure, uid: string): Node[] {
   const m = safeHex(cw.metal);
@@ -202,6 +204,9 @@ export function chest(cw: NormalizedFigure, uid: string): Node[] {
     case 'streak':
       // Prism Forge light streak (glow + clip handled in the pack module)
       return lightStreak(cw, uid);
+    case 'gill':
+      // Wildwood gill fan (pleats + clip handled in the pack module)
+      return gillFan(cw, uid);
     default:
       return [];
   }

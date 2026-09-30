@@ -103,6 +103,7 @@ export const PRINT_COLOR_SLOT_COUNTS: Record<PrintColorKey, number> = {
   plaid: 3, // base, band, cross band
   foil: 2, // tone, highlight
   shatter: 2, // base, crack line
+  brocade: 3, // base, motif, fleck
 };
 
 /** The stock palette's editable slot values for one surface. */
@@ -121,6 +122,8 @@ export function printColorDefaults(key: PrintColorKey): string[] {
       return [pal.foil.stops[2][1], pal.foil.stops[1][1]];
     case 'shatter':
       return [pal.shatter.bg, pal.shatter.line];
+    case 'brocade':
+      return [pal.brocade.bg, pal.brocade.motif, pal.brocade.fleck];
   }
 }
 
@@ -137,6 +140,7 @@ export interface ResolvedPrintPalettes {
   plaid: { bg: string; bandA: string; bandB: string; bandC: string };
   foil: { stops: Array<[string, string]> };
   shatter: { bg: string; line: string; facet: string };
+  brocade: { bg: string; motif: string; fleck: string; mottle: string };
 }
 
 /**
@@ -209,7 +213,13 @@ export function resolvePrintPalettes(
   // the faceted panes read as a lifted shade of the base, never the line
   const shatter = { bg: shBg, line: shLine, facet: lightenHex(shBg, 0.12) };
 
-  return { sunburst: sun, opart: op, pinstripe: pin, plaid, foil, shatter };
+  const [brBg, brMotif, brFleck] = has('brocade')
+    ? slots('brocade')
+    : [PRINT_PALETTES.brocade.bg, PRINT_PALETTES.brocade.motif, PRINT_PALETTES.brocade.fleck];
+  // the patina mottle is a sunken shade of the base, so it reads as age
+  const brocade = { bg: brBg, motif: brMotif, fleck: brFleck, mottle: darkenHex(brBg, 0.28) };
+
+  return { sunburst: sun, opart: op, pinstripe: pin, plaid, foil, shatter, brocade };
 }
 
 // =============================================================================
@@ -335,6 +345,7 @@ export function applyColorway(figure: FigureConfig, cw: UniformColorway): Figure
       glove: arm.glove ? accent : arm.glove,
       glowLine: arm.glowLine ? secondary : arm.glowLine,
       cuffGlow: arm.cuffGlow ? ([secondary, accent] as [string, string]) : arm.cuffGlow,
+      veins: arm.veins ? metal : arm.veins,
     };
   const recolorLeg = (leg?: LegConfig): LegConfig | undefined =>
     leg && {
@@ -344,6 +355,7 @@ export function applyColorway(figure: FigureConfig, cw: UniformColorway): Figure
       hemGlow: leg.hemGlow ? ([secondary, accent] as [string, string]) : leg.hemGlow,
       kneePlate: leg.kneePlate ? metal : leg.kneePlate,
       seams: leg.seams ? metal : leg.seams,
+      veins: leg.veins ? metal : leg.veins,
     };
 
   const n = normalizeFigure(figure);
@@ -371,6 +383,10 @@ export function applyColorway(figure: FigureConfig, cw: UniformColorway): Figure
     swashLegColor: figure.swashLegColor ? accent : figure.swashLegColor,
     streak: figure.streak ? secondary : figure.streak,
     torsoSplit: figure.torsoSplit ? { ...figure.torsoSplit, color: secondary } : figure.torsoSplit,
+    gill: figure.gill ? accent : figure.gill,
+    veins: figure.veins ? { ...figure.veins, color: metal } : figure.veins,
+    veinGlow: figure.veinGlow ? secondary : figure.veinGlow,
+    drape: figure.drape ? { ...figure.drape, color: secondary } : figure.drape,
     epaulet: figure.epaulet ? secondary : figure.epaulet,
     aiguillette: figure.aiguillette ? metal : figure.aiguillette,
     suspenders: figure.suspenders ? darkenHex(secondary, 0.3) : figure.suspenders,
@@ -531,6 +547,28 @@ export function designWithinLimits(design: UniformDesignV2): boolean {
 }
 
 // =============================================================================
+// WILDWOOD VEIN VISIBILITY (shared by the renderer, the gate, derived flags)
+// =============================================================================
+
+/**
+ * Whether an arm's veins land on anything: a sleeve (full, half or
+ * detached), a gauntlet, or a glove. Veins on a bare, ungloved arm draw
+ * nothing, so they neither render nor count toward the pack.
+ */
+export function armShowsVeins(a: ArmConfig | null | undefined): boolean {
+  if (!a || !a.veins || a.type === 'none') return false;
+  return a.type !== 'bare' || Boolean(a.gauntlet || a.glove);
+}
+
+/** Whether any vein is visible anywhere on the figure. */
+export function figureShowsVeins(figure: FigureConfig): boolean {
+  const n = normalizeFigure(figure);
+  return Boolean(
+    figure.veins || armShowsVeins(n.armL) || armShowsVeins(n.armR) || n.legL.veins || n.legR.veins
+  );
+}
+
+// =============================================================================
 // DERIVED FIGURE FLAGS
 // =============================================================================
 
@@ -568,6 +606,7 @@ export function withDerivedFlags(figure: FigureConfig): FigureConfig {
     plaid: usesRef(figure, 'url:plaid'),
     foilLeg: usesRef(figure, 'url:foil'),
     shatter: usesRef(figure, 'url:shatter'),
+    brocade: usesRef(figure, 'url:brocade'),
     glow: Boolean(
       figure.glowArt ||
       n.armL.glowLine ||
@@ -576,7 +615,8 @@ export function withDerivedFlags(figure: FigureConfig): FigureConfig {
       n.armL.cuffGlow ||
       n.armR.cuffGlow ||
       n.legL.hemGlow ||
-      n.legR.hemGlow
+      n.legR.hemGlow ||
+      (figure.veinGlow && figureShowsVeins(figure))
     ),
     hairShow: !figure.hatType,
   };
