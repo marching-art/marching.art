@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // =============================================================================
 // PROFILE EDIT MODAL
 // =============================================================================
@@ -16,7 +15,26 @@ import {
   isCorpsClassUnlocked,
 } from '../../utils/corps';
 
+/** @typedef {import('../../types/user').UserProfile} UserProfile */
+/** @typedef {import('../../types/user').DirectorProfileInfo} DirectorProfileInfo */
+
+/**
+ * Editable per-ensemble draft: every field is a string while editing
+ * (`foundedYear` may still hold the stored number; notable shows are one per
+ * line) and is normalized back to `EnsembleProfileInfo` on save.
+ * @typedef {{
+ *   tagline: string,
+ *   mission: string,
+ *   history: string,
+ *   foundedYear: number | string,
+ *   homeVenue: string,
+ *   motto: string,
+ *   notableShows: string,
+ * }} EnsembleDraft
+ */
+
 // Keyed by canonical class keys, matching what the data layer stores.
+/** @type {Record<string, string>} */
 const CLASS_LABELS = {
   worldClass: 'World Class',
   openClass: 'Open Class',
@@ -39,6 +57,14 @@ const SPECIALTY_OPTIONS = [
   'Teaching',
 ];
 
+/**
+ * @param {{
+ *   active: boolean,
+ *   onClick: () => void,
+ *   icon: React.ComponentType<{ className?: string }>,
+ *   label: string,
+ * }} props
+ */
 const TabButton = ({ active, onClick, icon: Icon, label }) => (
   <button
     type="button"
@@ -54,6 +80,9 @@ const TabButton = ({ active, onClick, icon: Icon, label }) => (
   </button>
 );
 
+/**
+ * @param {{ label: string, hint?: string, count?: string, children: React.ReactNode }} props
+ */
 const Field = ({ label, hint, children, count }) => (
   <div>
     <div className="flex items-center justify-between mb-1">
@@ -69,6 +98,7 @@ const Field = ({ label, hint, children, count }) => (
   </div>
 );
 
+/** @param {React.InputHTMLAttributes<HTMLInputElement>} props */
 const TextInput = (props) => (
   <input
     {...props}
@@ -76,6 +106,7 @@ const TextInput = (props) => (
   />
 );
 
+/** @param {React.TextareaHTMLAttributes<HTMLTextAreaElement>} props */
 const TextArea = ({ rows = 3, ...props }) => (
   <textarea
     rows={rows}
@@ -84,6 +115,18 @@ const TextArea = ({ rows = 3, ...props }) => (
   />
 );
 
+/**
+ * @param {{
+ *   profile: UserProfile,
+ *   onClose: () => void,
+ *   onSave: (payload: {
+ *     displayName: string,
+ *     location: string,
+ *     directorInfo: DirectorProfileInfo,
+ *     ensembleInfo: Record<string, Record<string, unknown>>,
+ *   }) => Promise<void> | void,
+ * }} props
+ */
 const ProfileEditModal = ({ profile, onClose, onSave }) => {
   useEscapeKey(onClose);
   const dialogRef = useRef(null);
@@ -93,6 +136,7 @@ const ProfileEditModal = ({ profile, onClose, onSave }) => {
   const availableCorps = useMemo(() => {
     const unlocked = profile?.unlockedClasses?.length ? profile.unlockedClasses : ['soundSport'];
     return CLASS_ORDER.filter((cls) => isCorpsClassUnlocked(unlocked, cls)).map((cls) => {
+      /** @type {Partial<import('../../types/corps').CorpsData>} */
       const corps = resolveCorpsForClass(profile?.corps, cls) || {};
       return {
         ...corps,
@@ -104,7 +148,9 @@ const ProfileEditModal = ({ profile, onClose, onSave }) => {
 
   const [activeTab, setActiveTab] = useState('director');
   const [activeEnsembleClass, setActiveEnsembleClass] = useState(
-    availableCorps.find((c) => c.isRegistered)?.classKey || availableCorps[0]?.classKey || null
+    /** @type {string | null} */ (
+      availableCorps.find((c) => c.isRegistered)?.classKey || availableCorps[0]?.classKey || null
+    )
   );
   const [saving, setSaving] = useState(false);
 
@@ -131,6 +177,7 @@ const ProfileEditModal = ({ profile, onClose, onSave }) => {
 
   // Ensemble-level state (per corps)
   const initialEnsembles = useMemo(() => {
+    /** @type {Record<string, EnsembleDraft>} */
     const out = {};
     availableCorps.forEach((corps) => {
       const info = corps.ensembleInfo || {};
@@ -149,13 +196,20 @@ const ProfileEditModal = ({ profile, onClose, onSave }) => {
 
   const [ensembles, setEnsembles] = useState(initialEnsembles);
 
+  /**
+   * @param {string | null} classKey
+   * @param {keyof EnsembleDraft} field
+   * @param {string} value
+   */
   const updateEnsembleField = (classKey, field, value) => {
+    if (!classKey) return;
     setEnsembles((prev) => ({
       ...prev,
       [classKey]: { ...prev[classKey], [field]: value },
     }));
   };
 
+  /** @param {string} specialty */
   const toggleSpecialty = (specialty) => {
     setDirector((prev) => ({
       ...prev,
@@ -165,6 +219,7 @@ const ProfileEditModal = ({ profile, onClose, onSave }) => {
     }));
   };
 
+  /** @param {React.FormEvent} [e] */
   const handleSave = async (e) => {
     e?.preventDefault();
     setSaving(true);
@@ -187,9 +242,11 @@ const ProfileEditModal = ({ profile, onClose, onSave }) => {
       };
 
       // Build ensembleInfo payloads per corps (only for registered ones)
+      /** @type {Set<string>} */
       const registeredKeys = new Set(
         availableCorps.filter((c) => c.isRegistered).map((c) => c.classKey)
       );
+      /** @type {Record<string, Record<string, unknown>>} */
       const ensemblePayloads = {};
       Object.entries(ensembles).forEach(([classKey, data]) => {
         if (!registeredKeys.has(classKey)) return;
