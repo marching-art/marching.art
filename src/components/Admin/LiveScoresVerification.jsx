@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // src/components/Admin/LiveScoresVerification.jsx
 // =============================================================================
 // LIVE SEASON SCORE VERIFICATION
@@ -35,12 +34,35 @@ import { getCaptionLabel } from '../../utils/captionUtils';
 import { CAPTION_IDS } from '../../data/captions';
 import { Heading } from '../ui';
 
+/** @type {readonly string[]} */
 const INDIVIDUAL_CAPTIONS = CAPTION_IDS;
+
+/** @typedef {Partial<Record<string, number>>} CaptionScores */
+/**
+ * One corps' line in a scraped event.
+ * @typedef {{ corps?: string, score?: number, captions?: CaptionScores }} ScrapedScore
+ */
+/**
+ * A scraped DCI event (historical_scores/{year}).
+ * @typedef {{ offSeasonDay?: number | null, date?: string, eventName?: string,
+ *   location?: string, scores?: ScrapedScore[] }} ScrapedEvent
+ */
+/**
+ * A day-merged spreadsheet column.
+ * @typedef {{ key: string, day: number | null, date?: string, dateLabel: string,
+ *   eventNames: string[], locations: Set<string>,
+ *   scoresByCorps: Map<string, ScrapedScore>, scored: boolean }} ScoreColumn
+ */
+/**
+ * @typedef {{ id: string, label: string, max: number,
+ *   calculate?: (c: CaptionScores) => number }} AggregateTab
+ */
 
 // Aggregate tabs. NOTE: "Total Score" uses the real scraped DCI total
 // (event.scores[].score) so it can be eyeballed directly against dci.org. The
 // other aggregates are derived from the individual captions using the game's
 // scoring formula (visual/music halved), matching ScoresSpreadsheet.
+/** @type {AggregateTab[]} */
 const AGGREGATE_TABS = [
   { id: 'total', label: 'Total Score', max: 100 },
   { id: 'ge_total', label: 'Total GE', max: 40, calculate: (c) => (c.GE1 || 0) + (c.GE2 || 0) },
@@ -59,6 +81,10 @@ const AGGREGATE_TABS = [
 ];
 
 // Heatmap cell background based on score as a fraction of the max possible.
+/**
+ * @param {number | null} value
+ * @param {number} maxPossible
+ */
 const getCellBgColor = (value, maxPossible) => {
   if (!value || value === 0) return '';
   const percentage = value / maxPossible;
@@ -69,6 +95,7 @@ const getCellBgColor = (value, maxPossible) => {
   return '';
 };
 
+/** @param {string | undefined} isoDate */
 const formatEventDate = (isoDate) => {
   if (!isoDate) return '—';
   const d = new Date(isoDate);
@@ -81,10 +108,14 @@ const VISIBLE_COLUMNS = 36;
 
 const LiveScoresVerification = () => {
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [seasonData, setSeasonData] = useState(null);
-  const [events, setEvents] = useState([]); // current-year scraped events
-  const [scoredDays, setScoredDays] = useState(new Set()); // competition days with a fantasy recap
+  const [error, setError] = useState(/** @type {string | null} */ (null));
+  const [seasonData, setSeasonData] = useState(
+    /** @type {{ name?: string, status?: string, seasonUid?: string, lastScrapedDate?: string } | null} */ (
+      null
+    )
+  );
+  const [events, setEvents] = useState(/** @type {ScrapedEvent[]} */ ([])); // current-year scraped events
+  const [scoredDays, setScoredDays] = useState(/** @type {Set<number>} */ (new Set())); // competition days with a fantasy recap
   const [activeTab, setActiveTab] = useState('total');
   const [scrollPosition, setScrollPosition] = useState(0);
   const [scraping, setScraping] = useState(false);
@@ -106,13 +137,15 @@ const LiveScoresVerification = () => {
       setSeasonData(season);
 
       // 2. Current DCI year scraped scores
-      const yearEvents = await getHistoricalScoresForYear(currentYear);
+      const yearEvents = /** @type {ScrapedEvent[]} */ (
+        await getHistoricalScoresForYear(currentYear)
+      );
       // Sort by competition day, then by date. Pre-season events (null day) go last.
       const sorted = [...yearEvents].sort((a, b) => {
         const dayA = a.offSeasonDay ?? Infinity;
         const dayB = b.offSeasonDay ?? Infinity;
         if (dayA !== dayB) return dayA - dayB;
-        return new Date(a.date || 0) - new Date(b.date || 0);
+        return new Date(a.date || 0).getTime() - new Date(b.date || 0).getTime();
       });
       setEvents(sorted);
 
@@ -131,7 +164,7 @@ const LiveScoresVerification = () => {
       setLoading(false);
     } catch (err) {
       console.error('Error fetching live scores data:', err);
-      setError(err.message);
+      setError(err instanceof Error ? err.message : String(err));
       setLoading(false);
     }
   }, [currentYear]);
@@ -153,7 +186,7 @@ const LiveScoresVerification = () => {
         toast.error(data.message || 'Scrape did not run.');
       }
     } catch (err) {
-      toast.error(err.message || 'Failed to scrape DCI scores');
+      toast.error((err instanceof Error && err.message) || 'Failed to scrape DCI scores');
     } finally {
       setScraping(false);
     }
@@ -196,7 +229,7 @@ const LiveScoresVerification = () => {
         toast.error(data.message || 'Backfill did not run.');
       }
     } catch (err) {
-      toast.error(err.message || 'Failed to backfill DCI scores');
+      toast.error((err instanceof Error && err.message) || 'Failed to backfill DCI scores');
     } finally {
       setBackfilling(false);
     }
@@ -207,6 +240,7 @@ const LiveScoresVerification = () => {
   // day, so scores never collide. Pre-season events (null day, outside the
   // 49-day window) have no competition day, so they group by calendar date.
   const columns = useMemo(() => {
+    /** @type {Map<string, ScoreColumn>} */
     const groups = new Map(); // key -> column accumulator
     for (const event of events) {
       const day = event.offSeasonDay;
@@ -245,13 +279,14 @@ const LiveScoresVerification = () => {
       const dayA = a.day ?? Infinity;
       const dayB = b.day ?? Infinity;
       if (dayA !== dayB) return dayA - dayB;
-      return new Date(a.date || 0) - new Date(b.date || 0);
+      return new Date(a.date || 0).getTime() - new Date(b.date || 0).getTime();
     });
   }, [events, scoredDays]);
 
   // Rows = unique corps across all events, ranked by their most recent
   // (highest competition day) DCI total so the strongest corps surface first.
   const corpsRows = useMemo(() => {
+    /** @type {Map<string, { latestDay: number, latestTotal: number }>} */
     const best = new Map(); // corps -> { latestDay, latestTotal }
     for (const event of events) {
       const day = event.offSeasonDay ?? -1;
@@ -269,6 +304,11 @@ const LiveScoresVerification = () => {
   }, [events]);
 
   // Cell value for a corps in a (day-merged) column under the active tab.
+  /**
+   * @param {string} corps
+   * @param {ScoreColumn} column
+   * @returns {number | null}
+   */
   const getCellValue = (corps, column) => {
     const scoreData = column.scoresByCorps.get(corps);
     if (!scoreData) return null;

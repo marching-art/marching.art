@@ -383,7 +383,7 @@ src/scripts/buildClientVenues.js` → re-run `buildPlaceIndex.js` (see its
 
 ## Evergreen ratchets (any session, any size)
 
-- `@ts-nocheck` paydown — **17 files** at
+- `@ts-nocheck` paydown — **10 files** at
   last update; `npm run ts-nocheck:next` ranks the cheapest (no free wins
   left — the cheapest `src/` files are ~31 errors). It needs `npm ci` first
   and refuses to report on any other compiler. One per substantive task is
@@ -403,6 +403,17 @@ src/scripts/buildClientVenues.js` → re-run `buildPlaceIndex.js` (see its
   touched.
 
 ## Recently shipped (context, newest first — prune when stale)
+
+- 2026-09-30: **Daily-login auto-claim keyed to the game day** —
+  `hooks/useAppBootstrap.ts` guarded the claim with the UTC date
+  (`toISOString().slice(0,10)`), which rolls at 7–8 PM ET while the streak
+  rolls at 2 AM ET. An evening visit stamped tomorrow's UTC date, so the next
+  day's daytime visits skipped the claim: the 7 PM `streakAtRiskPushJob` fired
+  daily and the Director's Report showed login undone (player report,
+  84-day streak). Guard now stores `getGameDay()`, and re-checks on tab
+  focus/visibility so a tab left open across 2 AM claims the new day. Push
+  copy now names the 2 AM ET deadline. Regression test:
+  `useAppBootstrap.test.tsx`.
 
 - 2026-09-29: **Report control on director articles** —
   `components/Articles/ReportArticleButton.tsx` (ui `Modal`, reason 5–500
