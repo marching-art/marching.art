@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // =============================================================================
 // useCaptionSelectionModal — all state, derived values, and handlers for
 // CaptionSelectionModal. Extracted so the modal component stays a (large but)
@@ -45,6 +44,22 @@ export const CATEGORY_COLORS = {
   Music: 'bg-purple-400',
 };
 
+/** @typedef {import('./CaptionSelectionParts').PoolCorps} PoolCorps */
+/**
+ * @typedef {{ name: string, lineup: Record<string, string>, totalPoints: number, createdAt: string }}
+ *   LineupTemplate
+ */
+
+/**
+ * @param {{
+ *   onClose: () => void,
+ *   onSubmit: (lineup: Record<string, string>) => void,
+ *   corpsClass: string,
+ *   currentLineup?: Record<string, string> | null,
+ *   seasonId?: string | null,
+ *   initialCaption?: string | null,
+ * }} props
+ */
 export function useCaptionSelectionModal({
   onClose,
   onSubmit,
@@ -53,15 +68,25 @@ export function useCaptionSelectionModal({
   seasonId,
   initialCaption,
 }) {
-  const { user } = useAuth();
-  const [selections, setSelections] = useState(currentLineup || {});
+  const user = useAuth()?.user;
+  const [selections, setSelections] = useState(
+    /** @type {Record<string, string>} */ (currentLineup || {})
+  );
   const [saving, setSaving] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
-  const [templates, setTemplates] = useState([]);
-  const [draftSuggestions, setDraftSuggestions] = useState({ hot: [], value: [], history: [] });
-  const [hotCorpsData, setHotCorpsData] = useState({}); // Per-caption hot status
-  const [activeLineupKeys, setActiveLineupKeys] = useState(new Set()); // Other users' lineup keys
+  const [templates, setTemplates] = useState(/** @type {LineupTemplate[]} */ ([]));
+  const [draftSuggestions, setDraftSuggestions] = useState(
+    /** @type {{ hot: PoolCorps[], value: PoolCorps[], history: PoolCorps[] }} */ ({
+      hot: [],
+      value: [],
+      history: [],
+    })
+  );
+  // Per-caption hot status, keyed by `${corpsName}|${sourceYear}`.
+  const [hotCorpsData, setHotCorpsData] = useState(/** @type {Record<string, any>} */ ({}));
+  // Other users' lineup keys
+  const [activeLineupKeys, setActiveLineupKeys] = useState(/** @type {Set<string>} */ (new Set()));
   const [extrasLoading, setExtrasLoading] = useState(true); // hot corps + lineup keys fetch
 
   // Mobile state - whether we're viewing lineup or selection list
@@ -70,10 +95,12 @@ export function useCaptionSelectionModal({
   // Prominent, in-modal save error (e.g. the caption-change-limit message from
   // the backend). Shown as a banner inside the modal instead of only a toast —
   // a bottom-center toast is easily lost behind the near-full-height modal.
-  const [saveError, setSaveError] = useState(null);
+  const [saveError, setSaveError] = useState(/** @type {string | null} */ (null));
 
   // Active caption for selection
-  const [activeCaption, setActiveCaption] = useState(initialCaption || null);
+  const [activeCaption, setActiveCaption] = useState(
+    /** @type {string | null} */ (initialCaption || null)
+  );
 
   // Corps list search — essential on mobile where the full list is a long scroll
   const [corpsSearch, setCorpsSearch] = useState('');
@@ -107,7 +134,9 @@ export function useCaptionSelectionModal({
   // window to compute changes remaining.
   const isInitialSetup =
     !!profile && Object.keys(profile.corps?.[corpsClass]?.lineup || {}).length === 0;
-  const weeklyTrades = profile?.corps?.[corpsClass]?.weeklyTrades || null;
+  const weeklyTrades = /** @type {{ seasonUid?: string, week?: number, used?: number } | null} */ (
+    profile?.corps?.[corpsClass]?.weeklyTrades || null
+  );
 
   // Live countdown to the nightly score processing (shown next to Lock
   // Lineup) plus the current caption-change window (unlimited / weekly /
@@ -126,7 +155,7 @@ export function useCaptionSelectionModal({
       weeklyTrades &&
       weeklyTrades.seasonUid === seasonUid &&
       weeklyTrades.week === changeInfo.periodKey
-        ? weeklyTrades.used
+        ? (weeklyTrades.used ?? 0)
         : 0;
     return Math.max(0, changeInfo.tradeLimit - used);
   }, [changeInfo, weeklyTrades, seasonUid]);
@@ -152,7 +181,7 @@ export function useCaptionSelectionModal({
   // the conservative direction.
   const currentWeek = useSeasonStore((s) => s.currentWeek);
   const maxPointLimit = POINT_CAPS[corpsClass];
-  const pointLimit = pointCapForWeek(corpsClass, currentWeek) ?? maxPointLimit;
+  const pointLimit = pointCapForWeek(corpsClass, currentWeek) ?? maxPointLimit ?? 0;
   /** Points the cap still gains between now and the final week (0 once at full). */
   const pointLimitGrowth = Math.max(0, (maxPointLimit ?? 0) - (pointLimit ?? 0));
 
@@ -172,19 +201,16 @@ export function useCaptionSelectionModal({
   // Landing/Dashboard/Onboarding), so reopening the modal costs no re-fetch.
   const corpsQuery = useCorpsValues(seasonId);
   const availableCorps = useMemo(() => {
-    const corps = (corpsQuery.data ?? [])
+    const corps = /** @type {PoolCorps[]} */ (corpsQuery.data ?? [])
       .filter((c) => (c.points || 0) <= DRAFT_POOL_MAX_POINTS)
-      .map(
-        (c) =>
-          /** @type {import('./CaptionSelectionParts').PoolCorps} */ ({
-            ...c,
-            performanceData: {
-              avgScore: c.avgScore || 80,
-              // Value calculation: good score per point ratio
-              isValue: (c.avgScore || 80) / c.points > 4.5,
-            },
-          })
-      );
+      .map((c) => ({
+        ...c,
+        performanceData: {
+          avgScore: c.avgScore || 80,
+          // Value calculation: good score per point ratio
+          isValue: (c.avgScore || 80) / c.points > 4.5,
+        },
+      }));
     corps.sort((a, b) => b.points - a.points);
     return corps;
   }, [corpsQuery.data]);
@@ -224,6 +250,7 @@ export function useCaptionSelectionModal({
 
   // Generate suggestions based on the active caption
   const generateSuggestions = useCallback(
+    /** @param {PoolCorps[]} corps @param {string} caption @param {Record<string, any>} hotData */
     (corps, caption, hotData) => {
       // Hot suggestions: corps that are hot for the current caption
       const hot = corps
@@ -310,6 +337,7 @@ export function useCaptionSelectionModal({
     changeCount,
   ]);
 
+  /** @param {string} captionId */
   const getSelectedCorps = (captionId) => {
     const sel = selections[captionId];
     if (!sel) return null;
@@ -318,6 +346,7 @@ export function useCaptionSelectionModal({
   };
 
   const handleSelectionChange = useCallback(
+    /** @param {string} captionId @param {PoolCorps | null} corpsData */
     (captionId, corpsData) => {
       // Editing the lineup dismisses any prior save error so it doesn't linger
       setSaveError(null);
@@ -335,6 +364,7 @@ export function useCaptionSelectionModal({
     [selections]
   );
 
+  /** @param {string} captionId */
   const handleCaptionClick = (captionId) => {
     setActiveCaption(captionId);
     setMobileView('selection');
@@ -345,6 +375,7 @@ export function useCaptionSelectionModal({
     setMobileView('lineup');
   };
 
+  /** @param {string} captionId @param {PoolCorps | null} corps */
   const handleCorpsSelect = (captionId, corps) => {
     handleSelectionChange(captionId, corps);
 
@@ -367,6 +398,7 @@ export function useCaptionSelectionModal({
     setMobileView('lineup');
   };
 
+  /** @param {string} name */
   const handleSaveTemplate = (name) => {
     const newTemplate = {
       name,
@@ -380,7 +412,9 @@ export function useCaptionSelectionModal({
     toast.success(`Template "${name}" saved!`);
   };
 
+  /** @param {LineupTemplate} template */
   const handleLoadTemplate = (template) => {
+    /** @type {Record<string, string>} */
     const valid = {};
     Object.entries(template.lineup).forEach(([id, sel]) => {
       const [name] = sel.split('|');
@@ -392,6 +426,7 @@ export function useCaptionSelectionModal({
     toast.success(`Template loaded!`);
   };
 
+  /** @param {number} idx */
   const handleDeleteTemplate = (idx) => {
     const updated = templates.filter((_, i) => i !== idx);
     setTemplates(updated);
@@ -421,11 +456,10 @@ export function useCaptionSelectionModal({
       return;
     }
 
-    setSelections(result.newSelections);
-    if (result.filledCount > 0) {
-      toast.success(
-        `Auto-filled ${result.filledCount} position${result.filledCount > 1 ? 's' : ''}!`
-      );
+    setSelections(result.newSelections ?? selections);
+    const filled = result.filledCount ?? 0;
+    if (filled > 0) {
+      toast.success(`Auto-filled ${filled} position${filled > 1 ? 's' : ''}!`);
     }
   }, [availableCorps, selections, captions, pointLimit, activeLineupKeys, corpsClass]);
 
@@ -466,6 +500,8 @@ export function useCaptionSelectionModal({
     // Offline: store the save locally and submit automatically on reconnect.
     // Backend rules (change windows, limits) still apply at replay time.
     const saveOffline = () => {
+      // The modal only opens for a signed-in director; nothing to queue under otherwise.
+      if (!user) return;
       queueLineupSave(user.uid, corpsClass, selections);
       toast.success("You're offline — lineup saved and will submit when you reconnect.", {
         duration: 6000,
@@ -491,7 +527,7 @@ export function useCaptionSelectionModal({
       }
       // Surface the backend message (e.g. the caption-change-limit error)
       // prominently inside the modal so it isn't lost behind it.
-      setSaveError(e.message || 'Failed to save lineup. Please try again.');
+      setSaveError((e instanceof Error && e.message) || 'Failed to save lineup. Please try again.');
       setSaving(false);
     }
   };

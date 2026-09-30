@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 import React, { useState } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
 import {
@@ -22,8 +21,15 @@ import { Heading, PageHeader } from '../components/ui';
 import { getSoundSportRating, RATING_CONFIG } from '../utils/scoresUtils';
 import { PLAQUE_TIERS, PLAQUE_STYLES, availablePlaqueUpgrades } from '../utils/prestige';
 
+/** @typedef {import('../types/user').RetiredCorps} RetiredCorps */
+/** @typedef {RetiredCorps & { originalIndex: number }} GalleryCorps */
+/** A gallery entry opened in a modal; `index` is its raw retiredCorps index. */
+/** @typedef {GalleryCorps & { index: number }} SelectedCorps */
+/** @typedef {{ name: string, color: string, bg: string, accent: string }} ClassStyle */
+
 // Class styling matches the site's design system (see Schedule CLASS_CONFIG):
 // sharp, flat color tints rather than gradients.
+/** @type {Record<string, ClassStyle>} */
 const CLASS_CONFIG = {
   worldClass: {
     name: 'World Class',
@@ -68,14 +74,15 @@ const RetiredCorpsGallery = () => {
   const loading = useProfileStore((state) => state.loading);
   const retiredCorps = profile?.retiredCorps || [];
   const corpsCoin = profile?.corpsCoin || 0;
-  const [selectedCorps, setSelectedCorps] = useState(null);
+  const [selectedCorps, setSelectedCorps] = useState(/** @type {SelectedCorps | null} */ (null));
   const [showUnretireModal, setShowUnretireModal] = useState(false);
   const [showPlaqueModal, setShowPlaqueModal] = useState(false);
-  const [purchasingTier, setPurchasingTier] = useState(null);
+  const [purchasingTier, setPurchasingTier] = useState(/** @type {string | null} */ (null));
   const [unretiring, setUnretiring] = useState(false);
   const [filterClass, setFilterClass] = useState('all');
   const [sortBy, setSortBy] = useState('retiredAt'); // retiredAt, totalSeasons, bestScore
 
+  /** @param {string} corpsClass @returns {ClassStyle} */
   const getClassConfig = (corpsClass) =>
     CLASS_CONFIG[corpsClass] || {
       name: corpsClass,
@@ -84,23 +91,25 @@ const RetiredCorpsGallery = () => {
       accent: 'bg-charcoal-500',
     };
 
+  /** @param {string} corpsClass @param {number} retiredIndex */
   const handleUnretire = async (corpsClass, retiredIndex) => {
     setUnretiring(true);
     try {
       const result = await unretireCorps({ corpsClass, retiredIndex });
       if (result.data.success) {
-        toast.success(result.data.message);
+        toast.success(result.data.message || 'Corps brought out of retirement!');
         setShowUnretireModal(false);
         setSelectedCorps(null);
       }
     } catch (error) {
       console.error('Error unretiring corps:', error);
-      toast.error(error.message || 'Failed to unretire corps');
+      toast.error((error instanceof Error && error.message) || 'Failed to unretire corps');
     } finally {
       setUnretiring(false);
     }
   };
 
+  /** @param {string} tier */
   const handlePurchasePlaque = async (tier) => {
     if (!selectedCorps) return;
     setPurchasingTier(tier);
@@ -117,7 +126,7 @@ const RetiredCorpsGallery = () => {
       }
     } catch (error) {
       console.error('Error commissioning plaque:', error);
-      toast.error(error.message || 'Failed to commission plaque');
+      toast.error((error instanceof Error && error.message) || 'Failed to commission plaque');
     } finally {
       setPurchasingTier(null);
     }
@@ -128,15 +137,16 @@ const RetiredCorpsGallery = () => {
   // that unretireCorps/purchaseRetirementPlaque receive, and mapping after
   // the filter made it the filtered position (wrong corps when a class
   // filter was active).
+  /** @type {GalleryCorps[]} */
   const filteredCorps = retiredCorps
     .map((corps, index) => ({ ...corps, originalIndex: index }))
     .filter((corps) => filterClass === 'all' || corps.corpsClass === filterClass)
     .sort((a, b) => {
       switch (sortBy) {
         case 'totalSeasons':
-          return b.totalSeasons - a.totalSeasons;
+          return (b.totalSeasons || 0) - (a.totalSeasons || 0);
         case 'bestScore':
-          return b.bestSeasonScore - a.bestSeasonScore;
+          return (b.bestSeasonScore || 0) - (a.bestSeasonScore || 0);
         case 'retiredAt':
         default:
           return (b.retiredAt?.seconds || 0) - (a.retiredAt?.seconds || 0);
@@ -224,7 +234,7 @@ const RetiredCorpsGallery = () => {
                 // instead of the numeric best score.
                 const isSoundSport = corps.corpsClass === 'soundSport';
                 const bestRating =
-                  isSoundSport && corps.bestSeasonScore > 0
+                  isSoundSport && corps.bestSeasonScore && corps.bestSeasonScore > 0
                     ? getSoundSportRating(corps.bestSeasonScore)
                     : null;
                 return (
@@ -523,7 +533,7 @@ const RetiredCorpsGallery = () => {
                         <div className="text-[10px] text-muted uppercase tracking-wider">Best</div>
                         {selectedCorps.corpsClass === 'soundSport' ? (
                           <div className="text-base font-bold text-white">
-                            {selectedCorps.bestSeasonScore > 0
+                            {selectedCorps.bestSeasonScore && selectedCorps.bestSeasonScore > 0
                               ? getSoundSportRating(selectedCorps.bestSeasonScore)
                               : '—'}
                           </div>

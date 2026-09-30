@@ -284,6 +284,25 @@ export function withArmFade(
 // =============================================================================
 
 /**
+ * Switch the hardware metal without re-skinning the rest of the figure: the
+ * figure's metal channel (plume boss, braid buttons, hat plate defaults) plus
+ * every hardware piece still wearing the previous metal. Pieces the director
+ * recolored by hand keep their color.
+ */
+export function applyHardware(figure: FigureConfig, metal: UniformColorway['metal']): FigureConfig {
+  const next = METAL_HEX[metal] || METAL_HEX.gold;
+  const prev = isHexColor(figure.metal) ? figure.metal.toLowerCase() : null;
+  const wearsOld = (v: string | null | undefined): v is string =>
+    !!prev && typeof v === 'string' && v.toLowerCase() === prev;
+  const out: FigureConfig = { ...figure, metal: next };
+  for (const key of ['buckle', 'buttonColor', 'aiguillette', 'waistBandEdge'] as const) {
+    if (wearsOld(figure[key])) out[key] = next;
+  }
+  if (figure.hat && wearsOld(figure.hat.emblem)) out.hat = { ...figure.hat, emblem: next };
+  return out;
+}
+
+/**
  * Re-skin a figure from the corps colorway in one deterministic pass:
  * primary → base garments and identity bands, secondary → hardware/trim,
  * accent → gloves/gauntlets/plume/neck pieces, metal → buttons and buckles.

@@ -21,6 +21,7 @@ export const HALL_BANNER_PRICE = 10000;
 export const HALL_BANNER_MAX_LENGTH = 60;
 
 // Presentation for the gallery card badge + purchase modal.
+/** @type {Record<string, { text: string, bg: string, border: string }>} */
 export const PLAQUE_STYLES = {
   bronze: {
     text: 'text-orange-400',

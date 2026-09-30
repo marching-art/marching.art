@@ -218,6 +218,17 @@ describe("validateDesign", () => {
     assert.match(validateDesign(d2).join(";"), /torsoStyle/);
   });
 
+  test("accepts sleeve sequins and rejects non-boolean values", () => {
+    const d = validDesign();
+    d.figure.armL = { type: "sleeve", sequin: true };
+    d.figure.armR = { type: "half", sequin: false };
+    assert.deepEqual(validateDesign(d), []);
+
+    const d2 = validDesign();
+    d2.figure.armL = { type: "sleeve", sequin: "yes" };
+    assert.match(validateDesign(d2).join(";"), /armL\.sequin is invalid/);
+  });
+
   test("accepts the long coat and the Plumassier plume types", () => {
     const d = validDesign();
     d.figure.torsoStyle = "longcoat";

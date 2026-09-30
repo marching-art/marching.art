@@ -143,7 +143,7 @@ function analyzeDesign(design) {
     fig.baldricSequin ||
     fig.gauntletSequin ||
     (fig.chest === "swash" && fig.swashSequin !== false) ||
-    arms.some((a) => a.gauntlet && a.gauntlet.sequin) ||
+    arms.some((a) => a.sequin || (a.gauntlet && a.gauntlet.sequin)) ||
     legs.some((l) => l.sequin || l.foil)
   ) {
     traits.add("sequins");

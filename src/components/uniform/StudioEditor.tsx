@@ -27,6 +27,7 @@ import {
 import { FIGURE_SKIN_TONES } from '../../data/uniformRenderTheme';
 import {
   applyColorway,
+  applyHardware,
   armFadeStops,
   darkenHex,
   normalizeFigure,
@@ -277,7 +278,14 @@ export default function StudioEditor({
                   { value: 'silver', label: 'Silver hardware' },
                 ]}
                 value={design.colorway.metal}
-                onSelect={(v) => setColorway({ metal: v as UniformColorway['metal'] })}
+                onSelect={(v) => {
+                  const metal = v as UniformColorway['metal'];
+                  onChange({
+                    ...design,
+                    colorway: { ...design.colorway, metal },
+                    figure: applyHardware(figure, metal),
+                  });
+                }}
               />
               <button
                 type="button"
@@ -322,13 +330,7 @@ export default function StudioEditor({
                 value: o.value,
                 label: o.value === 'longcoat' ? packLabel(o.label, 'pack_tailors_cut') : o.label,
               }))}
-              value={
-                figure.torsoStyle === 'tunic' ||
-                figure.torsoStyle === 'dress' ||
-                figure.torsoStyle === 'longcoat'
-                  ? figure.torsoStyle
-                  : 'jacket'
-              }
+              value={figure.torsoStyle ?? 'jacket'}
               onSelect={(v) => setFigure({ torsoStyle: v as FigureConfig['torsoStyle'] })}
             />
             <div className="mt-2">
@@ -389,6 +391,13 @@ export default function StudioEditor({
                 onChange={(v) => setFigure({ glowArt: v ? design.colorway.secondary : null })}
               />
             </div>
+            {figure.glowArt && (
+              <ChannelRow
+                label="Glow line-art"
+                value={figure.glowArt}
+                onChange={(v) => v && setFigure({ glowArt: v })}
+              />
+            )}
           </section>
         )}
 

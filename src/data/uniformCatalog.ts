@@ -185,6 +185,7 @@ export const PLUME_TYPE_OPTIONS = [
 export const TORSO_STYLE_OPTIONS = [
   { value: 'jacket', label: 'Jacket' },
   { value: 'tunic', label: 'Tunic (asymmetric drape)' },
+  { value: 'jumpsuit', label: 'Jumpsuit (one-piece)' },
   { value: 'dress', label: 'Guard dress' },
   // Tailors' Cut pack (Harrow & Finch) — premium, locked until owned.
   { value: 'longcoat', label: 'Long coat' },

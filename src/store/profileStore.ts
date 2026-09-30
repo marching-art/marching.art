@@ -11,6 +11,7 @@ import {
 } from '../api/functions';
 import { triggerXPFeedback } from '../components/xpFeedbackTrigger';
 import toast from 'react-hot-toast';
+import type { RetiredCorps } from '../types/user';
 
 // All corps classes for admin override
 // Note: Uses 'worldClass'/'openClass' format which matches CORPS_CLASS_ORDER in utils/corps.ts
@@ -99,6 +100,8 @@ export interface ProfileDoc {
   challenges?: Record<string, ChallengeCompletion[]>;
   predictions?: Record<string, PredictionBucket>;
   engagement?: Engagement;
+  /** Retired corps records (server-written by retireCorps / unretireCorps). */
+  retiredCorps?: RetiredCorps[];
   [key: string]: unknown;
 }
 

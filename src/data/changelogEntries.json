@@ -1,5 +1,47 @@
 [
   {
+    "id": "2026-09-30-studio-hardware-switch",
+    "date": "2026-09-30",
+    "title": "Gold/Silver hardware now recolors your uniform right away",
+    "category": "fix",
+    "summary": "Choosing Gold or Silver hardware in the Uniform Studio used to change only the colorway swatch. The plume base, buttons, buckle and hat plate stayed the old metal unless you pressed Apply to all, which also re-colored everything else. Switching the metal now updates the hardware right away and leaves the rest of your design alone.",
+    "highlights": ["Any hardware piece you recolored by hand keeps your color."]
+  },
+  {
+    "id": "2026-09-30-studio-sleeve-sequins",
+    "date": "2026-09-30",
+    "title": "Sequined sleeves in the Uniform Studio",
+    "category": "feature",
+    "summary": "Full and rolled half-sleeves now have a Sequins switch, so you can sparkle a whole sleeve instead of just the gauntlet cuff.",
+    "highlights": [
+      "Each sleeve takes sequins on its own, so one arm can shine while the other stays matte.",
+      "Detached sleeves sparkle only on the fabric, never on the bare shoulder.",
+      "Sequined sleeves count toward a design brief's sequins goal, and AI uniform portraits show them."
+    ]
+  },
+  {
+    "id": "2026-09-30-studio-glow-colors",
+    "date": "2026-09-30",
+    "title": "Pick any color for Uniform Studio glow lines",
+    "category": "improvement",
+    "summary": "Glow line-art on the torso and glow lines on sleeves now have their own color picker. Before, they were stuck on your colorway's secondary color.",
+    "highlights": [
+      "Switch a glow on, then tap its color swatch that appears just below to recolor it.",
+      "Each sleeve's glow line can be its own color when the sides aren't linked."
+    ]
+  },
+  {
+    "id": "2026-09-30-studio-jumpsuit",
+    "date": "2026-09-30",
+    "title": "Jumpsuit is now a torso choice in the Uniform Studio",
+    "category": "improvement",
+    "summary": "The Torso section now offers a one-piece Jumpsuit next to Jacket, Tunic, Guard dress and Long coat. The top and pants read as a single garment, which suits unitard and full-body print looks.",
+    "highlights": [
+      "Give the torso and both legs the same color or print and it becomes one continuous piece from shoulder to shoe.",
+      "Loading the Op-Art preset now shows Jumpsuit as selected, instead of wrongly highlighting Jacket."
+    ]
+  },
+  {
     "id": "2026-09-30-daily-login-streak-rollover",
     "date": "2026-09-30",
     "title": "Daily login now counts every day you visit",
