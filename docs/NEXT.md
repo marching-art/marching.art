@@ -311,6 +311,13 @@ ops step below)_
 
 ## Operational — owner only, standing until done
 
+- **Heal the current schedule's multi-city locations (once, after the next
+  functions deploy)** — Admin → Season & Scoring → "Standardize Show
+  Locations" rewrites stored rows like "Lexington/Winchester, KY" to
+  "Winchester, KY". New schedules and live refreshes already store the
+  collapsed form; this only fixes the season generated before it shipped.
+  Resolvers read the old spelling correctly in the meantime.
+
 - **Venue refresh after each live season (or when the Schedule Coverage card
   lists new towns)** — new DCI stops already work in-game (auto-geocoded:
   travel, heat, timezone, hosting, Tour Map); promoting them to the gazetteer
@@ -383,7 +390,7 @@ src/scripts/buildClientVenues.js` → re-run `buildPlaceIndex.js` (see its
 
 ## Evergreen ratchets (any session, any size)
 
-- `@ts-nocheck` paydown — **10 files** at
+- `@ts-nocheck` paydown — **5 files** at
   last update; `npm run ts-nocheck:next` ranks the cheapest (no free wins
   left — the cheapest `src/` files are ~31 errors). It needs `npm ci` first
   and refuses to report on any other compiler. One per substantive task is
@@ -403,6 +410,16 @@ src/scripts/buildClientVenues.js` → re-run `buildPlaceIndex.js` (see its
   touched.
 
 ## Recently shipped (context, newest first — prune when stale)
+
+- 2026-09-30: **Multi-city show locations keep the last city** —
+  `locationFormat.standardizeLocation` collapses "A/B, ST" to "B, ST"
+  (`collapseMultiCity`; hyphens untouched), so "Lexington/Winchester, KY" is
+  stored as "Winchester, KY". The gazetteer builder geocodes slash compounds
+  the same way (Lexington/Winchester → new `winchester-ky` venue,
+  Bloomington/Normal → `normal-il`); client artifacts regenerated. Server
+  `tourVenueFor` and client `resolveVenueId` retry the collapsed form, the
+  live refresh re-standardizes matched rows, and the new
+  `standardizeScheduleLocations` admin job heals a stored season.
 
 - 2026-09-30: **Daily-login auto-claim keyed to the game day** —
   `hooks/useAppBootstrap.ts` guarded the claim with the UTC date

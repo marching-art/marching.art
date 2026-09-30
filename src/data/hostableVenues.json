@@ -1,8 +1,8 @@
 {
   "meta": {
     "generatedFrom": "functions/src/helpers/podium/venueGazetteer.json",
-    "venues": 517,
-    "keys": 971
+    "venues": 518,
+    "keys": 969
   },
   "venues": [
     {
@@ -2541,6 +2541,11 @@
       "region": "WI"
     },
     {
+      "venueId": "winchester-ky",
+      "city": "Winchester",
+      "region": "KY"
+    },
+    {
       "venueId": "windsor-co",
       "city": "Windsor",
       "region": "CO"
@@ -2665,12 +2670,12 @@
     "birmingham, alabama": "birmingham-al",
     "blackwood, new jersey": "blackwood-nj",
     "blackwood, nj": "blackwood-nj",
-    "bloomington normal, illinois": "bloomington-il",
-    "bloomington, il": "bloomington-il",
-    "bloomington normal, il": "bloomington-il",
+    "bloomington normal, illinois": "normal-il",
+    "normal, il": "normal-il",
     "bloomington, indiana": "bloomington-in",
     "bloomington, in": "bloomington-in",
     "bloomington-normal illinois": "bloomington-il",
+    "bloomington, il": "bloomington-il",
     "bloomington-normal, il": "bloomington-il",
     "bloomington-normal, illinois": "bloomington-il",
     "boise, id": "boise-id",
@@ -2886,7 +2891,6 @@
     "fort edward, ny": "fort-edward-ny",
     "fort edwards glens falls, new york": "glens-falls-ny",
     "glens falls, ny": "glens-falls-ny",
-    "fort edwards glens falls, ny": "glens-falls-ny",
     "fort edwards new york": "fort-edward-ny",
     "fort edwards, ny": "fort-edward-ny",
     "fort edwards, new york": "fort-edward-ny",
@@ -3066,10 +3070,10 @@
     "leander, tx": "leander-tx",
     "lebanon, il": "lebanon-il",
     "lebanon, illinois": "lebanon-il",
-    "lexington winchester, kentucky": "lexington-ky",
-    "lexington, ky": "lexington-ky",
-    "lexington winchester, ky": "lexington-ky",
+    "lexington winchester, kentucky": "winchester-ky",
+    "winchester, ky": "winchester-ky",
     "lexington, kentucky": "lexington-ky",
+    "lexington, ky": "lexington-ky",
     "lexington, sc": "lexington-sc",
     "lima, oh": "lima-oh",
     "lima, ohio": "lima-oh",
@@ -3209,7 +3213,6 @@
     "niagara falls, ny": "niagara-falls-ny",
     "niles, mi": "niles-mi",
     "niles, michigan": "niles-mi",
-    "normal, il": "normal-il",
     "normal, illinois": "normal-il",
     "north canton, oh": "north-canton-oh",
     "norton, oh": "norton-oh",

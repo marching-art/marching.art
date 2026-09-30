@@ -312,6 +312,44 @@ async function updateScheduleDay(seasonId, dayNumber, shows) {
 }
 
 /**
+ * Re-run standardizeLocation over a stored competitions array. Pure; returns a
+ * new array plus the rows whose location changed.
+ * @param {Array<{id?: string, location?: string}>} competitions
+ * @returns {{competitions: Array<object>, changed: Array<{id: (string|undefined), from: string, to: string}>}}
+ */
+function restandardizeCompetitionLocations(competitions) {
+  const changed = [];
+  const next = (competitions || []).map((comp) => {
+    if (!comp || typeof comp.location !== "string" || !comp.location) return comp;
+    const location = standardizeLocation(comp.location);
+    if (location === comp.location) return comp;
+    changed.push({ id: comp.id, from: comp.location, to: location });
+    return { ...comp, location };
+  });
+  return { competitions: next, changed };
+}
+
+/**
+ * Heal a stored season schedule in place: every competition location is run
+ * back through standardizeLocation, so rows written before a rule landed (a
+ * multi-city "Lexington/Winchester, KY" -> "Winchester, KY") match what a
+ * fresh generation would store. Transactional; a no-op when nothing changes.
+ * @param {string} seasonId
+ * @returns {Promise<Array<{id: (string|undefined), from: string, to: string}>>} rows changed
+ */
+async function standardizeScheduleLocations(seasonId) {
+  const db = getDb();
+  const scheduleRef = db.doc(`schedules/${seasonId}`);
+  return db.runTransaction(async (tx) => {
+    const snap = await tx.get(scheduleRef);
+    if (!snap.exists) return [];
+    const { competitions, changed } = restandardizeCompetitionLocations(snap.data().competitions);
+    if (changed.length) tx.update(scheduleRef, { competitions });
+    return changed;
+  });
+}
+
+/**
  * Adds a show to a specific day (without overwriting existing shows)
  * @param {string} seasonId - The season identifier
  * @param {number} dayNumber - The offSeasonDay
@@ -505,6 +543,8 @@ module.exports = {
   getScheduleDays,
   getAllScheduleDays,
   updateScheduleDay,
+  restandardizeCompetitionLocations,
+  standardizeScheduleLocations,
   addShowToDay,
   shuffleArray,
   brandEventName,

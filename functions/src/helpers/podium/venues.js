@@ -45,9 +45,8 @@ for (const venue of Object.values(gazetteer.venues)) {
 // now store locations in "City, ST" form (locations enter through
 // standardizeLocation before storage), but that keeps the venue's ORIGINAL city
 // spelling — which the gazetteer often corrected during geocoding: typos
-// ("Severieville" -> "Sevierville"), slash compounds ("Bloomington/Normal" ->
-// "Bloomington"), fuzzy matches ("Bowling" -> "Bowling Green"), and manual
-// overrides that fix a wrong state. For those the standardized string
+// ("Severieville" -> "Sevierville"), fuzzy matches ("Bowling" -> "Bowling
+// Green"), and manual overrides that fix a wrong state. For those the standardized string
 // ("Severieville, TN") matches neither the primary key ("severieville,
 // tennessee") nor the canonical index ("sevierville, tn"), so it would resolve
 // to null and silently drop travel/heat/timezone math. Re-standardizing each
@@ -78,7 +77,13 @@ for (const venue of Object.values(gazetteer.venues)) {
  */
 function tourVenueFor(locationString) {
   const key = normalizeKey(locationString);
-  return gazetteer.venues[key] || canonicalIndex[key] || standardizedIndex[key] || null;
+  const hit = gazetteer.venues[key] || canonicalIndex[key] || standardizedIndex[key];
+  if (hit) return hit;
+  // A string no index knows verbatim — a multi-city "Lexington/Winchester, KY"
+  // stored before standardizeLocation collapsed those — retried in its
+  // standardized "City, ST" form.
+  const stdKey = normalizeKey(standardizeLocation(locationString));
+  return (stdKey !== key && (canonicalIndex[stdKey] || standardizedIndex[stdKey])) || null;
 }
 
 // The hometown place index (scripts/buildPlaceIndex.js): every populated place

@@ -93,6 +93,10 @@ function mergeScheduleRefresh(existing, scrapedEvents, seasonId, startDate, spri
         // Enrich the existing show in place — keep id/day/week/type/mandatory.
         applyEnrichment(match, event);
         if (!match.location && event.location) match.location = standardizeLocation(event.location);
+        // Re-standardize a stored location too, so a spelling stored before a
+        // standardizeLocation rule landed (a multi-city "Lexington/Winchester,
+        // KY") heals on the next refresh.
+        else if (match.location) match.location = standardizeLocation(match.location);
         if (!match.date && event.date) match.date = event.date;
         // Backfill the regional-major tag onto majors already on the schedule
         // (a season generated before tagging existed picks it up on refresh).

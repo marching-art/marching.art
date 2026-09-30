@@ -11,6 +11,7 @@ const {
   generateOffSeasonSchedule,
   scraperInvokeKey,
 } = require("../helpers/season");
+const { standardizeScheduleLocations } = require("../helpers/seasonSchedule");
 const { processAndArchiveOffSeasonScoresLogic, calculateCorpsStatisticsLogic, processAndScoreLiveSeasonDayLogic } = require("../helpers/scoring");
 const { reconcileSelectedShows } = require("../helpers/scheduleAudit");
 const { getCompletedCalendarDay } = require("../helpers/gameDay");
@@ -430,6 +431,23 @@ exports.manualTrigger = onCall({
         message: `Schedule refreshed from ${result.totalEvents} scraped events: ` +
           `${result.addedCount} added, ${result.enrichedCount} enriched with times/lineup, ` +
           `${result.unchangedCount} unchanged.`,
+      };
+    }
+    case "standardizeScheduleLocations": {
+      // Re-run standardizeLocation over the active season's stored schedule,
+      // healing rows written before a rule landed (a multi-city
+      // "Lexington/Winchester, KY" becomes "Winchester, KY").
+      const seasonDoc = await getDb().doc("game-settings/season").get();
+      const seasonId = seasonDoc.exists ? seasonDoc.data().seasonUid : null;
+      if (!seasonId) throw new HttpsError("failed-precondition", "No active season found.");
+      const changed = await standardizeScheduleLocations(seasonId);
+      logger.info(`Standardized ${changed.length} schedule locations in ${seasonId}.`, { changed });
+      return {
+        success: true,
+        message: changed.length
+          ? `Standardized ${changed.length} show location(s): ` +
+            changed.map((c) => `${c.from} → ${c.to}`).join("; ")
+          : "Every show location is already standardized.",
       };
     }
     case "setHeritageSchedules": {

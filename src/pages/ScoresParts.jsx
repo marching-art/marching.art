@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Presentational sections for the Scores page: pill tabs, recap box scores,
 // SoundSport medal list, and class standings. Styled to match the Podium Class
 // recap sheet (PodiumRecapSheet) — sheet cards, gold box-toppers, per-show
@@ -80,9 +79,21 @@ import { WORLD_FIELD_KEY } from '../utils/worldChampionship';
 // Finalists — and the top of the Finals sheet is the World Champion.
 // =============================================================================
 
+/** @typedef {import('../types/recap').NormalizedScore} NormalizedScore */
+/** @typedef {import('../types/recap').NormalizedShow} NormalizedShow */
+/** @typedef {import('../utils/corps').ViewerCorpsMatcher} ViewerCorpsMatcher */
+
+/** Sort-pill id → caption key ('total' has none: the sheet stays in score order). */
+/** @type {Record<string, 'ge' | 'vis' | 'mus'>} */
+const CAPTION_SORT_KEY = { GE: 'ge', VIS: 'vis', MUS: 'mus' };
+
 // Rank a class's scores (already total-desc, so index+1 is the finishing place)
 // and apply the active caption sort — the place stays fixed under a sort, the
 // same as the Podium recap sheet.
+/**
+ * @param {NormalizedScore[]} classScores
+ * @param {string} sortBy
+ */
 const buildClassRows = (classScores, sortBy) => {
   const withPlace = classScores.map((score, i) => ({
     score,
@@ -90,7 +101,7 @@ const buildClassRows = (classScores, sortBy) => {
     place: i + 1,
   }));
   if (sortBy === 'total') return withPlace;
-  const key = { GE: 'ge', VIS: 'vis', MUS: 'mus' }[sortBy];
+  const key = CAPTION_SORT_KEY[sortBy];
   if (!key) return withPlace;
   return [...withPlace].sort((a, b) => (b.captions[key] ?? -1) - (a.captions[key] ?? -1));
 };
@@ -103,6 +114,19 @@ const buildClassRows = (classScores, sortBy) => {
 // (components/scores/SheetPrimitives).
 
 const RecapDataGrid = memo(
+  /**
+   * @param {{
+   *   scores: NormalizedScore[],
+   *   eventName: string,
+   *   location?: string | null,
+   *   date?: string | null,
+   *   seasonId?: string | null,
+   *   offSeasonDay: number,
+   *   viewer?: ViewerCorpsMatcher | null,
+   *   sortBy?: string,
+   *   advancement?: import('../utils/scoresUtils').AdvancementResult | null,
+   * }} props
+   */
   ({
     scores,
     eventName,
@@ -179,7 +203,7 @@ const RecapDataGrid = memo(
     // image wherever the copied text is pasted.
     const topRankedClass = world
       ? WORLD_FIELD_KEY
-      : sections.find((s) => CLASS_SECTION_ORDER.includes(s.cls))?.cls;
+      : sections.find((s) => typeof s.cls === 'string' && CLASS_SECTION_ORDER.includes(s.cls))?.cls;
     const shareUrl = () =>
       seasonId && typeof offSeasonDay === 'number' && topRankedClass
         ? scoresShareUrl(seasonId, offSeasonDay, topRankedClass)
@@ -263,7 +287,7 @@ const RecapDataGrid = memo(
                       colors={score.colors}
                       tag={
                         advances ? (
-                          <AdvancesTag toDay={advancement.advancesToDay} />
+                          <AdvancesTag toDay={advancement?.advancesToDay} />
                         ) : world?.winner && place === 1 ? (
                           <TitleTag title={world.winner} />
                         ) : null
@@ -318,121 +342,127 @@ const NIGHT_BADGE = {
   2: 'bg-purple-500/15 text-purple-300',
 };
 
-const EasternCombinedSheet = memo(({ shows, viewer }) => {
-  const combined = useMemo(() => mergeTwoNightShows(shows || []), [shows]);
-  if (!combined) return null;
+const EasternCombinedSheet = memo(
+  /** @param {{ shows: NormalizedShow[], viewer?: ViewerCorpsMatcher | null }} props */
+  ({ shows, viewer = null }) => {
+    const combined = useMemo(() => mergeTwoNightShows(shows || []), [shows]);
+    if (!combined) return null;
 
-  const shareText = () =>
-    combined.sections
-      .map((section) =>
-        formatStandingsAsText(
-          {
-            title: `${formatEventName(combined.eventName)} — ${section.label}`,
-            subtitle: 'Combined Standings · Both Nights',
-          },
-          section.rows.map((row, idx) => ({
-            place: idx + 1,
-            corpsName: `${row.corpsName || row.corps} (N${row.night})`,
-            total: row.score ?? row.totalScore ?? 0,
-            captions: getCaptionBreakdown(row),
-          }))
+    const shareText = () =>
+      combined.sections
+        .map((section) =>
+          formatStandingsAsText(
+            {
+              title: `${formatEventName(combined.eventName)} — ${section.label}`,
+              subtitle: 'Combined Standings · Both Nights',
+            },
+            section.rows.map((row, idx) => ({
+              place: idx + 1,
+              corpsName: `${row.corpsName || row.corps} (N${row.night})`,
+              total: row.score ?? row.totalScore ?? 0,
+              captions: getCaptionBreakdown(row),
+            }))
+          )
         )
-      )
-      .join('\n\n');
+        .join('\n\n');
 
-  return (
-    <div className={`${SHEET_CARD} space-y-3`}>
-      {/* Masthead — gold-tinted to flag the marquee event */}
-      <div className="flex items-baseline justify-between gap-2 border-b border-brand/40 pb-2">
-        <div className="min-w-0">
-          <div className="text-[9px] font-bold uppercase tracking-[0.2em] text-brand">
-            Combined Standings · Both Nights
-          </div>
-          <div className="font-bold text-white text-[13px] truncate">
-            {formatEventName(combined.eventName)}
-          </div>
-        </div>
-        <div className="flex items-center gap-2 flex-shrink-0 pl-2 text-[10px] uppercase tracking-wider text-muted">
-          {combined.location && (
-            <span className="hidden sm:flex items-center gap-1 truncate max-w-[140px]">
-              <MapPin className="w-3 h-3" />
-              {combined.location}
-            </span>
-          )}
-          {combined.dateRange && (
-            <span className="tabular-nums normal-case">{combined.dateRange}</span>
-          )}
-        </div>
-      </div>
-
-      {/* Per-class sections */}
-      {combined.sections.map((section) => {
-        const sectionTops = captionTops(section.rows.map((row) => getCaptionBreakdown(row)));
-        return (
-          <div key={section.corpsClass} className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <span className="text-[9px] font-bold uppercase tracking-wider text-muted">
-                {section.label}
-              </span>
-              <span className="text-[9px] text-muted tabular-nums">
-                {section.rows.length} corps
-              </span>
+    return (
+      <div className={`${SHEET_CARD} space-y-3`}>
+        {/* Masthead — gold-tinted to flag the marquee event */}
+        <div className="flex items-baseline justify-between gap-2 border-b border-brand/40 pb-2">
+          <div className="min-w-0">
+            <div className="text-[9px] font-bold uppercase tracking-[0.2em] text-brand">
+              Combined Standings · Both Nights
             </div>
-            <BoxScoreHead trailing={<span className="w-7 text-right text-muted">Night</span>} />
-            <div>
-              {section.rows.map((row, idx) => {
-                const isUserCorps = isViewerCorps(row, viewer);
-                const captions = getCaptionBreakdown(row);
-                return (
-                  <div
-                    key={`${row.corpsName}-${idx}`}
-                    className={`flex items-center gap-2 px-1 py-1.5 border-b border-line-subtle last:border-b-0 ${
-                      isUserCorps ? 'bg-interactive/10' : ''
-                    }`}
-                  >
-                    <CorpsIdentity
-                      place={idx + 1}
-                      name={row.corpsName || row.corps}
-                      isMine={isUserCorps}
-                      displayName={row.displayName}
-                      uid={row.uid}
-                      avatarUrl={row.avatarUrl}
-                      colors={row.colors}
-                    />
-                    <div className="flex items-center gap-1.5 flex-shrink-0 text-[11px]">
-                      <CaptionValue value={captions?.ge} isTop={captions?.ge === sectionTops.ge} />
-                      <CaptionValue
-                        value={captions?.vis}
-                        isTop={captions?.vis === sectionTops.vis}
+            <div className="font-bold text-white text-[13px] truncate">
+              {formatEventName(combined.eventName)}
+            </div>
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0 pl-2 text-[10px] uppercase tracking-wider text-muted">
+            {combined.location && (
+              <span className="hidden sm:flex items-center gap-1 truncate max-w-[140px]">
+                <MapPin className="w-3 h-3" />
+                {combined.location}
+              </span>
+            )}
+            {combined.dateRange && (
+              <span className="tabular-nums normal-case">{combined.dateRange}</span>
+            )}
+          </div>
+        </div>
+
+        {/* Per-class sections */}
+        {combined.sections.map((section) => {
+          const sectionTops = captionTops(section.rows.map((row) => getCaptionBreakdown(row)));
+          return (
+            <div key={section.corpsClass} className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[9px] font-bold uppercase tracking-wider text-muted">
+                  {section.label}
+                </span>
+                <span className="text-[9px] text-muted tabular-nums">
+                  {section.rows.length} corps
+                </span>
+              </div>
+              <BoxScoreHead trailing={<span className="w-7 text-right text-muted">Night</span>} />
+              <div>
+                {section.rows.map((row, idx) => {
+                  const isUserCorps = isViewerCorps(row, viewer);
+                  const captions = getCaptionBreakdown(row);
+                  return (
+                    <div
+                      key={`${row.corpsName}-${idx}`}
+                      className={`flex items-center gap-2 px-1 py-1.5 border-b border-line-subtle last:border-b-0 ${
+                        isUserCorps ? 'bg-interactive/10' : ''
+                      }`}
+                    >
+                      <CorpsIdentity
+                        place={idx + 1}
+                        name={row.corpsName || row.corps}
+                        isMine={isUserCorps}
+                        displayName={row.displayName}
+                        uid={row.uid}
+                        avatarUrl={row.avatarUrl}
+                        colors={row.colors}
                       />
-                      <CaptionValue
-                        value={captions?.mus}
-                        isTop={captions?.mus === sectionTops.mus}
-                      />
-                      <span className={`${TOTAL_W} text-right font-bold text-white tabular-nums`}>
-                        {(row.score || row.totalScore || 0).toFixed(3)}
-                      </span>
-                      <span
-                        className={`w-7 flex-shrink-0 text-center text-[9px] font-bold uppercase rounded-none py-0.5 ${NIGHT_BADGE[row.night]}`}
-                      >
-                        N{row.night}
-                      </span>
+                      <div className="flex items-center gap-1.5 flex-shrink-0 text-[11px]">
+                        <CaptionValue
+                          value={captions?.ge}
+                          isTop={captions?.ge === sectionTops.ge}
+                        />
+                        <CaptionValue
+                          value={captions?.vis}
+                          isTop={captions?.vis === sectionTops.vis}
+                        />
+                        <CaptionValue
+                          value={captions?.mus}
+                          isTop={captions?.mus === sectionTops.mus}
+                        />
+                        <span className={`${TOTAL_W} text-right font-bold text-white tabular-nums`}>
+                          {(row.score || row.totalScore || 0).toFixed(3)}
+                        </span>
+                        <span
+                          className={`w-7 flex-shrink-0 text-center text-[9px] font-bold uppercase rounded-none py-0.5 ${NIGHT_BADGE[row.night]}`}
+                        >
+                          N{row.night}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
 
-      <SheetFooter
-        note="Night 2 carries one extra day of growth · box-toppers in gold"
-        action={<ShareButton getText={shareText} />}
-      />
-    </div>
-  );
-});
+        <SheetFooter
+          note="Night 2 carries one extra day of growth · box-toppers in gold"
+          action={<ShareButton getText={shareText} />}
+        />
+      </div>
+    );
+  }
+);
 
 // =============================================================================
 // FANTASY RECAPS VIEW — day tabs + one sort control, mirroring the Podium Class
@@ -464,7 +494,7 @@ const FantasyRecapsView = ({
   viewer = null,
 }) => {
   const [sortBy, setSortBy] = useState('total');
-  const [selectedDay, setSelectedDay] = useState(null);
+  const [selectedDay, setSelectedDay] = useState(/** @type {number | null} */ (null));
   const lazy = !shows && !!seasonId;
 
   // Distinct competition days, oldest → newest (the tab order). Eager mode
@@ -473,6 +503,7 @@ const FantasyRecapsView = ({
     if (lazy) {
       return [...(availableDays || [])].sort((a, b) => a - b);
     }
+    /** @type {Set<number>} */
     const set = new Set();
     (shows || []).forEach((s) => {
       if (typeof s.offSeasonDay === 'number') set.add(s.offSeasonDay);
@@ -501,6 +532,7 @@ const FantasyRecapsView = ({
   const { shows: easternN2 } = useDayRecapShows(seasonId, TWO_NIGHT_DAYS[1], lazy && isEasternDay);
 
   // The recap sheets exclude SoundSport (ratings are never shown as scores).
+  /** @param {NormalizedShow[] | null | undefined} list */
   const stripSoundSport = (list) =>
     (list || [])
       .map((show) => ({
@@ -646,7 +678,8 @@ const ClassStandingsGrid = ({ standings, className, viewer = null, referenceDay 
       captions: getCaptionBreakdown(entry.scores?.[0] || entry),
     }));
     if (sortBy === 'total') return withCaptions;
-    const key = { GE: 'ge', VIS: 'vis', MUS: 'mus' }[sortBy];
+    const key = CAPTION_SORT_KEY[sortBy];
+    if (!key) return withCaptions;
     return [...withCaptions].sort((a, b) => (b.captions[key] ?? -1) - (a.captions[key] ?? -1));
   }, [standings, sortBy]);
 

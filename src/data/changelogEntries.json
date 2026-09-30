@@ -1,5 +1,12 @@
 [
   {
+    "id": "2026-09-30-multi-city-show-locations",
+    "date": "2026-09-30",
+    "title": "Shows list the one town they're held in",
+    "category": "fix",
+    "summary": "Some shows carried two towns in their location, like \"Lexington/Winchester, KY\". They now list just the town the show is actually held in (Winchester, KY), on the schedule and on the Tour Map. Travel is measured to that town too."
+  },
+  {
     "id": "2026-09-30-studio-hardware-switch",
     "date": "2026-09-30",
     "title": "Gold/Silver hardware now recolors your uniform right away",

@@ -16,6 +16,10 @@
  * every location to one spelling before it is compared or stored fixes the
  * duplication and makes the schedule read consistently.
  *
+ * Multi-city show names ("Lexington/Winchester, KY", "Bloomington/Normal,
+ * Illinois") collapse to the LAST city — the town the show is actually held
+ * in — so the schedule shows one place and the venue resolves to one point.
+ *
  * `standardizeLocation` is intentionally conservative: it only rewrites the
  * trailing region when it recognizes a full state/province name or a valid
  * two-letter code, and returns the input UNCHANGED when it cannot (so an
@@ -76,6 +80,27 @@ function cleanCity(text) {
   return String(text).replace(/[\s.,]+$/, "").replace(/^[\s.,]+/, "").trim();
 }
 
+/**
+ * Collapse a slash-joined multi-city name to its last city:
+ * "Lexington/Winchester, KY" -> "Winchester, KY". Only the city part is
+ * touched (the region after the first comma is kept as-is), blank segments
+ * are ignored ("Lexington/, KY" stays "Lexington, KY"), and a string with no
+ * slash comes back unchanged. Hyphens are left alone — they're part of real
+ * town names (Wilkes-Barre, Winston-Salem).
+ *
+ * @param {string} location
+ * @returns {string}
+ */
+function collapseMultiCity(location) {
+  const text = String(location);
+  const comma = text.indexOf(",");
+  const cityPart = comma >= 0 ? text.slice(0, comma) : text;
+  if (!cityPart.includes("/")) return text;
+  const cities = cityPart.split("/").map((s) => s.trim()).filter(Boolean);
+  if (!cities.length) return text;
+  return `${cities[cities.length - 1]}${comma >= 0 ? text.slice(comma) : ""}`;
+}
+
 /** Fold a candidate region token to a two-letter code, or null. */
 function regionToCode(candidate) {
   const name = candidate
@@ -99,6 +124,7 @@ function regionToCode(candidate) {
  *   - "City StateName"       -> "City, ST"   ("Rockford Illinois")
  *   - "City, Rhode, Island"  -> "City, RI"   (dirty multi-comma region)
  *   - "City, ST" / "City, sT" -> "City, ST"  (already abbreviated; canonical case)
+ *   - "CityA/CityB, ST"      -> "CityB, ST"  (multi-city show: keep the last)
  *
  * Returns the input unchanged (aside from being coerced to a string) when the
  * trailing region is not a recognized state/province.
@@ -108,7 +134,7 @@ function regionToCode(candidate) {
  */
 function standardizeLocation(location) {
   if (location == null) return location;
-  const trimmed = String(location).trim();
+  const trimmed = collapseMultiCity(String(location).trim());
   if (!trimmed) return trimmed;
 
   const parts = trimmed.split(",").map((s) => s.trim()).filter(Boolean);
@@ -164,4 +190,11 @@ function isUnknownLocation(location) {
   return /^unknown(\s+location)?$/i.test(trimmed);
 }
 
-module.exports = { standardizeLocation, isUnknownLocation, US_STATES, CA_PROVINCES, MX_STATES };
+module.exports = {
+  standardizeLocation,
+  collapseMultiCity,
+  isUnknownLocation,
+  US_STATES,
+  CA_PROVINCES,
+  MX_STATES,
+};

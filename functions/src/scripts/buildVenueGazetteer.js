@@ -27,6 +27,7 @@
 
 const fs = require("node:fs");
 const path = require("node:path");
+const { collapseMultiCity } = require("../helpers/locationFormat");
 
 const OUTPUT_PATH = path.join(__dirname, "../helpers/podium/venueGazetteer.json");
 const LOCAL_DATA_DIR = path.join(__dirname, "../../pressboxImporter/output");
@@ -460,7 +461,11 @@ async function main() {
       continue;
     }
 
-    const { city, region } = parseLocation(key);
+    // A multi-city show ("Lexington/Winchester, Kentucky") geocodes to its
+    // LAST city, matching helpers/locationFormat.standardizeLocation — the
+    // slash is gone from the normalized key, so collapse the raw spelling.
+    const slashed = rawVariants.find((raw) => raw.includes("/"));
+    const { city, region } = parseLocation(slashed ? normalizeKey(collapseMultiCity(slashed)) : key);
     let resolved = null;
 
     if (region) {

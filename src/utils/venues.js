@@ -48,5 +48,30 @@ export function normalizeVenueKey(raw) {
  * @returns {string|null}
  */
 export function resolveVenueId(locationString) {
-  return KEY_TO_ID[normalizeVenueKey(locationString)] || null;
+  return (
+    KEY_TO_ID[normalizeVenueKey(locationString)] ||
+    KEY_TO_ID[normalizeVenueKey(collapseMultiCity(locationString))] ||
+    null
+  );
+}
+
+/**
+ * A multi-city show name collapsed to its last city — "Lexington/Winchester,
+ * KY" → "Winchester, KY", the town the show is held in. Mirrors
+ * collapseMultiCity in functions/src/helpers/locationFormat.js; a string with
+ * no slash comes back unchanged.
+ * @param {string|null|undefined} location
+ * @returns {string}
+ */
+export function collapseMultiCity(location) {
+  const text = String(location || '');
+  const comma = text.indexOf(',');
+  const cityPart = comma >= 0 ? text.slice(0, comma) : text;
+  if (!cityPart.includes('/')) return text;
+  const cities = cityPart
+    .split('/')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (!cities.length) return text;
+  return `${cities[cities.length - 1]}${comma >= 0 ? text.slice(comma) : ''}`;
 }
