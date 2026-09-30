@@ -34,6 +34,11 @@ const UNIFORM_PACKS = {
     house: "Casa Roldán",
     features: "the quill fan and cascade willow plumes",
   },
+  pack_prism_forge: {
+    name: "Prism Forge Collection",
+    house: "Lumen & Vane",
+    features: "the split panel, shatter print, light streak, glow cuffs & hems, knee plates and seams",
+  },
 };
 
 /**
@@ -50,6 +55,33 @@ const PRESTIGE_UNLOCKS = {
 };
 
 /**
+ * Whether a figure wears any Prism Forge piece (Lumen & Vane): the split
+ * panel, the shatter print on any surface, the light streak, glow cuffs or
+ * hems (a cuff counts only on a full sleeve, the one cut that shows it),
+ * knee plates, or leg seams. Pure.
+ * @param {any} fig
+ * @returns {boolean}
+ */
+function usesPrismForge(fig) {
+  const arms = [fig.armL, fig.armR];
+  const legs = [fig.legL, fig.legR];
+  const fills = [
+    fig.torsoFill,
+    fig.mockNeck,
+    fig.torsoSplit && fig.torsoSplit.fill,
+    ...arms.map((a) => a && a.fill),
+    ...legs.map((l) => l && l.fill),
+  ];
+  return Boolean(
+    fig.torsoSplit ||
+      fig.chest === "streak" ||
+      fills.includes("url:shatter") ||
+      arms.some((a) => a && a.cuffGlow && a.type === "sleeve") ||
+      legs.some((l) => l && (l.hemGlow || l.kneePlate || l.seams))
+  );
+}
+
+/**
  * Which shop item ids (packs + prestige titles) a figure's features require.
  * Pure.
  * @param {any} figure a validated FigureConfig.
@@ -64,6 +96,7 @@ function requiredPacksFor(figure) {
   if (fig.plume && (fig.plume.type === "fan" || fig.plume.type === "cascade")) {
     packs.add("pack_plumassier");
   }
+  if (usesPrismForge(fig)) packs.add("pack_prism_forge");
   if (fig.aiguillette) packs.add("title_drum_major");
   return [...packs];
 }

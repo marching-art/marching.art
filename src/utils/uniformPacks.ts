@@ -52,6 +52,14 @@ export const UNIFORM_PACKS: UniformPackMeta[] = [
     features: 'the quill fan and cascade willow plumes',
   },
   {
+    id: 'pack_prism_forge',
+    kind: 'pack',
+    name: 'Prism Forge Collection',
+    house: 'Lumen & Vane',
+    features:
+      'the split panel, shatter print, light streak, glow cuffs & hems, knee plates and seams',
+  },
+  {
     id: 'title_drum_major',
     kind: 'prestige',
     name: "the Drum Major's aiguillette",
@@ -64,6 +72,26 @@ export function getUniformPack(id: string): UniformPackMeta | undefined {
   return UNIFORM_PACKS.find((p) => p.id === id);
 }
 
+/** Whether a figure wears any Prism Forge piece (Lumen & Vane). Pure. */
+export function usesPrismForge(fig: FigureConfig): boolean {
+  const arms = [fig.armL, fig.armR];
+  const legs = [fig.legL, fig.legR];
+  const fills = [
+    fig.torsoFill,
+    fig.mockNeck,
+    fig.torsoSplit?.fill,
+    ...arms.map((a) => a?.fill),
+    ...legs.map((l) => l?.fill),
+  ];
+  return Boolean(
+    fig.torsoSplit ||
+    fig.chest === 'streak' ||
+    fills.includes('url:shatter') ||
+    arms.some((a) => a?.cuffGlow && a.type === 'sleeve') ||
+    legs.some((l) => l?.hemGlow || l?.kneePlate || l?.seams)
+  );
+}
+
 /** Which shop item ids (packs + prestige titles) a figure requires. Pure. */
 export function requiredPacksFor(figure: FigureConfig | undefined | null): string[] {
   const packs = new Set<string>();
@@ -74,6 +102,7 @@ export function requiredPacksFor(figure: FigureConfig | undefined | null): strin
   if (fig.plume && (fig.plume.type === 'fan' || fig.plume.type === 'cascade')) {
     packs.add('pack_plumassier');
   }
+  if (usesPrismForge(fig)) packs.add('pack_prism_forge');
   if (fig.aiguillette) packs.add('title_drum_major');
   return [...packs];
 }

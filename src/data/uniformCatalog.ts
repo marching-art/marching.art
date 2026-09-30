@@ -196,6 +196,8 @@ export const TORSO_PRINT_OPTIONS = [
   { value: 'sunburst', label: 'Radial burst print' },
   { value: 'opart', label: 'Op-art lattice print' },
   { value: 'pinstripe', label: 'Pinstripe print' },
+  // Prism Forge pack (Lumen & Vane) — premium, locked until owned.
+  { value: 'shatter', label: 'Shatter print' },
 ] as const;
 
 /** Editor labels for each procedural surface's color slots (see PrintColors). */
@@ -205,6 +207,7 @@ export const PRINT_COLOR_SLOTS: Record<import('../types/uniform').PrintColorKey,
   pinstripe: ['Base', 'Stripe'],
   plaid: ['Base', 'Band', 'Cross band'],
   foil: ['Foil tone', 'Highlight'],
+  shatter: ['Base', 'Crack line'],
 };
 
 export const CHEST_OPTIONS = [
@@ -216,6 +219,8 @@ export const CHEST_OPTIONS = [
   { value: 'buttons', label: 'Button columns' },
   { value: 'swash', label: 'Modern swash' },
   { value: 'vinylPanel', label: 'Vinyl panel' },
+  // Prism Forge pack (Lumen & Vane) — premium, locked until owned.
+  { value: 'streak', label: 'Light streak' },
 ] as const;
 
 export const NECK_OPTIONS = [

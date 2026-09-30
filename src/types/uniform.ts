@@ -49,14 +49,14 @@ export interface GradStop {
 export type ProceduralPrint = 'sunburst' | 'opart' | 'pinstripe';
 
 /** Every procedural surface whose colors a director can override. */
-export type PrintColorKey = ProceduralPrint | 'plaid' | 'foil';
+export type PrintColorKey = ProceduralPrint | 'plaid' | 'foil' | 'shatter';
 
 /**
  * Director color overrides for the figure's procedural prints. Each surface
  * exposes its identity slots as a fixed-length hex list (lengths enforced
  * server-side): sunburst [center, mid, outer]; opart [base, dot A, dot B];
  * pinstripe [base, stripe]; plaid [base, band, cross band]; foil
- * [tone, highlight]. Derived shades (the burst's dark falloff, the op-art
+ * [tone, highlight]; shatter [base, crack line]. Derived shades (the burst's dark falloff, the op-art
  * wave, the plaid's thin band, the foil ramp) come from these in the
  * renderer. An absent surface renders with its stock palette
  * (PRINT_PALETTES in data/uniformRenderTheme).
@@ -66,8 +66,17 @@ export type PrintColors = Partial<Record<PrintColorKey, HexColor[] | null>>;
 /** 'longcoat' is a Tailors' Cut premium silhouette (Harrow & Finch). */
 export type TorsoStyle = 'jacket' | 'tunic' | 'jumpsuit' | 'dress' | 'longcoat';
 
+/** 'streak' is a Prism Forge premium treatment (Lumen & Vane). */
 export type ChestTreatment =
-  'none' | 'braid' | 'sash' | 'baldric' | 'plastron' | 'buttons' | 'swash' | 'vinylPanel';
+  | 'none'
+  | 'braid'
+  | 'sash'
+  | 'baldric'
+  | 'plastron'
+  | 'buttons'
+  | 'swash'
+  | 'vinylPanel'
+  | 'streak';
 
 export type HatType = 'shako' | 'pith' | 'campaign' | 'aussie' | 'contour' | 'busby' | null;
 
@@ -105,6 +114,18 @@ export interface ChestBadge {
 /** Cut of the diagonal sash/baldric band. */
 export type ChestShape = 'band' | 'triangles' | 'tapered';
 
+/**
+ * Split-panel torso (Prism Forge pack): a contrasting panel covering one side
+ * of the torso, cut on the same diagonal as the light streak so the two line
+ * up. Default covers the viewer's right; `flip` mirrors it.
+ */
+export interface TorsoSplitConfig {
+  color: HexColor;
+  /** Print/gradient reference (e.g. "url:shatter"); overrides `color`. */
+  fill?: FillSpec | null;
+  flip?: boolean;
+}
+
 /** One-shoulder cavalry cape (Military Outfitters pack). */
 export interface CapeConfig {
   color: HexColor;
@@ -138,6 +159,8 @@ export interface ArmConfig {
   /** Glow piping line down the sleeve (hex color); requires figure.glow. */
   glowLine?: HexColor | null;
   gauntlet?: { color: HexColor; sequin?: boolean } | null;
+  /** Glowing cuff fade up the forearm, [upper, wrist] (Prism Forge pack). */
+  cuffGlow?: [HexColor, HexColor] | null;
   /** Glove color; null/undefined renders a bare hand in the skin tone. */
   glove?: HexColor | null;
 }
@@ -154,6 +177,12 @@ export interface LegConfig {
   /** Metallic-foil treatment (sequins + sheen over the fill). */
   foil?: boolean;
   sequin?: boolean;
+  /** Glowing hem fade up the lower leg, [upper, hem] (Prism Forge pack). */
+  hemGlow?: [HexColor, HexColor] | null;
+  /** Faceted diamond plate at the knee (Prism Forge pack). */
+  kneePlate?: HexColor | null;
+  /** Thin angular panel seams running hip → knee → hem (Prism Forge pack). */
+  seams?: HexColor | null;
 }
 
 /**
@@ -180,6 +209,10 @@ export interface FigureConfig {
   grads?: Record<string, GradStop[]> | null;
   /** Define the gold-foil leg gradient (referenced as "url:foil"). */
   foilLeg?: boolean;
+  /** Define the shatter crack print (referenced as "url:shatter"; Prism Forge). */
+  shatter?: boolean;
+  /** Split-panel torso (Prism Forge pack). */
+  torsoSplit?: TorsoSplitConfig | null;
   /** Define the glow filter (used by glowArt / arm glowLine). */
   glow?: boolean;
   /** Glow line-art color on the torso. */
@@ -226,6 +259,10 @@ export interface FigureConfig {
   swashBottom?: boolean;
   /** The swash's leg band color; null → matches the swash. */
   swashLegColor?: HexColor | null;
+  /** Light streak halo color (chest 'streak'; chestFade overrides it). */
+  streak?: HexColor | null;
+  /** Light streak's hot core line; null → near-white. */
+  streakCore?: HexColor | null;
 
   metal?: HexColor | null;
   collar?: HexColor | null;

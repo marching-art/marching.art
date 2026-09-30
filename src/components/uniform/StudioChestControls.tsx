@@ -11,16 +11,22 @@ import { CHEST_BADGE_OPTIONS, CHEST_OPTIONS, CHEST_SHAPE_OPTIONS } from '../../d
 import { darkenHex, safeHex } from '../../utils/uniform';
 import { ChannelRow, Pills, SECTION_LABEL, Toggle } from './StudioControls';
 
+/** Chest treatments that run on the diagonal (reversible, fadeable). */
+const DIAGONALS = new Set(['sash', 'baldric', 'swash', 'streak']);
+
 export default function ChestSection({
   figure,
   colorway,
   onPatch,
+  packLabel = (label) => label,
 }: {
   figure: FigureConfig;
   colorway: UniformColorway;
   onPatch: (patch: Partial<FigureConfig>) => void;
+  /** Appends the 🔒 to design-house content the director doesn't own. */
+  packLabel?: (label: string, packId: string) => string;
 }) {
-  const isBand = figure.chest === 'sash' || figure.chest === 'baldric' || figure.chest === 'swash';
+  const isBand = DIAGONALS.has(figure.chest || 'none');
   const hasButtons = figure.chest === 'braid' || figure.chest === 'buttons';
   const shapeable = figure.chest === 'sash' || figure.chest === 'baldric';
   const bandShape = figure.chestShape || 'band';
@@ -31,12 +37,15 @@ export default function ChestSection({
     <section>
       <h3 className={SECTION_LABEL}>Chest</h3>
       <Pills
-        options={CHEST_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
+        options={CHEST_OPTIONS.map((o) => ({
+          value: o.value,
+          label: o.value === 'streak' ? packLabel(o.label, 'pack_prism_forge') : o.label,
+        }))}
         value={figure.chest || 'none'}
         onSelect={(v) => {
           onPatch({
             chest: v as FigureConfig['chest'],
-            chestFade: v === 'sash' || v === 'baldric' || v === 'swash' ? figure.chestFade : null,
+            chestFade: DIAGONALS.has(v || 'none') ? figure.chestFade : null,
             braid: v === 'braid' ? figure.braid || colorway.secondary : figure.braid,
             sash: v === 'sash' ? figure.sash || colorway.secondary : figure.sash,
             baldric: v === 'baldric' ? figure.baldric || colorway.secondary : figure.baldric,
@@ -49,6 +58,7 @@ export default function ChestSection({
                 ? figure.panelTrim || darkenHex(colorway.secondary, 0.4)
                 : figure.panelTrim,
             swash: v === 'swash' ? figure.swash || colorway.secondary : figure.swash,
+            streak: v === 'streak' ? figure.streak || colorway.secondary : figure.streak,
           });
         }}
       />
@@ -144,6 +154,24 @@ export default function ChestSection({
             />
           </>
         )}
+        {figure.chest === 'streak' && (
+          <>
+            {!figure.chestFade && (
+              <ChannelRow
+                label="Streak glow"
+                value={figure.streak}
+                onChange={(v) => v && onPatch({ streak: v })}
+              />
+            )}
+            {/* the hot center line; cleared → near-white */}
+            <ChannelRow
+              label="Streak core"
+              value={figure.streakCore}
+              onChange={(v) => onPatch({ streakCore: v })}
+              clearable
+            />
+          </>
+        )}
         {hasButtons && (
           <ChannelRow
             label="Buttons"
@@ -168,7 +196,9 @@ export default function ChestSection({
                     ? figure.sash
                     : figure.chest === 'baldric'
                       ? figure.baldric
-                      : figure.swash) || colorway.secondary;
+                      : figure.chest === 'streak'
+                        ? figure.streak
+                        : figure.swash) || colorway.secondary;
                 onPatch({ chestFade: v ? [safeHex(band), darkenHex(band, 0.55)] : null });
               }}
             />

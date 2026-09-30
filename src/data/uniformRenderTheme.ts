@@ -83,7 +83,15 @@ export const PRINT_PALETTES = {
       ['1', '#8f6d20'],
     ] as Array<[string, string]>,
   },
+  /** Prism Forge shatter print: a faceted crack network over a dark base. */
+  shatter: {
+    bg: '#16181d',
+    line: '#c9ced6',
+  },
 } as const;
+
+/** Prism Forge light streak: the hot core line when no core color is set. */
+export const STREAK_CORE_DEFAULT = '#fbfbf4';
 
 /** Skin tones offered for the previewed corps member (figure, not director). */
 export const FIGURE_SKIN_TONES: string[] = [

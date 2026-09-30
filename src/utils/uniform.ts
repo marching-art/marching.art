@@ -102,6 +102,7 @@ export const PRINT_COLOR_SLOT_COUNTS: Record<PrintColorKey, number> = {
   pinstripe: 2, // base, stripe
   plaid: 3, // base, band, cross band
   foil: 2, // tone, highlight
+  shatter: 2, // base, crack line
 };
 
 /** The stock palette's editable slot values for one surface. */
@@ -118,6 +119,8 @@ export function printColorDefaults(key: PrintColorKey): string[] {
       return [pal.plaid.bg, pal.plaid.bandA, pal.plaid.bandB];
     case 'foil':
       return [pal.foil.stops[2][1], pal.foil.stops[1][1]];
+    case 'shatter':
+      return [pal.shatter.bg, pal.shatter.line];
   }
 }
 
@@ -133,6 +136,7 @@ export interface ResolvedPrintPalettes {
   pinstripe: { bg: string; stripe: string };
   plaid: { bg: string; bandA: string; bandB: string; bandC: string };
   foil: { stops: Array<[string, string]> };
+  shatter: { bg: string; line: string; facet: string };
 }
 
 /**
@@ -199,7 +203,13 @@ export function resolvePrintPalettes(
       })()
     : { stops: [...PRINT_PALETTES.foil.stops] };
 
-  return { sunburst: sun, opart: op, pinstripe: pin, plaid, foil };
+  const [shBg, shLine] = has('shatter')
+    ? slots('shatter')
+    : [PRINT_PALETTES.shatter.bg, PRINT_PALETTES.shatter.line];
+  // the faceted panes read as a lifted shade of the base, never the line
+  const shatter = { bg: shBg, line: shLine, facet: lightenHex(shBg, 0.12) };
+
+  return { sunburst: sun, opart: op, pinstripe: pin, plaid, foil, shatter };
 }
 
 // =============================================================================
@@ -324,12 +334,16 @@ export function applyColorway(figure: FigureConfig, cw: UniformColorway): Figure
       gauntlet: arm.gauntlet ? { ...arm.gauntlet, color: accent } : arm.gauntlet,
       glove: arm.glove ? accent : arm.glove,
       glowLine: arm.glowLine ? secondary : arm.glowLine,
+      cuffGlow: arm.cuffGlow ? ([secondary, accent] as [string, string]) : arm.cuffGlow,
     };
   const recolorLeg = (leg?: LegConfig): LegConfig | undefined =>
     leg && {
       ...leg,
       color: leg.fill ? leg.color : deep,
       stripe: leg.stripe ? secondary : leg.stripe,
+      hemGlow: leg.hemGlow ? ([secondary, accent] as [string, string]) : leg.hemGlow,
+      kneePlate: leg.kneePlate ? metal : leg.kneePlate,
+      seams: leg.seams ? metal : leg.seams,
     };
 
   const n = normalizeFigure(figure);
@@ -355,6 +369,8 @@ export function applyColorway(figure: FigureConfig, cw: UniformColorway): Figure
     panel: figure.panel ? secondary : figure.panel,
     swash: figure.swash ? secondary : figure.swash,
     swashLegColor: figure.swashLegColor ? accent : figure.swashLegColor,
+    streak: figure.streak ? secondary : figure.streak,
+    torsoSplit: figure.torsoSplit ? { ...figure.torsoSplit, color: secondary } : figure.torsoSplit,
     epaulet: figure.epaulet ? secondary : figure.epaulet,
     aiguillette: figure.aiguillette ? metal : figure.aiguillette,
     suspenders: figure.suspenders ? darkenHex(secondary, 0.3) : figure.suspenders,
@@ -522,6 +538,7 @@ function usesRef(figure: FigureConfig, ref: string): boolean {
   const n = normalizeFigure(figure);
   const fills = [
     figure.torsoFill,
+    figure.torsoSplit?.fill,
     typeof figure.mockNeck === 'string' ? figure.mockNeck : null,
     n.armL.fill,
     n.armR.fill,
@@ -550,7 +567,17 @@ export function withDerivedFlags(figure: FigureConfig): FigureConfig {
     print,
     plaid: usesRef(figure, 'url:plaid'),
     foilLeg: usesRef(figure, 'url:foil'),
-    glow: Boolean(figure.glowArt || n.armL.glowLine || n.armR.glowLine),
+    shatter: usesRef(figure, 'url:shatter'),
+    glow: Boolean(
+      figure.glowArt ||
+      n.armL.glowLine ||
+      n.armR.glowLine ||
+      figure.chest === 'streak' ||
+      n.armL.cuffGlow ||
+      n.armR.cuffGlow ||
+      n.legL.hemGlow ||
+      n.legR.hemGlow
+    ),
     hairShow: !figure.hatType,
   };
 }

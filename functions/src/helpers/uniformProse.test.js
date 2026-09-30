@@ -314,3 +314,32 @@ test("the guard dress silhouette is described for the guard look", () => {
   assert.ok(spec.block.includes("A-line skirt"));
   assert.ok(spec.summary.includes("guard dress"));
 });
+
+test("every Prism Forge piece reaches the image prompt", () => {
+  const spec = describeFigure({
+    colorway: { primary: "#16181d", secondary: "#c3c9d1", accent: "#f2c14e", metal: "silver" },
+    figure: {
+      skin: "#c9a074",
+      jacket: "#16181d",
+      torsoFill: "url:shatter",
+      printColors: { shatter: ["#a10001", "#a10002"] },
+      torsoSplit: { color: "#a10003" },
+      chest: "streak",
+      streakCore: "#a10004",
+      chestFade: ["#a10005", "#a10006"],
+      armL: { type: "sleeve", cuffGlow: ["#a10007", "#a10008"] },
+      armR: { type: "sleeve", color: "#a10003" },
+      legL: { color: "#2a2d33", seams: "#a10009", kneePlate: "#a1000a", hemGlow: ["#a1000b", "#a1000c"] },
+      legR: { color: "#2a2d33" },
+    },
+  });
+  const text = spec.block.toLowerCase();
+  for (let i = 1; i <= 12; i++) {
+    const hex = `#a1000${i.toString(16)}`;
+    assert.ok(text.includes(hex), `spec is missing ${hex}`);
+  }
+  for (const phrase of ["shatter", "split two-tone torso", "light-streak", "glowing cuff", "glowing hem", "diamond plate", "panel seams"]) {
+    assert.ok(text.includes(phrase), `spec is missing "${phrase}"`);
+  }
+  assert.ok(spec.summary.includes("light-streak"));
+});

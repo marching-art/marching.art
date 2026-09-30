@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 /**
  * Cross-runtime clock/caption-window parity gate.
  *
@@ -37,6 +36,7 @@
  *     week 7, so parity is asserted on min(week, 7).
  */
 
+import { describe, expect, it } from 'vitest';
 import { createRequire } from 'node:module';
 import { getCaptionChangeInfo } from './seasonClock';
 import { getSeasonProgress } from './seasonProgress';
@@ -64,6 +64,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 // DST transitions (spring forward 2026-03-08, fall back 2026-11-01) and
 // pre-season / post-season overshoot.
 // ---------------------------------------------------------------------------
+/** @type {Array<[string, number]>} */
 const SEASONS = [
   // [startDate ISO (UTC midnight, as the admin tool writes), springTrainingDays]
   ['2026-06-21T00:00:00Z', 0], // all-summer season (EDT throughout)
@@ -102,6 +103,7 @@ const DST_INSTANTS = [
 
 const CORPS_CLASSES = [null, 'worldClass', 'openClass', 'aClass', 'soundSport'];
 
+/** @param {string} startIso @param {number} springTrainingDays */
 function seasonDoc(startIso, springTrainingDays) {
   const start = new Date(startIso);
   return {
@@ -114,6 +116,7 @@ function seasonDoc(startIso, springTrainingDays) {
   };
 }
 
+/** @param {string} startIso @param {number} springTrainingDays */
 function* instants(startIso, springTrainingDays) {
   const startMs = new Date(startIso).getTime();
   // Calendar days 0..(spring + 51): pre-season through post-season overshoot.
@@ -123,6 +126,7 @@ function* instants(startIso, springTrainingDays) {
   for (const iso of DST_INSTANTS) yield new Date(iso);
 }
 
+/** @param {unknown} date */
 const ms = (date) => (date instanceof Date ? date.getTime() : date === null ? null : NaN);
 
 describe('caption-change window parity (functions captionWindows <-> client seasonClock)', () => {
@@ -136,8 +140,13 @@ describe('caption-change window parity (functions captionWindows <-> client seas
       let compared = 0;
       for (const now of instants(startIso, spring)) {
         for (const corpsClass of CORPS_CLASSES) {
-          const backend = backendCaption.getCaptionChangeWindow(season, now, corpsClass);
-          const client = getCaptionChangeInfo(season, now, corpsClass);
+          // Both sides compared field-by-field by name, so index them loosely.
+          const backend = /** @type {Record<string, unknown>} */ (
+            backendCaption.getCaptionChangeWindow(season, now, corpsClass)
+          );
+          const client = /** @type {Record<string, unknown>} */ (
+            /** @type {unknown} */ (getCaptionChangeInfo(season, now, corpsClass))
+          );
           const context = `${startIso} spring=${spring} now=${now.toISOString()} class=${corpsClass}`;
           for (const key of SHARED_SCALARS) {
             expect(client[key], `${key} @ ${context}`).toBe(backend[key]);
@@ -181,9 +190,10 @@ describe('game-day parity (functions gameDay <-> client seasonProgress)', () => 
         // The league jobs' week (getCurrentSeasonWeek) rides the same 2 AM ET
         // clock; it is unclamped above week 7, so compare the clamped value.
         const backendWeek = backendGameDay.getCurrentSeasonWeek(season, now);
-        expect(Math.min(backendWeek, 7), `getCurrentSeasonWeek @ ${context}`).toBe(
-          progress.currentWeek
-        );
+        expect(
+          Math.min(/** @type {number} */ (backendWeek), 7),
+          `getCurrentSeasonWeek @ ${context}`
+        ).toBe(progress.currentWeek);
         compared++;
       }
       expect(compared).toBeGreaterThan(300);
@@ -193,8 +203,10 @@ describe('game-day parity (functions gameDay <-> client seasonProgress)', () => 
 
   it('active day is completed day + 1 on the backend (shared 2 AM ET boundary)', () => {
     const now = new Date('2026-06-25T12:00:00Z');
+    const completed = backendGameDay.getCompletedCalendarDay(new Date('2026-06-21T00:00:00Z'), now);
+    expect(completed).not.toBeNull();
     expect(backendGameDay.getActiveCalendarDay(new Date('2026-06-21T00:00:00Z'), now)).toBe(
-      backendGameDay.getCompletedCalendarDay(new Date('2026-06-21T00:00:00Z'), now) + 1
+      /** @type {number} */ (completed) + 1
     );
   });
 });

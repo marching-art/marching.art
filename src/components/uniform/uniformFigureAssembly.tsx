@@ -52,6 +52,7 @@ import {
   type Node,
 } from './uniformFigureParts';
 import { chest } from './uniformFigureChest';
+import { cuffGlow, legsPrism, prismDefs, torsoSplit } from './uniformFigurePrism';
 
 const DETACHED_SLEEVE_D =
   'M64,132 Q58,166 60,200 Q61,228 64,244 L82,246 Q80,216 80,190 Q80,156 86,134 Q75,126 64,132 Z';
@@ -109,6 +110,7 @@ function armSide(a: ArmConfig, cw: NormalizedFigure, uid: string, kp: string): N
       })
     );
   }
+  out.push(...cuffGlow(a, sleeveD, uid, kp));
   if (a.patent) {
     out.push(light(`${kp}-pt`, 'M64,130 Q59,168 61,210 L64,210 Q62,168 67,132 Z', 0.24));
   }
@@ -653,13 +655,14 @@ function aiguillette(cw: NormalizedFigure): Node[] {
 export function figureLayers(raw: FigureConfig, uid: string): Node[] {
   const cw = normalizeFigure(raw);
   const flared = Boolean(cw.legL.flare || cw.legR.flare);
-  const layers: Node[] = [buildDefs(cw, uid), ...ground()];
+  const layers: Node[] = [buildDefs(cw, uid), prismDefs(cw, uid), ...ground()];
   if (flared) layers.push(<g key="shoes">{shoes(cw)}</g>);
   layers.push(<g key="legs">{legs(cw, uid)}</g>);
+  layers.push(<g key="legPrism">{legsPrism(cw, uid)}</g>);
   layers.push(<g key="swl">{swashLeg(cw)}</g>);
   layers.push(<g key="stream">{streamers(cw)}</g>);
   if (!flared) layers.push(<g key="shoes">{shoes(cw)}</g>);
-  layers.push(<g key="torso">{torso(cw, uid)}</g>);
+  layers.push(<g key="torso">{torso(cw, uid, torsoSplit(cw, uid))}</g>);
   if (cw.satin) layers.push(<g key="satin">{satinSheen()}</g>);
   if (cw.velvet) layers.push(<g key="velvet">{velvetSheen()}</g>);
   if (cw.iridescent) layers.push(<g key="irid">{iridescentSheen(uid)}</g>);

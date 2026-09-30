@@ -121,3 +121,38 @@ describe("shop catalog wiring", () => {
     }
   });
 });
+
+describe("Prism Forge Collection (Lumen & Vane)", () => {
+  const pair = ["#7cc4ff", "#f2c14e"];
+  test("every light-cut piece maps to the one pack", () => {
+    const cases = [
+      { torsoFill: "url:shatter" },
+      { mockNeck: "url:shatter" },
+      { torsoSplit: { color: "#c3c9d1" } },
+      { torsoSplit: { color: "#c3c9d1", fill: "url:shatter" } },
+      { chest: "streak", streak: "#7cc4ff" },
+      { armL: { type: "sleeve", cuffGlow: pair } },
+      { armR: { type: "sleeve", fill: "url:shatter" } },
+      { legL: { hemGlow: pair } },
+      { legR: { kneePlate: "#cfd4da" } },
+      { legL: { seams: "#cfd4da" } },
+      { legR: { fill: "url:shatter" } },
+    ];
+    for (const fig of cases) {
+      assert.deepEqual(requiredPacksFor({ ...FREE, ...fig }), ["pack_prism_forge"], JSON.stringify(fig));
+    }
+  });
+
+  test("the free floor and invisible leftovers stay free", () => {
+    assert.deepEqual(requiredPacksFor({ ...FREE, chest: "swash", swash: "#cfd4da" }), []);
+    // a cuff glow left on a half sleeve or bare arm draws nothing
+    assert.deepEqual(requiredPacksFor({ ...FREE, armL: { type: "half", cuffGlow: pair } }), []);
+    assert.deepEqual(requiredPacksFor({ ...FREE, armR: { type: "bare", cuffGlow: pair } }), []);
+  });
+
+  test("the missing-pack message names the house", () => {
+    const missing = missingPacksFor({ ...FREE, chest: "streak" }, ["pack_plumassier"]);
+    assert.deepEqual(missing, ["pack_prism_forge"]);
+    assert.match(missingPacksMessage(missing), /Prism Forge Collection \(Lumen & Vane\)/);
+  });
+});

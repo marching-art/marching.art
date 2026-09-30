@@ -297,6 +297,14 @@ export const SHOP_ITEMS = [
     description:
       'Casa Roldán — the spread quill fan and the tall cascade willow, plumes that turn a shako into a headdress',
   },
+  {
+    id: 'pack_prism_forge',
+    type: 'uniformPack',
+    name: 'Prism Forge Collection',
+    price: 2000,
+    description:
+      'Lumen & Vane — the light-cut look: a split two-tone torso, the shatter crack print, a glowing light-streak slash, glowing cuffs and hems, faceted knee plates and angular leg seams',
+  },
 ];
 
 /**
