@@ -133,6 +133,8 @@ export interface ArmConfig {
   detached?: boolean;
   /** Patent-vinyl gloss highlight on the sleeve. */
   patent?: boolean;
+  /** Sequin field across the sleeve fabric (clipped to the sleeve). */
+  sequin?: boolean;
   /** Glow piping line down the sleeve (hex color); requires figure.glow. */
   glowLine?: HexColor | null;
   gauntlet?: { color: HexColor; sequin?: boolean } | null;

@@ -1,5 +1,17 @@
 [
   {
+    "id": "2026-09-30-studio-sleeve-sequins",
+    "date": "2026-09-30",
+    "title": "Sequined sleeves in the Uniform Studio",
+    "category": "feature",
+    "summary": "Full and rolled half-sleeves now have a Sequins switch, so you can sparkle a whole sleeve instead of just the gauntlet cuff.",
+    "highlights": [
+      "Each sleeve takes sequins on its own, so one arm can shine while the other stays matte.",
+      "Detached sleeves sparkle only on the fabric, never on the bare shoulder.",
+      "Sequined sleeves count toward a design brief's sequins goal, and AI uniform portraits show them."
+    ]
+  },
+  {
     "id": "2026-09-30-studio-glow-colors",
     "date": "2026-09-30",
     "title": "Pick any color for Uniform Studio glow lines",

@@ -134,6 +134,7 @@ function checkArm(a, gradRefs, errors, label) {
     "color",
     "detached",
     "patent",
+    "sequin",
     "glowLine",
     "gauntlet",
     "glove",
@@ -145,6 +146,7 @@ function checkArm(a, gradRefs, errors, label) {
   if (a.fill != null && !isFill(a.fill, gradRefs)) errors.push(`${label}.fill is invalid`);
   if (a.color != null && !isHex(a.color)) errors.push(`${label}.color is invalid`);
   if (a.glowLine != null && !isHex(a.glowLine)) errors.push(`${label}.glowLine is invalid`);
+  if (a.sequin != null && typeof a.sequin !== "boolean") errors.push(`${label}.sequin is invalid`);
   if (a.glove != null && !isHex(a.glove)) errors.push(`${label}.glove is invalid`);
   if (a.gauntlet != null) {
     if (typeof a.gauntlet !== "object" || !isHex(a.gauntlet.color)) {

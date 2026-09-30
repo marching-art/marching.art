@@ -272,6 +272,7 @@ function armProse(fig, arm, torsoColor) {
       parts.push("the sleeve is DETACHED: bare shoulder and upper arm, the sleeve starting just above the elbow and running to the wrist");
     }
     if (arm.patent) parts.push("patent-vinyl gloss highlight on the sleeve");
+    if (arm.sequin) parts.push("a sequin field across the sleeve");
     if (arm.glowLine && isHex(arm.glowLine)) {
       parts.push(`a glowing ${named(arm.glowLine)} light-piping line running down the sleeve`);
     }

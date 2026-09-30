@@ -525,6 +525,36 @@ describe('UniformFigure', () => {
     expect(stops).toContain('#e8d27a');
   });
 
+  it('clips sleeve sequins to each sequined sleeve only', () => {
+    const base = { skin: '#c9a074', jacket: '#1d2f66' };
+    const plain = render(
+      <UniformFigure
+        label="plain sleeves"
+        figure={{ ...base, armL: { type: 'sleeve' }, armR: { type: 'sleeve' } }}
+      />
+    );
+    const shiny = render(
+      <UniformFigure
+        label="sequin sleeve"
+        figure={{
+          ...base,
+          armL: { type: 'sleeve', sequin: true },
+          armR: { type: 'half', sequin: true },
+        }}
+      />
+    );
+    expect(plain.container.querySelectorAll('clipPath[id$="-sqc"]')).toHaveLength(0);
+    expect(shiny.container.querySelectorAll('clipPath[id$="-sqc"]')).toHaveLength(2);
+    expect(shiny.container.querySelectorAll('circle').length).toBeGreaterThan(
+      plain.container.querySelectorAll('circle').length + 60
+    );
+    // A bare arm has no fabric to sequin.
+    const bare = render(
+      <UniformFigure label="bare" figure={{ ...base, armL: { type: 'bare', sequin: true } }} />
+    );
+    expect(bare.container.querySelectorAll('clipPath[id$="-sqc"]')).toHaveLength(0);
+  });
+
   it('scatters the lamé sequin weave over the torso', () => {
     const base = { skin: '#c9a074', jacket: '#1d2f66' };
     const plain = render(<UniformFigure label="no lame" figure={{ ...base }} />);

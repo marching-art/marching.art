@@ -53,41 +53,53 @@ import {
 } from './uniformFigureParts';
 import { chest } from './uniformFigureChest';
 
+const DETACHED_SLEEVE_D =
+  'M64,132 Q58,166 60,200 Q61,228 64,244 L82,246 Q80,216 80,190 Q80,156 86,134 Q75,126 64,132 Z';
+const HALF_SLEEVE_D =
+  'M78,103 Q66,111 62,134 Q60,152 60,168 L82,170 Q80,146 88,118 Q85,107 78,103 Z';
+
 function armSide(a: ArmConfig, cw: NormalizedFigure, uid: string, kp: string): Node[] {
   if (a.type === 'none') return [];
   const bare = a.type === 'bare';
   const fill = bare ? safeHex(cw.skin) : fillOf(a.fill, uid, a.color || cw.jacket);
+  // The sleeve fabric's outline (for clipping sequins); swapped per cut below.
+  let sleeveD: string | null = bare ? null : SLEEVE_D;
   let out: Node[] = [
     p(`${kp}`, bare ? BARE_ARM_D : SLEEVE_D, fill),
     shade(`${kp}-in`, 'M79,150 Q78,200 81,242 L82,244 L76,243 Q74,200 75,152 Z', 0.13),
     light(`${kp}-tl`, 'M66,116 Q60,140 59,170 L62,170 Q63,140 69,118 Z', 0.08),
   ];
   if (a.detached) {
+    sleeveD = DETACHED_SLEEVE_D;
     out = [
       p(`${kp}-sk`, BARE_ARM_D, safeHex(cw.skin)),
       shade(`${kp}-sks`, 'M80,150 Q79,200 82,242 L82,244 L76,243 Q74,200 76,152 Z', 0.1),
-      p(
-        `${kp}-sl`,
-        'M64,132 Q58,166 60,200 Q61,228 64,244 L82,246 Q80,216 80,190 Q80,156 86,134 Q75,126 64,132 Z',
-        fillOf(a.fill, uid, a.color)
-      ),
+      p(`${kp}-sl`, DETACHED_SLEEVE_D, fillOf(a.fill, uid, a.color)),
       shade(`${kp}-sls`, 'M78,158 Q77,204 80,244 L82,246 L75,245 Q73,204 74,160 Z', 0.13),
       light(`${kp}-sll`, 'M66,140 Q61,172 62,206 L65,206 Q64,172 69,142 Z', 0.1),
       strokeP(`${kp}-edge`, 'M64,134 Q75,128 86,136', FIGURE_INK.visor, 1.6, { opacity: '.35' }),
     ];
   }
   if (a.type === 'half') {
+    sleeveD = HALF_SLEEVE_D;
     out = [
       p(`${kp}-sk`, BARE_ARM_D, safeHex(cw.skin)),
       shade(`${kp}-sks`, 'M80,150 Q79,200 82,242 L82,244 L76,243 Q74,200 76,152 Z', 0.1),
-      p(
-        `${kp}-up`,
-        'M78,103 Q66,111 62,134 Q60,152 60,168 L82,170 Q80,146 88,118 Q85,107 78,103 Z',
-        fillOf(a.fill, uid, a.color)
-      ),
+      p(`${kp}-up`, HALF_SLEEVE_D, fillOf(a.fill, uid, a.color)),
       strokeP(`${kp}-cf`, 'M60,166 L82,168', FIGURE_INK.visor, 2.4, { opacity: '.25' }),
       light(`${kp}-ul`, 'M66,114 Q61,136 60,158 L63,158 Q64,136 69,116 Z', 0.09),
     ];
+  }
+  if (a.sequin && sleeveD) {
+    const clipId = `${uid}-${kp}-sqc`;
+    out.push(
+      <clipPath key={`${kp}-sqc`} id={clipId}>
+        <path d={sleeveD} />
+      </clipPath>,
+      <g key={`${kp}-sq`} clipPath={`url(#${clipId})`}>
+        {sequinField(`${kp}-sq`, 72, 174, 30, 144, 31, 44)}
+      </g>
+    );
   }
   if (a.glowLine) {
     out.push(

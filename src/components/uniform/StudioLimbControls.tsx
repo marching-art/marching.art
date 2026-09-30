@@ -83,9 +83,23 @@ export function ArmControls({
             onChange={(v) => onPatch({ patent: v })}
           />
           <Toggle
+            label="Sequins"
+            checked={Boolean(arm.sequin)}
+            onChange={(v) => onPatch({ sequin: v })}
+          />
+          <Toggle
             label="Glow line"
             checked={Boolean(arm.glowLine)}
             onChange={(v) => onPatch({ glowLine: v ? colorway.secondary : null })}
+          />
+        </div>
+      )}
+      {arm.type === 'half' && (
+        <div className="flex flex-wrap gap-3">
+          <Toggle
+            label="Sequins"
+            checked={Boolean(arm.sequin)}
+            onChange={(v) => onPatch({ sequin: v })}
           />
         </div>
       )}
