@@ -11,6 +11,7 @@ const {
   regionalTierForEventName,
   applyMultiNightMajors,
   restandardizeCompetitionLocations,
+  isBarredChampionshipEveShow,
 } = require("./seasonSchedule");
 const { mergeScheduleRefresh, buildScrapedEventUrlIndex } = require("./scheduleRefresh");
 
@@ -395,5 +396,47 @@ describe("multi-city show locations keep the last city", () => {
       springTrainingDays
     );
     assert.equal(competitions.find((c) => c.day === 3).location, "Winchester, KY");
+  });
+});
+
+describe("isBarredChampionshipEveShow", () => {
+  test("bars championship- and prelims-titled shows on days 43-44 only", () => {
+    for (const day of [43, 44]) {
+      assert.equal(isBarredChampionshipEveShow(day, "DCI Open Class World Championship Prelims"), true);
+      assert.equal(isBarredChampionshipEveShow(day, "Drum Corps Midwest Championship"), true);
+      assert.equal(isBarredChampionshipEveShow(day, "Division III Championships"), true);
+      assert.equal(isBarredChampionshipEveShow(day, "Tour Premiere Preliminaries"), true);
+      assert.equal(isBarredChampionshipEveShow(day, "Music on the March"), false);
+      assert.equal(isBarredChampionshipEveShow(day, null), false);
+    }
+    for (const day of [42, 45, 10]) {
+      assert.equal(isBarredChampionshipEveShow(day, "Drum Corps Midwest Championship"), false);
+    }
+  });
+
+  test("a live refresh never appends a barred show to day 43 or 44", () => {
+    const startDate = new Date("2026-06-01T00:00:00Z");
+    const springTrainingDays = 21;
+    const dateForDay = (day) =>
+      new Date(startDate.getTime() + (day + springTrainingDays - 1) * 86400000).toISOString();
+    const { competitions } = mergeScheduleRefresh(
+      [],
+      [
+        { eventName: "DCI Open Class World Championship Prelims", location: "Marion, IN", date: dateForDay(43) },
+        { eventName: "DCI Southern Indiana", location: "Evansville, IN", date: dateForDay(43) },
+        { eventName: "Midwest Championship", location: "Rockford, IL", date: dateForDay(44) },
+        { eventName: "Midwest Championship", location: "Rockford, IL", date: dateForDay(40) },
+      ],
+      "live_2026-26",
+      startDate,
+      springTrainingDays
+    );
+    assert.deepEqual(
+      competitions.map((c) => [c.day, c.name]),
+      [
+        [40, "Midwest Championship"],
+        [43, "DCI Southern Indiana"],
+      ]
+    );
   });
 });

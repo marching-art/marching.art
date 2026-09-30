@@ -15,6 +15,7 @@ const {
   brandEventName,
   regionalTierForEventName,
   applyMultiNightMajors,
+  isBarredChampionshipEveShow,
 } = require("./seasonSchedule");
 
 /**
@@ -62,6 +63,8 @@ function mergeScheduleRefresh(existing, scrapedEvents, seasonId, startDate, spri
     const calendarDay = Math.floor((eventDate.getTime() - startDate.getTime()) / millisInDay) + 1;
     const dayNumber = calendarDay - springTrainingDays;
     if (dayNumber < 1 || dayNumber > 44) continue; // championship week isn't scraped
+    // Championship/prelims-titled events on days 43-44 never join the schedule.
+    if (isBarredChampionshipEveShow(dayNumber, event.eventName)) continue;
 
     if (!showsByDay.has(dayNumber)) showsByDay.set(dayNumber, []);
     const dayShows = showsByDay.get(dayNumber);

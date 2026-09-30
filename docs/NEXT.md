@@ -390,7 +390,7 @@ src/scripts/buildClientVenues.js` → re-run `buildPlaceIndex.js` (see its
 
 ## Evergreen ratchets (any session, any size)
 
-- `@ts-nocheck` paydown — **5 files** at
+- `@ts-nocheck` paydown — **4 files** at
   last update; `npm run ts-nocheck:next` ranks the cheapest (no free wins
   left — the cheapest `src/` files are ~31 errors). It needs `npm ci` first
   and refuses to report on any other compiler. One per substantive task is
@@ -410,6 +410,15 @@ src/scripts/buildClientVenues.js` → re-run `buildPlaceIndex.js` (see its
   touched.
 
 ## Recently shipped (context, newest first — prune when stale)
+
+- 2026-09-30: **No championship/prelims-titled shows on days 43-44** —
+  `seasonSchedule.isBarredChampionshipEveShow` (title matches
+  /championship|prelim/i on day 43 or 44). The off-season generator's filler
+  loop passes over them so the day fills from the rest of the archive pool;
+  `generateLiveSeasonSchedule` and `mergeScheduleRefresh` leave such scraped
+  events off the live schedule. Rows already stored stay (refresh is additive);
+  "Regenerate Off-Season Schedule" rebuilds an off-season under the rule.
+  Tests: `scheduleGeneration.championshipEve.test.js`.
 
 - 2026-09-30: **Multi-city show locations keep the last city** —
   `locationFormat.standardizeLocation` collapses "A/B, ST" to "B, ST"

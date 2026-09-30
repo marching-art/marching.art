@@ -462,6 +462,26 @@ async function writeScheduleToCollection(seasonId, schedule) {
   logger.info(`Wrote ${competitions.length} competitions to schedules/${seasonId}`);
 }
 
+// Days 43-44 lead straight into Championship Week (days 45-49), whose Open/A
+// and World championship rounds are marching.art's own fixed events. A show on
+// either eve day titled as a championship or a prelims round reads as a
+// premature (or duplicate) championship, so no schedule builder places one
+// there: the off-season generator picks a different archive show for the day,
+// and live seasons leave the scraped event off the schedule.
+const CHAMPIONSHIP_EVE_DAYS = Object.freeze([43, 44]);
+const CHAMPIONSHIP_TITLE_RE = /championship|prelim/i;
+
+/**
+ * True when a show must not be scheduled on `day` because it is a
+ * championship- or prelims-titled show on a Championship Week eve (day 43/44).
+ * @param {number} day competition day (offSeasonDay)
+ * @param {string|null|undefined} eventName
+ * @returns {boolean}
+ */
+function isBarredChampionshipEveShow(day, eventName) {
+  return CHAMPIONSHIP_EVE_DAYS.includes(day) && CHAMPIONSHIP_TITLE_RE.test(String(eventName || ""));
+}
+
 function shuffleArray(array) {
   for (let i = array.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -550,4 +570,6 @@ module.exports = {
   brandEventName,
   regionalTierForEventName,
   applyMultiNightMajors,
+  CHAMPIONSHIP_EVE_DAYS,
+  isBarredChampionshipEveShow,
 };

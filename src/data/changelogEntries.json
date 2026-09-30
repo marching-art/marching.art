@@ -1,5 +1,12 @@
 [
   {
+    "id": "2026-09-30-championship-eve-schedule",
+    "date": "2026-09-30",
+    "title": "No early championships the days before Championship Week",
+    "category": "fix",
+    "summary": "The two days right before Championship Week sometimes listed a show called a championship or prelims, which looked like the championships had started early. Those days now only have regular shows. In off-seasons another show takes its place. In live seasons the real event is left off the schedule."
+  },
+  {
     "id": "2026-09-30-multi-city-show-locations",
     "date": "2026-09-30",
     "title": "Shows list the one town they're held in",
