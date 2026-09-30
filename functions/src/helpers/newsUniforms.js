@@ -492,7 +492,9 @@ const STYLE_DESCRIPTIONS = {
  * @returns {keyof typeof STYLE_DESCRIPTIONS}
  */
 function styleFromFigure(fig) {
-  if (fig.print || fig.glowArt || fig.foilLeg) return "avant-garde";
+  if (fig.print || fig.glowArt || fig.foilLeg || fig.shatter || fig.torsoSplit || fig.chest === "streak") {
+    return "avant-garde";
+  }
   if (
     fig.streamers ||
     fig.fringe ||

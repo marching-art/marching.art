@@ -28,6 +28,7 @@ const CHESTS = new Set([
   "buttons",
   "swash",
   "vinylPanel",
+  "streak",
 ]);
 const HATS = new Set(["shako", "pith", "campaign", "aussie", "contour", "busby"]);
 const HAT_ORNAMENTS = new Set([
@@ -52,6 +53,7 @@ const PRINT_COLOR_SLOT_COUNTS = {
   pinstripe: 2,
   plaid: 3,
   foil: 2,
+  shatter: 2,
 };
 const BUILTIN_FILL_REFS = new Set([
   "url:sun",
@@ -59,6 +61,7 @@ const BUILTIN_FILL_REFS = new Set([
   "url:pinstripe",
   "url:plaid",
   "url:foil",
+  "url:shatter",
 ]);
 
 /** @param {unknown} v */
@@ -118,6 +121,11 @@ function readGradStop(stop) {
   return null;
 }
 
+/** @param {unknown} v */
+function isHexPair(v) {
+  return Array.isArray(v) && v.length === 2 && v.every(isHex);
+}
+
 /**
  * Validate one arm config.
  * @param {any} a @param {Set<string>} gradRefs @param {string[]} errors @param {string} label
@@ -137,6 +145,7 @@ function checkArm(a, gradRefs, errors, label) {
     "sequin",
     "glowLine",
     "gauntlet",
+    "cuffGlow",
     "glove",
   ]);
   for (const k of Object.keys(a)) {
@@ -148,6 +157,9 @@ function checkArm(a, gradRefs, errors, label) {
   if (a.glowLine != null && !isHex(a.glowLine)) errors.push(`${label}.glowLine is invalid`);
   if (a.sequin != null && typeof a.sequin !== "boolean") errors.push(`${label}.sequin is invalid`);
   if (a.glove != null && !isHex(a.glove)) errors.push(`${label}.glove is invalid`);
+  if (a.cuffGlow != null && !isHexPair(a.cuffGlow)) {
+    errors.push(`${label}.cuffGlow must be two #rrggbb colors`);
+  }
   if (a.gauntlet != null) {
     if (typeof a.gauntlet !== "object" || !isHex(a.gauntlet.color)) {
       errors.push(`${label}.gauntlet is invalid`);
@@ -165,13 +177,29 @@ function checkLeg(l, gradRefs, errors, label) {
     errors.push(`${label} must be an object`);
     return;
   }
-  const allowed = new Set(["color", "fill", "stripe", "flare", "tattered", "foil", "sequin"]);
+  const allowed = new Set([
+    "color",
+    "fill",
+    "stripe",
+    "flare",
+    "tattered",
+    "foil",
+    "sequin",
+    "hemGlow",
+    "kneePlate",
+    "seams",
+  ]);
   for (const k of Object.keys(l)) {
     if (!allowed.has(k)) errors.push(`${label}.${k} is not a recognized field`);
   }
   if (l.color != null && !isHex(l.color)) errors.push(`${label}.color is invalid`);
   if (l.fill != null && !isFill(l.fill, gradRefs)) errors.push(`${label}.fill is invalid`);
   if (l.stripe != null && !isHex(l.stripe)) errors.push(`${label}.stripe is invalid`);
+  if (l.hemGlow != null && !isHexPair(l.hemGlow)) {
+    errors.push(`${label}.hemGlow must be two #rrggbb colors`);
+  }
+  if (l.kneePlate != null && !isHex(l.kneePlate)) errors.push(`${label}.kneePlate is invalid`);
+  if (l.seams != null && !isHex(l.seams)) errors.push(`${label}.seams is invalid`);
 }
 
 // Per-key validators for the figure. `hex` = nullable hex; `bool` = boolean.
@@ -187,6 +215,10 @@ const FIGURE_FIELDS = {
   plaid: "bool",
   grads: "grads",
   foilLeg: "bool",
+  // Prism Forge (Lumen & Vane) — saving requires the pack
+  // (helpers/uniformEntitlements); shatter is the derived print-def flag
+  shatter: "bool",
+  torsoSplit: "torsoSplit",
   glow: "bool",
   glowArt: "hex",
   velvet: "bool",
@@ -214,6 +246,8 @@ const FIGURE_FIELDS = {
   swashTop: "bool",
   swashBottom: "bool",
   swashLegColor: "hex",
+  streak: "hex",
+  streakCore: "hex",
   metal: "hex",
   collar: "hex",
   collarTrim: "hex",
@@ -369,6 +403,18 @@ function validateFigure(figure) {
           Object.keys(value).some((k) => !["color", "lining", "side"].includes(k))
         ) {
           errors.push("figure.cape is invalid");
+        }
+        break;
+      case "torsoSplit":
+        if (
+          typeof value !== "object" ||
+          Array.isArray(value) ||
+          !isHex(value.color) ||
+          (value.fill != null && !isFill(value.fill, gradRefs)) ||
+          (value.flip != null && typeof value.flip !== "boolean") ||
+          Object.keys(value).some((k) => !["color", "fill", "flip"].includes(k))
+        ) {
+          errors.push("figure.torsoSplit is invalid");
         }
         break;
       case "hatType":

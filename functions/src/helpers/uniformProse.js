@@ -31,6 +31,7 @@ const STOCK_PRINT_COLORS = {
   pinstripe: ["#efe3c8", "#d3bd90"],
   plaid: ["#d0951c", "#b57712", "#e8c25a"],
   foil: ["#caa03c", "#f2df9a"],
+  shatter: ["#16181d", "#c9ced6"],
 };
 
 /** Hardware metals (METAL_HEX in src/data/uniformCatalog.ts). */
@@ -85,6 +86,11 @@ const PLUME_PROSE = {
 /** @param {unknown} v */
 function isHex(v) {
   return typeof v === "string" && HEX_RE.test(v);
+}
+
+/** @param {unknown} v @returns {v is [string, string]} */
+function isHexPair(v) {
+  return Array.isArray(v) && v.length === 2 && v.every(isHex);
 }
 
 /**
@@ -189,6 +195,10 @@ function fillProse(fig, fill, axis = "top to bottom") {
       const [tone, highlight] = printColors(fig, "foil");
       return `crinkled metallic foil in ${named(tone)} with ${named(highlight)} highlights, scattered with sequins`;
     }
+    case "url:shatter": {
+      const [base, line] = printColors(fig, "shatter");
+      return `a faceted SHATTER print: ${named(base)} cloth crazed with a network of thin ${named(line)} crack lines, like cracked glass or a geometric web`;
+    }
     default:
       if (fill.startsWith("url:")) return gradientProse(fig, fill.slice(4), axis);
       return null;
@@ -211,6 +221,7 @@ function fillLabel(fig, fill, fallbackHex) {
       "url:pinstripe": "a pinstripe print",
       "url:plaid": "a plaid print",
       "url:foil": "metallic foil",
+      "url:shatter": "a shatter crack print",
     };
     if (labels[fill]) return labels[fill];
     if (fill.startsWith("url:") && gradientProse(fig, fill.slice(4), "")) return "an ombré gradient";
@@ -276,6 +287,11 @@ function armProse(fig, arm, torsoColor) {
     if (arm.glowLine && isHex(arm.glowLine)) {
       parts.push(`a glowing ${named(arm.glowLine)} light-piping line running down the sleeve`);
     }
+    if (isHexPair(arm.cuffGlow) && arm.type !== "half") {
+      parts.push(
+        `a GLOWING cuff: the lower forearm lights up, fading in from ${named(arm.cuffGlow[0])} to a bright ${named(arm.cuffGlow[1])} glow at the wrist edge`
+      );
+    }
   }
   if (arm.gauntlet && isHex(arm.gauntlet.color)) {
     parts.push(
@@ -308,6 +324,15 @@ function legProse(fig, leg, fallback) {
   else if (l.tattered) parts.push("tattered, ragged hem (torn edge)");
   else parts.push("straight hem");
   if (l.sequin) parts.push("a sequin field across the leg");
+  if (isHex(l.seams)) {
+    parts.push(`thin angular ${named(l.seams)} panel seams running from the hip, converging at the knee, then splitting again down to the hem`);
+  }
+  if (isHex(l.kneePlate)) parts.push(`a faceted ${named(l.kneePlate)} diamond plate at the knee`);
+  if (isHexPair(l.hemGlow)) {
+    parts.push(
+      `a GLOWING hem: the lower leg lights up, fading in from ${named(l.hemGlow[0])} to a bright ${named(l.hemGlow[1])} glow along the hem`
+    );
+  }
   return parts.join("; ");
 }
 
@@ -376,6 +401,14 @@ function chestProse(fig, metal) {
         bits.push(`a matching diagonal swash band across the ${reverse ? "viewer's-right" : "viewer's-left"} upper leg in ${legColor}, ${sequin}`);
       }
       return bits.length ? bits.join("; plus ") : "plain front (no chest treatment)";
+    }
+    case "streak": {
+      const run = reverse
+        ? "from the viewer's LEFT shoulder across the chest down to the viewer's RIGHT hip"
+        : "from the viewer's RIGHT shoulder across the chest down to the viewer's LEFT hip";
+      const halo = fade ? `a ${named(fig.chestFade[0])} to ${named(fig.chestFade[1])} halo` : `a ${named(fig.streak)} halo`;
+      const core = isHex(fig.streakCore) ? named(fig.streakCore) : "near-white";
+      return `a GLOWING LIGHT-STREAK slash: a narrow blade of light running ${run}, with a hot ${core} core line inside ${halo} that blooms softly onto the fabric (like a neon or LED light strip)`;
     }
     case "vinylPanel":
       return `a glossy vinyl front panel in ${named(fig.panel)} from the collar to the hips with a ${named(INK.zipper)} center zipper, edged in ${isHex(fig.panelTrim) ? named(fig.panelTrim) : named(INK.visor)}`;
@@ -527,6 +560,11 @@ function torsoProse(fig, cw) {
   const style = TORSO_STYLE_PROSE[fig.torsoStyle] || TORSO_STYLE_PROSE.jacket;
   const base = isHex(fig.jacket) ? fig.jacket : cw.primary;
   const fill = fillProse(fig, fig.torsoFill) || (isHex(base) ? `solid ${named(base)}` : "the primary color");
+  const sp = fig.torsoSplit;
+  const split =
+    sp && isHex(sp.color)
+      ? `; SPLIT two-tone torso: the ${sp.flip ? "viewer's-LEFT" : "viewer's-RIGHT"} part of the torso — everything on that side of a diagonal from the viewer's ${sp.flip ? "LEFT" : "RIGHT"} shoulder down to the viewer's ${sp.flip ? "RIGHT" : "LEFT"} hip — is a contrasting panel in ${fillProse(fig, sp.fill) || `solid ${named(sp.color)}`}`
+      : "";
   const finishes = [];
   if (fig.velvet) finishes.push("velvet (deep matte nap with soft sheen)");
   if (fig.satin) finishes.push("satin (smooth glossy sheen)");
@@ -538,7 +576,7 @@ function torsoProse(fig, cw) {
     finishes.push(`glowing ${named(fig.glowArt)} line-art / light piping traced across the torso`);
   }
   return {
-    torso: `${style} in ${fill}`,
+    torso: `${style} in ${fill}${split}`,
     torsoShort: `${style.split(":")[0].split(" (")[0]} in ${fillLabel(fig, fig.torsoFill, base)}`,
     finish: finishes.length ? finishes.join("; ") : "matte fabric, no sheen, no sequins, no glow",
     torsoColor: fill,
@@ -663,6 +701,7 @@ function describeFigure(design) {
     buttons: "double-breasted button columns",
     swash: "a sequined modern swash",
     vinylPanel: "a zippered vinyl front panel",
+    streak: "a glowing light-streak slash",
   };
   const summary = [
     torsoShort,

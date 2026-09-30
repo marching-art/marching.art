@@ -122,11 +122,11 @@ export function torsoPathOf(cw: NormalizedFigure): string {
         ? LONGCOAT_D
         : TORSO_D;
 }
-const LEG_D =
+export const LEG_D =
   'M90,254 L85,308 Q83,360 91,438 L114,438 Q112,384 113,336 Q113,306 116,284 Q119,276 120,272 L120,254 Z';
-const LEG_FLARE_D =
+export const LEG_FLARE_D =
   'M90,254 L85,308 Q83,360 83,406 Q81,428 75,446 L118,446 Q114,390 114,336 Q113,306 116,284 Q119,276 120,272 L120,254 Z';
-const LEG_TATTER_D =
+export const LEG_TATTER_D =
   'M90,254 L85,308 Q83,360 88,422 L87,442 L92,427 L96,444 L101,428 L105,443 L109,427 L112,441 L114,422 Q113,380 113,336 Q113,306 116,284 Q119,276 120,272 L120,254 Z';
 export const SLEEVE_D =
   'M78,103 Q66,111 62,134 Q57,165 59,197 Q60,223 63,242 L82,244 Q79,214 79,186 Q79,148 88,118 Q85,107 78,103 Z';
@@ -414,7 +414,11 @@ export function shoes(cw: NormalizedFigure): Node[] {
   return out;
 }
 
-export function torso(cw: NormalizedFigure, uid: string): Node[] {
+/**
+ * The torso garment. `panels` are drawn over the base fill and under the
+ * shading (the Prism Forge split panel), so they take the garment's folds.
+ */
+export function torso(cw: NormalizedFigure, uid: string, panels: Node[] = []): Node[] {
   const d = torsoPathOf(cw);
   const fill = fillOf(cw.torsoFill, uid, cw.jacket);
   const out: Node[] = [p('to', d, fill)];
@@ -440,6 +444,7 @@ export function torso(cw: NormalizedFigure, uid: string): Node[] {
       </g>
     );
   }
+  out.push(...panels);
   out.push(
     shade(
       'to-s',

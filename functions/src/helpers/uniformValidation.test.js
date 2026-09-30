@@ -459,3 +459,56 @@ describe("constants", () => {
     assert.ok(!DESIGN_ID_RE.test(""));
   });
 });
+
+describe("Prism Forge fields", () => {
+  const pair = ["#7cc4ff", "#f2c14e"];
+  function lightCut() {
+    const d = validDesign();
+    Object.assign(d.figure, {
+      torsoFill: "url:shatter",
+      shatter: true,
+      printColors: { shatter: ["#16181d", "#aeb6c2"] },
+      torsoSplit: { color: "#c3c9d1", fill: null, flip: true },
+      chest: "streak",
+      streak: "#7cc4ff",
+      streakCore: "#ffffff",
+      chestFade: pair,
+      glow: true,
+      armL: { type: "sleeve", fill: "url:shatter", cuffGlow: pair, glove: "#101013" },
+      armR: { type: "sleeve", color: "#c3c9d1", cuffGlow: pair, glove: "#101013" },
+      legL: { color: "#2a2d33", seams: "#aeb6c2", kneePlate: "#cfd4da", hemGlow: pair },
+      legR: { color: "#2a2d33", seams: "#aeb6c2", kneePlate: "#cfd4da", hemGlow: pair },
+    });
+    return d;
+  }
+
+  test("accepts and round-trips the full light-cut look", () => {
+    const d = lightCut();
+    assert.deepEqual(validateDesign(d), []);
+    const clean = sanitizeDesign(d);
+    assert.deepEqual(clean.figure.torsoSplit, d.figure.torsoSplit);
+    assert.deepEqual(clean.figure.legL, d.figure.legL);
+    assert.equal(clean.figure.chest, "streak");
+    assert.equal(clean.figure.streakCore, "#ffffff");
+    assert.ok(!hasNestedArray(clean), "glow pairs must stay Firestore-storable");
+  });
+
+  test("rejects malformed Prism pieces", () => {
+    const bad = [
+      (f) => (f.torsoSplit = { color: "silver" }),
+      (f) => (f.torsoSplit = { color: "#c3c9d1", fill: "url:nope" }),
+      (f) => (f.torsoSplit = { color: "#c3c9d1", side: "left" }),
+      (f) => (f.printColors = { shatter: ["#16181d"] }),
+      (f) => (f.streak = "blue"),
+      (f) => (f.armL = { type: "sleeve", cuffGlow: ["#7cc4ff"] }),
+      (f) => (f.legL = { hemGlow: ["#7cc4ff", "gold"] }),
+      (f) => (f.legR = { kneePlate: "shiny" }),
+      (f) => (f.legR = { seams: 3 }),
+    ];
+    for (const mutate of bad) {
+      const d = lightCut();
+      mutate(d.figure);
+      assert.ok(validateDesign(d).length > 0, mutate.toString());
+    }
+  });
+});

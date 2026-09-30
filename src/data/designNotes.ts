@@ -32,6 +32,10 @@ export const DESIGN_NOTES: DesignNote[] = [
     text: 'Glow reads best against near-black. Push the base darker than feels safe indoors.',
   },
   {
+    applies: (f) => Boolean(f.torsoSplit || f.chest === 'streak'),
+    text: 'Light reads as motion: lay the streak on the seam of a split and the body looks cut by a beam.',
+  },
+  {
     applies: (f) => Boolean(f.torsoSequin || f.sashSequin || f.baldricSequin),
     text: 'Sequins are for the back row: design the sparkle for the press box, not the mirror.',
   },
