@@ -136,7 +136,7 @@ export const retireCorps = createCallable<RetireCorpsData, { success: boolean; m
 );
 export const unretireCorps = createCallable<
   { corpsClass: string; retiredIndex: number },
-  { success: boolean }
+  { success: boolean; message?: string }
 >('unretireCorps');
 
 export interface TransferCorpsData {

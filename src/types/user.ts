@@ -219,12 +219,16 @@ export interface UserProfile {
   settings?: UserSettings;
 }
 
+/** Mirrors buildRetiredRecord (functions/src/helpers/corpsHelpers.js). */
 export interface RetiredCorps {
   corpsName: string;
   corpsClass: CorpsClass;
-  retiredAt: string;
-  finalScore?: number;
-  seasonsPlayed?: number;
+  location?: string;
+  /** Firestore Timestamp (a concrete one — array elements can't hold sentinels). */
+  retiredAt?: { seconds: number } | null;
+  totalSeasons?: number;
+  bestSeasonScore?: number;
+  totalShows?: number;
   /** Purchased memorial plaque (purchaseRetirementPlaque callable) */
   plaque?: { tier: 'bronze' | 'silver' | 'gold'; purchasedAt: string };
 }

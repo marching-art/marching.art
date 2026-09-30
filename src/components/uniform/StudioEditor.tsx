@@ -322,13 +322,7 @@ export default function StudioEditor({
                 value: o.value,
                 label: o.value === 'longcoat' ? packLabel(o.label, 'pack_tailors_cut') : o.label,
               }))}
-              value={
-                figure.torsoStyle === 'tunic' ||
-                figure.torsoStyle === 'dress' ||
-                figure.torsoStyle === 'longcoat'
-                  ? figure.torsoStyle
-                  : 'jacket'
-              }
+              value={figure.torsoStyle ?? 'jacket'}
               onSelect={(v) => setFigure({ torsoStyle: v as FigureConfig['torsoStyle'] })}
             />
             <div className="mt-2">
