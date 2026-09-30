@@ -1,5 +1,13 @@
 [
   {
+    "id": "2026-09-30-studio-hardware-switch",
+    "date": "2026-09-30",
+    "title": "Gold/Silver hardware now recolors your uniform right away",
+    "category": "fix",
+    "summary": "Choosing Gold or Silver hardware in the Uniform Studio used to change only the colorway swatch. The plume base, buttons, buckle and hat plate stayed the old metal unless you pressed Apply to all, which also re-colored everything else. Switching the metal now updates the hardware right away and leaves the rest of your design alone.",
+    "highlights": ["Any hardware piece you recolored by hand keeps your color."]
+  },
+  {
     "id": "2026-09-30-studio-sleeve-sequins",
     "date": "2026-09-30",
     "title": "Sequined sleeves in the Uniform Studio",

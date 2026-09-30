@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   applyColorway,
+  applyHardware,
   armFadeStops,
   darkenHex,
   designWithinLimits,
@@ -197,6 +198,36 @@ describe('print color resolution', () => {
     expect(partial[0]).toBe('#112233');
     expect(partial[1]).toBe(printColorDefaults('sunburst')[1]); // junk → default
     expect(partial[2]).toBe(printColorDefaults('sunburst')[2]); // missing → default
+  });
+});
+
+describe('applyHardware', () => {
+  it('swaps the metal and every piece still wearing it, leaving hand-picked colors', () => {
+    const out = applyHardware(
+      {
+        skin: '#c9a074',
+        jacket: '#1d2f66',
+        metal: '#D9A41C',
+        buckle: '#d9a41c',
+        buttonColor: '#123456',
+        waistBandEdge: '#d9a41c',
+        hat: { body: '#111111', emblem: '#d9a41c' },
+        plume: { type: 'fountain', color: '#29e6ff' },
+      },
+      'silver'
+    );
+    expect(out.metal).toBe('#cfd4da');
+    expect(out.buckle).toBe('#cfd4da');
+    expect(out.waistBandEdge).toBe('#cfd4da');
+    expect(out.hat?.emblem).toBe('#cfd4da');
+    expect(out.buttonColor).toBe('#123456');
+    expect(out.jacket).toBe('#1d2f66');
+    expect(out.plume).toEqual({ type: 'fountain', color: '#29e6ff' });
+  });
+
+  it('sets the metal on a figure that never had one without adding other keys', () => {
+    const out = applyHardware({ skin: '#c9a074' }, 'gold');
+    expect(out).toEqual({ skin: '#c9a074', metal: '#d9a41c' });
   });
 });
 

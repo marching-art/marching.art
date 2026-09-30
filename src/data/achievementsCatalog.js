@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Shared client-side achievements catalog.
 //
 // This mirrors the server-side source of truth in
@@ -18,6 +17,44 @@ import { REQUIRED_CAPTIONS } from '../utils/captionPricing';
 import { isCorpsClassUnlocked } from '../utils/corps';
 
 const ROSTER_SIZE = REQUIRED_CAPTIONS.length;
+
+/**
+ * The snapshot every `progress()` predicate reads (see buildAchievementState).
+ * @typedef {{
+ *   streak: number,
+ *   level: number,
+ *   unlockedClasses: string[],
+ *   maxLineup: number,
+ *   totalShows: number,
+ *   currentSeasonShows: number,
+ *   totalSeasons: number,
+ *   leagueWins: number,
+ *   inLeague: boolean,
+ *   classRanks: Record<string, number>,
+ *   regionalTrophies: number,
+ *   classChampionships: number,
+ *   championships: number,
+ * }} AchievementState
+ */
+
+/**
+ * @typedef {{
+ *   id: string,
+ *   title: string,
+ *   description: string,
+ *   icon: import('lucide-react').LucideIcon,
+ *   category: string,
+ *   rarity: 'common' | 'rare' | 'epic' | 'legendary',
+ *   ccReward: number,
+ *   progress: (s: AchievementState) => { current: number, goal: number },
+ * }} AchievementDef
+ */
+
+/**
+ * The profile document as the catalog reads it — a loose Firestore record;
+ * buildAchievementState defaults every field it touches.
+ * @typedef {Record<string, any> | null | undefined} AchievementProfile
+ */
 
 /** CorpsCoin paid when an achievement is first earned, by rarity (mirrors server). */
 export const RARITY_CC = { common: 25, rare: 50, epic: 100, legendary: 250 };
@@ -63,6 +100,7 @@ export const ACHIEVEMENT_CATEGORIES = [
 // The catalog. `progress(state)` returns { current, goal }; the entry is
 // complete when current >= goal (or when the server has already awarded it).
 // ---------------------------------------------------------------------------
+/** @type {AchievementDef[]} */
 export const ACHIEVEMENTS = [
   // --- Login streaks -------------------------------------------------------
   {
@@ -427,9 +465,10 @@ export const ACHIEVEMENTS = [
  * Mirrors buildAchievementState in functions/src/helpers/achievements.js so
  * client-computed progress matches the server's award logic.
  *
- * @param {Object} profile - the director profile document
- * @param {Object} [corps] - the corps map (store keeps it split out from
- *   profile; falls back to profile.corps)
+ * @param {AchievementProfile} profile - the director profile document
+ * @param {Record<string, any> | null} [corps] - the corps map (store keeps it
+ *   split out from profile; falls back to profile.corps)
+ * @returns {AchievementState}
  */
 export function buildAchievementState(profile, corps) {
   const p = profile || {};
@@ -439,6 +478,7 @@ export function buildAchievementState(profile, corps) {
   const lineupSizes = corpsList.map((x) => Object.keys(x?.lineup || {}).length);
   const maxLineup = lineupSizes.length ? Math.max(...lineupSizes) : 0;
 
+  /** @type {Record<string, number>} */
   const classRanks = {};
   Object.entries(p.classRanks || {}).forEach(([cls, snapshot]) => {
     if (snapshot && typeof snapshot.rank === 'number') classRanks[cls] = snapshot.rank;
@@ -471,11 +511,18 @@ export function buildAchievementState(profile, corps) {
  * Evaluate the whole catalog against a profile. Earned state comes from
  * profile.achievements (server-authoritative) and wins over local progress.
  *
- * @returns {Array} each achievement plus { current, goal, pct, earned, earnedAt }
+ * @param {AchievementProfile} profile
+ * @param {Record<string, any> | null} [corps]
+ * @returns {Array<AchievementDef & {
+ *   current: number, goal: number, pct: number, earned: boolean, earnedAt: unknown,
+ * }>} each achievement plus its progress and earned state
  */
 export function evaluateAchievements(profile, corps) {
   const state = buildAchievementState(profile, corps);
-  const earnedById = new Map((profile?.achievements || []).map((a) => [a.id, a]));
+  /** @type {Map<string, { id: string, earnedAt?: unknown }>} */
+  const earnedById = new Map(
+    (profile?.achievements || []).map((/** @type {{ id: string }} */ a) => [a.id, a])
+  );
 
   return ACHIEVEMENTS.map((a) => {
     const earnedEntry = earnedById.get(a.id);

@@ -27,6 +27,7 @@ import {
 import { FIGURE_SKIN_TONES } from '../../data/uniformRenderTheme';
 import {
   applyColorway,
+  applyHardware,
   armFadeStops,
   darkenHex,
   normalizeFigure,
@@ -277,7 +278,14 @@ export default function StudioEditor({
                   { value: 'silver', label: 'Silver hardware' },
                 ]}
                 value={design.colorway.metal}
-                onSelect={(v) => setColorway({ metal: v as UniformColorway['metal'] })}
+                onSelect={(v) => {
+                  const metal = v as UniformColorway['metal'];
+                  onChange({
+                    ...design,
+                    colorway: { ...design.colorway, metal },
+                    figure: applyHardware(figure, metal),
+                  });
+                }}
               />
               <button
                 type="button"
