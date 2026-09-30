@@ -65,6 +65,7 @@ describe("buildStreakAtRiskPushes", () => {
     );
     assert.equal(pushes[0].title, "Your 12-day streak ends tonight");
     assert.match(pushes[0].body, /Streak Freeze/);
+    assert.match(pushes[0].body, /2 AM ET/, "names the real deadline");
     assert.doesNotMatch(pushes[0].body, /\d+ ?CC/, "no price in the copy");
     assert.equal(pushes[0].url, STREAK_PANEL_URL);
     assert.equal(pushes[0].dedupeKey, pushes[1].dedupeKey);

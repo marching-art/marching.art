@@ -78,8 +78,8 @@ function buildStreakAtRiskPushes(profiles, now = new Date()) {
       streak,
       title: `Your ${streak}-day streak ends tonight`,
       body:
-        "You haven't claimed today's login yet. Check in before the day rolls over " +
-        "to keep it going — or protect it with a Streak Freeze.",
+        "You haven't claimed today's login yet. Open the game before the day rolls " +
+        "over at 2 AM ET to keep it going — or protect it with a Streak Freeze.",
       url: STREAK_PANEL_URL,
       dedupeKey: `streak_at_risk_${dayKey}`,
     });

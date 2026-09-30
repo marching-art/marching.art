@@ -1,5 +1,15 @@
 [
   {
+    "id": "2026-09-30-daily-login-streak-rollover",
+    "date": "2026-09-30",
+    "title": "Daily login now counts every day you visit",
+    "category": "fix",
+    "summary": "If you usually played in the evening, the game could skip counting your next day's login, so you'd get a \"streak ends tonight\" warning and an unchecked Daily login in your Director's Report even though you'd been in. Every visit now counts toward the correct day, and the streak warning says exactly when the day rolls over: 2 AM Eastern, the same time daily scores reset.",
+    "highlights": [
+      "Leaving the game open overnight now picks up the new day as soon as you come back to the tab."
+    ]
+  },
+  {
     "id": "2026-09-29-report-articles",
     "date": "2026-09-29",
     "title": "You can now report press releases and director articles",

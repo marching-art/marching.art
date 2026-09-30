@@ -22,6 +22,7 @@ import { useEffect } from 'react';
 import type { User } from 'firebase/auth';
 import { claimDailyLogin } from '../api/functions';
 import { surfaceDailyLoginPayoff } from '../utils/dailyLoginPayoff';
+import { getGameDay } from '../utils/dailyChallenges';
 import { queryClient } from '../lib/queryClient';
 import { useSeasonStore } from '../store/seasonStore';
 import { useScheduleStore } from '../store/scheduleStore';
@@ -93,32 +94,72 @@ export function useAppBootstrap(user: User | null | undefined): void {
     return initOfflineLineupReplay(user.uid);
   }, [user]);
 
-  // Claim daily login once per calendar day to award XP, update streak, and
-  // update userTitle. The backend is idempotent (returns alreadyClaimed:true
-  // on subsequent calls within the same day); the localStorage guard just
-  // avoids redundant network calls per session.
+  // Claim daily login once per GAME day (2 AM ET, the same boundary the server
+  // streak and the nightly scores use) to award XP, update streak, and update
+  // userTitle. The backend is idempotent (returns alreadyClaimed:true on
+  // subsequent calls within the same game day); the localStorage guard just
+  // avoids redundant network calls.
+  //
+  // The guard used to be keyed on the UTC date, which rolls over at 7–8 PM ET.
+  // A director who visited in the evening stamped TOMORROW's UTC date, so the
+  // next day's daytime visits skipped the claim entirely — the streak-at-risk
+  // push fired every evening and the Director's Report showed login undone
+  // until they came back after the UTC rollover, perpetuating the cycle.
+  //
+  // Also re-checked whenever the tab regains focus, so a tab left open across
+  // the 2 AM ET rollover claims the new day instead of waiting for a reload.
+  //
   // Gate on `profile` as well as `user`: a freshly-authenticated user going
   // through onboarding has no profile yet, and claimDailyLogin would 404 with
   // "profile not found". Waiting for the profile to exist avoids that race.
+  const hasProfile = !!profile;
   useEffect(() => {
-    if (!user || !profile) return;
-    const todayKey = new Date().toISOString().slice(0, 10);
+    if (!user || !hasProfile || typeof window === 'undefined') return;
     const storageKey = `dailyLoginClaimed:${user.uid}`;
-    if (typeof window === 'undefined') return;
-    const lastClaimed = window.localStorage.getItem(storageKey);
-    if (lastClaimed === todayKey) return;
-    claimDailyLogin()
-      .then((result) => {
-        window.localStorage.setItem(storageKey, todayKey);
-        // Show the payoff (XP/coin pills, milestone celebration, level-up).
-        // The response used to be discarded, making the game's most
-        // reliable daily reward beat completely silent.
-        surfaceDailyLoginPayoff(result?.data);
-      })
-      .catch((err) => {
-        console.warn('Daily login claim skipped:', err?.message || err);
-      });
-  }, [user, profile]);
+    let inFlight = false;
+
+    const claimIfNewGameDay = () => {
+      const gameDay = getGameDay();
+      let lastClaimed: string | null = null;
+      try {
+        lastClaimed = window.localStorage.getItem(storageKey);
+      } catch {
+        // Storage unavailable (private mode) — fall through; the server dedupes.
+      }
+      if (lastClaimed === gameDay || inFlight) return;
+      inFlight = true;
+      claimDailyLogin()
+        .then((result) => {
+          try {
+            window.localStorage.setItem(storageKey, gameDay);
+          } catch {
+            // Best-effort guard only.
+          }
+          // Show the payoff (XP/coin pills, milestone celebration, level-up).
+          // The response used to be discarded, making the game's most
+          // reliable daily reward beat completely silent.
+          surfaceDailyLoginPayoff(result?.data);
+        })
+        .catch((err) => {
+          console.warn('Daily login claim skipped:', err?.message || err);
+        })
+        .finally(() => {
+          inFlight = false;
+        });
+    };
+
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') claimIfNewGameDay();
+    };
+
+    claimIfNewGameDay();
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', onVisible);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', onVisible);
+    };
+  }, [user, hasProfile]);
 
   // Initialize push notifications when user is authenticated
   // Only attempts to get token if user has previously granted permission
