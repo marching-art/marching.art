@@ -383,6 +383,13 @@ export default function StudioEditor({
                 onChange={(v) => setFigure({ glowArt: v ? design.colorway.secondary : null })}
               />
             </div>
+            {figure.glowArt && (
+              <ChannelRow
+                label="Glow line-art"
+                value={figure.glowArt}
+                onChange={(v) => v && setFigure({ glowArt: v })}
+              />
+            )}
           </section>
         )}
 

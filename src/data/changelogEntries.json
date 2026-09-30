@@ -1,5 +1,16 @@
 [
   {
+    "id": "2026-09-30-studio-glow-colors",
+    "date": "2026-09-30",
+    "title": "Pick any color for Uniform Studio glow lines",
+    "category": "improvement",
+    "summary": "Glow line-art on the torso and glow lines on sleeves now have their own color picker. Before, they were stuck on your colorway's secondary color.",
+    "highlights": [
+      "Switch a glow on, then tap its color swatch that appears just below to recolor it.",
+      "Each sleeve's glow line can be its own color when the sides aren't linked."
+    ]
+  },
+  {
     "id": "2026-09-30-studio-jumpsuit",
     "date": "2026-09-30",
     "title": "Jumpsuit is now a torso choice in the Uniform Studio",

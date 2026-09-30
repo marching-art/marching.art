@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // =============================================================================
 // PODIUM PREVIEW — INTERACTIVE "TRY IT OUT" DEMO OF THE PODIUM DAILY LOOP
 // =============================================================================
@@ -35,6 +34,12 @@ import { useBodyScroll } from '../hooks/useBodyScroll';
 import { useSEO } from '../hooks/useSEO';
 import { BLOCKS, PODIUM_CAPTIONS, CAPTION_LABELS } from '../components/Podium/podiumConstants';
 
+/** @typedef {{ content: number, clean: number }} CaptionState */
+/** @typedef {Record<string, CaptionState>} CaptionMap */
+/** @typedef {{ c: string | null, text: string }} LogDelta */
+/** @typedef {{ id: number, block: string, deltas: LogDelta[] }} LogEntry */
+/** @typedef {(typeof BLOCKS)[number]} Block */
+
 const GOLD = '#c9a227';
 
 // Per-caption ceiling on the 20-point DCI caption scale. A fully installed,
@@ -43,6 +48,7 @@ const CAP_L = 19.6;
 
 // Which captions each block feeds. Primary gets the full yield, secondary a
 // fraction — mirrors the effect matrix in podiumConstants / the design doc.
+/** @type {Record<string, { primary: string[], secondary: string[] }>} */
 const BLOCK_EFFECTS = {
   warmup: { primary: [], secondary: ['VP'] },
   visualBasics: { primary: ['VP'], secondary: ['VA', 'CG'] },
@@ -65,17 +71,21 @@ const initCaptions = () =>
   PODIUM_CAPTIONS.reduce((acc, c) => {
     acc[c] = { content: 52, clean: 38 };
     return acc;
-  }, {});
+  }, /** @type {CaptionMap} */ ({}));
 
+/** @param {number} n @param {number} lo @param {number} hi */
 const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
 
 // A single caption's contribution on the 20-scale: installed content, gated by
 // how clean it is, against the caption ceiling.
+/** @param {CaptionState} caption */
 const captionValue = ({ content, clean }) =>
   clamp(CAP_L * (content / 100) * (0.72 + 0.28 * (clean / 100)), 0, 19.9);
 
 // The game's total formula: GE full weight, Visual + Music halved, hard cap.
+/** @param {CaptionMap} caps */
 const projectedTotal = (caps) => {
+  /** @param {string} c */
   const v = (c) => captionValue(caps[c]);
   const ge = GE.reduce((s, c) => s + v(c), 0);
   const vis = VIS.reduce((s, c) => s + v(c), 0);
@@ -87,6 +97,9 @@ const projectedTotal = (caps) => {
 // SMALL PRESENTATION COMPONENTS
 // =============================================================================
 
+/**
+ * @param {{ label: string, value: number, color: string, note?: string | null }} props
+ */
 const Meter = ({ label, value, color, note }) => (
   <div>
     <div className="flex items-center justify-between mb-1">
@@ -106,6 +119,7 @@ const Meter = ({ label, value, color, note }) => (
   </div>
 );
 
+/** @param {{ id: string, caps: CaptionMap }} props */
 const CaptionRow = ({ id, caps }) => {
   const { content, clean } = caps[id];
   const val = captionValue(caps[id]);
@@ -113,7 +127,9 @@ const CaptionRow = ({ id, caps }) => {
     <div className="flex items-center gap-3 px-3 py-2 border-b border-line-subtle last:border-0">
       <div className="w-9 flex-shrink-0">
         <div className="text-xs font-bold text-white">{id}</div>
-        <div className="text-[9px] text-muted leading-tight">{CAPTION_LABELS[id]}</div>
+        <div className="text-[9px] text-muted leading-tight">
+          {CAPTION_LABELS[/** @type {keyof typeof CAPTION_LABELS} */ (id)]}
+        </div>
       </div>
       <div className="flex-1 space-y-1">
         {/* Content bar */}
@@ -163,10 +179,12 @@ const PodiumPreview = () => {
   const [stamina, setStamina] = useState(100);
   const [morale, setMorale] = useState(72);
   const [blocksLeft, setBlocksLeft] = useState(BLOCKS_PER_DAY);
-  const [dayCounts, setDayCounts] = useState({}); // per-block repeat counter (this day)
+  const [dayCounts, setDayCounts] = useState(/** @type {Record<string, number>} */ ({})); // per-block repeat counter (this day)
   const [warmups, setWarmups] = useState(0); // warmup blocks done today (efficiency)
-  const [rehearsedToday, setRehearsedToday] = useState(() => new Set());
-  const [log, setLog] = useState([]); // itemized results for today
+  const [rehearsedToday, setRehearsedToday] = useState(
+    () => /** @type {Set<string>} */ (new Set())
+  );
+  const [log, setLog] = useState(/** @type {LogEntry[]} */ ([])); // itemized results for today
   const [, setEngagement] = useState(0); // count only drives the gate; value unused
   const [gateOpen, setGateOpen] = useState(false);
   const [gateSeen, setGateSeen] = useState(false);
@@ -174,6 +192,7 @@ const PodiumPreview = () => {
   const total = useMemo(() => projectedTotal(caps), [caps]);
   const lowStamina = stamina < 25;
 
+  /** @param {number} by */
   const bumpEngagement = (by) => {
     setEngagement((e) => {
       const next = e + by;
@@ -185,6 +204,7 @@ const PodiumPreview = () => {
     });
   };
 
+  /** @param {Block} block */
   const assignBlock = (block) => {
     if (blocksLeft <= 0) return;
 
@@ -199,8 +219,10 @@ const PodiumPreview = () => {
     const secondaryContent = 1.1 * dim * staminaFactor;
     const secondaryClean = 0.5 * dim * staminaFactor;
 
+    /** @type {LogDelta[]} */
     const deltas = [];
     const nextCaps = { ...caps };
+    /** @param {string} c @param {number} dContent @param {number} dClean */
     const applyGain = (c, dContent, dClean) => {
       const cur = nextCaps[c];
       const content = clamp(cur.content + dContent, 0, 100);
@@ -240,6 +262,7 @@ const PodiumPreview = () => {
     bumpEngagement(1);
   };
 
+  /** @param {{ rest: boolean }} opts */
   const finishDay = ({ rest }) => {
     // Overnight recovery + grind/rest morale, then neglect decay on any caption
     // not touched today (clean only — you don't forget the book, you get dirty).

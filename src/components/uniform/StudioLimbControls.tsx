@@ -89,6 +89,13 @@ export function ArmControls({
           />
         </div>
       )}
+      {arm.type === 'sleeve' && arm.glowLine && (
+        <ChannelRow
+          label="Glow line"
+          value={arm.glowLine}
+          onChange={(v) => v && onPatch({ glowLine: v })}
+        />
+      )}
       <div className="flex flex-wrap gap-3">
         <Toggle
           label="Gauntlet"
