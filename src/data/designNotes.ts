@@ -36,6 +36,10 @@ export const DESIGN_NOTES: DesignNote[] = [
     text: 'Light reads as motion: lay the streak on the seam of a split and the body looks cut by a beam.',
   },
   {
+    applies: (f) => Boolean(f.veins || f.veinGlow || f.chest === 'gill'),
+    text: 'Let the network travel: carry the veins from torso to sleeve to leg so the whole line reads as one organism.',
+  },
+  {
     applies: (f) => Boolean(f.torsoSequin || f.sashSequin || f.baldricSequin),
     text: 'Sequins are for the back row: design the sparkle for the press box, not the mirror.',
   },

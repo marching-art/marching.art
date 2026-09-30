@@ -29,6 +29,7 @@ const CHESTS = new Set([
   "swash",
   "vinylPanel",
   "streak",
+  "gill",
 ]);
 const HATS = new Set(["shako", "pith", "campaign", "aussie", "contour", "busby"]);
 const HAT_ORNAMENTS = new Set([
@@ -54,6 +55,7 @@ const PRINT_COLOR_SLOT_COUNTS = {
   plaid: 3,
   foil: 2,
   shatter: 2,
+  brocade: 3,
 };
 const BUILTIN_FILL_REFS = new Set([
   "url:sun",
@@ -62,6 +64,7 @@ const BUILTIN_FILL_REFS = new Set([
   "url:plaid",
   "url:foil",
   "url:shatter",
+  "url:brocade",
 ]);
 
 /** @param {unknown} v */
@@ -146,6 +149,7 @@ function checkArm(a, gradRefs, errors, label) {
     "glowLine",
     "gauntlet",
     "cuffGlow",
+    "veins",
     "glove",
   ]);
   for (const k of Object.keys(a)) {
@@ -157,6 +161,7 @@ function checkArm(a, gradRefs, errors, label) {
   if (a.glowLine != null && !isHex(a.glowLine)) errors.push(`${label}.glowLine is invalid`);
   if (a.sequin != null && typeof a.sequin !== "boolean") errors.push(`${label}.sequin is invalid`);
   if (a.glove != null && !isHex(a.glove)) errors.push(`${label}.glove is invalid`);
+  if (a.veins != null && !isHex(a.veins)) errors.push(`${label}.veins is invalid`);
   if (a.cuffGlow != null && !isHexPair(a.cuffGlow)) {
     errors.push(`${label}.cuffGlow must be two #rrggbb colors`);
   }
@@ -188,6 +193,7 @@ function checkLeg(l, gradRefs, errors, label) {
     "hemGlow",
     "kneePlate",
     "seams",
+    "veins",
   ]);
   for (const k of Object.keys(l)) {
     if (!allowed.has(k)) errors.push(`${label}.${k} is not a recognized field`);
@@ -200,6 +206,7 @@ function checkLeg(l, gradRefs, errors, label) {
   }
   if (l.kneePlate != null && !isHex(l.kneePlate)) errors.push(`${label}.kneePlate is invalid`);
   if (l.seams != null && !isHex(l.seams)) errors.push(`${label}.seams is invalid`);
+  if (l.veins != null && !isHex(l.veins)) errors.push(`${label}.veins is invalid`);
 }
 
 // Per-key validators for the figure. `hex` = nullable hex; `bool` = boolean.
@@ -219,6 +226,13 @@ const FIGURE_FIELDS = {
   // (helpers/uniformEntitlements); shatter is the derived print-def flag
   shatter: "bool",
   torsoSplit: "torsoSplit",
+  // Wildwood (Alder & Moss) — saving requires the pack; brocade is the
+  // derived print-def flag
+  brocade: "bool",
+  veins: "colorFlip",
+  veinGlow: "hex",
+  drape: "colorFlip",
+  gill: "hex",
   glow: "bool",
   glowArt: "hex",
   velvet: "bool",
@@ -415,6 +429,17 @@ function validateFigure(figure) {
           Object.keys(value).some((k) => !["color", "fill", "flip"].includes(k))
         ) {
           errors.push("figure.torsoSplit is invalid");
+        }
+        break;
+      case "colorFlip":
+        if (
+          typeof value !== "object" ||
+          Array.isArray(value) ||
+          !isHex(value.color) ||
+          (value.flip != null && typeof value.flip !== "boolean") ||
+          Object.keys(value).some((k) => !["color", "flip"].includes(k))
+        ) {
+          errors.push(`figure.${key} is invalid`);
         }
         break;
       case "hatType":
@@ -624,6 +649,12 @@ const PROSE_COLORS = [
   ["plum purple", 0x6d1f3f],
   ["royal purple", 0x4b2a6b],
   ["bronze", 0x8f6d20],
+  // Wildwood palette (the pack's natural-forest vocabulary)
+  ["peat brown", 0x2b231d],
+  ["oxidized teal", 0x1d4a4f],
+  ["oyster", 0xe4dccb],
+  ["twilight mauve", 0x5c4960],
+  ["bioluminescent aqua", 0x5ff0dc],
 ];
 
 /**

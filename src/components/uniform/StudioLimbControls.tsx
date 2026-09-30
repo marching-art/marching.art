@@ -15,6 +15,7 @@ import { LABEL } from './studioTokens';
 type PackLabel = (label: string, packId: string) => string;
 const PLAIN: PackLabel = (label) => label;
 const PRISM = 'pack_prism_forge';
+const WILDWOOD = 'pack_wildwood';
 
 /** A two-color glow fade (Prism Forge cuffs and hems): [upper, edge]. */
 function GlowPair({
@@ -162,6 +163,22 @@ export function ArmControls({
           onChange={(v) => v && onPatch({ glowLine: v })}
         />
       )}
+      {arm.type !== 'none' && (
+        <Toggle
+          label={packLabel(arm.type === 'bare' ? 'Veins (gauntlet/glove)' : 'Veins', WILDWOOD)}
+          checked={Boolean(arm.veins)}
+          onChange={(v) =>
+            onPatch({ veins: v ? METAL_HEX[colorway.metal] || METAL_HEX.gold : null })
+          }
+        />
+      )}
+      {arm.type !== 'none' && arm.veins && (
+        <ChannelRow
+          label="Arm veins"
+          value={arm.veins}
+          onChange={(v) => v && onPatch({ veins: v })}
+        />
+      )}
       {arm.type === 'sleeve' && arm.cuffGlow && (
         <GlowPair
           upperLabel="Cuff glow"
@@ -295,9 +312,21 @@ export function LegControls({
           checked={Boolean(leg.hemGlow)}
           onChange={(v) => onPatch({ hemGlow: v ? [colorway.secondary, colorway.accent] : null })}
         />
+        <Toggle
+          label={packLabel('Veins', WILDWOOD)}
+          checked={Boolean(leg.veins)}
+          onChange={(v) => onPatch({ veins: v ? metal : null })}
+        />
       </div>
-      {(leg.seams || leg.kneePlate) && (
+      {(leg.seams || leg.kneePlate || leg.veins) && (
         <div className="grid grid-cols-2 gap-2">
+          {leg.veins && (
+            <ChannelRow
+              label="Leg veins"
+              value={leg.veins}
+              onChange={(v) => v && onPatch({ veins: v })}
+            />
+          )}
           {leg.seams && (
             <ChannelRow label="Seams" value={leg.seams} onChange={(v) => onPatch({ seams: v })} />
           )}

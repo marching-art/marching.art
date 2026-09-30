@@ -71,6 +71,12 @@ export const NAMED_COLORS: NamedColor[] = [
   { name: 'Rose', hex: '#c25a6e' },
   { name: 'Copper', hex: '#b06a3a' },
   { name: 'Bronze', hex: '#8f6d20' },
+  { name: 'Peat', hex: '#2b231d' },
+  { name: 'Bark', hex: '#5b3f2c' },
+  { name: 'Oxidized Teal', hex: '#1d4a4f' },
+  { name: 'Oyster', hex: '#e4dccb' },
+  { name: 'Twilight Mauve', hex: '#5c4960' },
+  { name: 'Aqua Glow', hex: '#5ff0dc' },
   { name: 'Foil Gold', hex: '#caa64e' },
   { name: 'Platinum', hex: '#e5e4e2' },
 ];
@@ -198,6 +204,8 @@ export const TORSO_PRINT_OPTIONS = [
   { value: 'pinstripe', label: 'Pinstripe print' },
   // Prism Forge pack (Lumen & Vane) — premium, locked until owned.
   { value: 'shatter', label: 'Shatter print' },
+  // Wildwood pack (Alder & Moss) — premium, locked until owned.
+  { value: 'brocade', label: 'Patina brocade' },
 ] as const;
 
 /** Editor labels for each procedural surface's color slots (see PrintColors). */
@@ -208,6 +216,7 @@ export const PRINT_COLOR_SLOTS: Record<import('../types/uniform').PrintColorKey,
   plaid: ['Base', 'Band', 'Cross band'],
   foil: ['Foil tone', 'Highlight'],
   shatter: ['Base', 'Crack line'],
+  brocade: ['Base', 'Motif', 'Fleck'],
 };
 
 export const CHEST_OPTIONS = [
@@ -221,6 +230,8 @@ export const CHEST_OPTIONS = [
   { value: 'vinylPanel', label: 'Vinyl panel' },
   // Prism Forge pack (Lumen & Vane) — premium, locked until owned.
   { value: 'streak', label: 'Light streak' },
+  // Wildwood pack (Alder & Moss) — premium, locked until owned.
+  { value: 'gill', label: 'Gill fan' },
 ] as const;
 
 export const NECK_OPTIONS = [

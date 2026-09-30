@@ -39,6 +39,11 @@ const UNIFORM_PACKS = {
     house: "Lumen & Vane",
     features: "the split panel, shatter print, light streak, glow cuffs & hems, knee plates and seams",
   },
+  pack_wildwood: {
+    name: "Wildwood Collection",
+    house: "Alder & Moss",
+    features: "the vein network, bioluminescent glow, gill fan, sheer drape and patina brocade print",
+  },
 };
 
 /**
@@ -82,6 +87,45 @@ function usesPrismForge(fig) {
 }
 
 /**
+ * Whether an arm's Wildwood veins land on anything: a sleeve (full, half or
+ * detached), a gauntlet, or a glove. Mirrors armShowsVeins in
+ * src/utils/uniform.ts. Pure.
+ * @param {any} a
+ * @returns {boolean}
+ */
+function armShowsVeins(a) {
+  if (!a || !a.veins || a.type === "none") return false;
+  return a.type !== "bare" || Boolean(a.gauntlet || a.glove);
+}
+
+/**
+ * Whether a figure wears any Wildwood piece (Alder & Moss): the brocade print
+ * on any surface, the gill fan, the sheer drape, or veins anywhere they show
+ * (a vein glow only draws on a visible vein, so it never counts alone). Pure.
+ * @param {any} fig
+ * @returns {boolean}
+ */
+function usesWildwood(fig) {
+  const arms = [fig.armL, fig.armR];
+  const legs = [fig.legL, fig.legR];
+  const fills = [
+    fig.torsoFill,
+    fig.mockNeck,
+    fig.torsoSplit && fig.torsoSplit.fill,
+    ...arms.map((a) => a && a.fill),
+    ...legs.map((l) => l && l.fill),
+  ];
+  return Boolean(
+    fig.chest === "gill" ||
+      fig.drape ||
+      fig.veins ||
+      fills.includes("url:brocade") ||
+      arms.some(armShowsVeins) ||
+      legs.some((l) => l && l.veins)
+  );
+}
+
+/**
  * Which shop item ids (packs + prestige titles) a figure's features require.
  * Pure.
  * @param {any} figure a validated FigureConfig.
@@ -97,6 +141,7 @@ function requiredPacksFor(figure) {
     packs.add("pack_plumassier");
   }
   if (usesPrismForge(fig)) packs.add("pack_prism_forge");
+  if (usesWildwood(fig)) packs.add("pack_wildwood");
   if (fig.aiguillette) packs.add("title_drum_major");
   return [...packs];
 }
@@ -132,6 +177,7 @@ function missingPacksMessage(missing) {
 module.exports = {
   UNIFORM_PACKS,
   PRESTIGE_UNLOCKS,
+  armShowsVeins,
   requiredPacksFor,
   missingPacksFor,
   missingPacksMessage,

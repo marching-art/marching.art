@@ -156,3 +156,44 @@ describe("Prism Forge Collection (Lumen & Vane)", () => {
     assert.match(missingPacksMessage(missing), /Prism Forge Collection \(Lumen & Vane\)/);
   });
 });
+
+describe("Wildwood Collection (Alder & Moss)", () => {
+  const vein = "#e4dccb";
+  test("every living-forest piece maps to the one pack", () => {
+    const cases = [
+      { torsoFill: "url:brocade" },
+      { mockNeck: "url:brocade" },
+      { veins: { color: vein } },
+      { chest: "gill", gill: "#b06a3a" },
+      { drape: { color: "#5c4960", flip: true } },
+      { armL: { type: "sleeve", veins: vein } },
+      { armR: { type: "half", veins: vein } },
+      { armL: { type: "sleeve", detached: true, veins: vein } },
+      { armR: { type: "bare", veins: vein, gauntlet: { color: "#b06a3a" } } },
+      { armL: { type: "bare", veins: vein, glove: "#141414" } },
+      { legL: { veins: vein } },
+      { legR: { fill: "url:brocade" } },
+    ];
+    for (const fig of cases) {
+      assert.deepEqual(requiredPacksFor({ ...FREE, ...fig }), ["pack_wildwood"], JSON.stringify(fig));
+    }
+  });
+
+  test("invisible leftovers stay free", () => {
+    // a glow with no vein to carry it, and veins on bare skin, draw nothing
+    assert.deepEqual(requiredPacksFor({ ...FREE, veinGlow: "#5ff0dc" }), []);
+    assert.deepEqual(requiredPacksFor({ ...FREE, armL: { type: "bare", veins: vein } }), []);
+    assert.deepEqual(requiredPacksFor({ ...FREE, armR: { type: "none", veins: vein } }), []);
+  });
+
+  test("a brocade split panel needs both houses", () => {
+    const fig = { ...FREE, torsoSplit: { color: "#c3c9d1", fill: "url:brocade" } };
+    assert.deepEqual(requiredPacksFor(fig).sort(), ["pack_prism_forge", "pack_wildwood"]);
+  });
+
+  test("the missing-pack message names the house", () => {
+    const missing = missingPacksFor({ ...FREE, chest: "gill", gill: "#b06a3a" }, ["pack_prism_forge"]);
+    assert.deepEqual(missing, ["pack_wildwood"]);
+    assert.match(missingPacksMessage(missing), /Wildwood Collection \(Alder & Moss\)/);
+  });
+});

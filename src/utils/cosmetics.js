@@ -305,6 +305,14 @@ export const SHOP_ITEMS = [
     description:
       'Lumen & Vane — the light-cut look: a split two-tone torso, the shatter crack print, a glowing light-streak slash, glowing cuffs and hems, faceted knee plates and angular leg seams',
   },
+  {
+    id: 'pack_wildwood',
+    type: 'uniformPack',
+    name: 'Wildwood Collection',
+    price: 2000,
+    description:
+      'Alder & Moss — the living-forest look: a branching metallic vein network for torso, sleeves and legs that can glow from within, a pleated gill fan, a sheer asymmetric drape and the patina brocade print',
+  },
 ];
 
 /**

@@ -8,6 +8,7 @@
 // The mirror test keeps pack ids in lock-step with the shop catalog.
 
 import type { FigureConfig } from '../types/uniform';
+import { armShowsVeins } from './uniform';
 
 export interface UniformPackMeta {
   /** Shop item id — pack ids must match SHOP_ITEMS type 'uniformPack' in
@@ -60,6 +61,14 @@ export const UNIFORM_PACKS: UniformPackMeta[] = [
       'the split panel, shatter print, light streak, glow cuffs & hems, knee plates and seams',
   },
   {
+    id: 'pack_wildwood',
+    kind: 'pack',
+    name: 'Wildwood Collection',
+    house: 'Alder & Moss',
+    features:
+      'the vein network, bioluminescent glow, gill fan, sheer drape and patina brocade print',
+  },
+  {
     id: 'title_drum_major',
     kind: 'prestige',
     name: "the Drum Major's aiguillette",
@@ -92,6 +101,31 @@ export function usesPrismForge(fig: FigureConfig): boolean {
   );
 }
 
+/**
+ * Whether a figure wears any Wildwood piece (Alder & Moss): the brocade print
+ * on any surface, the gill fan, the sheer drape, or veins anywhere they show
+ * (a vein glow counts only while some vein is visible to carry it). Pure.
+ */
+export function usesWildwood(fig: FigureConfig): boolean {
+  const arms = [fig.armL, fig.armR];
+  const legs = [fig.legL, fig.legR];
+  const fills = [
+    fig.torsoFill,
+    fig.mockNeck,
+    fig.torsoSplit?.fill,
+    ...arms.map((a) => a?.fill),
+    ...legs.map((l) => l?.fill),
+  ];
+  return Boolean(
+    fig.chest === 'gill' ||
+    fig.drape ||
+    fig.veins ||
+    fills.includes('url:brocade') ||
+    arms.some((a) => armShowsVeins(a)) ||
+    legs.some((l) => l?.veins)
+  );
+}
+
 /** Which shop item ids (packs + prestige titles) a figure requires. Pure. */
 export function requiredPacksFor(figure: FigureConfig | undefined | null): string[] {
   const packs = new Set<string>();
@@ -103,6 +137,7 @@ export function requiredPacksFor(figure: FigureConfig | undefined | null): strin
     packs.add('pack_plumassier');
   }
   if (usesPrismForge(fig)) packs.add('pack_prism_forge');
+  if (usesWildwood(fig)) packs.add('pack_wildwood');
   if (fig.aiguillette) packs.add('title_drum_major');
   return [...packs];
 }

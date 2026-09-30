@@ -20,6 +20,7 @@
 // director's free-text aiHints are delimited by the prompt builders instead.
 
 const { proseColorName } = require("./uniformValidation");
+const { armShowsVeins } = require("./uniformEntitlements");
 
 const HEX_RE = /^#[0-9a-f]{6}$/i;
 
@@ -32,6 +33,7 @@ const STOCK_PRINT_COLORS = {
   plaid: ["#d0951c", "#b57712", "#e8c25a"],
   foil: ["#caa03c", "#f2df9a"],
   shatter: ["#16181d", "#c9ced6"],
+  brocade: ["#1d4a4f", "#3f7f78", "#b88a4a"],
 };
 
 /** Hardware metals (METAL_HEX in src/data/uniformCatalog.ts). */
@@ -199,6 +201,10 @@ function fillProse(fig, fill, axis = "top to bottom") {
       const [base, line] = printColors(fig, "shatter");
       return `a faceted SHATTER print: ${named(base)} cloth crazed with a network of thin ${named(line)} crack lines, like cracked glass or a geometric web`;
     }
+    case "url:brocade": {
+      const [base, motif, fleck] = printColors(fig, "brocade");
+      return `a PATINA BROCADE print: ${named(base)} cloth woven with a tone-on-tone ${named(motif)} damask leaf-and-scroll motif, mottled like aged oxidized metal and flecked with ${named(fleck)}`;
+    }
     default:
       if (fill.startsWith("url:")) return gradientProse(fig, fill.slice(4), axis);
       return null;
@@ -222,6 +228,7 @@ function fillLabel(fig, fill, fallbackHex) {
       "url:plaid": "a plaid print",
       "url:foil": "metallic foil",
       "url:shatter": "a shatter crack print",
+      "url:brocade": "a patina brocade print",
     };
     if (labels[fill]) return labels[fill];
     if (fill.startsWith("url:") && gradientProse(fig, fill.slice(4), "")) return "an ombré gradient";
@@ -259,6 +266,33 @@ function normalizeFigure(raw) {
     legR = legR || base;
   }
   return { ...fig, armL, armR, legL, legR };
+}
+
+/**
+ * Whether any Wildwood vein shows anywhere on the (normalized) figure — the
+ * vein glow only draws on a visible vein.
+ * @param {object} fig
+ * @returns {boolean}
+ */
+function showsVeins(fig) {
+  const legs = [fig.legL, fig.legR];
+  return Boolean(
+    (fig.veins && isHex(fig.veins.color)) ||
+      armShowsVeins(fig.armL) ||
+      armShowsVeins(fig.armR) ||
+      legs.some((l) => l && isHex(l.veins))
+  );
+}
+
+/**
+ * " that GLOWS … from within" when the figure's veins are bioluminescent.
+ * @param {object} fig
+ * @returns {string}
+ */
+function veinGlowProse(fig) {
+  return isHex(fig.veinGlow)
+    ? ` that GLOWS ${named(fig.veinGlow)} from within (soft bioluminescent light seeping along every line)`
+    : "";
 }
 
 /**
@@ -301,6 +335,15 @@ function armProse(fig, arm, torsoColor) {
     parts.push("no gauntlet cuff");
   }
   parts.push(isHex(arm.glove) ? `${named(arm.glove)} glove` : "BARE HAND (no glove)");
+  if (isHex(arm.veins) && armShowsVeins(arm)) {
+    const on = [];
+    if (arm.type !== "bare") on.push("sleeve");
+    if (arm.gauntlet) on.push("gauntlet");
+    if (isHex(arm.glove)) on.push("the back of the glove");
+    parts.push(
+      `raised metallic ${named(arm.veins)} VEIN line-art (a branching organic network like roots or mycelium) running from the shoulder down the arm across the ${on.join(", ")}${veinGlowProse(fig)}`
+    );
+  }
   return parts.join("; ");
 }
 
@@ -328,6 +371,11 @@ function legProse(fig, leg, fallback) {
     parts.push(`thin angular ${named(l.seams)} panel seams running from the hip, converging at the knee, then splitting again down to the hem`);
   }
   if (isHex(l.kneePlate)) parts.push(`a faceted ${named(l.kneePlate)} diamond plate at the knee`);
+  if (isHex(l.veins)) {
+    parts.push(
+      `raised metallic ${named(l.veins)} VEIN line-art climbing from the hem up the leg, branching like roots${veinGlowProse(fig)}`
+    );
+  }
   if (isHexPair(l.hemGlow)) {
     parts.push(
       `a GLOWING hem: the lower leg lights up, fading in from ${named(l.hemGlow[0])} to a bright ${named(l.hemGlow[1])} glow along the hem`
@@ -410,6 +458,8 @@ function chestProse(fig, metal) {
       const core = isHex(fig.streakCore) ? named(fig.streakCore) : "near-white";
       return `a GLOWING LIGHT-STREAK slash: a narrow blade of light running ${run}, with a hot ${core} core line inside ${halo} that blooms softly onto the fabric (like a neon or LED light strip)`;
     }
+    case "gill":
+      return `a pleated GILL FAN inset in ${named(fig.gill)}: a wedge of fine radiating lamellae (like the gills of a mushroom or the ribs of a scallop shell) fanning out from a small dark boss at the center chest up across the ${reverse ? "viewer's LEFT" : "viewer's RIGHT"} shoulder`;
     case "vinylPanel":
       return `a glossy vinyl front panel in ${named(fig.panel)} from the collar to the hips with a ${named(INK.zipper)} center zipper, edged in ${isHex(fig.panelTrim) ? named(fig.panelTrim) : named(INK.visor)}`;
     default:
@@ -486,7 +536,12 @@ function waistProse(fig, metal) {
   if (Array.isArray(fig.streamers) && fig.streamers.length === 2 && fig.streamers.every(isHex)) {
     parts.push(`two long ribbon streamers, ${named(fig.streamers[0])} and ${named(fig.streamers[1])}, hanging from the waist`);
   }
-  return parts.length ? parts.join("; ") : "no belt, waistband, fringe, or streamers (clean waist)";
+  if (fig.drape && isHex(fig.drape.color)) {
+    parts.push(
+      `a SHEER translucent ${named(fig.drape.color)} chiffon DRAPE hanging from under the jacket at the viewer's ${fig.drape.flip ? "RIGHT" : "LEFT"} hip, flowing past the knee to a pointed handkerchief hem (the leg shows through the fabric)`
+    );
+  }
+  return parts.length ? parts.join("; ") : "no belt, waistband, fringe, streamers, or drape (clean waist)";
 }
 
 /**
@@ -565,6 +620,11 @@ function torsoProse(fig, cw) {
     sp && isHex(sp.color)
       ? `; SPLIT two-tone torso: the ${sp.flip ? "viewer's-LEFT" : "viewer's-RIGHT"} part of the torso — everything on that side of a diagonal from the viewer's ${sp.flip ? "LEFT" : "RIGHT"} shoulder down to the viewer's ${sp.flip ? "RIGHT" : "LEFT"} hip — is a contrasting panel in ${fillProse(fig, sp.fill) || `solid ${named(sp.color)}`}`
       : "";
+  const vn = fig.veins;
+  const veins =
+    vn && isHex(vn.color)
+      ? `; a raised metallic ${named(vn.color)} VEIN NETWORK — branching organic line-art like tree roots or mycelium — climbs from the viewer's ${vn.flip ? "RIGHT" : "LEFT"} hip across the torso toward the shoulders${veinGlowProse(fig)}`
+      : "";
   const finishes = [];
   if (fig.velvet) finishes.push("velvet (deep matte nap with soft sheen)");
   if (fig.satin) finishes.push("satin (smooth glossy sheen)");
@@ -575,8 +635,11 @@ function torsoProse(fig, cw) {
   if (fig.glow && isHex(fig.glowArt)) {
     finishes.push(`glowing ${named(fig.glowArt)} line-art / light piping traced across the torso`);
   }
+  if (isHex(fig.veinGlow) && showsVeins(fig)) {
+    finishes.push(`bioluminescent: every vein line glows ${named(fig.veinGlow)} from within`);
+  }
   return {
-    torso: `${style} in ${fill}${split}`,
+    torso: `${style} in ${fill}${split}${veins}`,
     torsoShort: `${style.split(":")[0].split(" (")[0]} in ${fillLabel(fig, fig.torsoFill, base)}`,
     finish: finishes.length ? finishes.join("; ") : "matte fabric, no sheen, no sequins, no glow",
     torsoColor: fill,
@@ -702,6 +765,7 @@ function describeFigure(design) {
     swash: "a sequined modern swash",
     vinylPanel: "a zippered vinyl front panel",
     streak: "a glowing light-streak slash",
+    gill: "a pleated gill fan",
   };
   const summary = [
     torsoShort,

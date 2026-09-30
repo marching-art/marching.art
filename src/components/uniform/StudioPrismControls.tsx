@@ -3,7 +3,7 @@
 // =============================================================================
 // Split out of StudioEditor.tsx (max-lines guardrail). The split panel covers
 // one side of the torso along the light-streak diagonal; it can be a solid
-// color or the shatter print. Edits flow back through onPatch, which the
+// color, the shatter print, or the Wildwood patina brocade. Edits flow back through onPatch, which the
 // editor routes through withDerivedFlags (so the shatter def is defined only
 // while something wears it).
 
@@ -42,12 +42,13 @@ export default function TorsoSplitControls({
             options={[
               { value: 'solid', label: 'Solid' },
               { value: 'shatter', label: packLabel('Shatter print', 'pack_prism_forge') },
+              { value: 'brocade', label: packLabel('Patina brocade', 'pack_wildwood') },
             ]}
-            value={split.fill === 'url:shatter' ? 'shatter' : 'solid'}
-            onSelect={(v) => patchSplit({ fill: v === 'shatter' ? 'url:shatter' : null })}
+            value={split.fill?.startsWith('url:') ? split.fill.slice(4) : 'solid'}
+            onSelect={(v) => patchSplit({ fill: v === 'solid' ? null : `url:${v}` })}
           />
           <div className="grid grid-cols-2 gap-2">
-            {split.fill !== 'url:shatter' && (
+            {!split.fill && (
               <ChannelRow
                 label="Panel"
                 value={split.color}

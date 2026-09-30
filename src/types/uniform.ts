@@ -49,14 +49,15 @@ export interface GradStop {
 export type ProceduralPrint = 'sunburst' | 'opart' | 'pinstripe';
 
 /** Every procedural surface whose colors a director can override. */
-export type PrintColorKey = ProceduralPrint | 'plaid' | 'foil' | 'shatter';
+export type PrintColorKey = ProceduralPrint | 'plaid' | 'foil' | 'shatter' | 'brocade';
 
 /**
  * Director color overrides for the figure's procedural prints. Each surface
  * exposes its identity slots as a fixed-length hex list (lengths enforced
  * server-side): sunburst [center, mid, outer]; opart [base, dot A, dot B];
  * pinstripe [base, stripe]; plaid [base, band, cross band]; foil
- * [tone, highlight]; shatter [base, crack line]. Derived shades (the burst's dark falloff, the op-art
+ * [tone, highlight]; shatter [base, crack line]; brocade [base, motif,
+ * fleck]. Derived shades (the burst's dark falloff, the op-art
  * wave, the plaid's thin band, the foil ramp) come from these in the
  * renderer. An absent surface renders with its stock palette
  * (PRINT_PALETTES in data/uniformRenderTheme).
@@ -66,7 +67,10 @@ export type PrintColors = Partial<Record<PrintColorKey, HexColor[] | null>>;
 /** 'longcoat' is a Tailors' Cut premium silhouette (Harrow & Finch). */
 export type TorsoStyle = 'jacket' | 'tunic' | 'jumpsuit' | 'dress' | 'longcoat';
 
-/** 'streak' is a Prism Forge premium treatment (Lumen & Vane). */
+/**
+ * 'streak' is a Prism Forge premium treatment (Lumen & Vane); 'gill' is a
+ * Wildwood premium treatment (Alder & Moss).
+ */
 export type ChestTreatment =
   | 'none'
   | 'braid'
@@ -76,7 +80,8 @@ export type ChestTreatment =
   | 'buttons'
   | 'swash'
   | 'vinylPanel'
-  | 'streak';
+  | 'streak'
+  | 'gill';
 
 export type HatType = 'shako' | 'pith' | 'campaign' | 'aussie' | 'contour' | 'busby' | null;
 
@@ -126,6 +131,26 @@ export interface TorsoSplitConfig {
   flip?: boolean;
 }
 
+/**
+ * Vein network across the torso (Wildwood pack): a branching raised-relief
+ * line-art that climbs from the hip toward the shoulder. Default rises on the
+ * viewer's left; `flip` mirrors it.
+ */
+export interface VeinConfig {
+  color: HexColor;
+  flip?: boolean;
+}
+
+/**
+ * Sheer drape (Wildwood pack): a translucent chiffon panel that hangs from
+ * under the jacket at one hip down past the knee with a pointed hem. Default
+ * hangs on the viewer's left; `flip` mirrors it.
+ */
+export interface DrapeConfig {
+  color: HexColor;
+  flip?: boolean;
+}
+
 /** One-shoulder cavalry cape (Military Outfitters pack). */
 export interface CapeConfig {
   color: HexColor;
@@ -161,6 +186,11 @@ export interface ArmConfig {
   gauntlet?: { color: HexColor; sequin?: boolean } | null;
   /** Glowing cuff fade up the forearm, [upper, wrist] (Prism Forge pack). */
   cuffGlow?: [HexColor, HexColor] | null;
+  /**
+   * Vein line-art running shoulder → hand over whatever covers the arm: the
+   * sleeve, a gauntlet, a glove (Wildwood pack).
+   */
+  veins?: HexColor | null;
   /** Glove color; null/undefined renders a bare hand in the skin tone. */
   glove?: HexColor | null;
 }
@@ -183,6 +213,8 @@ export interface LegConfig {
   kneePlate?: HexColor | null;
   /** Thin angular panel seams running hip → knee → hem (Prism Forge pack). */
   seams?: HexColor | null;
+  /** Vein line-art climbing from the hem up the leg (Wildwood pack). */
+  veins?: HexColor | null;
 }
 
 /**
@@ -213,6 +245,17 @@ export interface FigureConfig {
   shatter?: boolean;
   /** Split-panel torso (Prism Forge pack). */
   torsoSplit?: TorsoSplitConfig | null;
+  /** Define the patina brocade print (referenced as "url:brocade"; Wildwood). */
+  brocade?: boolean;
+  /** Vein network across the torso (Wildwood pack). */
+  veins?: VeinConfig | null;
+  /**
+   * Bioluminescent veins (Wildwood pack): every vein — torso, arms, legs —
+   * carries a soft glow in this color under its metallic surface.
+   */
+  veinGlow?: HexColor | null;
+  /** Sheer asymmetric drape from one hip (Wildwood pack). */
+  drape?: DrapeConfig | null;
   /** Define the glow filter (used by glowArt / arm glowLine). */
   glow?: boolean;
   /** Glow line-art color on the torso. */
@@ -263,6 +306,8 @@ export interface FigureConfig {
   streak?: HexColor | null;
   /** Light streak's hot core line; null → near-white. */
   streakCore?: HexColor | null;
+  /** Gill fan inset color (chest 'gill'; chestReverse mirrors it). */
+  gill?: HexColor | null;
 
   metal?: HexColor | null;
   collar?: HexColor | null;

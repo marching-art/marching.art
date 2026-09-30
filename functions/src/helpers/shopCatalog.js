@@ -74,6 +74,7 @@ const SHOP_CATALOG = [
   { id: 'pack_tailors_cut', type: 'uniformPack', name: "The Tailors' Cut", price: 3000 },
   { id: 'pack_plumassier', type: 'uniformPack', name: 'Plumassier Collection', price: 1200 },
   { id: 'pack_prism_forge', type: 'uniformPack', name: 'Prism Forge Collection', price: 2000 },
+  { id: 'pack_wildwood', type: 'uniformPack', name: 'Wildwood Collection', price: 2000 },
 ];
 
 /** Equip slot per item type — one equipped item per slot */

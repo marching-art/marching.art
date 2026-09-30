@@ -343,3 +343,35 @@ test("every Prism Forge piece reaches the image prompt", () => {
   }
   assert.ok(spec.summary.includes("light-streak"));
 });
+
+test("every Wildwood piece reaches the image prompt", () => {
+  const spec = describeFigure({
+    colorway: { primary: "#2b231d", secondary: "#1d4a4f", accent: "#b06a3a", metal: "gold" },
+    figure: {
+      skin: "#8d5a3b",
+      jacket: "#2b231d",
+      torsoFill: "url:brocade",
+      printColors: { brocade: ["#a10001", "#a10002", "#a10003"] },
+      veins: { color: "#a10004" },
+      veinGlow: "#a10005",
+      chest: "gill",
+      gill: "#a10006",
+      drape: { color: "#a10007", flip: true },
+      armL: { type: "sleeve", veins: "#a10008", glove: "#141414" },
+      armR: { type: "bare", veins: "#a10009" },
+      legL: { color: "#141414", veins: "#a1000a" },
+      legR: { color: "#141414" },
+    },
+  });
+  const text = spec.block.toLowerCase();
+  for (const i of [1, 2, 3, 4, 5, 6, 7, 8, 10]) {
+    const hex = `#a1000${i.toString(16)}`;
+    assert.ok(text.includes(hex), `spec is missing ${hex}`);
+  }
+  // veins on a bare, ungloved arm draw nothing, so the prompt skips them
+  assert.ok(!text.includes("#a10009"));
+  for (const phrase of ["patina brocade", "vein network", "gill fan", "sheer", "bioluminescent", "viewer's right hip", "back of the glove"]) {
+    assert.ok(text.includes(phrase), `spec is missing "${phrase}"`);
+  }
+  assert.ok(spec.summary.includes("gill fan"));
+});
