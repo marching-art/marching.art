@@ -1,5 +1,27 @@
 [
   {
+    "id": "2026-10-01-schedule-travel-and-rivals",
+    "date": "2026-10-01",
+    "title": "Plan your Podium tour from the Schedule — travel costs and rivals on every show",
+    "category": "feature",
+    "summary": "Every upcoming show on the Schedule now shows what getting there would cost your Podium corps from your previous stop, flags the closest show each day, and tells you when one of your rivals is attending.",
+    "highlights": [
+      "Mileage, travel stamina, heat and any required flight for each show, measured from the last show you've scheduled before it (or where your corps is now).",
+      "A Closest tag marks the nearest show on each day, so you can build your tour day by day without a map.",
+      "Picking a show between two booked stops also shows the trip on to your next stop.",
+      "The same travel line appears on the Podium row when you open a show to register.",
+      "Rival attending: shows your rivals have signed up for are flagged, and rivals are tagged in each show's Attending list.",
+      "At the start of a season, before anyone has a score, rivals are matched on last season's results. The Dashboard marks these as Last season."
+    ]
+  },
+  {
+    "id": "2026-10-01-route-flight-order",
+    "date": "2026-10-01",
+    "title": "Upcoming route lists flights in the order you take them",
+    "category": "fix",
+    "summary": "On the Upcoming route, each flight or airfare note now appears just above the show it flies you to and names both cities, so the flight to Hawaii comes before the Hawaii show and the flight home comes after it."
+  },
+  {
     "id": "2026-10-01-season-performance-achievements",
     "date": "2026-10-01",
     "title": "New achievements for how your season went",

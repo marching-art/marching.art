@@ -67,8 +67,26 @@ function rivalGroupOf(entry) {
 }
 
 /**
- * Build a flat list of all (user, class, corps) entries with a score, grouped by bucket.
- * Skips entries with no totalSeasonScore (corps not yet competing).
+ * The corps' final score from its most recent archived season — Podium résumé
+ * rows carry `finalScore`, fantasy rows `totalSeasonScore` — or 0 when it has
+ * no scored history. Seeds rivals at the start of a season, before anyone has
+ * a score this season (see pickRivalsForEntry).
+ */
+function lastSeasonScoreOf(corpsData) {
+  const rows = Array.isArray(corpsData && corpsData.seasonHistory) ? corpsData.seasonHistory : [];
+  for (let i = rows.length - 1; i >= 0; i--) {
+    const row = rows[i];
+    if (!row) continue;
+    const score = Number(row.finalScore != null ? row.finalScore : row.totalSeasonScore);
+    if (score > 0) return score;
+  }
+  return 0;
+}
+
+/**
+ * Build a flat list of all (user, class, corps) entries, grouped by bucket.
+ * A corps is indexed once it has a score this season OR a scored previous
+ * season (its seed); a brand-new corps with neither has nothing to compare.
  */
 function indexCorpsByBucket(profileDocs, userIds) {
   const byBucket = { soundSport: [], competitive: [], podium: [] };
@@ -85,7 +103,8 @@ function indexCorpsByBucket(profileDocs, userIds) {
       const corpsData = corps[corpsClass];
       if (!corpsData) continue;
       const score = Number(corpsData.totalSeasonScore || 0);
-      if (score <= 0) continue;
+      const lastSeasonScore = lastSeasonScoreOf(corpsData);
+      if (score <= 0 && lastSeasonScore <= 0) continue;
       const bucket = bucketFor(corpsClass);
       if (!bucket) continue;
 
@@ -95,6 +114,7 @@ function indexCorpsByBucket(profileDocs, userIds) {
         corpsClass,
         corpsName: corpsData.corpsName || corpsData.name || "Unnamed Corps",
         score,
+        lastSeasonScore,
         avatarUrl: corpsData.avatarUrl || null,
         // Podium's internal division (worldClass/openClass/aClass), written by
         // the nightly Podium processor onto the corps display copy.
@@ -114,19 +134,26 @@ function indexCorpsByBucket(profileDocs, userIds) {
  * Pick rivals for a single corps entry. Prefers same-group neighbors (class in
  * the competitive bucket, division in the Podium bucket); falls back to
  * bucket-mates only if needed to reach RIVAL_TARGET.
+ *
+ * A corps that has scored this season is matched on this season's score
+ * against other scored corps. One that hasn't yet (the season's first days) is
+ * matched on LAST season's final score against everyone with one — like for
+ * like, never a partial season against a full one — and its rows carry
+ * `basis: "lastSeason"` so the UI can say so.
  */
 function pickRivalsForEntry(entry, bucketEntries) {
-  const others = bucketEntries.filter(
-    (e) => e.uid !== entry.uid,
-  );
+  const seeded = !(entry.score > 0);
+  const metric = (e) => (seeded ? e.lastSeasonScore || 0 : e.score);
+  const others = bucketEntries.filter((e) => e.uid !== entry.uid && metric(e) > 0);
   if (others.length === 0) return [];
 
   const entryGroup = rivalGroupOf(entry);
   const sameGroup = others.filter((e) => rivalGroupOf(e) === entryGroup);
   const otherGroup = others.filter((e) => rivalGroupOf(e) !== entryGroup);
 
+  const entryMetric = metric(entry);
   const byCloseness = (a, b) =>
-    Math.abs(a.score - entry.score) - Math.abs(b.score - entry.score);
+    Math.abs(metric(a) - entryMetric) - Math.abs(metric(b) - entryMetric);
 
   const picks = [];
   for (const candidate of [...sameGroup].sort(byCloseness)) {
@@ -141,8 +168,11 @@ function pickRivalsForEntry(entry, bucketEntries) {
   }
 
   // Compute global rank within the bucket once for context.
+  // (Unscored corps sort last and have no rank yet.)
   const bucketRankByUid = new Map();
-  bucketEntries.forEach((e, i) => bucketRankByUid.set(`${e.uid}:${e.corpsClass}`, i + 1));
+  bucketEntries
+    .filter((e) => e.score > 0)
+    .forEach((e, i) => bucketRankByUid.set(`${e.uid}:${e.corpsClass}`, i + 1));
   const userRank = bucketRankByUid.get(`${entry.uid}:${entry.corpsClass}`) || null;
 
   return picks.map((rival) => {
@@ -155,14 +185,15 @@ function pickRivalsForEntry(entry, bucketEntries) {
       bucketRank: bucketRankByUid.get(`${rival.uid}:${rival.corpsClass}`) || null,
       userBucketRank: userRank,
       ...(rival.division ? { division: rival.division } : {}),
+      ...(seeded ? { basis: "lastSeason" } : {}),
     };
 
     // SoundSport never reveals raw scores. Surface medal tier and the user's
     // own medal so the dashboard / email can render a relative comparison
     // without leaking numeric scores.
     if (rival.corpsClass === "soundSport" || entry.corpsClass === "soundSport") {
-      const rivalMedal = medalForScore(rival.score);
-      const userMedal = medalForScore(entry.score);
+      const rivalMedal = medalForScore(metric(rival));
+      const userMedal = medalForScore(entryMetric);
       return {
         ...base,
         medal: rivalMedal.medal,
@@ -174,8 +205,8 @@ function pickRivalsForEntry(entry, bucketEntries) {
 
     return {
       ...base,
-      score: rival.score,
-      scoreDelta: Number((rival.score - entry.score).toFixed(3)),
+      score: metric(rival),
+      scoreDelta: Number((metric(rival) - entryMetric).toFixed(3)),
     };
   });
 }
@@ -227,6 +258,7 @@ async function updateRivalsLogic() {
   for (const bucket of Object.keys(byBucket)) {
     const perClassCounters = new Map();
     for (const entry of byBucket[bucket]) {
+      if (!(entry.score > 0)) continue; // seeded only — no rank until it scores
       const nextRank = (perClassCounters.get(entry.corpsClass) || 0) + 1;
       perClassCounters.set(entry.corpsClass, nextRank);
       classRankByKey.set(`${entry.uid}:${entry.corpsClass}`, nextRank);
@@ -317,4 +349,5 @@ module.exports = {
   bucketFor,
   indexCorpsByBucket,
   pickRivalsForEntry,
+  lastSeasonScoreOf,
 };

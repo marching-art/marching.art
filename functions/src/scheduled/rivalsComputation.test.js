@@ -10,6 +10,7 @@ const {
   bucketFor,
   indexCorpsByBucket,
   pickRivalsForEntry,
+  lastSeasonScoreOf,
 } = require("./rivalsComputation");
 
 function profileDoc(data) {
@@ -144,5 +145,68 @@ describe("pickRivalsForEntry (podium bucket)", () => {
       rivals.map((r) => r.uid),
       ["world-far", "open-close"],
     );
+  });
+});
+
+describe("season-start seeding from last season's score", () => {
+  const corps = (score, history) => ({
+    corpsName: "C",
+    totalSeasonScore: score,
+    seasonHistory: history,
+  });
+
+  test("lastSeasonScoreOf reads the newest scored résumé row (podium or fantasy)", () => {
+    assert.equal(lastSeasonScoreOf(corps(0, [{ totalSeasonScore: 70 }, { finalScore: 81.2 }])), 81.2);
+    assert.equal(lastSeasonScoreOf(corps(0, [{ totalSeasonScore: 70 }, { totalSeasonScore: 0 }])), 70);
+    assert.equal(lastSeasonScoreOf(corps(0, undefined)), 0);
+  });
+
+  test("an unscored corps with history is indexed; one with neither is not", () => {
+    const docs = [
+      profileDoc({ username: "a", corps: { worldClass: corps(0, [{ totalSeasonScore: 80 }]) } }),
+      profileDoc({ username: "b", corps: { worldClass: corps(0, []) } }),
+    ];
+    const byBucket = indexCorpsByBucket(docs, ["a", "b"]);
+    assert.deepEqual(
+      byBucket.competitive.map((e) => e.uid),
+      ["a"],
+    );
+    assert.equal(byBucket.competitive[0].lastSeasonScore, 80);
+  });
+
+  test("an unscored corps is matched on last season's scores, flagged lastSeason", () => {
+    const e = (uid, score, lastSeasonScore) => ({
+      uid,
+      username: uid,
+      corpsClass: "worldClass",
+      corpsName: uid,
+      score,
+      lastSeasonScore,
+    });
+    const me = e("me", 0, 80);
+    const bucket = [e("near", 0, 81), e("scoredFar", 50, 40), e("far", 0, 60), me];
+    const rivals = pickRivalsForEntry(me, bucket);
+    assert.deepEqual(
+      rivals.map((r) => r.uid),
+      ["near", "far", "scoredFar"],
+    );
+    assert.equal(rivals[0].basis, "lastSeason");
+    assert.equal(rivals[0].score, 81);
+    assert.equal(rivals[0].scoreDelta, 1);
+  });
+
+  test("a scored corps never compares against unscored (seed-only) corps", () => {
+    const me = { uid: "me", corpsClass: "worldClass", score: 50, lastSeasonScore: 0 };
+    const bucket = [
+      { uid: "seed", corpsClass: "worldClass", score: 0, lastSeasonScore: 50 },
+      { uid: "live", corpsClass: "worldClass", score: 60, lastSeasonScore: 0 },
+      me,
+    ];
+    const rivals = pickRivalsForEntry(me, bucket);
+    assert.deepEqual(
+      rivals.map((r) => r.uid),
+      ["live"],
+    );
+    assert.equal(rivals[0].basis, undefined);
   });
 });

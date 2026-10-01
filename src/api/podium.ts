@@ -48,6 +48,9 @@ export interface PodiumBlockResult {
 
 export interface PodiumRouteLeg {
   day: number;
+  // "City, ST" the leg departs from (the previous stop, or the current
+  // location for the first leg); null when that origin isn't on the map.
+  fromCity?: string | null;
   eventName: string | null;
   // Branded label for a fixed major or Championship Week round (null on a
   // self-pick, whose name is `eventName`).
@@ -486,6 +489,45 @@ export const setPodiumShows = createCallable<
 >('setPodiumShows');
 
 export const getPodiumState = createCallable<void, PodiumStateResponse>('getPodiumState');
+
+// Per-show travel for the Schedule page (design §5.3): the leg INTO each show the
+// corps could still add, routed from the venue of its last tour stop before that
+// day (or its current location), plus the hop on to its next booked stop.
+// Matches the route sheet's leg exactly once the show is added.
+export interface PodiumShowTravelLeg {
+  day: number;
+  fromCity: string | null;
+  fromDay: number | null; // the stop it's routed from; null = current location
+  fromHome: boolean; // routed from the corps' hometown (no show performed yet)
+  tier: string | null;
+  miles: number;
+  coinCost: number;
+  staminaCost: number;
+  heat: number;
+  mandatoryFlight: boolean;
+  airfareEligible: boolean;
+  airfareCost: number;
+  airfareStaminaCost: number | null;
+  onward: {
+    day: number;
+    city: string | null;
+    miles: number;
+    staminaCost: number;
+    mandatoryFlight: boolean;
+  } | null;
+  closest: boolean; // the day's nearest show (only when the day offers several)
+}
+
+export interface PodiumShowTravelResponse {
+  exists: boolean;
+  competitionDay: number;
+  /** Keyed `${day}|${eventName}`. */
+  legs: Record<string, PodiumShowTravelLeg>;
+}
+
+export const getPodiumShowTravel = createCallable<void, PodiumShowTravelResponse>(
+  'getPodiumShowTravel'
+);
 
 export const setPodiumFoodPlan = createCallable<
   { tier: string },

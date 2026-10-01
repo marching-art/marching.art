@@ -115,6 +115,11 @@ const RivalsPanel = memo(
                         <RankIcon className="w-3 h-3" />
                         {rankLabel}
                       </div>
+                      {rival.basis === 'lastSeason' && (
+                        <div className="text-[9px] uppercase tracking-wider text-muted">
+                          Last season
+                        </div>
+                      )}
                     </div>
                   </Link>
                 );
@@ -158,6 +163,13 @@ const RivalsPanel = memo(
                       >
                         <DeltaIcon className="w-3 h-3" />
                         {delta}
+                      </div>
+                    )}
+                    {/* Matched before anyone has scored this season — on last
+                        season's final scores (scheduled/rivalsComputation.js). */}
+                    {rival.basis === 'lastSeason' && (
+                      <div className="text-[9px] uppercase tracking-wider text-muted">
+                        Last season
                       </div>
                     )}
                   </div>

@@ -9,6 +9,9 @@ import { championshipShowFor, championshipModalShow } from '../utils/scheduleUti
 import { useIsShowClosed } from '../components/Schedule/showClockContext';
 import { formatEventName } from '../utils/season';
 import { CLASS_CONFIG, CHAMPIONSHIP_EVENTS } from './scheduleConstants';
+import { ShowInsights } from '../components/Schedule/ShowInsights';
+import { WeatherChip } from '../components/Schedule/WeatherChip';
+import { travelKey, rivalKey } from '../hooks/useScheduleInsights';
 import {
   isPodiumAutoAnchor,
   multiNightNights,
@@ -19,10 +22,15 @@ import {
 /** @typedef {import('../store/scheduleStore').ScheduleShow} ScheduleShow */
 /** @typedef {import('../api/podium').HostedEventRecord} HostedEventRecord */
 /** @typedef {import('../utils/podiumAttendance').PodiumAttendance} PodiumAttendance */
+/** @typedef {import('../api/podium').PodiumShowTravelLeg} PodiumShowTravelLeg */
+/** @typedef {import('../api/functions').RivalAttendee} RivalAttendee */
+/** Per-show Podium travel, keyed `${day}|${eventName}` (useScheduleInsights). */
+/** @typedef {Record<string, PodiumShowTravelLeg> | null | undefined} PodiumTravelMap */
+/** Rivals on each show's bill, keyed `${week}|${eventName}` (useScheduleInsights). */
+/** @typedef {Record<string, RivalAttendee[]> | null | undefined} RivalAttendanceMap */
 /** @typedef {(typeof CHAMPIONSHIP_EVENTS)[number]} ChampionshipEvent */
 /** @typedef {keyof typeof CLASS_CONFIG} CorpsClassKey */
 /** @typedef {{ name: string, color: string, bgColor: string }} ClassBadgeConfig */
-/** @typedef {{ summary?: string, tempF?: number, code?: number, hour?: number } | null | undefined} WeatherLike */
 /**
  * The director's profile as the schedule cards read it (`profileStore`'s
  * ProfileDoc keeps `corps` as unknown values; the cards read each fantasy
@@ -72,50 +80,6 @@ const fantasyCorpsEntries = (userProfile) =>
  */
 const showIsScored = (show) =>
   Array.isArray(show.scores) && show.scores.some((s) => s?.score != null);
-
-// An emoji for a WMO weather code (the backend stores show-time conditions on
-// each competition as { summary, tempF, code }). Falls back to a thermometer so
-// a code we don't map still renders a chip rather than nothing.
-/** @param {unknown} code */
-const weatherEmoji = (code) => {
-  const c = Number(code);
-  if (c === 0) return '☀️';
-  if (c === 1) return '🌤️';
-  if (c === 2) return '⛅';
-  if (c === 3) return '☁️';
-  if (c === 45 || c === 48) return '🌫️';
-  if (c >= 51 && c <= 57) return '🌦️';
-  if (c >= 61 && c <= 67) return '🌧️';
-  if (c >= 71 && c <= 77) return '❄️';
-  if (c >= 80 && c <= 82) return '🌦️';
-  if (c === 85 || c === 86) return '🌨️';
-  if (c >= 95 && c <= 99) return '⛈️';
-  return '🌡️';
-};
-
-// The show-time weather chip shared by every schedule card: the sky as an emoji
-// and the temperature, with the full conditions line in the tooltip. Renders
-// nothing until the backend has stamped weather on the competition (the
-// producer dates every show — regular, major, championship — from the season
-// calendar, so this is the venue's forecast for the night the show is actually
-// played this season).
-/** @param {{ weather: WeatherLike }} props */
-const WeatherChip = ({ weather }) => {
-  if (!weather?.summary) return null;
-  const hour = typeof weather.hour === 'number' ? weather.hour : 20;
-  const clock =
-    hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`;
-  return (
-    <span
-      className="flex items-center gap-1 flex-shrink-0 tabular-nums"
-      title={`${clock} · ${weather.summary}`}
-      aria-label={`Show-time weather: ${weather.summary}`}
-    >
-      <span aria-hidden="true">{weatherEmoji(weather.code)}</span>
-      {typeof weather.tempF === 'number' && <span>{weather.tempF}°</span>}
-    </span>
-  );
-};
 
 // =============================================================================
 // WEEK PILLS COMPONENT
@@ -268,6 +232,8 @@ const RegistrationBadges = ({ show, userProfile, podiumAttendance }) => {
  *   seasonUid: string | null | undefined,
  *   podiumAttendance: PodiumAttendance | null | undefined,
  *   hostedEvent: Partial<HostedEventRecord> | null | undefined,
+ *   podiumTravel?: PodiumTravelMap,
+ *   rivalAttendance?: RivalAttendanceMap,
  * }} props
  */
 const ShowCard = ({
@@ -280,6 +246,8 @@ const ShowCard = ({
   seasonUid,
   podiumAttendance,
   hostedEvent,
+  podiumTravel,
+  rivalAttendance,
 }) => {
   const isRegistered = useMemo(() => {
     if (podiumAttendsShow(podiumAttendance, show)) return true;
@@ -413,6 +381,14 @@ const ShowCard = ({
         </div>
       </div>
 
+      {/* Podium travel from the previous stop + rivals on the bill */}
+      {!isPast && (
+        <ShowInsights
+          travel={podiumTravel?.[travelKey(show)] || null}
+          rivals={rivalAttendance?.[rivalKey(show)] || null}
+        />
+      )}
+
       {/* Card Footer */}
       <div className="px-4 py-2 bg-surface-sunken">
         <div className="flex items-center justify-between min-h-[1.5rem]">
@@ -508,6 +484,8 @@ const DayIndicator = ({ date, dayNumber, isMajorDay = false }) => {
  *   seasonUid: string | null | undefined,
  *   podiumAttendance: PodiumAttendance | null | undefined,
  *   hostedByKey: HostedByKey,
+ *   podiumTravel?: PodiumTravelMap,
+ *   rivalAttendance?: RivalAttendanceMap,
  * }} props
  */
 const DayRow = ({
@@ -520,6 +498,8 @@ const DayRow = ({
   seasonUid,
   podiumAttendance,
   hostedByKey,
+  podiumTravel,
+  rivalAttendance,
 }) => {
   const isShowClosed = useIsShowClosed();
   const date = getActualDate(day);
@@ -545,6 +525,8 @@ const DayRow = ({
             seasonUid={seasonUid}
             podiumAttendance={podiumAttendance}
             hostedEvent={hostedByKey?.[`${show.day}|${show.eventName}`] || null}
+            podiumTravel={podiumTravel}
+            rivalAttendance={rivalAttendance}
           />
         ))}
       </div>
@@ -566,6 +548,8 @@ const DayRow = ({
  *   seasonUid: string | null | undefined,
  *   podiumAttendance: PodiumAttendance | null | undefined,
  *   hostedByKey: HostedByKey,
+ *   podiumTravel?: PodiumTravelMap,
+ *   rivalAttendance?: RivalAttendanceMap,
  * }} props
  */
 const ShowsList = ({
@@ -577,6 +561,8 @@ const ShowsList = ({
   seasonUid,
   podiumAttendance,
   hostedByKey,
+  podiumTravel,
+  rivalAttendance,
 }) => {
   // Group shows by day
   const showsByDay = useMemo(() => {
@@ -620,6 +606,8 @@ const ShowsList = ({
           seasonUid={seasonUid}
           podiumAttendance={podiumAttendance}
           hostedByKey={hostedByKey}
+          podiumTravel={podiumTravel}
+          rivalAttendance={rivalAttendance}
         />
       ))}
     </div>
@@ -819,6 +807,8 @@ const ChampionshipEventCard = ({
  *   onRegister: RegisterHandler,
  *   podiumAttendance: PodiumAttendance | null | undefined,
  *   hostedByKey: HostedByKey,
+ *   podiumTravel?: PodiumTravelMap,
+ *   rivalAttendance?: RivalAttendanceMap,
  * }} props
  */
 const ChampionshipWeekDisplay = ({
@@ -830,6 +820,8 @@ const ChampionshipWeekDisplay = ({
   onRegister,
   podiumAttendance,
   hostedByKey,
+  podiumTravel,
+  rivalAttendance,
 }) => {
   const isShowClosed = useIsShowClosed();
   // Group championship events by day. Each card is paired with its row in the
@@ -891,6 +883,8 @@ const ChampionshipWeekDisplay = ({
                       seasonUid={seasonUid}
                       podiumAttendance={podiumAttendance}
                       hostedEvent={hostedByKey?.[`${show.day}|${show.eventName}`] || null}
+                      podiumTravel={podiumTravel}
+                      rivalAttendance={rivalAttendance}
                     />
                   ))}
                 </div>

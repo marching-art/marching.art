@@ -68,8 +68,8 @@ export const CAPTION_CATEGORIES = {
 
 /**
  * Calculate total point value of a lineup
- * @param {Object} lineup - Object mapping caption to corps ID
- * @param {Array<{ id: string, value: number }>} availableCorps - Array of corps with value property
+ * @param {Record<string, string> | null | undefined} lineup - Object mapping caption to corps ID
+ * @param {Array<{ id: string, value: number }> | null | undefined} availableCorps - Array of corps with value property
  * @returns {number} Total point value
  */
 export const calculateLineupValue = (lineup, availableCorps) => {
@@ -88,13 +88,13 @@ export const calculateLineupValue = (lineup, availableCorps) => {
 
 /**
  * Check if a lineup is valid for a given class
- * @param {Object} lineup - Caption to corps ID mapping
+ * @param {Record<string, string>} lineup - Caption to corps ID mapping
  * @param {string} corpsClass - Competition class
  * @param {Array<{ id: string, value: number }>} availableCorps - Available corps with values
  * @param {{week?: number|null}} [options] - `week` applies that competition
  *   week's ramped cap (utils/classRegistry pointCapForWeek). Omitted, the
  *   class's full cap is used.
- * @returns {Object} { valid: boolean, reason: string, totalValue: number }
+ * @returns {{ valid: boolean, reason: string, totalValue: number }}
  */
 export const validateLineup = (lineup, corpsClass, availableCorps, options = {}) => {
   // Check all captions are selected
@@ -179,7 +179,7 @@ export const generateLineupHash = (lineup) => {
  * @param {number} corpsCoin - User's CorpsCoin balance
  * @param {string} corpsClass - Class to check
  * @param {number} weeksRemaining - Weeks until season end
- * @returns {Object} { canRegister: boolean, reason: string, cost: number }
+ * @returns {{ canRegister: boolean, reason: string, cost: number, requiresPayment?: boolean }}
  */
 export const canRegisterForClass = (userLevel, corpsCoin, corpsClass, weeksRemaining) => {
   const requiredLevel = CLASS_UNLOCK_REQUIREMENTS[corpsClass];
@@ -289,7 +289,7 @@ export const getMaxShowsForWeek = (week, totalWeeks = 7) => {
 
 /**
  * Format corps name with year for display
- * @param {{ year?: (string|number), name?: string }} corps - Corps object with name and year
+ * @param {{ year?: (string|number), name?: string } | null | undefined} corps - Corps object with name and year
  * @returns {string} Formatted name
  */
 export const formatCorpsName = (corps) => {
@@ -298,12 +298,20 @@ export const formatCorpsName = (corps) => {
 };
 
 /**
+ * @typedef {{
+ *   name: string, displayName: string, color: string, bgClass: string,
+ *   textClass: string, description: string, pointLimit: number,
+ *   requiredLevel: number, requiredXP: number, unlockCost?: number,
+ * }} ClassInfo
+ */
+
+/**
  * Get class display information
  * @param {string} corpsClass - Class identifier
- * @returns {Object} Display information
+ * @returns {ClassInfo} Display information
  */
 export const getClassInfo = (corpsClass) => {
-  /** @type {Record<string, any>} */
+  /** @type {Record<string, ClassInfo>} */
   const info = {
     soundSport: {
       name: 'SoundSport',

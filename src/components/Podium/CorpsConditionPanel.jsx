@@ -22,7 +22,13 @@ import {
   Plane,
 } from 'lucide-react';
 import { formatEventName } from '../../utils/season';
-import { BLOCKS } from './podiumConstants';
+import { BLOCKS, TRAVEL_TIER_LABELS } from './podiumConstants';
+import {
+  MandatoryFlightNote,
+  AirfareRow,
+  TodayAirfareNote,
+  StrandedAirfareNote,
+} from './RouteLegNotes';
 
 /** @typedef {import('../../api/podium').PodiumRouteLeg} PodiumRouteLeg */
 /** @typedef {import('../../api/podium').PodiumCurrentLocation} PodiumCurrentLocation */
@@ -36,14 +42,7 @@ const FOOD_TIERS = [
   { id: 'fullKitchen', label: 'Full kitchen', detail: '150 Budget/week · best recovery + morale' },
 ];
 
-/** @type {Record<string, string>} */
-const TIER_LABELS = {
-  local: 'Local',
-  dayTrip: 'Day trip',
-  overnightHaul: 'Overnight haul',
-  longHaul: 'Long haul',
-  crossCountry: 'Cross-country',
-};
+const TIER_LABELS = TRAVEL_TIER_LABELS;
 
 // Shared section header — icon + uppercase label, matches the panel's tone.
 /** @param {{icon: React.ElementType, children: React.ReactNode, className?: string}} props */
@@ -104,133 +103,6 @@ function CurrentLocationRow({ location, hasRoute }) {
 // Route itinerary shares one column template between its header and rows so
 // the day / show / travel / heat / stamina columns line up across the width.
 const ROUTE_COLS = 'grid grid-cols-[2.25rem_minmax(0,1fr)_auto_auto_auto] gap-x-3 items-center';
-
-// Airfare affordance under a long leg (design §5.3): fly to halve the travel-
-// stamina hit for a CorpsCoin fare charged from the Corps Budget. Booking is
-// free and reversible here — the fare only lands at the nightly processor,
-// priced against the leg the corps actually flies. Shown only on eligible
-// (over-the-floor) legs; disabled to book when the Budget can't cover the fare.
-/**
- * An over-ocean leg (to/from Hawaii): the flight isn't optional, so there's no
- * toggle — just the fare the nightly run will charge and the full stamina hit.
- * @param {{ leg: PodiumRouteLeg }} props
- */
-function MandatoryFlightNote({ leg }) {
-  return (
-    <div className="px-3 py-1 border-t border-line-subtle bg-surface-sunken/40 flex items-center gap-1.5 text-[9px] text-muted">
-      <Plane className="w-3 h-3 shrink-0 text-red-400" />
-      <span className="truncate">
-        Over-ocean flight required —{' '}
-        <span className="text-red-400 font-bold">{leg.coinCost} CC</span> from Budget, full −
-        {leg.staminaCost} travel stamina (no flight discount).
-      </span>
-    </div>
-  );
-}
-
-/**
- * @param {{
- *   leg: PodiumRouteLeg,
- *   budgetBalance: number,
- *   busy: boolean,
- *   disabled: boolean,
- *   onToggle: (fly: boolean) => void,
- * }} props
- */
-function AirfareRow({ leg, budgetBalance, busy, disabled, onToggle }) {
-  const affordable = budgetBalance >= (leg.airfareCost || 0);
-  const flownStamina = leg.airfareStaminaCost != null ? leg.airfareStaminaCost : leg.staminaCost;
-  const saved = Math.round((leg.staminaCost - flownStamina) * 10) / 10;
-  return (
-    <div className="px-3 py-1 border-t border-line-subtle bg-surface-sunken/40 flex items-center justify-between gap-2">
-      <div className="flex items-center gap-1.5 text-[9px] text-muted min-w-0">
-        <Plane className="w-3 h-3 shrink-0 text-interactive" />
-        {leg.airfarePurchased ? (
-          <span className="truncate">
-            Flying — <span className="text-interactive font-bold">{leg.airfareCost} CC</span> from
-            Budget, travel stamina halved to −{flownStamina}.
-          </span>
-        ) : (
-          <span className="truncate">
-            Fly this leg — <span className="text-white font-bold">{leg.airfareCost} CC</span> to
-            save {saved} stamina
-            {!affordable ? <span className="text-red-400/80"> · Budget too low</span> : null}.
-          </span>
-        )}
-      </div>
-      <button
-        disabled={disabled || (!leg.airfarePurchased && !affordable)}
-        onClick={() => onToggle(!leg.airfarePurchased)}
-        className={`shrink-0 text-[9px] font-bold uppercase px-2 py-0.5 rounded-none press-feedback disabled:opacity-40 ${
-          leg.airfarePurchased
-            ? 'border border-line text-muted hover:text-white'
-            : 'bg-interactive text-white hover:bg-interactive-hover'
-        }`}
-      >
-        {busy ? (
-          <Loader2 className="w-3 h-3 animate-spin" />
-        ) : leg.airfarePurchased ? (
-          'Cancel'
-        ) : (
-          'Fly'
-        )}
-      </button>
-    </div>
-  );
-}
-
-// Tonight's long leg: airfare booking closed with the day (setPodiumAirfare only
-// books days still ahead of today), so say what the nightly run will do —
-// fly it if a flight was booked, otherwise ride the bus — with no toggle.
-/** @param {{leg: PodiumRouteLeg}} props */
-function TodayAirfareNote({ leg }) {
-  return (
-    <div className="px-3 py-1 border-t border-line-subtle bg-surface-sunken/40 flex items-center gap-1.5 text-[9px] text-muted">
-      <Plane
-        className={`w-3 h-3 shrink-0 ${leg.airfarePurchased ? 'text-interactive' : 'text-muted'}`}
-      />
-      {leg.airfarePurchased ? (
-        <span className="truncate">
-          Flying tonight — <span className="text-interactive font-bold">{leg.airfareCost} CC</span>{' '}
-          from Budget, travel stamina halved to −{leg.airfareStaminaCost}.
-        </span>
-      ) : (
-        <span className="truncate">
-          Riding the bus tonight — airfare closes once the show day begins.
-        </span>
-      )}
-    </div>
-  );
-}
-
-// A previously-booked fly intent whose leg has since rerouted under the airfare
-// floor (design §5.3). The flag lingers harmlessly — the nightly processor
-// prices airfare on the REALIZED leg and simply won't fly a short one, so no
-// CorpsCoin is ever charged — but the route portal must SAY that rather than
-// silently dropping the "Flying" badge, which reads like a vanished purchase.
-// Offers a one-click clear to tidy the stale flag (re-book later if it reroutes
-// long again — toggling airfare is always free and reversible).
-/** @param {{busy: boolean, disabled: boolean, onClear: () => void}} props */
-function StrandedAirfareNote({ busy, disabled, onClear }) {
-  return (
-    <div className="px-3 py-1 border-t border-line-subtle bg-surface-sunken/40 flex items-center justify-between gap-2">
-      <div className="flex items-center gap-1.5 text-[9px] text-muted min-w-0">
-        <Plane className="w-3 h-3 shrink-0 text-muted" />
-        <span className="truncate">
-          Booked to fly, but this leg is now too short — the flight won&apos;t apply and{' '}
-          <span className="text-white font-bold">no CC will be charged</span>.
-        </span>
-      </div>
-      <button
-        disabled={disabled}
-        onClick={onClear}
-        className="shrink-0 text-[9px] font-bold uppercase px-2 py-0.5 rounded-none border border-line text-muted hover:text-white press-feedback disabled:opacity-40"
-      >
-        {busy ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Clear'}
-      </button>
-    </div>
-  );
-}
 
 /** @param {{podium: PodiumHook}} props */
 export default function CorpsConditionPanel({ podium }) {
@@ -700,6 +572,31 @@ export default function CorpsConditionPanel({ podium }) {
               const flying = leg.airfarePurchased && leg.airfareStaminaCost != null;
               return (
                 <React.Fragment key={leg.day}>
+                  {/* The travel INTO this stop (flight / airfare) — above the
+                      stop it arrives at, so the route reads in riding order. */}
+                  {leg.mandatoryFlight ? (
+                    <MandatoryFlightNote leg={leg} />
+                  ) : leg.airfareEligible && leg.isToday ? (
+                    <TodayAirfareNote leg={leg} />
+                  ) : leg.airfareEligible ? (
+                    <AirfareRow
+                      leg={leg}
+                      budgetBalance={budget.balance || 0}
+                      busy={busy === `airfare-${leg.day}`}
+                      disabled={busy !== null}
+                      onToggle={(fly) =>
+                        act(`airfare-${leg.day}`, () => podium.setAirfare(leg.day, fly))
+                      }
+                    />
+                  ) : leg.airfareStranded ? (
+                    <StrandedAirfareNote
+                      busy={busy === `airfare-${leg.day}`}
+                      disabled={busy !== null}
+                      onClear={() =>
+                        act(`airfare-${leg.day}`, () => podium.setAirfare(leg.day, false))
+                      }
+                    />
+                  ) : null}
                   <div
                     className={`${ROUTE_COLS} px-3 py-1 border-t border-line-subtle text-[10px] tabular-nums`}
                   >
@@ -753,29 +650,6 @@ export default function CorpsConditionPanel({ podium }) {
                       )}
                     </span>
                   </div>
-                  {leg.mandatoryFlight ? (
-                    <MandatoryFlightNote leg={leg} />
-                  ) : leg.airfareEligible && leg.isToday ? (
-                    <TodayAirfareNote leg={leg} />
-                  ) : leg.airfareEligible ? (
-                    <AirfareRow
-                      leg={leg}
-                      budgetBalance={budget.balance || 0}
-                      busy={busy === `airfare-${leg.day}`}
-                      disabled={busy !== null}
-                      onToggle={(fly) =>
-                        act(`airfare-${leg.day}`, () => podium.setAirfare(leg.day, fly))
-                      }
-                    />
-                  ) : leg.airfareStranded ? (
-                    <StrandedAirfareNote
-                      busy={busy === `airfare-${leg.day}`}
-                      disabled={busy !== null}
-                      onClear={() =>
-                        act(`airfare-${leg.day}`, () => podium.setAirfare(leg.day, false))
-                      }
-                    />
-                  ) : null}
                 </React.Fragment>
               );
             })}
@@ -785,9 +659,11 @@ export default function CorpsConditionPanel({ podium }) {
         <p className="mt-1.5 text-[9px] text-muted leading-relaxed">
           <span className="text-brand font-bold">Gold</span> stops — majors &amp; championship week
           — are attended automatically. Every other stop is a show you added on the Schedule page.
-          Long legs offer <span className="text-interactive font-bold">airfare</span> (1 CC per 2
-          miles from the Corps Budget) to halve their travel-stamina hit. Legs over the ocean (to or
-          from Hawaii) must fly: the fare is always charged and there&apos;s no stamina discount.
+          Each stop&apos;s travel is the leg <em>into</em> it, and any flight note sits just above
+          the stop it flies to. Long legs offer{' '}
+          <span className="text-interactive font-bold">airfare</span> (1 CC per 2 miles from the
+          Corps Budget) to halve their travel-stamina hit. Legs over the ocean (to or from Hawaii)
+          must fly: the fare is always charged and there&apos;s no stamina discount.
         </p>
       </div>
 
