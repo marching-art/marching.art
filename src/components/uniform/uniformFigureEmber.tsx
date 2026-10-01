@@ -20,6 +20,7 @@ import {
   type NormalizedFigure,
 } from '../../utils/uniform';
 import { fillOf, light, mirrored, p, shade, strokeP, type Node } from './uniformFigureParts';
+import { FIGURE_INK } from '../../data/uniformRenderTheme';
 
 /** The ember-glass tile (user-space units). */
 const TILE_W = 44;
@@ -70,8 +71,8 @@ function emberMotif(uid: string, em: ReturnType<typeof resolvePrintPalettes>['em
     ...LICKS.map((d, i) => strokeP(`l${i}`, d, em.lead, 1.1, { opacity: '.8' })),
     ...[...CAME_MAIN, ...CAME_CROSS].map((d, i) => strokeP(`c${i}`, d, em.lead, 2.3)),
     // a cold glint on the glass beside two cames
-    strokeP('g0', 'M11,21 Q14,16 18,14', '#ffffff', 0.7, { opacity: '.3' }),
-    strokeP('g1', 'M33,30 Q36,26 40,25', '#ffffff', 0.7, { opacity: '.3' }),
+    strokeP('g0', 'M11,21 Q14,16 18,14', FIGURE_INK.white, 0.7, { opacity: '.3' }),
+    strokeP('g1', 'M33,30 Q36,26 40,25', FIGURE_INK.white, 0.7, { opacity: '.3' }),
   ];
 }
 
