@@ -36,7 +36,7 @@
  *     week 7, so parity is asserted on min(week, 7).
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { createRequire } from 'node:module';
 import { getCaptionChangeInfo } from './seasonClock';
 import { getSeasonProgress } from './seasonProgress';
@@ -103,10 +103,7 @@ const DST_INSTANTS = [
 
 const CORPS_CLASSES = [null, 'worldClass', 'openClass', 'aClass', 'soundSport'];
 
-/**
- * @param {string} startIso
- * @param {number} springTrainingDays
- */
+/** @param {string} startIso @param {number} springTrainingDays */
 function seasonDoc(startIso, springTrainingDays) {
   const start = new Date(startIso);
   return {
@@ -119,10 +116,7 @@ function seasonDoc(startIso, springTrainingDays) {
   };
 }
 
-/**
- * @param {string} startIso
- * @param {number} springTrainingDays
- */
+/** @param {string} startIso @param {number} springTrainingDays */
 function* instants(startIso, springTrainingDays) {
   const startMs = new Date(startIso).getTime();
   // Calendar days 0..(spring + 51): pre-season through post-season overshoot.
@@ -146,18 +140,19 @@ describe('caption-change window parity (functions captionWindows <-> client seas
       let compared = 0;
       for (const now of instants(startIso, spring)) {
         for (const corpsClass of CORPS_CLASSES) {
-          const backend = backendCaption.getCaptionChangeWindow(season, now, corpsClass);
-          const client = getCaptionChangeInfo(season, now, corpsClass);
-          if (!backend || !client) throw new Error('both sides must compute a window here');
-          // Compared field-by-field by name: index both shapes as plain records.
-          const b = /** @type {Record<string, unknown>} */ (backend);
-          const c = /** @type {Record<string, unknown>} */ (client);
+          // Both sides compared field-by-field by name, so index them loosely.
+          const backend = /** @type {Record<string, unknown>} */ (
+            backendCaption.getCaptionChangeWindow(season, now, corpsClass)
+          );
+          const client = /** @type {Record<string, unknown>} */ (
+            /** @type {unknown} */ (getCaptionChangeInfo(season, now, corpsClass))
+          );
           const context = `${startIso} spring=${spring} now=${now.toISOString()} class=${corpsClass}`;
           for (const key of SHARED_SCALARS) {
-            expect(c[key], `${key} @ ${context}`).toBe(b[key]);
+            expect(client[key], `${key} @ ${context}`).toBe(backend[key]);
           }
           for (const key of SHARED_INSTANTS) {
-            expect(ms(c[key]), `${key} @ ${context}`).toBe(ms(b[key]));
+            expect(ms(client[key]), `${key} @ ${context}`).toBe(ms(backend[key]));
           }
           compared++;
         }
@@ -195,9 +190,10 @@ describe('game-day parity (functions gameDay <-> client seasonProgress)', () => 
         // The league jobs' week (getCurrentSeasonWeek) rides the same 2 AM ET
         // clock; it is unclamped above week 7, so compare the clamped value.
         const backendWeek = backendGameDay.getCurrentSeasonWeek(season, now);
-        expect(Math.min(backendWeek ?? NaN, 7), `getCurrentSeasonWeek @ ${context}`).toBe(
-          progress.currentWeek
-        );
+        expect(
+          Math.min(/** @type {number} */ (backendWeek), 7),
+          `getCurrentSeasonWeek @ ${context}`
+        ).toBe(progress.currentWeek);
         compared++;
       }
       expect(compared).toBeGreaterThan(300);
@@ -207,8 +203,10 @@ describe('game-day parity (functions gameDay <-> client seasonProgress)', () => 
 
   it('active day is completed day + 1 on the backend (shared 2 AM ET boundary)', () => {
     const now = new Date('2026-06-25T12:00:00Z');
+    const completed = backendGameDay.getCompletedCalendarDay(new Date('2026-06-21T00:00:00Z'), now);
+    expect(completed).not.toBeNull();
     expect(backendGameDay.getActiveCalendarDay(new Date('2026-06-21T00:00:00Z'), now)).toBe(
-      backendGameDay.getCompletedCalendarDay(new Date('2026-06-21T00:00:00Z'), now) + 1
+      /** @type {number} */ (completed) + 1
     );
   });
 });

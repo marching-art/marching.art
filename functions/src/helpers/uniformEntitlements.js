@@ -34,7 +34,35 @@ const UNIFORM_PACKS = {
     house: "Casa Roldán",
     features: "the quill fan and cascade willow plumes",
   },
+  pack_prism_forge: {
+    name: "Prism Forge Collection",
+    house: "Lumen & Vane",
+    features: "the split panel, shatter print, light streak, glow cuffs & hems, knee plates and seams",
+  },
+  pack_wildwood: {
+    name: "Wildwood Collection",
+    house: "Alder & Moss",
+    features: "branchwork, its bioluminescent glow, gill fan, sheer drape and patina brocade print",
+  },
+  pack_ember_glass: {
+    name: "Ember Glass Collection",
+    house: "Kiln & Lantern",
+    features: "the ember glass print, swept yoke and printed hat panel",
+  },
 };
+
+/** Hats with a front face that can carry the Ember Glass panel. */
+const PANEL_HATS = new Set(["shako", "pith", "contour"]);
+
+/**
+ * Whether the hat's front panel draws: a panel on a hat with a front face.
+ * Mirrors hatShowsPanel in src/utils/uniform.ts. Pure.
+ * @param {any} fig
+ * @returns {boolean}
+ */
+function hatShowsPanel(fig) {
+  return Boolean(fig && fig.hat && fig.hat.panel && PANEL_HATS.has(fig.hatType));
+}
 
 /**
  * Prestige regalia gated on NON-pack shop items (titles). Same ownership
@@ -48,6 +76,94 @@ const PRESTIGE_UNLOCKS = {
     requires: "the Drum Major title",
   },
 };
+
+/**
+ * Whether a figure wears any Prism Forge piece (Lumen & Vane): the split
+ * panel, the shatter print on any surface, the light streak, glow cuffs or
+ * hems (a cuff counts only on a full sleeve, the one cut that shows it),
+ * knee plates, or leg seams. Pure.
+ * @param {any} fig
+ * @returns {boolean}
+ */
+function usesPrismForge(fig) {
+  const arms = [fig.armL, fig.armR];
+  const legs = [fig.legL, fig.legR];
+  const fills = [
+    fig.torsoFill,
+    fig.mockNeck,
+    fig.torsoSplit && fig.torsoSplit.fill,
+    hatShowsPanel(fig) ? fig.hat.panel : null,
+    ...arms.map((a) => a && a.fill),
+    ...legs.map((l) => l && l.fill),
+  ];
+  return Boolean(
+    fig.torsoSplit ||
+      fig.chest === "streak" ||
+      fills.includes("url:shatter") ||
+      arms.some((a) => a && a.cuffGlow && a.type === "sleeve") ||
+      legs.some((l) => l && (l.hemGlow || l.kneePlate || l.seams))
+  );
+}
+
+/**
+ * Whether an arm's Wildwood branchwork (stored as `veins`) lands on anything: a sleeve (full, half or
+ * detached), a gauntlet, or a glove. Mirrors armShowsBranchwork in
+ * src/utils/uniform.ts. Pure.
+ * @param {any} a
+ * @returns {boolean}
+ */
+function armShowsBranchwork(a) {
+  if (!a || !a.veins || a.type === "none") return false;
+  return a.type !== "bare" || Boolean(a.gauntlet || a.glove);
+}
+
+/**
+ * Whether a figure wears any Wildwood piece (Alder & Moss): the brocade print
+ * on any surface, the gill fan, the sheer drape, or branchwork anywhere it shows
+ * (its glow only draws on visible branchwork, so it never counts alone). Pure.
+ * @param {any} fig
+ * @returns {boolean}
+ */
+function usesWildwood(fig) {
+  const arms = [fig.armL, fig.armR];
+  const legs = [fig.legL, fig.legR];
+  const fills = [
+    fig.torsoFill,
+    fig.mockNeck,
+    fig.torsoSplit && fig.torsoSplit.fill,
+    hatShowsPanel(fig) ? fig.hat.panel : null,
+    ...arms.map((a) => a && a.fill),
+    ...legs.map((l) => l && l.fill),
+  ];
+  return Boolean(
+    fig.chest === "gill" ||
+      fig.drape ||
+      fig.veins ||
+      fills.includes("url:brocade") ||
+      arms.some(armShowsBranchwork) ||
+      legs.some((l) => l && l.veins)
+  );
+}
+
+/**
+ * Whether a figure wears any Ember Glass piece (Kiln & Lantern): the ember
+ * glass print on any surface, the swept yoke, or a hat front panel on a hat
+ * that shows one. Pure.
+ * @param {any} fig
+ * @returns {boolean}
+ */
+function usesEmberGlass(fig) {
+  const arms = [fig.armL, fig.armR];
+  const legs = [fig.legL, fig.legR];
+  const fills = [
+    fig.torsoFill,
+    fig.mockNeck,
+    fig.torsoSplit && fig.torsoSplit.fill,
+    ...arms.map((a) => a && a.fill),
+    ...legs.map((l) => l && l.fill),
+  ];
+  return Boolean(fig.chest === "yoke" || hatShowsPanel(fig) || fills.includes("url:ember"));
+}
 
 /**
  * Which shop item ids (packs + prestige titles) a figure's features require.
@@ -64,6 +180,9 @@ function requiredPacksFor(figure) {
   if (fig.plume && (fig.plume.type === "fan" || fig.plume.type === "cascade")) {
     packs.add("pack_plumassier");
   }
+  if (usesPrismForge(fig)) packs.add("pack_prism_forge");
+  if (usesWildwood(fig)) packs.add("pack_wildwood");
+  if (usesEmberGlass(fig)) packs.add("pack_ember_glass");
   if (fig.aiguillette) packs.add("title_drum_major");
   return [...packs];
 }
@@ -99,6 +218,8 @@ function missingPacksMessage(missing) {
 module.exports = {
   UNIFORM_PACKS,
   PRESTIGE_UNLOCKS,
+  armShowsBranchwork,
+  hatShowsPanel,
   requiredPacksFor,
   missingPacksFor,
   missingPacksMessage,

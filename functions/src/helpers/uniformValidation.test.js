@@ -459,3 +459,169 @@ describe("constants", () => {
     assert.ok(!DESIGN_ID_RE.test(""));
   });
 });
+
+describe("Prism Forge fields", () => {
+  const pair = ["#7cc4ff", "#f2c14e"];
+  function lightCut() {
+    const d = validDesign();
+    Object.assign(d.figure, {
+      torsoFill: "url:shatter",
+      shatter: true,
+      printColors: { shatter: ["#16181d", "#aeb6c2"] },
+      torsoSplit: { color: "#c3c9d1", fill: null, flip: true },
+      chest: "streak",
+      streak: "#7cc4ff",
+      streakCore: "#ffffff",
+      chestFade: pair,
+      glow: true,
+      armL: { type: "sleeve", fill: "url:shatter", cuffGlow: pair, glove: "#101013" },
+      armR: { type: "sleeve", color: "#c3c9d1", cuffGlow: pair, glove: "#101013" },
+      legL: { color: "#2a2d33", seams: "#aeb6c2", kneePlate: "#cfd4da", hemGlow: pair },
+      legR: { color: "#2a2d33", seams: "#aeb6c2", kneePlate: "#cfd4da", hemGlow: pair },
+    });
+    return d;
+  }
+
+  test("accepts and round-trips the full light-cut look", () => {
+    const d = lightCut();
+    assert.deepEqual(validateDesign(d), []);
+    const clean = sanitizeDesign(d);
+    assert.deepEqual(clean.figure.torsoSplit, d.figure.torsoSplit);
+    assert.deepEqual(clean.figure.legL, d.figure.legL);
+    assert.equal(clean.figure.chest, "streak");
+    assert.equal(clean.figure.streakCore, "#ffffff");
+    assert.ok(!hasNestedArray(clean), "glow pairs must stay Firestore-storable");
+  });
+
+  test("rejects malformed Prism pieces", () => {
+    const bad = [
+      (f) => (f.torsoSplit = { color: "silver" }),
+      (f) => (f.torsoSplit = { color: "#c3c9d1", fill: "url:nope" }),
+      (f) => (f.torsoSplit = { color: "#c3c9d1", side: "left" }),
+      (f) => (f.printColors = { shatter: ["#16181d"] }),
+      (f) => (f.streak = "blue"),
+      (f) => (f.armL = { type: "sleeve", cuffGlow: ["#7cc4ff"] }),
+      (f) => (f.legL = { hemGlow: ["#7cc4ff", "gold"] }),
+      (f) => (f.legR = { kneePlate: "shiny" }),
+      (f) => (f.legR = { seams: 3 }),
+    ];
+    for (const mutate of bad) {
+      const d = lightCut();
+      mutate(d.figure);
+      assert.ok(validateDesign(d).length > 0, mutate.toString());
+    }
+  });
+});
+
+describe("Wildwood fields", () => {
+  function grove() {
+    const d = validDesign();
+    Object.assign(d.figure, {
+      torsoFill: "url:brocade",
+      brocade: true,
+      printColors: { brocade: ["#1d4a4f", "#3f7f78", "#b88a4a"] },
+      veins: { color: "#e4dccb", flip: true },
+      veinGlow: "#5ff0dc",
+      glow: true,
+      chest: "gill",
+      gill: "#b06a3a",
+      chestReverse: true,
+      drape: { color: "#5c4960", flip: false },
+      armL: { type: "sleeve", color: "#2b231d", veins: "#e4dccb", glove: "#141414" },
+      armR: { type: "bare", veins: "#e4dccb", gauntlet: { color: "#b06a3a" } },
+      legL: { color: "#141414", veins: "#e4dccb" },
+      legR: { fill: "url:brocade" },
+    });
+    return d;
+  }
+
+  test("accepts and round-trips the full living-forest look", () => {
+    const d = grove();
+    assert.deepEqual(validateDesign(d), []);
+    const clean = sanitizeDesign(d);
+    assert.deepEqual(clean.figure.veins, d.figure.veins);
+    assert.deepEqual(clean.figure.drape, d.figure.drape);
+    assert.deepEqual(clean.figure.armR, d.figure.armR);
+    assert.equal(clean.figure.chest, "gill");
+    assert.equal(clean.figure.veinGlow, "#5ff0dc");
+    assert.ok(!hasNestedArray(clean));
+  });
+
+  test("rejects malformed Wildwood pieces", () => {
+    const bad = [
+      (f) => (f.veins = "#e4dccb"),
+      (f) => (f.veins = { color: "bark" }),
+      (f) => (f.veins = { color: "#e4dccb", side: "left" }),
+      (f) => (f.drape = { color: "#5c4960", flip: "yes" }),
+      (f) => (f.veinGlow = "aqua"),
+      (f) => (f.gill = 12),
+      (f) => (f.printColors = { brocade: ["#1d4a4f", "#3f7f78"] }),
+      (f) => (f.torsoFill = "url:brocades"),
+      (f) => (f.armL = { type: "sleeve", veins: "gold" }),
+      (f) => (f.legL = { veins: ["#e4dccb"] }),
+    ];
+    for (const mutate of bad) {
+      const d = grove();
+      mutate(d.figure);
+      assert.ok(validateDesign(d).length > 0, mutate.toString());
+    }
+  });
+});
+
+describe("Ember Glass fields", () => {
+  function lantern() {
+    const d = validDesign();
+    Object.assign(d.figure, {
+      torsoFill: "url:ember",
+      ember: true,
+      printColors: { ember: ["#e2540f", "#fbc02d", "#111114"] },
+      chest: "yoke",
+      yoke: "#111114",
+      yokePiping: "#f4f2ec",
+      chestReverse: true,
+      armR: { type: "sleeve", fill: "url:ember", glove: "#111114" },
+      hatType: "shako",
+      hat: { body: "#111114", panel: "url:ember", ornament: "none" },
+    });
+    return d;
+  }
+
+  test("accepts and round-trips the full lit-glass look", () => {
+    const d = lantern();
+    assert.deepEqual(validateDesign(d), []);
+    const clean = sanitizeDesign(d);
+    assert.equal(clean.figure.chest, "yoke");
+    assert.equal(clean.figure.yokePiping, "#f4f2ec");
+    assert.deepEqual(clean.figure.hat, d.figure.hat);
+    assert.deepEqual(clean.figure.printColors, d.figure.printColors);
+    assert.ok(!hasNestedArray(clean));
+  });
+
+  test("accepts a solid or gradient hat panel", () => {
+    const solid = lantern();
+    solid.figure.hat.panel = "#e2540f";
+    assert.deepEqual(validateDesign(solid), []);
+    const fade = lantern();
+    fade.figure.grads = { blaze: [{ o: "0", c: "#e2540f" }, { o: "1", c: "#fbc02d" }] };
+    fade.figure.hat.panel = "url:blaze";
+    assert.deepEqual(validateDesign(fade), []);
+  });
+
+  test("rejects malformed Ember Glass pieces", () => {
+    const bad = [
+      (f) => (f.yoke = "black"),
+      (f) => (f.yokePiping = 7),
+      (f) => (f.ember = "yes"),
+      (f) => (f.printColors = { ember: ["#e2540f", "#fbc02d"] }),
+      (f) => (f.torsoFill = "url:embers"),
+      (f) => (f.hat = { body: "#111114", panel: "url:emberSm" }),
+      (f) => (f.hat = { body: "#111114", panel: "url:nope" }),
+      (f) => (f.hat = { body: "#111114", panel: 12 }),
+    ];
+    for (const mutate of bad) {
+      const d = lantern();
+      mutate(d.figure);
+      assert.ok(validateDesign(d).length > 0, mutate.toString());
+    }
+  });
+});

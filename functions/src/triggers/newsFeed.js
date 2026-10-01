@@ -8,6 +8,7 @@ const { getDb } = require("../config");
 const { getCategoryFromType, NEWS_CATEGORIES } = require("../helpers/newsArticleShared");
 const { clampLimit, assertDocId } = require("../helpers/callableGuards");
 const { consumeRateBudget } = require("../helpers/rateLimit");
+const { toApTitleCase } = require("../helpers/headlineCase");
 
 // Paginated feed reads bypass the shared cache (each cursor is a distinct
 // query), so they are the one billable path an anonymous client can drive.
@@ -347,7 +348,7 @@ exports.getRecentNews = onCall(
           articleType,
           category: articleCategory,
           // Core display fields (always included)
-          headline: data.headline || "",
+          headline: toApTitleCase(data.headline),
           summary: data.summary || "",
           imageUrl: data.imageUrl || null,
           readingTime: calculateReadingTime(data),
@@ -586,7 +587,7 @@ exports.getNewsFeedHttp = onRequest(
           reportDay,
           articleType,
           category: articleCategory,
-          headline: data.headline || "",
+          headline: toApTitleCase(data.headline),
           summary: data.summary || "",
           imageUrl: data.imageUrl || null,
           readingTime: calculateReadingTime(data),

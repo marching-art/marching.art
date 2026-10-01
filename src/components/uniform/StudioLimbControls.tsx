@@ -7,28 +7,69 @@
 
 import React from 'react';
 import type { ArmConfig, LegConfig, UniformColorway } from '../../types/uniform';
-import { ARM_TYPE_OPTIONS } from '../../data/uniformCatalog';
+import { ARM_TYPE_OPTIONS, METAL_HEX } from '../../data/uniformCatalog';
 import { ChannelRow, Pills, Toggle } from './StudioControls';
 import { LABEL } from './studioTokens';
+
+/** Appends the 🔒 to design-house content the director doesn't own. */
+type PackLabel = (label: string, packId: string) => string;
+const PLAIN: PackLabel = (label) => label;
+const PRISM = 'pack_prism_forge';
+const WILDWOOD = 'pack_wildwood';
+
+/** A two-color glow fade (Prism Forge cuffs and hems): [upper, edge]. */
+function GlowPair({
+  upperLabel,
+  edgeLabel,
+  value,
+  onChange,
+}: {
+  upperLabel: string;
+  edgeLabel: string;
+  value: [string, string];
+  onChange: (next: [string, string]) => void;
+}) {
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      <ChannelRow
+        label={upperLabel}
+        value={value[0]}
+        onChange={(v) => v && onChange([v, value[1]])}
+      />
+      <ChannelRow
+        label={edgeLabel}
+        value={value[1]}
+        onChange={(v) => v && onChange([value[0], v])}
+      />
+    </div>
+  );
+}
 
 export function ArmControls({
   title,
   arm,
   jacket,
+  torsoFill,
   colorway,
   fade,
   onPatch,
   onFade,
+  packLabel = PLAIN,
 }: {
   title: string;
   arm: ArmConfig;
   jacket: string | null | undefined;
+  /** The torso's print reference, offered as "Torso print" on the sleeve. */
+  torsoFill?: string | null;
   colorway: UniformColorway;
   /** [top, bottom] colors when this sleeve wears a director fade. */
   fade: [string, string] | null;
   onPatch: (patch: Partial<ArmConfig>) => void;
   onFade: (stops: [string, string] | null) => void;
+  packLabel?: PackLabel;
 }) {
+  const torsoPrint = torsoFill?.startsWith('url:') ? torsoFill : null;
+  const wearsPrint = Boolean(torsoPrint && arm.fill === torsoPrint);
   return (
     <div className="space-y-1">
       <span className={LABEL}>{title}</span>
@@ -42,10 +83,15 @@ export function ArmControls({
           options={[
             { value: 'solid', label: 'Solid' },
             { value: 'fade', label: 'Color fade' },
+            ...(torsoPrint ? [{ value: 'print', label: 'Torso print' }] : []),
           ]}
-          value={fade ? 'fade' : 'solid'}
+          value={fade ? 'fade' : wearsPrint ? 'print' : 'solid'}
           onSelect={(v) =>
-            onFade(v === 'fade' ? [arm.color || jacket || colorway.primary, colorway.accent] : null)
+            v === 'print'
+              ? onPatch({ fill: torsoPrint, color: null })
+              : onFade(
+                  v === 'fade' ? [arm.color || jacket || colorway.primary, colorway.accent] : null
+                )
           }
         />
       )}
@@ -63,7 +109,7 @@ export function ArmControls({
           />
         </div>
       )}
-      {arm.type !== 'bare' && !fade && (
+      {arm.type !== 'bare' && !fade && !wearsPrint && (
         <ChannelRow
           label="Sleeve"
           value={arm.fill?.startsWith('url:') ? null : arm.color || jacket}
@@ -92,6 +138,13 @@ export function ArmControls({
             checked={Boolean(arm.glowLine)}
             onChange={(v) => onPatch({ glowLine: v ? colorway.secondary : null })}
           />
+          <Toggle
+            label={packLabel('Glow cuff', PRISM)}
+            checked={Boolean(arm.cuffGlow)}
+            onChange={(v) =>
+              onPatch({ cuffGlow: v ? [colorway.secondary, colorway.accent] : null })
+            }
+          />
         </div>
       )}
       {arm.type === 'half' && (
@@ -108,6 +161,33 @@ export function ArmControls({
           label="Glow line"
           value={arm.glowLine}
           onChange={(v) => v && onPatch({ glowLine: v })}
+        />
+      )}
+      {arm.type !== 'none' && (
+        <Toggle
+          label={packLabel(
+            arm.type === 'bare' ? 'Branchwork (gauntlet/glove)' : 'Branchwork',
+            WILDWOOD
+          )}
+          checked={Boolean(arm.veins)}
+          onChange={(v) =>
+            onPatch({ veins: v ? METAL_HEX[colorway.metal] || METAL_HEX.gold : null })
+          }
+        />
+      )}
+      {arm.type !== 'none' && arm.veins && (
+        <ChannelRow
+          label="Arm branchwork"
+          value={arm.veins}
+          onChange={(v) => v && onPatch({ veins: v })}
+        />
+      )}
+      {arm.type === 'sleeve' && arm.cuffGlow && (
+        <GlowPair
+          upperLabel="Cuff glow"
+          edgeLabel="Wrist edge"
+          value={arm.cuffGlow}
+          onChange={(cuffGlow) => onPatch({ cuffGlow })}
         />
       )}
       <div className="flex flex-wrap gap-3">
@@ -148,14 +228,19 @@ export function LegControls({
   leg,
   torsoPrint,
   torsoFill,
+  colorway,
   onPatch,
+  packLabel = PLAIN,
 }: {
   title: string;
   leg: LegConfig;
   torsoPrint: string | null;
   torsoFill: string | null | undefined;
+  colorway: UniformColorway;
   onPatch: (patch: Partial<LegConfig>) => void;
+  packLabel?: PackLabel;
 }) {
+  const metal = colorway.metal === 'gold' ? METAL_HEX.gold : METAL_HEX.silver;
   const fillValue =
     leg.fill === 'url:plaid'
       ? 'plaid'
@@ -215,7 +300,56 @@ export function LegControls({
           checked={Boolean(leg.sequin)}
           onChange={(v) => onPatch({ sequin: v })}
         />
+        <Toggle
+          label={packLabel('Seams', PRISM)}
+          checked={Boolean(leg.seams)}
+          onChange={(v) => onPatch({ seams: v ? metal : null })}
+        />
+        <Toggle
+          label={packLabel('Knee plate', PRISM)}
+          checked={Boolean(leg.kneePlate)}
+          onChange={(v) => onPatch({ kneePlate: v ? metal : null })}
+        />
+        <Toggle
+          label={packLabel('Glow hem', PRISM)}
+          checked={Boolean(leg.hemGlow)}
+          onChange={(v) => onPatch({ hemGlow: v ? [colorway.secondary, colorway.accent] : null })}
+        />
+        <Toggle
+          label={packLabel('Branchwork', WILDWOOD)}
+          checked={Boolean(leg.veins)}
+          onChange={(v) => onPatch({ veins: v ? metal : null })}
+        />
       </div>
+      {(leg.seams || leg.kneePlate || leg.veins) && (
+        <div className="grid grid-cols-2 gap-2">
+          {leg.veins && (
+            <ChannelRow
+              label="Leg branchwork"
+              value={leg.veins}
+              onChange={(v) => v && onPatch({ veins: v })}
+            />
+          )}
+          {leg.seams && (
+            <ChannelRow label="Seams" value={leg.seams} onChange={(v) => onPatch({ seams: v })} />
+          )}
+          {leg.kneePlate && (
+            <ChannelRow
+              label="Knee plate"
+              value={leg.kneePlate}
+              onChange={(v) => onPatch({ kneePlate: v })}
+            />
+          )}
+        </div>
+      )}
+      {leg.hemGlow && (
+        <GlowPair
+          upperLabel="Hem glow"
+          edgeLabel="Hem edge"
+          value={leg.hemGlow}
+          onChange={(hemGlow) => onPatch({ hemGlow })}
+        />
+      )}
     </div>
   );
 }

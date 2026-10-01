@@ -1,4 +1,3 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 import { describe, it, expect } from 'vitest';
 import {
   getNextScoresProcessingTime,
@@ -9,6 +8,18 @@ import {
   formatCountdown,
   formatEtShort,
 } from './seasonClock';
+
+/**
+ * Narrow a nullable result for an assertion — throws (failing the test)
+ * instead of letting a null slip through as a TypeError.
+ * @template T
+ * @param {T | null | undefined} value
+ * @returns {T}
+ */
+const defined = (value) => {
+  if (value == null) throw new Error('expected a value, got ' + value);
+  return value;
+};
 
 // All expectations are expressed as UTC instants for fixed ET wall times:
 // July (EDT) is UTC-4, January (EST) is UTC-5.
@@ -44,7 +55,9 @@ describe('getShowRegistrationDeadline', () => {
   it('is 2 AM ET the day after the show', () => {
     const eventDate = new Date(2026, 6, 10); // July 10, local midnight
     // Deadline: July 11 02:00 EDT = 06:00 UTC
-    expect(getShowRegistrationDeadline(eventDate).toISOString()).toBe('2026-07-11T06:00:00.000Z');
+    expect(defined(getShowRegistrationDeadline(eventDate)).toISOString()).toBe(
+      '2026-07-11T06:00:00.000Z'
+    );
   });
 
   it('returns null for missing dates', () => {
@@ -58,7 +71,7 @@ describe('getShowRegistrationLockTime', () => {
 
   it('locks at the 9 PM ET off-season drop, not the 2 AM rollover', () => {
     const lockAt = getShowRegistrationLockTime(eventDate, { status: 'off-season' });
-    expect(lockAt.toISOString()).toBe('2026-09-28T01:00:00.000Z'); // 9 PM EDT Sep 27
+    expect(defined(lockAt).toISOString()).toBe('2026-09-28T01:00:00.000Z'); // 9 PM EDT Sep 27
     expect(
       isShowRegistrationClosed(
         eventDate,
@@ -86,9 +99,11 @@ describe('getShowRegistrationLockTime', () => {
   it('ignores a plan for another night and falls back to the 2 AM bound', () => {
     const plan = { showDateKey: '2026-09-26', dropAt: new Date('2026-09-27T03:00:00Z') };
     expect(
-      getShowRegistrationLockTime(eventDate, { status: 'live-season' }, plan).toISOString()
+      defined(getShowRegistrationLockTime(eventDate, { status: 'live-season' }, plan)).toISOString()
     ).toBe('2026-09-28T06:00:00.000Z');
-    expect(getShowRegistrationLockTime(eventDate).toISOString()).toBe('2026-09-28T06:00:00.000Z');
+    expect(defined(getShowRegistrationLockTime(eventDate)).toISOString()).toBe(
+      '2026-09-28T06:00:00.000Z'
+    );
   });
 
   it('is null (never closed) without a date', () => {
@@ -102,6 +117,7 @@ describe('getCaptionChangeInfo', () => {
   // Day boundaries land at 8 PM EDT: day 1 = June 21, day 14 ends
   // 2026-07-05T00:00:00Z = Saturday July 4, 8:00 PM EDT.
   const start = new Date('2026-06-21T00:00:00Z');
+  /** @param {number} [springTrainingDays] */
   const season = (springTrainingDays) => ({
     status: 'off-season',
     schedule: {
@@ -109,16 +125,18 @@ describe('getCaptionChangeInfo', () => {
       ...(springTrainingDays ? { springTrainingDays } : {}),
     },
   });
-  const info = (nowIso, springDays) => getCaptionChangeInfo(season(springDays), new Date(nowIso));
+  /** @param {string} nowIso @param {number} [springDays] */
+  const info = (nowIso, springDays) =>
+    defined(getCaptionChangeInfo(season(springDays), new Date(nowIso)));
 
   it('is unlimited on days 1-14, ending at the day-14 boundary (Sat 8 PM ET)', () => {
     const w = info('2026-06-23T12:00:00Z'); // day 3
     expect(w.phase).toBe('unlimited');
     expect(w.status).toBe('open');
     expect(w.tradeLimit).toBe(Infinity);
-    expect(w.unlimitedEndsAt.toISOString()).toBe('2026-07-05T00:00:00.000Z');
+    expect(defined(w.unlimitedEndsAt).toISOString()).toBe('2026-07-05T00:00:00.000Z');
     // Weekly limits become usable after day 15 begins + the 2 AM ET run
-    expect(w.resetsAt.toISOString()).toBe('2026-07-05T06:00:00.000Z');
+    expect(defined(w.resetsAt).toISOString()).toBe('2026-07-05T06:00:00.000Z');
     expect(w.nextLimit).toBe(3);
   });
 
@@ -127,7 +145,7 @@ describe('getCaptionChangeInfo', () => {
     const w = info('2026-06-28T01:00:00Z');
     expect(w.day).toBe(8);
     expect(w.status).toBe('locked');
-    expect(w.reopensAt.toISOString()).toBe('2026-06-28T06:00:00.000Z'); // 2 AM EDT
+    expect(defined(w.reopensAt).toISOString()).toBe('2026-06-28T06:00:00.000Z'); // 2 AM EDT
 
     // After 2 AM ET it reopens, still unlimited
     const reopened = info('2026-06-28T07:00:00Z');
@@ -142,11 +160,11 @@ describe('getCaptionChangeInfo', () => {
     expect(w.week).toBe(3);
     expect(w.tradeLimit).toBe(3);
     // Locks overnight at tonight's 8 PM ET boundary (day 17 begins)
-    expect(w.locksAt.toISOString()).toBe('2026-07-07T00:00:00.000Z');
+    expect(defined(w.locksAt).toISOString()).toBe('2026-07-07T00:00:00.000Z');
     // The week's allotment expires at the Saturday close ending week 3 (day 21)
-    expect(w.allotmentEndsAt.toISOString()).toBe('2026-07-12T00:00:00.000Z');
+    expect(defined(w.allotmentEndsAt).toISOString()).toBe('2026-07-12T00:00:00.000Z');
     // Fresh allotment once week 4 opens after the 2 AM ET run
-    expect(w.resetsAt.toISOString()).toBe('2026-07-12T06:00:00.000Z');
+    expect(defined(w.resetsAt).toISOString()).toBe('2026-07-12T06:00:00.000Z');
   });
 
   it('locks every night at the day boundary — the show — until 2 AM ET', () => {
@@ -157,9 +175,9 @@ describe('getCaptionChangeInfo', () => {
     expect(w.status).toBe('locked');
     expect(w.locksAt).toBeNull();
     expect(w.allotmentEndsAt).toBeNull();
-    expect(w.reopensAt.toISOString()).toBe('2026-07-07T06:00:00.000Z'); // 2 AM EDT
+    expect(defined(w.reopensAt).toISOString()).toBe('2026-07-07T06:00:00.000Z'); // 2 AM EDT
     // A mid-week overnight lock keeps the week's allotment: the reset stays Sunday.
-    expect(w.resetsAt.toISOString()).toBe('2026-07-12T06:00:00.000Z');
+    expect(defined(w.resetsAt).toISOString()).toBe('2026-07-12T06:00:00.000Z');
     // 2 AM ET: open again, same week, same allotment.
     const reopened = info('2026-07-07T06:00:00Z');
     expect(reopened.status).toBe('open');
@@ -175,8 +193,8 @@ describe('getCaptionChangeInfo', () => {
     const w = info('2026-06-21T01:00:00Z'); // 9 PM EDT on opening night
     expect(w.day).toBe(1);
     expect(w.status).toBe('open');
-    expect(w.locksAt.toISOString()).toBe('2026-06-22T00:00:00.000Z');
-    expect(w.allotmentEndsAt.toISOString()).toBe('2026-07-05T00:00:00.000Z');
+    expect(defined(w.locksAt).toISOString()).toBe('2026-06-22T00:00:00.000Z');
+    expect(defined(w.allotmentEndsAt).toISOString()).toBe('2026-07-05T00:00:00.000Z');
   });
 
   it('locks week-start days until the 2 AM ET score run', () => {
@@ -184,10 +202,10 @@ describe('getCaptionChangeInfo', () => {
     const w = info('2026-07-12T01:00:00Z');
     expect(w.day).toBe(22);
     expect(w.status).toBe('locked');
-    expect(w.reopensAt.toISOString()).toBe('2026-07-12T06:00:00.000Z');
+    expect(defined(w.reopensAt).toISOString()).toBe('2026-07-12T06:00:00.000Z');
     // The fresh week's allotment lands at this reopen (unlike a mid-week
     // overnight lock, which keeps the current week's changes).
-    expect(w.resetsAt.toISOString()).toBe('2026-07-12T06:00:00.000Z');
+    expect(defined(w.resetsAt).toISOString()).toBe('2026-07-12T06:00:00.000Z');
     expect(w.nextLimit).toBe(3);
   });
 
@@ -197,7 +215,7 @@ describe('getCaptionChangeInfo', () => {
     expect(w.status).toBe('closed');
     expect(w.tradeLimit).toBe(0);
     // Championship changes open after day 45 begins + the 2 AM ET run
-    expect(w.reopensAt.toISOString()).toBe('2026-08-04T06:00:00.000Z');
+    expect(defined(w.reopensAt).toISOString()).toBe('2026-08-04T06:00:00.000Z');
     expect(w.nextLimit).toBe(2);
   });
 
@@ -206,7 +224,7 @@ describe('getCaptionChangeInfo', () => {
     const locked = info('2026-08-04T01:00:00Z');
     expect(locked.phase).toBe('championship');
     expect(locked.status).toBe('locked');
-    expect(locked.reopensAt.toISOString()).toBe('2026-08-04T06:00:00.000Z');
+    expect(defined(locked.reopensAt).toISOString()).toBe('2026-08-04T06:00:00.000Z');
 
     // Tuesday afternoon: open with the championship limit, closing at the
     // next day boundary (8 PM ET). periodKey is the day, so it resets nightly.
@@ -215,14 +233,15 @@ describe('getCaptionChangeInfo', () => {
     expect(open.tradeLimit).toBe(2);
     expect(open.week).toBe(7);
     expect(open.periodKey).toBe(45);
-    expect(open.locksAt.toISOString()).toBe('2026-08-05T00:00:00.000Z');
+    expect(defined(open.locksAt).toISOString()).toBe('2026-08-05T00:00:00.000Z');
     // The next day keys on a new period (fresh 2 changes).
     expect(info('2026-08-05T18:00:00Z').periodKey).toBe(46);
   });
 
   it('gates championship changes by the per-day competing-class bracket', () => {
+    /** @param {string} nowIso @param {string} corpsClass */
     const infoClass = (nowIso, corpsClass) =>
-      getCaptionChangeInfo(season(), new Date(nowIso), corpsClass);
+      defined(getCaptionChangeInfo(season(), new Date(nowIso), corpsClass));
 
     // Days 45-46: only Open Class and A Class compete.
     expect(infoClass('2026-08-04T18:00:00Z', 'openClass').status).toBe('open');
@@ -232,7 +251,7 @@ describe('getCaptionChangeInfo', () => {
     // resume on Day 47, whose changes open at 2 AM ET.
     const waiting = infoClass('2026-08-04T18:00:00Z', 'soundSport');
     expect(waiting.classResumesDay).toBe(47);
-    expect(waiting.reopensAt.toISOString()).toBe('2026-08-06T06:00:00.000Z');
+    expect(defined(waiting.reopensAt).toISOString()).toBe('2026-08-06T06:00:00.000Z');
     expect(waiting.nextLimit).toBe(2);
 
     // Day 47: all classes compete.
@@ -265,7 +284,7 @@ describe('getCaptionChangeInfo', () => {
     expect(w.phase).toBe('unlimited');
     expect(w.status).toBe('open');
     // Unlimited ends at start + (21 + 14) days
-    expect(w.unlimitedEndsAt.toISOString()).toBe('2026-07-26T00:00:00.000Z');
+    expect(defined(w.unlimitedEndsAt).toISOString()).toBe('2026-07-26T00:00:00.000Z');
   });
 
   it('returns null without a start date', () => {

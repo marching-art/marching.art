@@ -6,7 +6,7 @@
 const { test, describe } = require('node:test');
 const assert = require('node:assert/strict');
 
-const { buildCurrentLocation, buildRouteLegs } = require('./podiumRoute');
+const { buildCurrentLocation, buildRouteLegs, buildShowTravel } = require('./podiumRoute');
 const venues = require('../helpers/podium/venues');
 const store = require('../helpers/podium/store');
 
@@ -357,5 +357,87 @@ describe('buildRouteLegs — over-ocean legs are mandatory flights', () => {
       locations: { 12: 'Dallas, Texas' },
     });
     assert.equal(leg.mandatoryFlight, false);
+  });
+});
+
+describe('buildRouteLegs — each leg names where it departs', () => {
+  test('fromCity chains through the previous stop (the route sheet labels A → B)', () => {
+    const state = {
+      seasonUid: 'season-1',
+      division: 'worldClass',
+      location: 'San Francisco, California',
+      lastVenue: venues.venueFor('San Francisco, California'),
+    };
+    const legs = buildRouteLegs(state, [12, 15], {
+      jointByDay: {},
+      locations: { 12: 'San Diego, California', 15: 'Honolulu, HI' },
+    });
+    assert.equal(legs[0].fromCity, 'San Francisco, CA');
+    assert.equal(legs[1].fromCity, legs[0].city);
+    assert.equal(legs[1].mandatoryFlight, true);
+  });
+});
+
+describe('buildShowTravel — per-show legs for the Schedule page', () => {
+  const state = {
+    seasonUid: 'season-1',
+    division: 'worldClass',
+    location: 'San Francisco, California',
+    lastVenue: venues.venueFor('San Francisco, California'),
+    selectedShows: { 10: { eventName: 'Booked', location: 'San Diego, California' } },
+  };
+  const competitions = [
+    { day: 8, name: 'Near', location: 'Stanford, California' },
+    { day: 8, name: 'Far', location: 'Riverside, California' },
+    { day: 10, name: 'Booked', location: 'San Diego, California' },
+    { day: 12, name: 'After', location: 'Escondido, California' },
+    { day: 12, name: 'Island', location: 'Honolulu, HI' },
+    { day: 28, name: 'Major', location: 'San Antonio, Texas' },
+    { day: 3, name: 'Past', location: 'Stanford, California' },
+  ];
+  const legs = buildShowTravel(state, {
+    tourDays: [10, 28],
+    autoDays: [28],
+    competitions,
+    locations: {},
+    today: 5,
+  });
+
+  test('a show before the first booked stop is routed from the current location', () => {
+    assert.equal(legs['8|Near'].fromDay, null);
+    assert.equal(legs['8|Near'].fromCity, 'San Francisco, CA');
+    assert.equal(legs['8|Near'].fromHome, false);
+    assert.equal(legs['8|Near'].onward.day, 10, 'and shows the hop on to the next stop');
+  });
+
+  test('a show after a booked stop is routed from that stop', () => {
+    assert.equal(legs['12|After'].fromDay, 10);
+    assert.equal(legs['12|After'].fromCity, 'San Diego, CA');
+    assert.ok(legs['12|After'].miles < legs['12|Island'].miles);
+  });
+
+  test("each day's nearest show is marked closest", () => {
+    assert.equal(legs['8|Near'].closest, true);
+    assert.equal(legs['8|Far'].closest, false);
+    assert.equal(legs['12|After'].closest, true);
+    assert.equal(legs['10|Booked'].closest, false, 'a lone show is never "closest"');
+  });
+
+  test('over-ocean picks are mandatory flights; auto days and past days are skipped', () => {
+    assert.equal(legs['12|Island'].mandatoryFlight, true);
+    assert.equal(legs['12|Island'].airfareEligible, false);
+    assert.equal(legs['28|Major'], undefined);
+    assert.equal(legs['3|Past'], undefined);
+  });
+
+  test('matches the route sheet leg once the show is added', () => {
+    const [, leg] = buildRouteLegs(
+      { ...state, selectedShows: { ...state.selectedShows, 12: { eventName: 'After', location: 'Escondido, California' } } },
+      [10, 12],
+      { jointByDay: {}, locations: {} }
+    );
+    assert.equal(leg.miles, legs['12|After'].miles);
+    assert.equal(leg.staminaCost, legs['12|After'].staminaCost);
+    assert.equal(leg.heat, legs['12|After'].heat);
   });
 });

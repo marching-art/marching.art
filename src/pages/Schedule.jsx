@@ -21,6 +21,7 @@ import { useSeasonDeadlines } from '../hooks/useSeasonClock';
 import { usePodiumEnabled } from '../hooks/useFeatures';
 import { usePodium } from '../hooks/usePodium';
 import { useHostedEvents } from '../hooks/useHostedEvents';
+import { usePodiumShowTravel, useRivalAttendance, travelKey } from '../hooks/useScheduleInsights';
 import { CHAMPIONSHIP_EVENTS } from './scheduleConstants';
 import { WeekPills, ShowsList, ChampionshipWeekDisplay } from './ScheduleParts';
 
@@ -112,6 +113,29 @@ const Schedule = () => {
     if (events.size === 0 && autoDays.size === 0) return null;
     return { events, autoDays, corpsName: data.state?.corpsName || 'Podium Corps' };
   }, [podium.data]);
+
+  // Per-show travel from the Podium corps' previous stop. Every pick moves the
+  // stops later shows are routed from, so the picks themselves are the reload key.
+  const podiumPicksKey = useMemo(() => {
+    const picks = podium.data?.exists ? podium.data.state?.selectedShows || {} : null;
+    if (!picks) return '';
+    return Object.entries(picks)
+      .map(([day, pick]) => `${day}:${pick?.eventName || ''}:${pick?.location || ''}`)
+      .sort()
+      .join('|');
+  }, [podium.data]);
+  const podiumTravel = usePodiumShowTravel(Boolean(podium.data?.exists), podiumPicksKey);
+
+  // Rivals' upcoming picks — only worth a read once the nightly job has
+  // written at least one rival onto the profile.
+  const hasRivals = useMemo(
+    () =>
+      Object.values(/** @type {Record<string, unknown>} */ (userProfile?.rivals || {})).some(
+        (list) => Array.isArray(list) && list.length > 0
+      ),
+    [userProfile?.rivals]
+  );
+  const rivalAttendance = useRivalAttendance(Boolean(user) && hasRivals);
 
   // Initialize selected week to current week
   useEffect(() => {
@@ -380,6 +404,8 @@ const Schedule = () => {
               onRegister={handleShowClick}
               podiumAttendance={podiumAttendance}
               hostedByKey={hostedByKey}
+              podiumTravel={podiumTravel}
+              rivalAttendance={rivalAttendance}
             />
           ) : (
             <ShowsList
@@ -391,6 +417,8 @@ const Schedule = () => {
               seasonUid={seasonUid}
               podiumAttendance={podiumAttendance}
               hostedByKey={hostedByKey}
+              podiumTravel={podiumTravel}
+              rivalAttendance={rivalAttendance}
             />
           )}
 
@@ -427,6 +455,7 @@ const Schedule = () => {
             formattedDate={formatDate(selectedShow.day)}
             eventDate={getActualDate(selectedShow.day)}
             hostedEvent={selectedHostedEvent}
+            podiumTravel={podiumTravel?.[travelKey(selectedShow)] || null}
             onClose={() => setRegistrationModal(false)}
             onSuccess={() => {
               // Fantasy corps update via the profileStore real-time listener, but

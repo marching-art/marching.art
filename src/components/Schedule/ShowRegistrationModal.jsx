@@ -74,6 +74,7 @@ const weekShowsFor = (userProfile, corpsClass, week) =>
  *   formattedDate: string,
  *   eventDate: Date|null,
  *   hostedEvent?: Record<string, any>|null,
+ *   podiumTravel?: import('../../api/podium').PodiumShowTravelLeg|null,
  *   onClose: () => void,
  *   onSuccess?: () => void,
  * }} props
@@ -84,6 +85,7 @@ const ShowRegistrationModal = ({
   formattedDate,
   eventDate,
   hostedEvent = null,
+  podiumTravel = null,
   onClose,
   onSuccess,
 }) => {
@@ -107,6 +109,19 @@ const ShowRegistrationModal = ({
     show,
     hostedEvent,
   });
+
+  // The director's rivals (written nightly onto the profile), keyed by the
+  // exact corps — `${uid}|${corpsClass}` — so the roster tags only the corps
+  // that is the rival, not every corps that director fields.
+  const rivalKeys = useMemo(() => {
+    const keys = new Set();
+    for (const list of Object.values(userProfile?.rivals || {})) {
+      for (const rival of Array.isArray(list) ? list : []) {
+        if (rival?.uid && rival?.corpsClass) keys.add(`${rival.uid}|${rival.corpsClass}`);
+      }
+    }
+    return keys;
+  }, [userProfile?.rivals]);
 
   // Get max shows based on the show's week (7 for final week, 4 otherwise)
   const maxShows = useMemo(() => getMaxShowsForWeek(show.week), [show.week]);
@@ -514,10 +529,14 @@ const ShowRegistrationModal = ({
           richer panel (venue slots + host); every other non-championship show
           gets the same roster in a neutral panel, so the lineup is visible on all
           shows, not just hosted ones. */}
-      {isHosted && <HostedShowPanel {...hostedShow} />}
+      {isHosted && <HostedShowPanel {...hostedShow} rivalKeys={rivalKeys} />}
       {!isHosted && !isChampionship && (
         <div className="mx-4 mt-4 p-3 bg-surface-sunken border border-line">
-          <AttendeeRoster attendees={hostedShow.attendees} loading={hostedShow.loading} />
+          <AttendeeRoster
+            attendees={hostedShow.attendees}
+            loading={hostedShow.loading}
+            rivalKeys={rivalKeys}
+          />
         </div>
       )}
 
@@ -624,6 +643,7 @@ const ShowRegistrationModal = ({
                 picksThisWeek={podiumPicksThisWeek}
                 maxPicks={podiumMaxPicks}
                 autoSlotNote={podiumAutoSlotNote}
+                travel={podiumTravel}
                 onToggle={togglePodium}
               />
             )}

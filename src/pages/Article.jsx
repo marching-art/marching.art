@@ -49,6 +49,7 @@ import { useLandingScores } from '../hooks/useLandingScores';
 import { useYoutubeSearch } from '../hooks/useYoutubeSearch';
 import { shareLink, articleShareUrl } from '../utils/shareSheet';
 import { displayEventName } from '../utils/eventNames';
+import { toApTitleCase } from '../utils/headlineCase';
 
 /**
  * The article this page renders. It arrives either as a feed entry (NewsEntry,
@@ -285,10 +286,12 @@ const Article = () => {
     window.scrollTo(0, 0);
   }, [id]);
 
+  // Rendered in AP title case regardless of how the stored doc was cased.
+  const headline = toApTitleCase(article?.headline);
+
   // Share the /share/ URL, not window.location: social scrapers don't run
   // the SPA's JS, so only the share endpoint's OG tags unfurl properly.
-  const handleShare = () =>
-    shareLink({ title: article?.headline, url: articleShareUrl(article?.id || id) });
+  const handleShare = () => shareLink({ title: headline, url: articleShareUrl(article?.id || id) });
 
   /** @param {number} newCount */
   const handleCommentCountChange = (newCount) => {
@@ -330,7 +333,7 @@ const Article = () => {
     const jsonLd = {
       '@context': 'https://schema.org',
       '@type': 'NewsArticle',
-      headline: metaArticle.headline,
+      headline,
       description: truncateForMeta(metaArticle.summary),
       mainEntityOfPage: `https://marching.art/article/${metaArticle.id}`,
       publisher: {
@@ -348,17 +351,17 @@ const Article = () => {
       };
     }
     return jsonLd;
-  }, [metaArticle, publishedTime]);
+  }, [metaArticle, headline, publishedTime]);
 
   useSEO({
-    title: metaArticle ? `${metaArticle.headline} | marching.art` : undefined,
+    title: metaArticle ? `${headline} | marching.art` : undefined,
     description: metaArticle ? truncateForMeta(metaArticle.summary) : undefined,
     path: `/article/${id}`,
     // Loading renders indexable defaults; a missing or day-gated article is a
     // dead-end page that should stay out of the index.
     noindex: !loading && !metaArticle,
     image: metaArticle?.imageUrl,
-    imageAlt: metaArticle?.headline,
+    imageAlt: metaArticle ? headline : undefined,
     type: metaArticle ? 'article' : undefined,
     publishedTime,
     jsonLd: articleJsonLd,
@@ -419,7 +422,7 @@ const Article = () => {
                 <div className="w-full mb-6 border border-line relative">
                   <OptimizedImage
                     src={article.imageUrl}
-                    alt={article.headline ?? ''}
+                    alt={headline}
                     aspectRatio="21/9"
                     priority={true}
                   />
@@ -462,7 +465,7 @@ const Article = () => {
 
                   {/* Headline */}
                   <Heading level="display" className="leading-tight mb-4">
-                    {article.headline}
+                    {headline}
                   </Heading>
 
                   {/* Author byline — credits the submitting director; the username
@@ -508,7 +511,7 @@ const Article = () => {
                         article.authorUid &&
                         article.authorUid !== user.uid &&
                         isReportableArticleId(article.id) && (
-                          <ReportArticleButton articleId={article.id} headline={article.headline} />
+                          <ReportArticleButton articleId={article.id} headline={headline} />
                         )}
                       <ReactionsBar
                         articleId={article.id}

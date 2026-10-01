@@ -443,15 +443,15 @@ interface RecapScore {
   corpsClass?: string;
   score?: number;
   totalScore?: number;
-  corps?: string;
-  corpsName?: string;
-  uid?: string;
-  displayName?: string;
-  avatarUrl?: string | null;
-  colors?: string[] | null;
   geScore?: number;
   visualScore?: number;
   musicScore?: number;
+  uid?: string;
+  corps?: string;
+  corpsName?: string;
+  displayName?: string;
+  avatarUrl?: string | null;
+  colors?: string[] | null;
 }
 
 interface RecapShow {

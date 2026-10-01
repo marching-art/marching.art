@@ -50,6 +50,8 @@ import { ArmControls, LegControls } from './StudioLimbControls';
 import ChestSection from './StudioChestControls';
 import ShouldersSection from './StudioShouldersControls';
 import HeadwearSection from './StudioHeadwearControls';
+import TorsoSplitControls from './StudioPrismControls';
+import WildwoodTorsoControls from './StudioWildwoodControls';
 import { StudioColorwayContext } from './studioColorContext';
 import {
   STUDIO_SECTIONS,
@@ -57,6 +59,20 @@ import {
   type StudioSectionId,
   type StudioTabId,
 } from './studioSections';
+
+/** Torso prints sold in a design-house pack (🔒 until owned). */
+const PRINT_PACKS: Record<string, string> = {
+  shatter: 'pack_prism_forge',
+  brocade: 'pack_wildwood',
+  ember: 'pack_ember_glass',
+};
+
+/** Pack prints with their own def flag, and the title of their color rows. */
+const PACK_PRINTS: Array<['shatter' | 'brocade' | 'ember', string]> = [
+  ['shatter', 'Shatter colors'],
+  ['brocade', 'Brocade colors'],
+  ['ember', 'Ember glass colors'],
+];
 
 // ---------------------------------------------------------------------------
 // per-side editors
@@ -336,7 +352,13 @@ export default function StudioEditor({
             <div className="mt-2">
               <span className={LABEL}>Print</span>
               <Pills
-                options={TORSO_PRINT_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
+                options={TORSO_PRINT_OPTIONS.map((o) => ({
+                  value: o.value,
+                  label:
+                    o.value && PRINT_PACKS[o.value]
+                      ? packLabel(o.label, PRINT_PACKS[o.value])
+                      : o.label,
+                }))}
                 value={torsoPrint}
                 onSelect={(v) => setTorsoPrint(v)}
               />
@@ -347,6 +369,12 @@ export default function StudioEditor({
                 <PrintColorRows figure={figure} surface={figure.print} onSlot={setPrintColor} />
               </div>
             )}
+            {PACK_PRINTS.filter(([surface]) => figure[surface]).map(([surface, title]) => (
+              <div key={surface} className="mt-2">
+                <span className={LABEL}>{title}</span>
+                <PrintColorRows figure={figure} surface={surface} onSlot={setPrintColor} />
+              </div>
+            ))}
             {!figure.torsoFill && (
               <ChannelRow
                 label="Jacket"
@@ -398,12 +426,29 @@ export default function StudioEditor({
                 onChange={(v) => v && setFigure({ glowArt: v })}
               />
             )}
+            <TorsoSplitControls
+              figure={figure}
+              colorway={design.colorway}
+              onPatch={setFigure}
+              packLabel={packLabel}
+            />
+            <WildwoodTorsoControls
+              figure={figure}
+              colorway={design.colorway}
+              onPatch={setFigure}
+              packLabel={packLabel}
+            />
           </section>
         )}
 
         {sec(
           'chest',
-          <ChestSection figure={figure} colorway={design.colorway} onPatch={setFigure} />
+          <ChestSection
+            figure={figure}
+            colorway={design.colorway}
+            onPatch={setFigure}
+            packLabel={packLabel}
+          />
         )}
 
         {sec(
@@ -526,7 +571,9 @@ export default function StudioEditor({
                 title={armsLinked ? 'Both arms' : 'Left arm'}
                 arm={armForEdit(figure, 'armL')}
                 jacket={figure.jacket}
+                torsoFill={figure.torsoFill}
                 colorway={design.colorway}
+                packLabel={packLabel}
                 fade={armFadeStops(figure, 'armL')}
                 onPatch={(patch) => setArm('armL', patch)}
                 onFade={(stops) => setFigure(withArmFade(figure, 'armL', stops, armsLinked))}
@@ -536,7 +583,9 @@ export default function StudioEditor({
                   title="Right arm"
                   arm={armForEdit(figure, 'armR')}
                   jacket={figure.jacket}
+                  torsoFill={figure.torsoFill}
                   colorway={design.colorway}
+                  packLabel={packLabel}
                   fade={armFadeStops(figure, 'armR')}
                   onPatch={(patch) => setArm('armR', patch)}
                   onFade={(stops) => setFigure(withArmFade(figure, 'armR', stops, false))}
@@ -559,6 +608,8 @@ export default function StudioEditor({
                 leg={legForEdit(figure, 'legL')}
                 torsoPrint={torsoPrint}
                 torsoFill={figure.torsoFill}
+                colorway={design.colorway}
+                packLabel={packLabel}
                 onPatch={(patch) => setLeg('legL', patch)}
               />
               {!legsLinked && (
@@ -567,6 +618,8 @@ export default function StudioEditor({
                   leg={legForEdit(figure, 'legR')}
                   torsoPrint={torsoPrint}
                   torsoFill={figure.torsoFill}
+                  colorway={design.colorway}
+                  packLabel={packLabel}
                   onPatch={(patch) => setLeg('legR', patch)}
                 />
               )}

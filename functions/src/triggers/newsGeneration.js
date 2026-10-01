@@ -24,6 +24,7 @@ const {
   getArticleImage,
 } = require("../helpers/newsGeneration");
 const { generateSeasonSummaryArticle } = require("../helpers/newsSeasonSummary");
+const { toApTitleCase } = require("../helpers/headlineCase");
 const { getCategoryFromType, NEWS_CATEGORIES } = require("../helpers/newsArticleShared");
 const { assertAdmin } = require("../helpers/callableGuards");
 const { loadHistoricalYear } = require("../helpers/historicalScores");
@@ -229,6 +230,7 @@ async function handleSeasonSummaryGeneration(data) {
       logger.info(`Season summary produced no article for day ${throughDay} (not enough season on record).`);
       return null;
     }
+    article.headline = toApTitleCase(article.headline);
 
     const metadata = {
       reportDay: throughDay,
@@ -246,7 +248,7 @@ async function handleSeasonSummaryGeneration(data) {
       reportDay: throughDay,
       currentDay: throughDay,
       updatedAt: new Date(),
-      primaryHeadline: article.headline || `Day ${throughDay} Season Summary`,
+      primaryHeadline: toApTitleCase(article.headline || `Day ${throughDay} Season Summary`),
       primaryImageUrl: article.imageUrl || null,
       isPublished: true,
     }, { merge: true });
@@ -282,7 +284,7 @@ async function saveArticleDoc(db, { reportDay, article, metadata, seasonId }) {
     updatedAt: new Date(),
 
     // Article content
-    headline: article.headline || `Day ${reportDay} ${article.type}`,
+    headline: toApTitleCase(article.headline || `Day ${reportDay} ${article.type}`),
     summary: article.summary || "",
     narrative: article.narrative || "",
 
@@ -364,7 +366,7 @@ async function saveDailyNews(db, { reportDay, content, metadata, articles, seaso
       updatedAt: new Date(),
       articleTypes: articles.map(a => a.type),
       articleCount: articles.length,
-      primaryHeadline: articles[0]?.headline || `Day ${reportDay} Recap`,
+      primaryHeadline: toApTitleCase(articles[0]?.headline || `Day ${reportDay} Recap`),
       // Only the fantasy-corps events article carries an image now, so take the
       // first article that actually has one rather than articles[0] (DCI Daily).
       primaryImageUrl: articles.find(a => a.imageUrl)?.imageUrl || null,
@@ -392,7 +394,7 @@ async function saveDailyNews(db, { reportDay, content, metadata, articles, seaso
     currentDay: metadata.currentDay,
     createdAt: new Date(),
     updatedAt: new Date(),
-    headline: content.headline,
+    headline: toApTitleCase(content.headline),
     summary: content.summary,
     dciRecap: content.dciRecap || null,
     fantasySpotlight: content.fantasySpotlight || null,
@@ -839,7 +841,7 @@ async function saveToNewsHubLegacy(db, { category, date, content, metadata, offS
     category,
     date: safeDate,
     createdAt: new Date(),
-    headline: content.headline,
+    headline: toApTitleCase(content.headline),
     summary: content.summary,
 
     // Full story (legacy) or narrative sections

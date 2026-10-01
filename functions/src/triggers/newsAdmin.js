@@ -7,6 +7,7 @@ const { defineSecret } = require("firebase-functions/params");
 const { getDb } = require("../config");
 const { invalidateNewsCache } = require("./newsFeed");
 const { assertAdmin } = require("../helpers/callableGuards");
+const { toApTitleCase } = require("../helpers/headlineCase");
 
 // The only documents the article-admin callables may touch. They used to
 // pass the client's `path` straight to db.doc(): an admin token (or a leaked
@@ -219,6 +220,9 @@ exports.updateArticle = onCall(
       if (updates[field] !== undefined) {
         sanitizedUpdates[field] = updates[field];
       }
+    }
+    if (typeof sanitizedUpdates.headline === "string") {
+      sanitizedUpdates.headline = toApTitleCase(sanitizedUpdates.headline);
     }
 
     // Sync fullStory and narrative fields - when one is updated, update both

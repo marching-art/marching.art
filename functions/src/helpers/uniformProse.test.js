@@ -314,3 +314,93 @@ test("the guard dress silhouette is described for the guard look", () => {
   assert.ok(spec.block.includes("A-line skirt"));
   assert.ok(spec.summary.includes("guard dress"));
 });
+
+test("every Prism Forge piece reaches the image prompt", () => {
+  const spec = describeFigure({
+    colorway: { primary: "#16181d", secondary: "#c3c9d1", accent: "#f2c14e", metal: "silver" },
+    figure: {
+      skin: "#c9a074",
+      jacket: "#16181d",
+      torsoFill: "url:shatter",
+      printColors: { shatter: ["#a10001", "#a10002"] },
+      torsoSplit: { color: "#a10003" },
+      chest: "streak",
+      streakCore: "#a10004",
+      chestFade: ["#a10005", "#a10006"],
+      armL: { type: "sleeve", cuffGlow: ["#a10007", "#a10008"] },
+      armR: { type: "sleeve", color: "#a10003" },
+      legL: { color: "#2a2d33", seams: "#a10009", kneePlate: "#a1000a", hemGlow: ["#a1000b", "#a1000c"] },
+      legR: { color: "#2a2d33" },
+    },
+  });
+  const text = spec.block.toLowerCase();
+  for (let i = 1; i <= 12; i++) {
+    const hex = `#a1000${i.toString(16)}`;
+    assert.ok(text.includes(hex), `spec is missing ${hex}`);
+  }
+  for (const phrase of ["shatter", "split two-tone torso", "light-streak", "glowing cuff", "glowing hem", "diamond plate", "panel seams"]) {
+    assert.ok(text.includes(phrase), `spec is missing "${phrase}"`);
+  }
+  assert.ok(spec.summary.includes("light-streak"));
+});
+
+test("every Wildwood piece reaches the image prompt", () => {
+  const spec = describeFigure({
+    colorway: { primary: "#2b231d", secondary: "#1d4a4f", accent: "#b06a3a", metal: "gold" },
+    figure: {
+      skin: "#8d5a3b",
+      jacket: "#2b231d",
+      torsoFill: "url:brocade",
+      printColors: { brocade: ["#a10001", "#a10002", "#a10003"] },
+      veins: { color: "#a10004" },
+      veinGlow: "#a10005",
+      chest: "gill",
+      gill: "#a10006",
+      drape: { color: "#a10007", flip: true },
+      armL: { type: "sleeve", veins: "#a10008", glove: "#141414" },
+      armR: { type: "bare", veins: "#a10009" },
+      legL: { color: "#141414", veins: "#a1000a" },
+      legR: { color: "#141414" },
+    },
+  });
+  const text = spec.block.toLowerCase();
+  for (const i of [1, 2, 3, 4, 5, 6, 7, 8, 10]) {
+    const hex = `#a1000${i.toString(16)}`;
+    assert.ok(text.includes(hex), `spec is missing ${hex}`);
+  }
+  // branchwork on a bare, ungloved arm draw nothing, so the prompt skips them
+  assert.ok(!text.includes("#a10009"));
+  for (const phrase of ["patina brocade", "branchwork", "gill fan", "sheer", "bioluminescent", "viewer's right hip", "back of the glove"]) {
+    assert.ok(text.includes(phrase), `spec is missing "${phrase}"`);
+  }
+  assert.ok(spec.summary.includes("gill fan"));
+});
+
+test("every Ember Glass piece reaches the image prompt", () => {
+  const spec = describeFigure({
+    colorway: { primary: "#e2540f", secondary: "#111114", accent: "#f4f2ec", metal: "silver" },
+    figure: {
+      skin: "#e0b48e",
+      jacket: "#111114",
+      torsoFill: "url:ember",
+      printColors: { ember: ["#a10001", "#a10002", "#a10003"] },
+      chest: "yoke",
+      yoke: "#a10004",
+      yokePiping: "#a10005",
+      armL: { type: "sleeve", color: "#111114", glove: "#111114" },
+      armR: { type: "sleeve", fill: "url:ember", glove: "#111114" },
+      hatType: "shako",
+      hat: { body: "#a10006", panel: "url:ember", ornament: "none" },
+      plume: { type: "upright", color: "#f4f2ec" },
+    },
+  });
+  const text = spec.block.toLowerCase();
+  for (const i of [1, 2, 3, 4, 5, 6]) {
+    assert.ok(text.includes(`#a1000${i}`), `spec is missing #a1000${i}`);
+  }
+  for (const phrase of ["ember glass", "stained glass", "lead-line", "swept yoke", "piping", "front face of the hat"]) {
+    assert.ok(text.includes(phrase), `spec is missing "${phrase}"`);
+  }
+  assert.ok(spec.summary.includes("swept contrasting yoke"));
+  assert.equal(fillProse({}, "url:ember").startsWith("an EMBER GLASS print"), true);
+});

@@ -52,11 +52,22 @@ import {
   type Node,
 } from './uniformFigureParts';
 import { chest } from './uniformFigureChest';
+import { cuffGlow, legsPrism, prismDefs, torsoSplit } from './uniformFigurePrism';
+import {
+  armBranchwork,
+  drape,
+  legsWildwood,
+  torsoBranchwork,
+  wildwoodDefs,
+} from './uniformFigureWildwood';
+import { emberDefs, hatPanel } from './uniformFigureEmber';
 
 const DETACHED_SLEEVE_D =
   'M64,132 Q58,166 60,200 Q61,228 64,244 L82,246 Q80,216 80,190 Q80,156 86,134 Q75,126 64,132 Z';
 const HALF_SLEEVE_D =
   'M78,103 Q66,111 62,134 Q60,152 60,168 L82,170 Q80,146 88,118 Q85,107 78,103 Z';
+const GAUNTLET_D = 'M54,210 L86,212 L83,248 Q71,253 61,247 Z';
+const HAND_D = 'M63,246 Q60,260 66,267 Q74,271 79,264 Q83,256 82,246 Q72,251 63,246 Z';
 
 function armSide(a: ArmConfig, cw: NormalizedFigure, uid: string, kp: string): Node[] {
   if (a.type === 'none') return [];
@@ -109,6 +120,7 @@ function armSide(a: ArmConfig, cw: NormalizedFigure, uid: string, kp: string): N
       })
     );
   }
+  out.push(...cuffGlow(a, sleeveD, uid, kp));
   if (a.patent) {
     out.push(light(`${kp}-pt`, 'M64,130 Q59,168 61,210 L64,210 Q62,168 67,132 Z', 0.24));
   }
@@ -116,7 +128,7 @@ function armSide(a: ArmConfig, cw: NormalizedFigure, uid: string, kp: string): N
     const c = safeHex(a.gauntlet.color);
     // Bell opens toward the elbow, snug at the wrist (real gauntlets taper down).
     out.push(
-      p(`${kp}-ga`, 'M54,210 L86,212 L83,248 Q71,253 61,247 Z', c),
+      p(`${kp}-ga`, GAUNTLET_D, c),
       strokeP(`${kp}-gat`, 'M54,212 L86,214', darkenHex(c, 0.35), 2.2),
       shade(`${kp}-gas`, 'M80,213 L83,248 L77,251 L74,214 Z', 0.15)
     );
@@ -124,8 +136,19 @@ function armSide(a: ArmConfig, cw: NormalizedFigure, uid: string, kp: string): N
   }
   const handC = a.glove ? safeHex(a.glove) : safeHex(cw.skin);
   out.push(
-    p(`${kp}-hd`, 'M63,246 Q60,260 66,267 Q74,271 79,264 Q83,256 82,246 Q72,251 63,246 Z', handC),
+    p(`${kp}-hd`, HAND_D, handC),
     shade(`${kp}-hds`, 'M76,248 Q79,258 75,265 Q80,259 80,248 Z', 0.15)
+  );
+  // Wildwood branchwork runs over everything that covers the arm, never bare skin
+  const covered = [sleeveD, a.gauntlet ? GAUNTLET_D : null, a.glove ? HAND_D : null];
+  out.push(
+    ...armBranchwork(
+      a,
+      covered.filter((d): d is string => Boolean(d)),
+      cw,
+      uid,
+      kp
+    )
   );
   return out;
 }
@@ -230,7 +253,7 @@ function hatOrnamentNodes(orn: string | undefined, m: string, kp: string, inner?
   ];
 }
 
-function shako(cw: NormalizedFigure): Node[] {
+function shako(cw: NormalizedFigure, uid: string): Node[] {
   const h = cw.hat;
   if (!h) return [];
   const body = safeHex(h.body);
@@ -241,6 +264,7 @@ function shako(cw: NormalizedFigure): Node[] {
     shade('sk-s', 'M132,6 Q140,7 145,8 L141,58 Q133,61 128,62 Q132,36 132,6 Z', 0.16),
     light('sk-l', 'M99,10 Q102,10 106,9 Q104,34 104,58 Q100,57 99,56 Z', 0.09),
     p('sk-t', 'M95,8 Q120,2 145,8 Q120,13 95,8 Z', lightenHex(body, 0.12)),
+    ...hatPanel(cw, uid),
   ];
   if (h.band) {
     const band = safeHex(h.band);
@@ -257,7 +281,7 @@ function shako(cw: NormalizedFigure): Node[] {
   return out;
 }
 
-function pith(cw: NormalizedFigure): Node[] {
+function pith(cw: NormalizedFigure, uid: string): Node[] {
   const h = cw.hat;
   if (!h) return [];
   const body = safeHex(h.body);
@@ -265,6 +289,7 @@ function pith(cw: NormalizedFigure): Node[] {
     p('pi', 'M97,52 Q96,16 120,14 Q144,16 143,52 Z', body),
     shade('pi-s', 'M130,17 Q141,24 142,50 L134,52 Q135,30 130,17 Z', 0.12),
     light('pi-l', 'M102,24 Q99,36 99,50 L104,51 Q104,32 107,22 Z', 0.1),
+    ...hatPanel(cw, uid),
     <ellipse key="pi-br" cx="120" cy="53" rx="31" ry="7.5" fill={lightenHex(body, 0.06)} />,
     shade('pi-bs', 'M89,53 A31,7.5 0 0 0 151,53 A31,7.5 0 0 1 89,53 Z', 0.18),
   ];
@@ -327,7 +352,7 @@ function aussie(cw: NormalizedFigure): Node[] {
  * The ornament defaults to bare — the clean face IS the look — and the plume
  * stays optional through the standard plume system.
  */
-function contour(cw: NormalizedFigure): Node[] {
+function contour(cw: NormalizedFigure, uid: string): Node[] {
   const h = cw.hat;
   if (!h) return [];
   const body = safeHex(h.body);
@@ -337,6 +362,7 @@ function contour(cw: NormalizedFigure): Node[] {
     p('co-t', 'M103,8 L135,16 L133,20 L105,12 Z', lightenHex(body, 0.14)),
     shade('co-s', 'M128,14 L135,16 L139,60 Q131,63 127,64 Q130,38 128,14 Z', 0.14),
     light('co-l', 'M104,12 L109,13 Q106,36 106,60 Q103,59 102,58 Z', 0.09),
+    ...hatPanel(cw, uid),
   ];
   if (h.band) {
     out.push(p('co-b', 'M101.4,52 Q120,60 138.6,52 L139,58 Q120,66 101,58 Z', safeHex(h.band)));
@@ -653,17 +679,27 @@ function aiguillette(cw: NormalizedFigure): Node[] {
 export function figureLayers(raw: FigureConfig, uid: string): Node[] {
   const cw = normalizeFigure(raw);
   const flared = Boolean(cw.legL.flare || cw.legR.flare);
-  const layers: Node[] = [buildDefs(cw, uid), ...ground()];
+  const layers: Node[] = [
+    buildDefs(cw, uid),
+    prismDefs(cw, uid),
+    wildwoodDefs(cw, uid),
+    emberDefs(cw, uid),
+    ...ground(),
+  ];
   if (flared) layers.push(<g key="shoes">{shoes(cw)}</g>);
   layers.push(<g key="legs">{legs(cw, uid)}</g>);
+  layers.push(<g key="legPrism">{legsPrism(cw, uid)}</g>);
+  layers.push(<g key="legWild">{legsWildwood(cw, uid)}</g>);
   layers.push(<g key="swl">{swashLeg(cw)}</g>);
   layers.push(<g key="stream">{streamers(cw)}</g>);
   if (!flared) layers.push(<g key="shoes">{shoes(cw)}</g>);
-  layers.push(<g key="torso">{torso(cw, uid)}</g>);
+  layers.push(<g key="drape">{drape(cw)}</g>);
+  layers.push(<g key="torso">{torso(cw, uid, torsoSplit(cw, uid))}</g>);
   if (cw.satin) layers.push(<g key="satin">{satinSheen()}</g>);
   if (cw.velvet) layers.push(<g key="velvet">{velvetSheen()}</g>);
   if (cw.iridescent) layers.push(<g key="irid">{iridescentSheen(uid)}</g>);
   if (cw.lame) layers.push(<g key="lame">{lameField()}</g>);
+  layers.push(<g key="branchwork">{torsoBranchwork(cw, uid)}</g>);
   layers.push(
     <g key="chest">{chest(cw, uid)}</g>,
     <g key="chestBadge">{chestBadge(cw)}</g>,
@@ -687,11 +723,11 @@ export function figureLayers(raw: FigureConfig, uid: string): Node[] {
   );
   if (cw.crew) layers.push(<g key="crew">{crewNeck(cw)}</g>);
   if (cw.plume) layers.push(<g key="plume">{plume(cw)}</g>);
-  if (cw.hatType === 'shako') layers.push(<g key="hat">{shako(cw)}</g>);
-  if (cw.hatType === 'pith') layers.push(<g key="hat">{pith(cw)}</g>);
+  if (cw.hatType === 'shako') layers.push(<g key="hat">{shako(cw, uid)}</g>);
+  if (cw.hatType === 'pith') layers.push(<g key="hat">{pith(cw, uid)}</g>);
   if (cw.hatType === 'campaign') layers.push(<g key="hat">{campaign(cw)}</g>);
   if (cw.hatType === 'aussie') layers.push(<g key="hat">{aussie(cw)}</g>);
-  if (cw.hatType === 'contour') layers.push(<g key="hat">{contour(cw)}</g>);
+  if (cw.hatType === 'contour') layers.push(<g key="hat">{contour(cw, uid)}</g>);
   if (cw.hatType === 'busby') layers.push(<g key="hat">{busby(cw)}</g>);
   return layers;
 }

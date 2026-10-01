@@ -83,9 +83,9 @@ import { WORLD_FIELD_KEY } from '../utils/worldChampionship';
 /** @typedef {import('../types/recap').NormalizedShow} NormalizedShow */
 /** @typedef {import('../utils/corps').ViewerCorpsMatcher} ViewerCorpsMatcher */
 
-/** Sort-pill id → caption key ('total' has none: the sheet stays in score order). */
+/** Sort-pill id → the caption breakdown key it orders by. */
 /** @type {Record<string, 'ge' | 'vis' | 'mus'>} */
-const CAPTION_SORT_KEY = { GE: 'ge', VIS: 'vis', MUS: 'mus' };
+const CAPTION_SORT_KEYS = { GE: 'ge', VIS: 'vis', MUS: 'mus' };
 
 // Rank a class's scores (already total-desc, so index+1 is the finishing place)
 // and apply the active caption sort — the place stays fixed under a sort, the
@@ -101,7 +101,7 @@ const buildClassRows = (classScores, sortBy) => {
     place: i + 1,
   }));
   if (sortBy === 'total') return withPlace;
-  const key = CAPTION_SORT_KEY[sortBy];
+  const key = CAPTION_SORT_KEYS[sortBy];
   if (!key) return withPlace;
   return [...withPlace].sort((a, b) => (b.captions[key] ?? -1) - (a.captions[key] ?? -1));
 };
@@ -113,20 +113,22 @@ const buildClassRows = (classScores, sortBy) => {
 // the chip and banner themselves are shared with the Podium board
 // (components/scores/SheetPrimitives).
 
+/**
+ * @typedef {{
+ *   scores: NormalizedScore[],
+ *   eventName: string,
+ *   location?: string | null,
+ *   date?: string | null,
+ *   seasonId?: string | null,
+ *   offSeasonDay: number,
+ *   viewer?: ViewerCorpsMatcher | null,
+ *   sortBy?: string,
+ *   advancement?: import('../utils/scoresUtils').AdvancementResult | null,
+ * }} RecapDataGridProps
+ */
+
 const RecapDataGrid = memo(
-  /**
-   * @param {{
-   *   scores: NormalizedScore[],
-   *   eventName: string,
-   *   location?: string | null,
-   *   date?: string | null,
-   *   seasonId?: string | null,
-   *   offSeasonDay: number,
-   *   viewer?: ViewerCorpsMatcher | null,
-   *   sortBy?: string,
-   *   advancement?: import('../utils/scoresUtils').AdvancementResult | null,
-   * }} props
-   */
+  /** @param {RecapDataGridProps} props */
   ({
     scores,
     eventName,
@@ -203,7 +205,7 @@ const RecapDataGrid = memo(
     // image wherever the copied text is pasted.
     const topRankedClass = world
       ? WORLD_FIELD_KEY
-      : sections.find((s) => typeof s.cls === 'string' && CLASS_SECTION_ORDER.includes(s.cls))?.cls;
+      : sections.find((s) => s.cls != null && CLASS_SECTION_ORDER.includes(s.cls))?.cls;
     const shareUrl = () =>
       seasonId && typeof offSeasonDay === 'number' && topRankedClass
         ? scoresShareUrl(seasonId, offSeasonDay, topRankedClass)
@@ -286,8 +288,8 @@ const RecapDataGrid = memo(
                       avatarUrl={score.avatarUrl}
                       colors={score.colors}
                       tag={
-                        advances ? (
-                          <AdvancesTag toDay={advancement?.advancesToDay} />
+                        advances && advancement ? (
+                          <AdvancesTag toDay={advancement.advancesToDay} />
                         ) : world?.winner && place === 1 ? (
                           <TitleTag title={world.winner} />
                         ) : null
@@ -343,8 +345,8 @@ const NIGHT_BADGE = {
 };
 
 const EasternCombinedSheet = memo(
-  /** @param {{ shows: NormalizedShow[], viewer?: ViewerCorpsMatcher | null }} props */
-  ({ shows, viewer = null }) => {
+  /** @param {{ shows: NormalizedShow[] | null, viewer?: ViewerCorpsMatcher | null }} props */
+  ({ shows, viewer }) => {
     const combined = useMemo(() => mergeTwoNightShows(shows || []), [shows]);
     if (!combined) return null;
 
@@ -494,7 +496,7 @@ const FantasyRecapsView = ({
   viewer = null,
 }) => {
   const [sortBy, setSortBy] = useState('total');
-  const [selectedDay, setSelectedDay] = useState(/** @type {number | null} */ (null));
+  const [selectedDay, setSelectedDay] = useState(null);
   const lazy = !shows && !!seasonId;
 
   // Distinct competition days, oldest → newest (the tab order). Eager mode
@@ -503,7 +505,6 @@ const FantasyRecapsView = ({
     if (lazy) {
       return [...(availableDays || [])].sort((a, b) => a - b);
     }
-    /** @type {Set<number>} */
     const set = new Set();
     (shows || []).forEach((s) => {
       if (typeof s.offSeasonDay === 'number') set.add(s.offSeasonDay);
@@ -678,7 +679,7 @@ const ClassStandingsGrid = ({ standings, className, viewer = null, referenceDay 
       captions: getCaptionBreakdown(entry.scores?.[0] || entry),
     }));
     if (sortBy === 'total') return withCaptions;
-    const key = CAPTION_SORT_KEY[sortBy];
+    const key = CAPTION_SORT_KEYS[sortBy];
     if (!key) return withCaptions;
     return [...withCaptions].sort((a, b) => (b.captions[key] ?? -1) - (a.captions[key] ?? -1));
   }, [standings, sortBy]);

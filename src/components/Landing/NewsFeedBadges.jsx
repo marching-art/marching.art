@@ -12,6 +12,7 @@ import {
   Share2,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { toApTitleCase } from '../../utils/headlineCase';
 
 /** @param {{ direction?: 'up' | 'down' | string, className?: string }} props */
 function TrendingBadge({ direction, className = 'w-3 h-3' }) {
@@ -134,8 +135,8 @@ function ShareButton({ story, className = '' }) {
     if (navigator.share && isMobile) {
       try {
         await navigator.share({
-          title: story.headline,
-          text: story.headline,
+          title: toApTitleCase(story.headline),
+          text: toApTitleCase(story.headline),
           url: shareUrl,
         });
       } catch (err) {

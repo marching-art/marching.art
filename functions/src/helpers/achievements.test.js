@@ -12,6 +12,7 @@ const {
   podiumSeasonsPlayed,
   podiumShowsAttended,
   reconciledTotalSeasons,
+  seasonPerformance,
 } = require("./achievements");
 
 /** A profile whose only game is Podium, with N completed seasons on the résumé. */
@@ -123,6 +124,106 @@ describe("Podium participation folds into the shared career milestones", () => {
     assert.ok(!earned.includes("podium_debut"));
     assert.ok(!earned.includes("podium_open"));
     assert.ok(!earned.includes("podium_world"));
+  });
+});
+
+describe("Season Performance achievements", () => {
+  /** One archived résumé row. */
+  const row = (seasonId, placement, showsAttended = 10, extra = {}) => ({
+    seasonId,
+    placement,
+    showsAttended,
+    ...extra,
+  });
+  const earnedIds = (profile) => sweepProfileAchievements(profile).map((a) => a.id);
+
+  test("placement tiers stack: a 2nd-place finish earns Contender, Finalist and Medal Stand", () => {
+    const ids = earnedIds({ corps: { openClass: { seasonHistory: [row("s1", 2)] } } });
+    assert.ok(ids.includes("season_top_25"));
+    assert.ok(ids.includes("season_top_12"));
+    assert.ok(ids.includes("season_top_3"));
+  });
+
+  test("a 14th-place finish earns Contender only", () => {
+    const ids = earnedIds({ corps: { aClass: { seasonHistory: [row("s1", 14)] } } });
+    assert.ok(ids.includes("season_top_25"));
+    assert.ok(!ids.includes("season_top_12"));
+    assert.ok(!ids.includes("season_top_3"));
+  });
+
+  test("SoundSport is ratings-only and never earns a placement tier", () => {
+    const ids = earnedIds({ corps: { soundSport: { seasonHistory: [row("s1", 1)] } } });
+    assert.ok(!ids.includes("season_top_25"));
+    assert.ok(!ids.includes("season_climber"));
+  });
+
+  test("On the Rise needs a better finish than the previous season in the same class", () => {
+    const climbed = seasonPerformance({
+      corps: { worldClass: { seasonHistory: [row("s1", 40), row("s2", 22)] } },
+    });
+    assert.equal(climbed.climbedPlacement, true);
+
+    const slid = seasonPerformance({
+      corps: { worldClass: { seasonHistory: [row("s1", 22), row("s2", 40)] } },
+    });
+    assert.equal(slid.climbedPlacement, false);
+
+    // Moving up a class with a worse number is a new field, not a climb.
+    const promoted = seasonPerformance({
+      corps: {
+        openClass: {
+          seasonHistory: [row("s1", 5, 10, { corpsClass: "aClass" }), row("s2", 30)],
+        },
+      },
+    });
+    assert.equal(promoted.climbedPlacement, false);
+  });
+
+  test("Full Tour counts one corps' shows in one season, not a career sum", () => {
+    const spread = seasonPerformance({
+      corps: { aClass: { seasonHistory: [row("s1", 20, 15), row("s2", 20, 15)] } },
+    });
+    assert.equal(spread.maxSeasonShows, 15);
+
+    const full = earnedIds({ corps: { aClass: { seasonHistory: [row("s1", 20, 26)] } } });
+    assert.ok(full.includes("season_full_tour"));
+  });
+
+  test("Triple Threat counts distinct fantasy classes competed in one season", () => {
+    const profile = {
+      corps: {
+        soundSport: { seasonHistory: [row("s1", null, 6)] },
+        aClass: { seasonHistory: [row("s1", 10, 6)] },
+        podiumClass: { seasonHistory: [row("s1", 3, 6)] }, // separate game
+      },
+    };
+    assert.equal(seasonPerformance(profile).maxClassesInSeason, 2);
+
+    profile.corps.openClass = { seasonHistory: [row("s1", 18, 6)] };
+    assert.ok(earnedIds(profile).includes("season_multi_class"));
+  });
+
+  test("a retired corps' résumé still counts", () => {
+    const ids = earnedIds({
+      retiredCorps: [{ corpsClass: "openClass", seasonHistory: [row("s1", 9)] }],
+    });
+    assert.ok(ids.includes("season_top_12"));
+  });
+
+  test("seasons_2 and seasons_3 fill the gap between Season One and Five Year Plan", () => {
+    const ids = earnedIds({ lifetimeStats: { totalSeasons: 3 } });
+    assert.ok(ids.includes("seasons_2"));
+    assert.ok(ids.includes("seasons_3"));
+    assert.ok(!ids.includes("seasons_5"));
+  });
+
+  test("an empty profile has no season results", () => {
+    assert.deepEqual(seasonPerformance({}), {
+      bestSeasonPlacement: null,
+      climbedPlacement: false,
+      maxSeasonShows: 0,
+      maxClassesInSeason: 0,
+    });
   });
 });
 

@@ -19,6 +19,7 @@ import {
 import toast from 'react-hot-toast';
 import Portal from '../Portal';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
+import { toApTitleCase } from '../../utils/headlineCase';
 import { listPendingSubmissions, approveSubmission, rejectSubmission } from '../../api/functions';
 
 /**
@@ -334,7 +335,9 @@ const SubmissionRow = ({
             {CATEGORY_LABELS[submission.category]}
           </span>
         </div>
-        <h3 className="text-sm font-bold text-white truncate mb-1">{submission.headline}</h3>
+        <h3 className="text-sm font-bold text-white truncate mb-1">
+          {toApTitleCase(submission.headline)}
+        </h3>
         <p className="text-xs text-muted truncate">{submission.summary}</p>
         <div className="flex items-center gap-4 mt-2 text-[10px] text-muted">
           <span className="flex items-center gap-1">
@@ -470,7 +473,7 @@ const PreviewModal = ({ submission, onClose, onApprove, onReject, isProcessing, 
               <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1">
                 Headline
               </label>
-              <p className="text-lg font-bold text-white">{submission.headline}</p>
+              <p className="text-lg font-bold text-white">{toApTitleCase(submission.headline)}</p>
             </div>
 
             {/* Summary */}

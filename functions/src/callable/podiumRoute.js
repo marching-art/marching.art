@@ -139,20 +139,49 @@ async function buildRoutePreview(db, seasonData, state, uid, competitionDay, eas
     .slice(0, 8);
   if (upcoming.length === 0) return [];
 
+  const locations = locationsByDay(await loadScheduleCompetitions(db, seasonData));
+  return buildRouteLegs(state, upcoming, { jointByDay, locations, today: competitionDay });
+}
+
+/**
+ * The active season's schedule entries (schedules/{dataDocId|name}.competitions),
+ * or [] when the doc is missing. One read; shared by the route preview and the
+ * per-show travel read.
+ */
+async function loadScheduleCompetitions(db, seasonData) {
   const scheduleId = seasonData.dataDocId || seasonData.name;
-  let locations = {};
-  if (scheduleId) {
-    const doc = await db.doc(`schedules/${scheduleId}`).get();
-    if (doc.exists) {
-      for (const comp of doc.data().competitions || []) {
-        if (comp.day != null && comp.location && locations[comp.day] == null) {
-          locations[comp.day] = comp.location;
-        }
-      }
+  if (!scheduleId) return [];
+  const doc = await db.doc(`schedules/${scheduleId}`).get();
+  return doc.exists ? doc.data().competitions || [] : [];
+}
+
+/** First listed location per competition day — the fallback for a legacy pick. */
+function locationsByDay(competitions) {
+  const locations = {};
+  for (const comp of competitions || []) {
+    if (comp && comp.day != null && comp.location && locations[comp.day] == null) {
+      locations[comp.day] = comp.location;
     }
   }
+  return locations;
+}
 
-  return buildRouteLegs(state, upcoming, { jointByDay, locations, today: competitionDay });
+/** "City, ST" for a venue, or null. */
+function cityLabel(venue) {
+  return venue ? `${venue.city}, ${venue.region}` : null;
+}
+
+/**
+ * Where the corps performs on a tour (show) day: a major's fixed venue, else
+ * the venue of the show the director picked, else (legacy picks with no stored
+ * location) the day's schedule location. `venue` is null when unresolvable.
+ */
+function stopVenueFor(state, day, locations) {
+  const isMajor = Boolean(venues.MAJOR_VENUES[day]);
+  const pick = isMajor ? null : store.showPickFor(state, day);
+  const pickLocation = (pick && pick.location) || locations[day];
+  const venue = venues.MAJOR_VENUES[day] || (pickLocation ? venues.venueFor(pickLocation) : null);
+  return { isMajor, pick, venue };
 }
 
 /**
@@ -194,6 +223,9 @@ function buildRouteLegs(state, upcoming, { jointByDay, locations, today = 0 }) {
       const move = venues.travelLeg(cursor, venue, store.balance);
       legs.push({
         day,
+        // Where the leg departs — the route sheet names it ("A → B") on the
+        // travel note so a flight reads as the hop INTO this stop.
+        fromCity: cityLabel(cursor),
         eventName: null,
         city: venue ? `${venue.city}, ${venue.region}` : joint.city || 'TBA',
         stadium: venue ? venues.stadiumFor(venue.venueId) : null,
@@ -216,13 +248,10 @@ function buildRouteLegs(state, upcoming, { jointByDay, locations, today = 0 }) {
       // tour position, so the next show is never priced from the host city.
       continue;
     }
-    const isMajor = Boolean(venues.MAJOR_VENUES[day]);
     // Route to the CHOSEN show's location on a self-pick day so consecutive
     // picks chain leg-to-leg through their actual venues; majors have fixed
     // venues; legacy picks (no stored location) fall back to the day's schedule.
-    const pick = isMajor ? null : store.showPickFor(state, day);
-    const pickLocation = pick?.location || locations[day];
-    const venue = venues.MAJOR_VENUES[day] || (pickLocation ? venues.venueFor(pickLocation) : null);
+    const { isMajor, pick, venue } = stopVenueFor(state, day, locations);
     const leg = venues.travelLeg(cursor, venue, store.balance);
     // Airfare (design §5.3): long legs can fly to halve their stamina hit for a
     // CorpsCoin fare. The portal shows the fare, the flown stamina, and whether
@@ -235,6 +264,7 @@ function buildRouteLegs(state, upcoming, { jointByDay, locations, today = 0 }) {
     const rawStamina = leg ? Math.round(leg.staminaCost * (1 - tourReduction) * 10) / 10 : 0;
     legs.push({
       day,
+      fromCity: cityLabel(cursor),
       eventName: pick?.eventName || null,
       city: venue ? `${venue.city}, ${venue.region}` : 'TBA',
       stadium: venue ? venues.stadiumFor(venue.venueId) : null,
@@ -273,6 +303,99 @@ function buildRouteLegs(state, upcoming, { jointByDay, locations, today = 0 }) {
 
 // Exported for unit tests; buildRoutePreview is the production entry point.
 exports.buildRouteLegs = buildRouteLegs;
+
+const round1 = (n) => Math.round(n * 10) / 10;
+
+/**
+ * Per-show travel for the Schedule page (design §5.3 open-information routing):
+ * for every show the director could still add, what the leg INTO it would cost
+ * from where the corps will be standing the night before — the venue of its
+ * last tour stop before that day (a self-pick or an auto-attended major), else
+ * its current location — and what the hop on to its next booked stop would be.
+ * Directors read mileage, travel stamina, heat and any airfare off the show
+ * cards while building the tour day by day, instead of off a paper map.
+ *
+ * Mirrors buildRouteLegs exactly (Tour Manager reduction, rounding, airfare and
+ * the over-ocean mandatory flight), so a show's card matches the leg the route
+ * sheet shows once it's added. Joint rehearsals never move the corps, so they
+ * are not stops. Auto-attended days are skipped: there's no choice to make.
+ * Each day's nearest show(s) carry `closest` when the day offers more than one.
+ * Pure and exported for unit tests; getPodiumShowTravel is the entry point.
+ *
+ * @returns {Record<string, object>} keyed `${day}|${eventName}`
+ */
+function buildShowTravel(state, { tourDays, autoDays, competitions, locations, today = 0 }) {
+  const tourReduction = staffMarket.tourStaminaReduction(state, store.balance);
+  const firstDay = Math.max(1, today);
+  const origin = currentVenueOf(state);
+  const atHome = !state.lastVenue;
+  const stops = [...new Set(tourDays || [])]
+    .filter((day) => day >= firstDay && day <= 49)
+    .sort((a, b) => a - b)
+    .map((day) => ({ day, venue: stopVenueFor(state, day, locations).venue }))
+    .filter((stop) => stop.venue);
+  const auto = new Set(autoDays || []);
+
+  const legs = {};
+  const byDay = {};
+  for (const comp of competitions || []) {
+    const day = Number(comp && comp.day);
+    const eventName = comp && comp.name;
+    if (!Number.isInteger(day) || day < firstDay || day > 49 || auto.has(day)) continue;
+    if (typeof eventName !== 'string' || !eventName || !comp.location) continue;
+    const venue = venues.venueFor(comp.location);
+    let prev = null;
+    let next = null;
+    for (const stop of stops) {
+      if (stop.day < day) prev = stop;
+      else if (stop.day > day && !next) next = stop;
+    }
+    const from = prev ? prev.venue : origin;
+    const leg = venues.travelLeg(from, venue, store.balance);
+    if (!leg) continue;
+    const airfare = venues.airfareFor(leg, store.balance);
+    const staminaCost = round1(leg.staminaCost * (1 - tourReduction));
+    const onwardLeg = next ? venues.travelLeg(venue, next.venue, store.balance) : null;
+    const key = `${day}|${eventName}`;
+    legs[key] = {
+      day,
+      fromCity: cityLabel(from),
+      // The stop it's routed from (null = the corps' current location).
+      fromDay: prev ? prev.day : null,
+      fromHome: !prev && atHome,
+      tier: leg.tier,
+      miles: leg.miles,
+      coinCost: airfare.mandatory ? airfare.coinCost : leg.coinCost,
+      staminaCost,
+      heat: venues.heatStamina(venue, store.balance),
+      mandatoryFlight: Boolean(airfare.mandatory),
+      airfareEligible: airfare.eligible,
+      airfareCost: airfare.coinCost,
+      airfareStaminaCost: airfare.eligible ? round1(staminaCost * airfare.staminaMultiplier) : null,
+      // The hop on to the next booked stop, so a mid-tour pick shows both sides.
+      onward:
+        next && onwardLeg
+          ? {
+              day: next.day,
+              city: cityLabel(next.venue),
+              miles: onwardLeg.miles,
+              staminaCost: round1(onwardLeg.staminaCost * (1 - tourReduction)),
+              mandatoryFlight: Boolean(onwardLeg.overwater && onwardLeg.miles > 0),
+            }
+          : null,
+      closest: false,
+    };
+    (byDay[day] = byDay[day] || []).push(legs[key]);
+  }
+  for (const dayLegs of Object.values(byDay)) {
+    if (dayLegs.length < 2) continue;
+    const nearest = Math.min(...dayLegs.map((l) => l.miles));
+    for (const l of dayLegs) l.closest = l.miles === nearest;
+  }
+  return legs;
+}
+
+exports.buildShowTravel = buildShowTravel;
 
 /**
  * Between-seasons funding preview (design §5.6, the "guns vs. butter" commit
@@ -606,6 +729,32 @@ exports.getPodiumState = onCall({ cors: true }, async (request) => {
       : null,
     state,
   };
+});
+
+/**
+ * Per-show travel for the Schedule page — see buildShowTravel. Read-only, one
+ * state read + the schedule doc; fetched only by the Schedule page (and again
+ * after a pick changes), never on the dashboard's hot path.
+ */
+exports.getPodiumShowTravel = onCall({ cors: true }, async (request) => {
+  const { uid, db, seasonData, competitionDay } = await podiumContext(request);
+  const snapshot = await store.stateRef(db, uid).get();
+  if (!snapshot.exists || snapshot.data().seasonUid !== seasonData.seasonUid) {
+    return { exists: false, competitionDay, legs: {} };
+  }
+  const state = snapshot.data();
+  const easternAssignments = await store.loadEasternAssignments(db, seasonData.seasonUid);
+  const division = divisions.normalizeDivision(state.division);
+  const autoDays = store.autoDaysFor(uid, seasonData.seasonUid, { division, easternAssignments });
+  const competitions = await loadScheduleCompetitions(db, seasonData);
+  const legs = buildShowTravel(state, {
+    tourDays: [...autoDays, ...store.selectedDaysOf(state)],
+    autoDays,
+    competitions,
+    locations: locationsByDay(competitions),
+    today: competitionDay,
+  });
+  return { exists: true, competitionDay, legs };
 });
 
 /**

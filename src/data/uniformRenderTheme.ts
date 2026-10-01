@@ -83,7 +83,30 @@ export const PRINT_PALETTES = {
       ['1', '#8f6d20'],
     ] as Array<[string, string]>,
   },
+  /** Prism Forge shatter print: a faceted crack network over a dark base. */
+  shatter: {
+    bg: '#16181d',
+    line: '#c9ced6',
+  },
+  /** Wildwood patina brocade: oxidized-teal damask with bronze flecks. */
+  brocade: {
+    bg: '#1d4a4f',
+    motif: '#3f7f78',
+    fleck: '#b88a4a',
+  },
+  /** Ember Glass: stained-glass flame tongues set in black lead came. */
+  ember: {
+    flame: '#e2540f',
+    core: '#fbc02d',
+    lead: '#111114',
+  },
 } as const;
+
+/** Prism Forge light streak: the hot core line when no core color is set. */
+export const STREAK_CORE_DEFAULT = '#fbfbf4';
+
+/** Wildwood bioluminescent branchwork: the glow a director starts from. */
+export const BRANCH_GLOW_DEFAULT = '#5ff0dc';
 
 /** Skin tones offered for the previewed corps member (figure, not director). */
 export const FIGURE_SKIN_TONES: string[] = [

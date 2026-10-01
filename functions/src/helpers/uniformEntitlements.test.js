@@ -121,3 +121,116 @@ describe("shop catalog wiring", () => {
     }
   });
 });
+
+describe("Prism Forge Collection (Lumen & Vane)", () => {
+  const pair = ["#7cc4ff", "#f2c14e"];
+  test("every light-cut piece maps to the one pack", () => {
+    const cases = [
+      { torsoFill: "url:shatter" },
+      { mockNeck: "url:shatter" },
+      { torsoSplit: { color: "#c3c9d1" } },
+      { torsoSplit: { color: "#c3c9d1", fill: "url:shatter" } },
+      { chest: "streak", streak: "#7cc4ff" },
+      { armL: { type: "sleeve", cuffGlow: pair } },
+      { armR: { type: "sleeve", fill: "url:shatter" } },
+      { legL: { hemGlow: pair } },
+      { legR: { kneePlate: "#cfd4da" } },
+      { legL: { seams: "#cfd4da" } },
+      { legR: { fill: "url:shatter" } },
+    ];
+    for (const fig of cases) {
+      assert.deepEqual(requiredPacksFor({ ...FREE, ...fig }), ["pack_prism_forge"], JSON.stringify(fig));
+    }
+  });
+
+  test("the free floor and invisible leftovers stay free", () => {
+    assert.deepEqual(requiredPacksFor({ ...FREE, chest: "swash", swash: "#cfd4da" }), []);
+    // a cuff glow left on a half sleeve or bare arm draws nothing
+    assert.deepEqual(requiredPacksFor({ ...FREE, armL: { type: "half", cuffGlow: pair } }), []);
+    assert.deepEqual(requiredPacksFor({ ...FREE, armR: { type: "bare", cuffGlow: pair } }), []);
+  });
+
+  test("the missing-pack message names the house", () => {
+    const missing = missingPacksFor({ ...FREE, chest: "streak" }, ["pack_plumassier"]);
+    assert.deepEqual(missing, ["pack_prism_forge"]);
+    assert.match(missingPacksMessage(missing), /Prism Forge Collection \(Lumen & Vane\)/);
+  });
+});
+
+describe("Wildwood Collection (Alder & Moss)", () => {
+  const vein = "#e4dccb";
+  test("every living-forest piece maps to the one pack", () => {
+    const cases = [
+      { torsoFill: "url:brocade" },
+      { mockNeck: "url:brocade" },
+      { veins: { color: vein } },
+      { chest: "gill", gill: "#b06a3a" },
+      { drape: { color: "#5c4960", flip: true } },
+      { armL: { type: "sleeve", veins: vein } },
+      { armR: { type: "half", veins: vein } },
+      { armL: { type: "sleeve", detached: true, veins: vein } },
+      { armR: { type: "bare", veins: vein, gauntlet: { color: "#b06a3a" } } },
+      { armL: { type: "bare", veins: vein, glove: "#141414" } },
+      { legL: { veins: vein } },
+      { legR: { fill: "url:brocade" } },
+    ];
+    for (const fig of cases) {
+      assert.deepEqual(requiredPacksFor({ ...FREE, ...fig }), ["pack_wildwood"], JSON.stringify(fig));
+    }
+  });
+
+  test("invisible leftovers stay free", () => {
+    // a glow with no branchwork to carry it, and branchwork on bare skin, draw nothing
+    assert.deepEqual(requiredPacksFor({ ...FREE, veinGlow: "#5ff0dc" }), []);
+    assert.deepEqual(requiredPacksFor({ ...FREE, armL: { type: "bare", veins: vein } }), []);
+    assert.deepEqual(requiredPacksFor({ ...FREE, armR: { type: "none", veins: vein } }), []);
+  });
+
+  test("a brocade split panel needs both houses", () => {
+    const fig = { ...FREE, torsoSplit: { color: "#c3c9d1", fill: "url:brocade" } };
+    assert.deepEqual(requiredPacksFor(fig).sort(), ["pack_prism_forge", "pack_wildwood"]);
+  });
+
+  test("the missing-pack message names the house", () => {
+    const missing = missingPacksFor({ ...FREE, chest: "gill", gill: "#b06a3a" }, ["pack_prism_forge"]);
+    assert.deepEqual(missing, ["pack_wildwood"]);
+    assert.match(missingPacksMessage(missing), /Wildwood Collection \(Alder & Moss\)/);
+  });
+});
+
+describe("Ember Glass Collection (Kiln & Lantern)", () => {
+  const K = "#111114";
+  test("every lit-glass piece maps to the one pack", () => {
+    const cases = [
+      { torsoFill: "url:ember" },
+      { mockNeck: "url:ember" },
+      { armR: { type: "sleeve", fill: "url:ember" } },
+      { legL: { fill: "url:ember" } },
+      { chest: "yoke", yoke: K, yokePiping: "#f4f2ec" },
+      { hatType: "shako", hat: { body: K, panel: "url:ember" } },
+      { hatType: "contour", hat: { body: K, panel: "#e2540f" } },
+      { hatType: "pith", hat: { body: K, panel: "url:opart" }, torsoFill: "url:opart" },
+    ];
+    for (const fig of cases) {
+      assert.deepEqual(requiredPacksFor({ ...FREE, ...fig }), ["pack_ember_glass"], JSON.stringify(fig));
+    }
+  });
+
+  test("a panel on a hat without a front face stays free", () => {
+    for (const hatType of ["campaign", "aussie"]) {
+      assert.deepEqual(requiredPacksFor({ ...FREE, hatType, hat: { body: K, panel: "url:ember" } }), []);
+    }
+  });
+
+  test("another house's print on the hat panel needs both houses", () => {
+    const fig = { ...FREE, hat: { body: K, panel: "url:brocade" } };
+    assert.deepEqual(requiredPacksFor(fig).sort(), ["pack_ember_glass", "pack_wildwood"]);
+  });
+
+  test("the pack is for sale and the message names the house", () => {
+    assert.equal(getShopItem("pack_ember_glass").type, "uniformPack");
+    const missing = missingPacksFor({ ...FREE, chest: "yoke", yoke: K }, []);
+    assert.deepEqual(missing, ["pack_ember_glass"]);
+    assert.match(missingPacksMessage(missing), /Ember Glass Collection \(Kiln & Lantern\)/);
+  });
+});

@@ -28,6 +28,9 @@ const CHESTS = new Set([
   "buttons",
   "swash",
   "vinylPanel",
+  "streak",
+  "gill",
+  "yoke",
 ]);
 const HATS = new Set(["shako", "pith", "campaign", "aussie", "contour", "busby"]);
 const HAT_ORNAMENTS = new Set([
@@ -52,6 +55,9 @@ const PRINT_COLOR_SLOT_COUNTS = {
   pinstripe: 2,
   plaid: 3,
   foil: 2,
+  shatter: 2,
+  brocade: 3,
+  ember: 3,
 };
 const BUILTIN_FILL_REFS = new Set([
   "url:sun",
@@ -59,6 +65,9 @@ const BUILTIN_FILL_REFS = new Set([
   "url:pinstripe",
   "url:plaid",
   "url:foil",
+  "url:shatter",
+  "url:brocade",
+  "url:ember",
 ]);
 
 /** @param {unknown} v */
@@ -118,6 +127,11 @@ function readGradStop(stop) {
   return null;
 }
 
+/** @param {unknown} v */
+function isHexPair(v) {
+  return Array.isArray(v) && v.length === 2 && v.every(isHex);
+}
+
 /**
  * Validate one arm config.
  * @param {any} a @param {Set<string>} gradRefs @param {string[]} errors @param {string} label
@@ -137,6 +151,8 @@ function checkArm(a, gradRefs, errors, label) {
     "sequin",
     "glowLine",
     "gauntlet",
+    "cuffGlow",
+    "veins",
     "glove",
   ]);
   for (const k of Object.keys(a)) {
@@ -148,6 +164,10 @@ function checkArm(a, gradRefs, errors, label) {
   if (a.glowLine != null && !isHex(a.glowLine)) errors.push(`${label}.glowLine is invalid`);
   if (a.sequin != null && typeof a.sequin !== "boolean") errors.push(`${label}.sequin is invalid`);
   if (a.glove != null && !isHex(a.glove)) errors.push(`${label}.glove is invalid`);
+  if (a.veins != null && !isHex(a.veins)) errors.push(`${label}.veins is invalid`);
+  if (a.cuffGlow != null && !isHexPair(a.cuffGlow)) {
+    errors.push(`${label}.cuffGlow must be two #rrggbb colors`);
+  }
   if (a.gauntlet != null) {
     if (typeof a.gauntlet !== "object" || !isHex(a.gauntlet.color)) {
       errors.push(`${label}.gauntlet is invalid`);
@@ -165,13 +185,31 @@ function checkLeg(l, gradRefs, errors, label) {
     errors.push(`${label} must be an object`);
     return;
   }
-  const allowed = new Set(["color", "fill", "stripe", "flare", "tattered", "foil", "sequin"]);
+  const allowed = new Set([
+    "color",
+    "fill",
+    "stripe",
+    "flare",
+    "tattered",
+    "foil",
+    "sequin",
+    "hemGlow",
+    "kneePlate",
+    "seams",
+    "veins",
+  ]);
   for (const k of Object.keys(l)) {
     if (!allowed.has(k)) errors.push(`${label}.${k} is not a recognized field`);
   }
   if (l.color != null && !isHex(l.color)) errors.push(`${label}.color is invalid`);
   if (l.fill != null && !isFill(l.fill, gradRefs)) errors.push(`${label}.fill is invalid`);
   if (l.stripe != null && !isHex(l.stripe)) errors.push(`${label}.stripe is invalid`);
+  if (l.hemGlow != null && !isHexPair(l.hemGlow)) {
+    errors.push(`${label}.hemGlow must be two #rrggbb colors`);
+  }
+  if (l.kneePlate != null && !isHex(l.kneePlate)) errors.push(`${label}.kneePlate is invalid`);
+  if (l.seams != null && !isHex(l.seams)) errors.push(`${label}.seams is invalid`);
+  if (l.veins != null && !isHex(l.veins)) errors.push(`${label}.veins is invalid`);
 }
 
 // Per-key validators for the figure. `hex` = nullable hex; `bool` = boolean.
@@ -187,6 +225,22 @@ const FIGURE_FIELDS = {
   plaid: "bool",
   grads: "grads",
   foilLeg: "bool",
+  // Prism Forge (Lumen & Vane) — saving requires the pack
+  // (helpers/uniformEntitlements); shatter is the derived print-def flag
+  shatter: "bool",
+  torsoSplit: "torsoSplit",
+  // Wildwood (Alder & Moss) — saving requires the pack; brocade is the
+  // derived print-def flag
+  brocade: "bool",
+  veins: "colorFlip",
+  veinGlow: "hex",
+  drape: "colorFlip",
+  gill: "hex",
+  // Ember Glass (Kiln & Lantern) — saving requires the pack; ember is the
+  // derived print-def flag (the hat's front panel is checked under "hat")
+  ember: "bool",
+  yoke: "hex",
+  yokePiping: "hex",
   glow: "bool",
   glowArt: "hex",
   velvet: "bool",
@@ -214,6 +268,8 @@ const FIGURE_FIELDS = {
   swashTop: "bool",
   swashBottom: "bool",
   swashLegColor: "hex",
+  streak: "hex",
+  streakCore: "hex",
   metal: "hex",
   collar: "hex",
   collarTrim: "hex",
@@ -371,6 +427,29 @@ function validateFigure(figure) {
           errors.push("figure.cape is invalid");
         }
         break;
+      case "torsoSplit":
+        if (
+          typeof value !== "object" ||
+          Array.isArray(value) ||
+          !isHex(value.color) ||
+          (value.fill != null && !isFill(value.fill, gradRefs)) ||
+          (value.flip != null && typeof value.flip !== "boolean") ||
+          Object.keys(value).some((k) => !["color", "fill", "flip"].includes(k))
+        ) {
+          errors.push("figure.torsoSplit is invalid");
+        }
+        break;
+      case "colorFlip":
+        if (
+          typeof value !== "object" ||
+          Array.isArray(value) ||
+          !isHex(value.color) ||
+          (value.flip != null && typeof value.flip !== "boolean") ||
+          Object.keys(value).some((k) => !["color", "flip"].includes(k))
+        ) {
+          errors.push(`figure.${key} is invalid`);
+        }
+        break;
       case "hatType":
         if (!HATS.has(value)) errors.push(`figure.hatType is invalid`);
         break;
@@ -382,7 +461,10 @@ function validateFigure(figure) {
           (value.emblem != null && !isHex(value.emblem)) ||
           (value.ornament != null && !HAT_ORNAMENTS.has(value.ornament)) ||
           (value.flip != null && typeof value.flip !== "boolean") ||
-          Object.keys(value).some((k) => !["body", "band", "emblem", "ornament", "flip"].includes(k))
+          (value.panel != null && !isFill(value.panel, gradRefs)) ||
+          Object.keys(value).some(
+            (k) => !["body", "band", "emblem", "ornament", "flip", "panel"].includes(k)
+          )
         ) {
           errors.push("figure.hat is invalid");
         }
@@ -578,6 +660,15 @@ const PROSE_COLORS = [
   ["plum purple", 0x6d1f3f],
   ["royal purple", 0x4b2a6b],
   ["bronze", 0x8f6d20],
+  // Wildwood palette (the pack's natural-forest vocabulary)
+  ["peat brown", 0x2b231d],
+  ["oxidized teal", 0x1d4a4f],
+  ["oyster", 0xe4dccb],
+  ["twilight mauve", 0x5c4960],
+  ["bioluminescent aqua", 0x5ff0dc],
+  // Ember Glass palette (the pack's lit-glass vocabulary)
+  ["ember orange", 0xe2540f],
+  ["flame gold", 0xfbc02d],
 ];
 
 /**

@@ -22,14 +22,14 @@ need to run `npm run format` by hand, and the CI `format:check` gate should
 never fail on a push. If it ever does, run `npm run format` and check that the
 hook is active: `git config core.hooksPath` must print `.githooks`.
 
-## Chip away at `@ts-nocheck` — one per task
+## `@ts-nocheck` is paid down to zero — keep it there
 
-**Every time you do substantive work in this repo (any issue, feature, or
-fix), also remove at least one `// @ts-nocheck` header** and leave the file
-passing `checkJs`. The count is ratcheted downward by CI
-(`npm run ts-nocheck:check`, baseline in `scripts/ts-nocheck.baseline.json`);
-this habit is how the ~155 grandfathered files get typed over time instead of
-never. See [ARCHITECTURE.md](ARCHITECTURE.md#ci-gates) for the ratchet.
+The grandfathered `// @ts-nocheck` headers are all gone (2026-10-01). CI
+(`npm run ts-nocheck:check`, baseline in `scripts/ts-nocheck.baseline.json`)
+holds the ceiling at **0**, so never add one: type new and touched code with
+JSDoc (`@param` / `@type` / `@typedef`) or TypeScript instead. See
+[ARCHITECTURE.md](ARCHITECTURE.md#ci-gates) for the ratchet. The loop below is
+kept for reference should a header ever slip back in.
 
 Low-friction loop:
 
@@ -46,8 +46,7 @@ npm test -- <the file>         # if it's covered by a test, run it
 node scripts/tsNocheckCensus.mjs --update   # lock the new lower ceiling
 ```
 
-Commit the header removal together with (or right after) your main change.
-Never add a new `@ts-nocheck` header to compensate — the ratchet only falls.
+Never add a new `@ts-nocheck` header — the ratchet only falls, and it's at 0.
 
 > Note: this container may ship a newer TypeScript than the lockfile pins.
 > If `npm run typecheck` reports `TS5101`/`TS6xxx` noise, align it first:
