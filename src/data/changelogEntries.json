@@ -1,5 +1,16 @@
 [
   {
+    "id": "2026-10-01-headline-title-case",
+    "date": "2026-10-01",
+    "title": "News headlines now read like a real publication",
+    "category": "improvement",
+    "summary": "Every headline on the news hub — daily recaps, community articles and press releases — now uses consistent AP-style title case, on the feed, the article page, share previews and Discord.",
+    "highlights": [
+      "Writing an article or press release? The form shows exactly how your headline will publish as you type.",
+      "No more ALL-CAPS headlines: shouted words are set in normal title case, while real abbreviations like DCI, GE1 and SCV stay capitalized."
+    ]
+  },
+  {
     "id": "2026-10-01-schedule-travel-and-rivals",
     "date": "2026-10-01",
     "title": "Plan your Podium tour from the Schedule — travel costs and rivals on every show",

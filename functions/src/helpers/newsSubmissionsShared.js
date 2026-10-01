@@ -15,6 +15,7 @@ const {
 } = require("./promptSafety");
 const { getActiveCompetitionDay } = require("./gameDay");
 const { resolveCorpsUniform } = require("./newsUniforms");
+const { toApTitleCase } = require("./headlineCase");
 
 // A user graduates to auto-publish once an admin has approved this many of
 // their articles. After that, their new submissions publish automatically at
@@ -277,7 +278,7 @@ function validatePressReleaseInput(input) {
   return {
     valid: true,
     cleaned: {
-      headline: cleanHeadline,
+      headline: toApTitleCase(cleanHeadline),
       // Fall back to a truncated body when the author writes no summary, so the
       // feed card always has a teaser line.
       summary: cleanSummary || cleanBody.slice(0, L.summaryMax),
@@ -309,7 +310,7 @@ function buildPressReleaseArticle({ id, cleaned, corps, author, seasonId, curren
     updatedAt: now,
 
     // Content
-    headline: cleaned.headline,
+    headline: toApTitleCase(cleaned.headline),
     summary: cleaned.summary,
     narrative: cleaned.body,
     category: "press",
@@ -703,7 +704,7 @@ async function publishSubmission(db, {
     updatedAt: now,
 
     // Article content
-    headline: submission.headline,
+    headline: toApTitleCase(submission.headline),
     summary: submission.summary,
     narrative: submission.fullStory,
     category: submission.category,

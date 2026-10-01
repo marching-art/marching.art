@@ -22,6 +22,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { toApTitleCase } from '../../utils/headlineCase';
 
 // Source badge colors
 const SOURCE_COLORS = {
@@ -78,7 +79,7 @@ const ArticleRow = ({ article, onEdit, onArchive, onDelete, formatDate, editLoad
                 longer steal a full column and crush the content on mobile. */}
             <div className="flex items-start justify-between gap-2">
               <h3 className="font-bold text-white text-sm line-clamp-2 sm:truncate">
-                {article.headline}
+                {toApTitleCase(article.headline)}
               </h3>
 
               {/* Action buttons */}
