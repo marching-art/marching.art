@@ -14,6 +14,13 @@ test("toApTitleCase applies AP composition-title rules", () => {
   assert.equal(toApTitleCase("what to look for"), "What to Look For");
 });
 
+test("toApTitleCase takes shouting out but keeps real acronyms", () => {
+  assert.equal(toApTitleCase("BLUE DEVILS WIN BIG AT DCI FINALS"), "Blue Devils Win Big at DCI Finals");
+  assert.equal(toApTitleCase("SCV TAKES 3RD IN MARION, IN"), "SCV Takes 3rd in Marion, IN");
+  assert.equal(toApTitleCase("WIN OR LOSE, IN OR OUT"), "Win or Lose, in or Out");
+  assert.equal(toApTitleCase("I AM BACK FOR THE 8 PM SHOW"), "I Am Back for the 8 PM Show");
+});
+
 test("toApTitleCase tolerates non-strings and is idempotent", () => {
   assert.equal(toApTitleCase(undefined), "");
   assert.equal(toApTitleCase("   "), "");

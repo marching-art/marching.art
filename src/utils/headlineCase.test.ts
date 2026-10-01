@@ -39,6 +39,21 @@ const CASES: Array<[string, string]> = [
   // "A Class" is a proper noun
   ['Open and A Class Prelims', 'Open and A Class Prelims'],
   ['a class act from a corps', 'A Class Act From a Corps'],
+  // No shouting: all-caps words are cased; real acronyms keep their caps
+  ['BLUE DEVILS WIN BIG AT DCI FINALS', 'Blue Devils Win Big at DCI Finals'],
+  ['THE END', 'The End'],
+  ['crown posts HUGE number in GE1', 'Crown Posts Huge Number in GE1'],
+  ['OPEN AND A CLASS PRELIMS IN MARION, IN', 'Open and A Class Prelims in Marion, IN'],
+  ['SCV TAKES 3RD — A 1990S THROWBACK', 'SCV Takes 3rd — A 1990s Throwback'],
+  ["DCI'S BEST: SOUNDSPORT AT MARCHING.ART", "DCI's Best: SoundSport at marching.art"],
+  ['HEAD-TO-HEAD: BLUECOATS VS. CROWN', 'Head-to-Head: Bluecoats vs. Crown'],
+  ['DEVILS HOLD ON IN TOLEDO', 'Devils Hold On in Toledo'],
+  ['I AM BACK FOR THE 8 PM ET SHOW', 'I Am Back for the 8 PM ET Show'],
+  ['XP LEADERS FOR WEEK IV', 'XP Leaders for Week IV'],
+  ['WIN OR LOSE, IN OR OUT', 'Win or Lose, in or Out'],
+  ['crown wins in marion, IN as rain falls', 'Crown Wins in Marion, IN as Rain Falls'],
+  ['SHOWDOWN IN MARION, IN: WHO WINS?', 'Showdown in Marion, IN: Who Wins?'],
+  ['WHAT IS U.S. DRUM CORPS?', 'What Is U.S. Drum Corps?'],
   // Quotes, possessives, whitespace
   ['“the best of the best” returns', '“The Best of the Best” Returns'],
   ["the director's cut: devils' night", "The Director's Cut: Devils' Night"],
