@@ -47,7 +47,7 @@ db.settings({ ignoreUndefinedProperties: true });
 // Gemini jobs, push/email batches) and the public HTTP rewrite endpoints pin
 // `cpu: 1` locally so their runtime behavior is unchanged; keep that override
 // when adding a new heavy function.
-setGlobalOptions({ enforceAppCheck: true, maxInstances: 10, cpu: "gcf_gen1" });
+setGlobalOptions({ enforceAppCheck: false, maxInstances: 10, cpu: "gcf_gen1" });
 
 // Callable Functions
 const {
