@@ -180,7 +180,7 @@ describe("Wildwood Collection (Alder & Moss)", () => {
   });
 
   test("invisible leftovers stay free", () => {
-    // a glow with no vein to carry it, and veins on bare skin, draw nothing
+    // a glow with no branchwork to carry it, and branchwork on bare skin, draw nothing
     assert.deepEqual(requiredPacksFor({ ...FREE, veinGlow: "#5ff0dc" }), []);
     assert.deepEqual(requiredPacksFor({ ...FREE, armL: { type: "bare", veins: vein } }), []);
     assert.deepEqual(requiredPacksFor({ ...FREE, armR: { type: "none", veins: vein } }), []);

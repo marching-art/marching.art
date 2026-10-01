@@ -8,7 +8,7 @@
 // The mirror test keeps pack ids in lock-step with the shop catalog.
 
 import type { FigureConfig } from '../types/uniform';
-import { armShowsVeins, hatShowsPanel } from './uniform';
+import { armShowsBranchwork, hatShowsPanel } from './uniform';
 
 export interface UniformPackMeta {
   /** Shop item id — pack ids must match SHOP_ITEMS type 'uniformPack' in
@@ -65,8 +65,7 @@ export const UNIFORM_PACKS: UniformPackMeta[] = [
     kind: 'pack',
     name: 'Wildwood Collection',
     house: 'Alder & Moss',
-    features:
-      'the vein network, bioluminescent glow, gill fan, sheer drape and patina brocade print',
+    features: 'branchwork, its bioluminescent glow, gill fan, sheer drape and patina brocade print',
   },
   {
     id: 'pack_ember_glass',
@@ -111,8 +110,8 @@ export function usesPrismForge(fig: FigureConfig): boolean {
 
 /**
  * Whether a figure wears any Wildwood piece (Alder & Moss): the brocade print
- * on any surface, the gill fan, the sheer drape, or veins anywhere they show
- * (a vein glow counts only while some vein is visible to carry it). Pure.
+ * on any surface, the gill fan, the sheer drape, or branchwork anywhere it shows
+ * (its glow counts only while some branchwork is visible to carry it). Pure.
  */
 export function usesWildwood(fig: FigureConfig): boolean {
   const arms = [fig.armL, fig.armR];
@@ -130,7 +129,7 @@ export function usesWildwood(fig: FigureConfig): boolean {
     fig.drape ||
     fig.veins ||
     fills.includes('url:brocade') ||
-    arms.some((a) => armShowsVeins(a)) ||
+    arms.some((a) => armShowsBranchwork(a)) ||
     legs.some((l) => l?.veins)
   );
 }

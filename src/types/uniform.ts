@@ -139,11 +139,12 @@ export interface TorsoSplitConfig {
 }
 
 /**
- * Vein network across the torso (Wildwood pack): a branching raised-relief
+ * Branchwork across the torso (Wildwood pack): a branching raised-relief
  * line-art that climbs from the hip toward the shoulder. Default rises on the
  * viewer's left; `flip` mirrors it.
  */
-export interface VeinConfig {
+/** Stored under the figure's `veins` key (the pack's original field name). */
+export interface BranchworkConfig {
   color: HexColor;
   flip?: boolean;
 }
@@ -194,7 +195,7 @@ export interface ArmConfig {
   /** Glowing cuff fade up the forearm, [upper, wrist] (Prism Forge pack). */
   cuffGlow?: [HexColor, HexColor] | null;
   /**
-   * Vein line-art running shoulder → hand over whatever covers the arm: the
+   * Branchwork running shoulder → hand over whatever covers the arm: the
    * sleeve, a gauntlet, a glove (Wildwood pack).
    */
   veins?: HexColor | null;
@@ -220,7 +221,7 @@ export interface LegConfig {
   kneePlate?: HexColor | null;
   /** Thin angular panel seams running hip → knee → hem (Prism Forge pack). */
   seams?: HexColor | null;
-  /** Vein line-art climbing from the hem up the leg (Wildwood pack). */
+  /** Branchwork climbing from the hem up the leg (Wildwood pack). */
   veins?: HexColor | null;
 }
 
@@ -256,10 +257,10 @@ export interface FigureConfig {
   brocade?: boolean;
   /** Define the ember-glass print (referenced as "url:ember"; Ember Glass). */
   ember?: boolean;
-  /** Vein network across the torso (Wildwood pack). */
-  veins?: VeinConfig | null;
+  /** Branchwork across the torso (Wildwood pack). */
+  veins?: BranchworkConfig | null;
   /**
-   * Bioluminescent veins (Wildwood pack): every vein — torso, arms, legs —
+   * Bioluminescent branchwork (Wildwood pack): every branch — torso, arms, legs —
    * carries a soft glow in this color under its metallic surface.
    */
   veinGlow?: HexColor | null;

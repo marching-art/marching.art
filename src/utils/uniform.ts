@@ -577,24 +577,28 @@ export function designWithinLimits(design: UniformDesignV2): boolean {
 }
 
 // =============================================================================
-// WILDWOOD VEIN VISIBILITY (shared by the renderer, the gate, derived flags)
+// WILDWOOD BRANCHWORK VISIBILITY (shared by the renderer, the gate, derived flags)
 // =============================================================================
 
 /**
- * Whether an arm's veins land on anything: a sleeve (full, half or
- * detached), a gauntlet, or a glove. Veins on a bare, ungloved arm draw
+ * Whether an arm's branchwork (stored as `veins`) lands on anything: a sleeve (full, half or
+ * detached), a gauntlet, or a glove. Branchwork on a bare, ungloved arm draws
  * nothing, so they neither render nor count toward the pack.
  */
-export function armShowsVeins(a: ArmConfig | null | undefined): boolean {
+export function armShowsBranchwork(a: ArmConfig | null | undefined): boolean {
   if (!a || !a.veins || a.type === 'none') return false;
   return a.type !== 'bare' || Boolean(a.gauntlet || a.glove);
 }
 
-/** Whether any vein is visible anywhere on the figure. */
-export function figureShowsVeins(figure: FigureConfig): boolean {
+/** Whether any branchwork is visible anywhere on the figure. */
+export function figureShowsBranchwork(figure: FigureConfig): boolean {
   const n = normalizeFigure(figure);
   return Boolean(
-    figure.veins || armShowsVeins(n.armL) || armShowsVeins(n.armR) || n.legL.veins || n.legR.veins
+    figure.veins ||
+    armShowsBranchwork(n.armL) ||
+    armShowsBranchwork(n.armR) ||
+    n.legL.veins ||
+    n.legR.veins
   );
 }
 
@@ -664,7 +668,7 @@ export function withDerivedFlags(figure: FigureConfig): FigureConfig {
       n.armR.cuffGlow ||
       n.legL.hemGlow ||
       n.legR.hemGlow ||
-      (figure.veinGlow && figureShowsVeins(figure))
+      (figure.veinGlow && figureShowsBranchwork(figure))
     ),
     hairShow: !figure.hatType,
   };
