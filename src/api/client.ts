@@ -100,7 +100,16 @@ function initializeFirebase(): void {
  */
 function initializeAppCheckIfConfigured(): void {
   if (!APP_CHECK_CONFIG.enabled) return;
-  import('firebase/app-check')
+  // Only hand App Check to the SDK once reCAPTCHA Enterprise is actually ready.
+  // The Functions SDK awaits the App Check token BEFORE its own 70s timeout
+  // starts, and the App Check SDK's script loader has no onerror — so on a
+  // device where reCAPTCHA never loads (content blocker, flaky mobile network,
+  // iOS standalone PWA), every callable would hang forever behind an endless
+  // spinner. Skipping App Check there sends calls without a token instead:
+  // harmless while callables are monitor-only, and a clean "unauthenticated"
+  // rather than a hang once they enforce.
+  loadRecaptchaEnterprise(RECAPTCHA_READY_TIMEOUT_MS)
+    .then(() => import('firebase/app-check'))
     .then(({ initializeAppCheck, ReCaptchaEnterpriseProvider }) => {
       // Debug token for local/emulator dev — must be set before initialize.
       if (APP_CHECK_CONFIG.debugToken) {
@@ -117,6 +126,55 @@ function initializeAppCheckIfConfigured(): void {
       // App Check, so the app still renders; function calls will be refused.
       console.error('App Check initialization failed:', error);
     });
+}
+
+/** How long reCAPTCHA Enterprise gets to load before App Check is skipped. */
+const RECAPTCHA_READY_TIMEOUT_MS = 10_000;
+
+type RecaptchaEnterprise = { ready: (callback: () => void) => void };
+
+/**
+ * Load reCAPTCHA Enterprise (the same `enterprise.js?render=explicit` script
+ * the App Check SDK would inject — it reuses `grecaptcha.enterprise` when one
+ * is already on the page) and resolve once `grecaptcha.enterprise.ready`
+ * fires. Rejects on a script error or when `timeoutMs` passes first.
+ */
+function loadRecaptchaEnterprise(timeoutMs: number): Promise<void> {
+  const getEnterprise = () =>
+    (globalThis as { grecaptcha?: { enterprise?: RecaptchaEnterprise } }).grecaptcha?.enterprise;
+
+  return new Promise<void>((resolve, reject) => {
+    const timer = setTimeout(
+      () => reject(new Error(`reCAPTCHA Enterprise not ready after ${timeoutMs}ms`)),
+      timeoutMs
+    );
+    const whenReady = () => {
+      const enterprise = getEnterprise();
+      if (!enterprise) {
+        clearTimeout(timer);
+        reject(new Error('reCAPTCHA Enterprise script loaded without grecaptcha.enterprise'));
+        return;
+      }
+      enterprise.ready(() => {
+        clearTimeout(timer);
+        resolve();
+      });
+    };
+
+    if (getEnterprise()) {
+      whenReady();
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = 'https://www.google.com/recaptcha/enterprise.js?render=explicit';
+    script.async = true;
+    script.onload = whenReady;
+    script.onerror = () => {
+      clearTimeout(timer);
+      reject(new Error('reCAPTCHA Enterprise script failed to load'));
+    };
+    document.head.appendChild(script);
+  });
 }
 
 /**
