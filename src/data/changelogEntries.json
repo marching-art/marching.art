@@ -1,5 +1,32 @@
 [
   {
+    "id": "2026-10-01-season-performance-achievements",
+    "date": "2026-10-01",
+    "title": "New achievements for how your season went",
+    "category": "feature",
+    "summary": "A new Season Performance category rewards where your season finished, not just that it happened — plus two new career steps between Season One and Five Year Plan. Veterans are credited automatically for past seasons on their next login.",
+    "highlights": [
+      "Contender, Finalist and Medal Stand: finish a season in the top 25, top 12 or top 3 of a competitive class.",
+      "On the Rise: finish higher in a class than you did the season before.",
+      "Full Tour: compete in 25 shows in a single season.",
+      "Triple Threat: compete in three classes in the same season.",
+      "Sophomore Season and Hat Trick: complete your second and third seasons.",
+      "Each one pays CorpsCoin the first time you earn it."
+    ]
+  },
+  {
+    "id": "2026-10-01-achievement-count-fix",
+    "date": "2026-10-01",
+    "title": "Achievement counts now match everywhere",
+    "category": "fix",
+    "summary": "Your profile and the Achievements page could show different achievement totals. Both now show the same count, and nothing is hidden.",
+    "highlights": [
+      "The three Podium Class achievements now appear on the Achievements page with their progress.",
+      "League championship titles and retired awards are listed in a new Special Honors section and shown as a separate +N on your profile.",
+      "An award that was saved twice is only counted once."
+    ]
+  },
+  {
     "id": "2026-10-01-studio-ember-glass",
     "date": "2026-10-01",
     "title": "New Uniform Studio pack: the Ember Glass Collection",

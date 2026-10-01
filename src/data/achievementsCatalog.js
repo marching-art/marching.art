@@ -12,7 +12,20 @@
 // locally-computed progress. Keep this file in sync with the server catalog
 // when achievements are added or changed.
 
-import { Award, Trophy, Target, Users, Flame, Star, Crown, Medal } from 'lucide-react';
+import {
+  Award,
+  Trophy,
+  Target,
+  Users,
+  Flame,
+  Star,
+  Crown,
+  Medal,
+  TrendingUp,
+  Layers,
+  MapPin,
+  Mic,
+} from 'lucide-react';
 import { REQUIRED_CAPTIONS } from '../utils/captionPricing';
 import { isCorpsClassUnlocked } from '../utils/corps';
 
@@ -34,6 +47,12 @@ const ROSTER_SIZE = REQUIRED_CAPTIONS.length;
  *   regionalTrophies: number,
  *   classChampionships: number,
  *   championships: number,
+ *   podiumSeasons: number,
+ *   podiumDivision: string | null,
+ *   bestSeasonPlacement: number | null,
+ *   climbedPlacement: boolean,
+ *   maxSeasonShows: number,
+ *   maxClassesInSeason: number,
  * }} AchievementState
  */
 
@@ -58,6 +77,15 @@ const ROSTER_SIZE = REQUIRED_CAPTIONS.length;
 
 /** CorpsCoin paid when an achievement is first earned, by rarity (mirrors server). */
 export const RARITY_CC = { common: 25, rare: 50, epic: 100, legendary: 250 };
+
+/** Season Performance thresholds (mirrors SEASON_PERFORMANCE on the server). */
+export const SEASON_PERFORMANCE = {
+  contenderCut: 25,
+  finalistCut: 12,
+  medalCut: 3,
+  fullTourShows: 25,
+  multiClassCount: 3,
+};
 
 // ---------------------------------------------------------------------------
 // Categories — ordered, each with a short "how you advance" hint so players
@@ -85,6 +113,11 @@ export const ACHIEVEMENT_CATEGORIES = [
     hint: 'Fill your lineup, compete in shows, and finish seasons. These build up every season you play — the marathon of a director career.',
   },
   {
+    id: 'season',
+    label: 'Season Performance',
+    hint: 'Rewards for how a season went — where you finished, how much you toured, how many classes you fielded, and whether you climbed. They land on your first login after a season wraps.',
+  },
+  {
     id: 'league',
     label: 'Leagues',
     hint: 'Join a league and win weekly head-to-head matchups against other directors.',
@@ -94,7 +127,20 @@ export const ACHIEVEMENT_CATEGORIES = [
     label: 'Championships',
     hint: 'Medal at regionals and win Finals titles. The rarest hardware in the game — the reward for a full competitive season done right.',
   },
+  {
+    id: 'podium',
+    label: 'Podium Class',
+    hint: 'Direct a corps in Podium Class, the director sim. Finish a season, then climb its divisions to Open and World Class.',
+  },
 ];
+
+/**
+ * Earned achievements that live outside the catalog: per-league championship
+ * titles (one per league and season) and awards from retired catalog
+ * versions. They are real and stay on the profile, but have no denominator,
+ * so every surface counts them as "honors" alongside the catalog's X/Y.
+ */
+export const HONORS_LABEL = 'Special Honors';
 
 // ---------------------------------------------------------------------------
 // The catalog. `progress(state)` returns { current, goal }; the entry is
@@ -333,6 +379,26 @@ export const ACHIEVEMENTS = [
     progress: (s) => ({ current: Math.min(s.totalSeasons, 1), goal: 1 }),
   },
   {
+    id: 'seasons_2',
+    title: 'Sophomore Season',
+    description: 'Complete 2 seasons',
+    icon: Medal,
+    category: 'career',
+    rarity: 'common',
+    ccReward: RARITY_CC.common,
+    progress: (s) => ({ current: Math.min(s.totalSeasons, 2), goal: 2 }),
+  },
+  {
+    id: 'seasons_3',
+    title: 'Hat Trick',
+    description: 'Complete 3 seasons',
+    icon: Medal,
+    category: 'career',
+    rarity: 'common',
+    ccReward: RARITY_CC.common,
+    progress: (s) => ({ current: Math.min(s.totalSeasons, 3), goal: 3 }),
+  },
+  {
     id: 'seasons_5',
     title: 'Five Year Plan',
     description: 'Complete 5 seasons',
@@ -351,6 +417,93 @@ export const ACHIEVEMENTS = [
     rarity: 'legendary',
     ccReward: RARITY_CC.legendary,
     progress: (s) => ({ current: Math.min(s.totalSeasons, 10), goal: 10 }),
+  },
+
+  // --- Season performance --------------------------------------------------
+  // Read from archived season results, so progress moves when a season wraps.
+  {
+    id: 'season_top_25',
+    title: 'Contender',
+    description: `Finish a season in the top ${SEASON_PERFORMANCE.contenderCut} of a competitive class`,
+    icon: Star,
+    category: 'season',
+    rarity: 'common',
+    ccReward: RARITY_CC.common,
+    progress: (s) => ({
+      current:
+        s.bestSeasonPlacement != null && s.bestSeasonPlacement <= SEASON_PERFORMANCE.contenderCut
+          ? 1
+          : 0,
+      goal: 1,
+    }),
+  },
+  {
+    id: 'season_top_12',
+    title: 'Finalist',
+    description: `Finish a season in the top ${SEASON_PERFORMANCE.finalistCut} of a competitive class`,
+    icon: Medal,
+    category: 'season',
+    rarity: 'rare',
+    ccReward: RARITY_CC.rare,
+    progress: (s) => ({
+      current:
+        s.bestSeasonPlacement != null && s.bestSeasonPlacement <= SEASON_PERFORMANCE.finalistCut
+          ? 1
+          : 0,
+      goal: 1,
+    }),
+  },
+  {
+    id: 'season_top_3',
+    title: 'Medal Stand',
+    description: `Finish a season in the top ${SEASON_PERFORMANCE.medalCut} of a competitive class`,
+    icon: Trophy,
+    category: 'season',
+    rarity: 'epic',
+    ccReward: RARITY_CC.epic,
+    progress: (s) => ({
+      current:
+        s.bestSeasonPlacement != null && s.bestSeasonPlacement <= SEASON_PERFORMANCE.medalCut
+          ? 1
+          : 0,
+      goal: 1,
+    }),
+  },
+  {
+    id: 'season_climber',
+    title: 'On the Rise',
+    description: 'Finish higher in a class than your previous season there',
+    icon: TrendingUp,
+    category: 'season',
+    rarity: 'rare',
+    ccReward: RARITY_CC.rare,
+    progress: (s) => ({ current: s.climbedPlacement ? 1 : 0, goal: 1 }),
+  },
+  {
+    id: 'season_full_tour',
+    title: 'Full Tour',
+    description: `Compete in ${SEASON_PERFORMANCE.fullTourShows} shows in a single season`,
+    icon: MapPin,
+    category: 'season',
+    rarity: 'rare',
+    ccReward: RARITY_CC.rare,
+    progress: (s) => ({
+      current: Math.min(s.maxSeasonShows, SEASON_PERFORMANCE.fullTourShows),
+      goal: SEASON_PERFORMANCE.fullTourShows,
+    }),
+  },
+  {
+    id: 'season_multi_class',
+    title: 'Triple Threat',
+    description: `Compete in ${SEASON_PERFORMANCE.multiClassCount} classes in the same season`,
+    icon: Layers,
+    category: 'season',
+    rarity: 'rare',
+    ccReward: RARITY_CC.rare,
+    progress: (s) => ({
+      current: Math.min(s.maxClassesInSeason, SEASON_PERFORMANCE.multiClassCount),
+      goal: SEASON_PERFORMANCE.multiClassCount,
+    }),
   },
 
   // --- Leagues -------------------------------------------------------------
@@ -458,7 +611,147 @@ export const ACHIEVEMENTS = [
     ccReward: RARITY_CC.rare,
     progress: (s) => ({ current: (s.classRanks.worldClass || Infinity) <= 10 ? 1 : 0, goal: 1 }),
   },
+
+  // --- Podium Class (director sim) -----------------------------------------
+  {
+    id: 'podium_debut',
+    title: 'Podium Debut',
+    description: 'Complete your first Podium season',
+    icon: Mic,
+    category: 'podium',
+    rarity: 'common',
+    ccReward: RARITY_CC.common,
+    progress: (s) => ({ current: Math.min(s.podiumSeasons, 1), goal: 1 }),
+  },
+  {
+    id: 'podium_open',
+    title: 'Open Class Director',
+    description: 'Climb to Open Class in Podium',
+    icon: Trophy,
+    category: 'podium',
+    rarity: 'rare',
+    ccReward: RARITY_CC.rare,
+    progress: (s) => ({
+      current: s.podiumDivision === 'openClass' || s.podiumDivision === 'worldClass' ? 1 : 0,
+      goal: 1,
+    }),
+  },
+  {
+    id: 'podium_world',
+    title: 'World Class Director',
+    description: 'Climb to World Class in Podium',
+    icon: Crown,
+    category: 'podium',
+    rarity: 'epic',
+    ccReward: RARITY_CC.epic,
+    progress: (s) => ({ current: s.podiumDivision === 'worldClass' ? 1 : 0, goal: 1 }),
+  },
 ];
+
+const CATALOG_IDS = new Set(ACHIEVEMENTS.map((a) => a.id));
+
+/**
+ * @typedef {{
+ *   classKey: string | null,
+ *   seasonId: string | null,
+ *   placement: number | null,
+ *   shows: number,
+ * }} SeasonRow
+ */
+
+/**
+ * Every archived season row, grouped per corps history in archive order.
+ * Mirrors seasonHistories in functions/src/helpers/achievements.js.
+ *
+ * @param {Record<string, any>} corps
+ * @param {Array<Record<string, any>>} retiredCorps
+ * @returns {SeasonRow[][]}
+ */
+function seasonHistories(corps, retiredCorps) {
+  /** @type {SeasonRow[][]} */
+  const lists = [];
+  /** @param {unknown} rows @param {string | null | undefined} fallbackClass */
+  const add = (rows, fallbackClass) => {
+    if (!Array.isArray(rows) || rows.length === 0) return;
+    lists.push(
+      rows.filter(Boolean).map((row) => ({
+        classKey: row.corpsClass || fallbackClass || null,
+        seasonId: row.seasonId || null,
+        placement: Number.isInteger(row.placement) && row.placement >= 1 ? row.placement : null,
+        shows: Number(row.showsAttended) || 0,
+      }))
+    );
+  };
+  Object.entries(corps).forEach(([slot, c]) => {
+    if (c) add(c.seasonHistory, slot);
+  });
+  retiredCorps.forEach((r) => {
+    if (r) add(r.seasonHistory, r.corpsClass);
+  });
+  return lists;
+}
+
+/**
+ * Season-performance snapshot (mirrors seasonPerformance on the server): best
+ * ranked-class finish, a season-over-season climb in one class, the most shows
+ * one corps played in one season, and the most fantasy classes in one season.
+ *
+ * @param {Record<string, any>} corps
+ * @param {Array<Record<string, any>>} retiredCorps
+ */
+export function seasonPerformance(corps, retiredCorps = []) {
+  /** @type {number | null} */
+  let bestSeasonPlacement = null;
+  let climbedPlacement = false;
+  let maxSeasonShows = 0;
+  /** @type {Map<string, Set<string>>} */
+  const classesBySeason = new Map();
+
+  for (const rows of seasonHistories(corps, retiredCorps)) {
+    /** @type {Map<string | null, number>} */
+    const lastPlacementByClass = new Map();
+    for (const row of rows) {
+      maxSeasonShows = Math.max(maxSeasonShows, row.shows);
+      if (row.seasonId && row.shows > 0 && row.classKey && row.classKey !== 'podiumClass') {
+        const classes = classesBySeason.get(row.seasonId) ?? new Set();
+        classes.add(row.classKey);
+        classesBySeason.set(row.seasonId, classes);
+      }
+      if (row.placement == null || row.classKey === 'soundSport') continue;
+      if (bestSeasonPlacement == null || row.placement < bestSeasonPlacement) {
+        bestSeasonPlacement = row.placement;
+      }
+      const previous = lastPlacementByClass.get(row.classKey);
+      if (previous != null && row.placement < previous) climbedPlacement = true;
+      lastPlacementByClass.set(row.classKey, row.placement);
+    }
+  }
+
+  let maxClassesInSeason = 0;
+  classesBySeason.forEach((classes) => {
+    maxClassesInSeason = Math.max(maxClassesInSeason, classes.size);
+  });
+  return { bestSeasonPlacement, climbedPlacement, maxSeasonShows, maxClassesInSeason };
+}
+
+/**
+ * Podium seasons played and shows attended, from the public résumé
+ * (mirrors podiumSeasonsPlayed / podiumShowsAttended on the server).
+ *
+ * @param {Record<string, any>} corps
+ */
+function podiumCareer(corps) {
+  /** @type {Array<Record<string, any>>} */
+  const rows = corps.podiumClass?.seasonHistory || [];
+  const seasonIds = new Set();
+  let shows = 0;
+  for (const row of rows) {
+    if (!row) continue;
+    if (row.seasonId && row.finalScore != null) seasonIds.add(row.seasonId);
+    shows += row.showsAttended || 0;
+  }
+  return { seasons: seasonIds.size, shows };
+}
 
 /**
  * Build the state snapshot the catalog's progress() predicates read from.
@@ -489,21 +782,27 @@ export function buildAchievementState(profile, corps) {
     (sum, x) => sum + Object.keys(x?.selectedShows || {}).length,
     0
   );
+  // Podium is a separate game: its shows add to the career count, its seasons
+  // overlap the fantasy count (one calendar season), so they union via max.
+  const podium = podiumCareer(c);
 
   return {
     streak: p.engagement?.loginStreak ?? 0,
     level: p.xpLevel ?? 1,
     unlockedClasses: p.unlockedClasses ?? ['soundSport'],
     maxLineup,
-    totalShows: p.lifetimeStats?.totalShows || 0,
+    totalShows: (p.lifetimeStats?.totalShows || 0) + podium.shows,
     currentSeasonShows,
-    totalSeasons: p.lifetimeStats?.totalSeasons || 0,
+    totalSeasons: Math.max(p.lifetimeStats?.totalSeasons || 0, podium.seasons),
     leagueWins: p.stats?.leagueWins || p.lifetimeStats?.leagueChampionships || 0,
     inLeague: (p.leagueIds || []).length > 0,
     classRanks,
     regionalTrophies: (trophies.regionals || []).length,
     classChampionships: (trophies.classChampionships || []).length,
     championships: (trophies.championships || []).length,
+    podiumSeasons: podium.seasons,
+    podiumDivision: c.podiumClass?.division || null,
+    ...seasonPerformance(c, Array.isArray(p.retiredCorps) ? p.retiredCorps : []),
   };
 }
 
@@ -533,4 +832,73 @@ export function evaluateAchievements(profile, corps) {
     const pct = goal === 0 ? 100 : Math.min(Math.round((current / goal) * 100), 100);
     return { ...a, current, goal, pct, earned: pct >= 100, earnedAt: null };
   });
+}
+
+/**
+ * A stored achievement entry as the profile holds it. Legacy rows may carry
+ * `name` instead of `title`.
+ * @typedef {{ id: string, title?: string, name?: string, description?: string,
+ *   rarity?: string, ccReward?: number, earnedAt?: unknown }} StoredAchievement
+ */
+
+/**
+ * The profile's stored achievements with duplicate ids collapsed (older
+ * writers could arrayUnion the same id twice with different timestamps) and
+ * a display title on every row (legacy rows stored `name` instead of `title`).
+ * Returns a fresh array in stored (oldest-first) order.
+ *
+ * @param {AchievementProfile} profile
+ * @returns {Array<StoredAchievement & { title: string }>}
+ */
+export function uniqueStoredAchievements(profile) {
+  /** @type {StoredAchievement[]} */
+  const list = Array.isArray(profile?.achievements) ? profile.achievements : [];
+  const seen = new Set();
+  return list
+    .filter((a) => {
+      if (!a || !a.id || seen.has(a.id)) return false;
+      seen.add(a.id);
+      return true;
+    })
+    .map((a) => ({ ...a, title: a.title || a.name || 'Special Honor' }));
+}
+
+/**
+ * The one achievement tally every surface shows (profile, /achievements,
+ * dashboard), so they can never disagree: catalog earned / catalog total,
+ * plus honors — earned entries outside the catalog (league titles, retired
+ * awards) that have no denominator.
+ *
+ * @param {AchievementProfile} profile
+ * @param {Record<string, any> | null} [corps]
+ */
+export function summarizeAchievements(profile, corps) {
+  const evaluated = evaluateAchievements(profile, corps);
+  const earned = evaluated.filter((a) => a.earned);
+  const honors = uniqueStoredAchievements(profile).filter((a) => !CATALOG_IDS.has(a.id));
+  const ccEarned =
+    earned.reduce((sum, a) => sum + (a.ccReward || 0), 0) +
+    honors.reduce((sum, a) => sum + (Number(a.ccReward) || 0), 0);
+  return {
+    evaluated,
+    earnedCount: earned.length,
+    totalCount: ACHIEVEMENTS.length,
+    honors,
+    ccEarned,
+  };
+}
+
+/**
+ * The tally as compact text — `26/41 · +2` with a spelled-out tooltip — for
+ * surfaces with no room for the full header.
+ *
+ * @param {{ earnedCount: number, totalCount: number, honors: unknown[] }} summary
+ */
+export function formatAchievementTally({ earnedCount, totalCount, honors }) {
+  const n = honors.length;
+  const honorsText = n > 0 ? `, plus ${n} special ${n === 1 ? 'honor' : 'honors'}` : '';
+  return {
+    short: `${earnedCount}/${totalCount}${n > 0 ? ` · +${n}` : ''}`,
+    long: `${earnedCount} of ${totalCount} achievements${honorsText}`,
+  };
 }
