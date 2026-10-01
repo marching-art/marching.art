@@ -186,10 +186,9 @@ the domain logic lives in `helpers/` so it can be shared and unit-tested.
   callable file that ships with neither a budget nor an admin gate;
   genuinely read-only files are exempted with a reason in
   `scripts/callable-budget.baseline.json`.
-- **App Check** — enforcement for all callables is a single literal in
-  `functions/index.js` (`setGlobalOptions({ enforceAppCheck: false })`). The
-  client already attests; the flip and its preconditions are under
-  [Security](#security) below.
+- **App Check** — enforced for every callable by a single literal in
+  `functions/index.js` (`setGlobalOptions({ enforceAppCheck: true })`, on since
+  2026-09-30); details and rollback under [Security](#security) below.
 
 ### Callable groups (`functions/src/callable/`)
 
@@ -369,14 +368,15 @@ additionally pinned by `touchesProtectedProfileFields` /
 `touchesProtectedCorpsFields`. Admin is the
 Firebase custom claim only — there is no `profile.role` path.
 
-**App Check: the client attests, the backend does not yet enforce.** The web app
-initializes App Check with a score-based reCAPTCHA Enterprise key when configured
-(`initializeAppCheckIfConfigured` in `src/api/client.ts`), but enforcement for
-callables is still `setGlobalOptions({ enforceAppCheck: false })` in
-`functions/index.js`. To finish the rollout: watch the Firebase console's App
-Check metrics for Functions until real traffic shows as verified, then change
-that literal to `true` and run a full deploy. Flipping it blind locks out users
-still running a stale cached bundle. Keep it a plain literal — a `defineBoolean`
+**App Check is enforced on callables.** The web app initializes App Check with a
+score-based reCAPTCHA Enterprise key (`initializeAppCheckIfConfigured` in
+`src/api/client.ts`), and `setGlobalOptions({ enforceAppCheck: true })` in
+`functions/index.js` makes every callable refuse a request without a valid
+token. Enforcement was flipped on 2026-09-30 after the console metrics showed
+real traffic verified. A bundle built without `VITE_APPCHECK_RECAPTCHA_SITE_KEY`
+cannot call any function, so `deploy-hosting.yml` fails the build without it (and
+the Vercel project needs the same env var). Roll back by setting the literal to
+`false` and redeploying functions. Keep it a plain literal — a `defineBoolean`
 param resolves during deploy discovery and hard-fails non-interactive deploys.
 
 ## Development
@@ -386,15 +386,15 @@ deployed via `firebase.json`), with regression tests in
 `firestore-tests/rules.test.mjs`. Privileged mutations go through callables
 (Admin SDK bypasses rules).
 
-**App Check is monitor-only.** The web app is registered with reCAPTCHA
-Enterprise in the Firebase console and the client attests when
-`VITE_APPCHECK_RECAPTCHA_SITE_KEY` is set (see above), but Firestore, Functions
-and Storage still accept requests from any client that can authenticate; abuse
-resistance relies on security rules and callable-side validation until the
-`enforceAppCheck` literal is flipped after metrics show real traffic verified.
-Local/emulator development uses a debug token (`VITE_APPCHECK_DEBUG_TOKEN`,
-registered in the console) — do not flip enforcement on without it or every
-dev client breaks alongside any stale production bundle.
+**App Check is enforced on callables only.** The web app is registered with
+reCAPTCHA Enterprise in the Firebase console and the client attests with
+`VITE_APPCHECK_RECAPTCHA_SITE_KEY` (see above); callables reject requests
+without a valid token, but Firestore and Storage still accept any client that
+can authenticate, so abuse resistance there relies on security rules.
+Local/emulator development needs a debug token (`VITE_APPCHECK_DEBUG_TOKEN`,
+registered in the console, alongside the site key) — without it every
+callable refuses the dev client, since the emulator does not waive a missing
+token.
 
 ## Development
 

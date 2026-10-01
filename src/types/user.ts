@@ -28,7 +28,7 @@ export interface DirectorSocialLinks {
 export interface DirectorProfileInfo {
   // Director bio - about the person directing
   bio?: string; // Short bio / directing philosophy
-  yearsDirecting?: number; // Years spent fantasy directing on marching.art
+  yearsDirecting?: number | null; // Years spent fantasy directing on marching.art (null = cleared)
   specialties?: string[]; // e.g., ["General Effect", "Visual", "Music", "Color Guard"]
   credentials?: string; // Education, certifications, background
 

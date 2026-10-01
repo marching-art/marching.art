@@ -7,14 +7,17 @@ initializeApp();
 const db = getFirestore();
 db.settings({ ignoreUndefinedProperties: true });
 
-// App Check enforcement for every callable. `false` = current behavior:
-// callables require auth but do not verify App Check attestation. The client
-// already attests (src/api/client.ts initializes reCAPTCHA v3 App Check
-// "IfConfigured"), so the rollout is: watch the Firebase console's App Check
-// metrics for Functions until real traffic shows as verified, then change
-// this literal to `true` and run a full deploy — flipping it blind would
-// lock out users on stale cached bundles. onRequest endpoints (news feed,
-// webhooks, scraper) and event triggers are unaffected either way.
+// App Check enforcement for every callable. `true` = a callable rejects any
+// request without a valid App Check token ("unauthenticated"), on top of its
+// own auth checks. The client attests with a score-based reCAPTCHA Enterprise
+// key (src/api/client.ts initializeAppCheckIfConfigured); enforcement was
+// flipped on 2026-09-30 after ~2.5 weeks of monitor-only metrics. A bundle
+// built without VITE_APPCHECK_RECAPTCHA_SITE_KEY cannot call any function, so
+// deploy-hosting.yml refuses to build without it; local/emulator dev needs
+// VITE_APPCHECK_DEBUG_TOKEN (registered in the console) — the emulator does
+// not waive a missing token. Roll back by setting this to `false` and
+// redeploying. onRequest endpoints (news feed, webhooks, scraper) and event
+// triggers are unaffected either way.
 //
 // NOTE: deliberately a plain literal, NOT a defineBoolean param. The SDK
 // resolves enforceAppCheck during deploy DISCOVERY (params.X.value()
@@ -44,7 +47,7 @@ db.settings({ ignoreUndefinedProperties: true });
 // Gemini jobs, push/email batches) and the public HTTP rewrite endpoints pin
 // `cpu: 1` locally so their runtime behavior is unchanged; keep that override
 // when adding a new heavy function.
-setGlobalOptions({ enforceAppCheck: false, maxInstances: 10, cpu: "gcf_gen1" });
+setGlobalOptions({ enforceAppCheck: true, maxInstances: 10, cpu: "gcf_gen1" });
 
 // Callable Functions
 const {

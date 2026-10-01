@@ -19,6 +19,10 @@ name: Deploy Hosting
 #     bundle at build time (see .env.local.example for the full list). These
 #     values are public by design, but shipping a bundle without them yields a
 #     broken app, so the build fails loudly if VITE_FIREBASE_API_KEY is unset.
+#   - VITE_APPCHECK_RECAPTCHA_SITE_KEY (secret): the reCAPTCHA Enterprise key
+#     ID the client attests with. Callables enforce App Check
+#     (functions/index.js), so a bundle without it cannot call any function —
+#     the build fails loudly if it is unset too.
 
 on:
   push:
@@ -71,6 +75,7 @@ jobs:
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
+          VITE_APPCHECK_RECAPTCHA_SITE_KEY: ${{ secrets.VITE_APPCHECK_RECAPTCHA_SITE_KEY }}
         run: |
           if [ -z "$FIREBASE_SERVICE_ACCOUNT" ]; then
             echo "::warning::FIREBASE_SERVICE_ACCOUNT secret is not set — skipping the Firebase Hosting deploy. See the header of this workflow for setup."
@@ -79,6 +84,10 @@ jobs:
           fi
           if [ -z "$VITE_FIREBASE_API_KEY" ]; then
             echo "::error::VITE_FIREBASE_API_KEY secret is not set — a bundle built without the Firebase web config is broken. Add the VITE_FIREBASE_* secrets (see .env.local.example)."
+            exit 1
+          fi
+          if [ -z "$VITE_APPCHECK_RECAPTCHA_SITE_KEY" ]; then
+            echo "::error::VITE_APPCHECK_RECAPTCHA_SITE_KEY secret is not set — callables enforce App Check, so a bundle built without the key cannot call any function. Add the reCAPTCHA Enterprise key ID (see .env.local.example)."
             exit 1
           fi
           echo "deployable=true" >> "$GITHUB_OUTPUT"
