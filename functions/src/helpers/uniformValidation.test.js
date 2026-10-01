@@ -567,3 +567,61 @@ describe("Wildwood fields", () => {
     }
   });
 });
+
+describe("Ember Glass fields", () => {
+  function lantern() {
+    const d = validDesign();
+    Object.assign(d.figure, {
+      torsoFill: "url:ember",
+      ember: true,
+      printColors: { ember: ["#e2540f", "#fbc02d", "#111114"] },
+      chest: "yoke",
+      yoke: "#111114",
+      yokePiping: "#f4f2ec",
+      chestReverse: true,
+      armR: { type: "sleeve", fill: "url:ember", glove: "#111114" },
+      hatType: "shako",
+      hat: { body: "#111114", panel: "url:ember", ornament: "none" },
+    });
+    return d;
+  }
+
+  test("accepts and round-trips the full lit-glass look", () => {
+    const d = lantern();
+    assert.deepEqual(validateDesign(d), []);
+    const clean = sanitizeDesign(d);
+    assert.equal(clean.figure.chest, "yoke");
+    assert.equal(clean.figure.yokePiping, "#f4f2ec");
+    assert.deepEqual(clean.figure.hat, d.figure.hat);
+    assert.deepEqual(clean.figure.printColors, d.figure.printColors);
+    assert.ok(!hasNestedArray(clean));
+  });
+
+  test("accepts a solid or gradient hat panel", () => {
+    const solid = lantern();
+    solid.figure.hat.panel = "#e2540f";
+    assert.deepEqual(validateDesign(solid), []);
+    const fade = lantern();
+    fade.figure.grads = { blaze: [{ o: "0", c: "#e2540f" }, { o: "1", c: "#fbc02d" }] };
+    fade.figure.hat.panel = "url:blaze";
+    assert.deepEqual(validateDesign(fade), []);
+  });
+
+  test("rejects malformed Ember Glass pieces", () => {
+    const bad = [
+      (f) => (f.yoke = "black"),
+      (f) => (f.yokePiping = 7),
+      (f) => (f.ember = "yes"),
+      (f) => (f.printColors = { ember: ["#e2540f", "#fbc02d"] }),
+      (f) => (f.torsoFill = "url:embers"),
+      (f) => (f.hat = { body: "#111114", panel: "url:emberSm" }),
+      (f) => (f.hat = { body: "#111114", panel: "url:nope" }),
+      (f) => (f.hat = { body: "#111114", panel: 12 }),
+    ];
+    for (const mutate of bad) {
+      const d = lantern();
+      mutate(d.figure);
+      assert.ok(validateDesign(d).length > 0, mutate.toString());
+    }
+  });
+});

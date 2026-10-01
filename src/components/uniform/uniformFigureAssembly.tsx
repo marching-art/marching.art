@@ -54,6 +54,7 @@ import {
 import { chest } from './uniformFigureChest';
 import { cuffGlow, legsPrism, prismDefs, torsoSplit } from './uniformFigurePrism';
 import { armVeins, drape, legsWildwood, torsoVeins, wildwoodDefs } from './uniformFigureWildwood';
+import { emberDefs, hatPanel } from './uniformFigureEmber';
 
 const DETACHED_SLEEVE_D =
   'M64,132 Q58,166 60,200 Q61,228 64,244 L82,246 Q80,216 80,190 Q80,156 86,134 Q75,126 64,132 Z';
@@ -246,7 +247,7 @@ function hatOrnamentNodes(orn: string | undefined, m: string, kp: string, inner?
   ];
 }
 
-function shako(cw: NormalizedFigure): Node[] {
+function shako(cw: NormalizedFigure, uid: string): Node[] {
   const h = cw.hat;
   if (!h) return [];
   const body = safeHex(h.body);
@@ -257,6 +258,7 @@ function shako(cw: NormalizedFigure): Node[] {
     shade('sk-s', 'M132,6 Q140,7 145,8 L141,58 Q133,61 128,62 Q132,36 132,6 Z', 0.16),
     light('sk-l', 'M99,10 Q102,10 106,9 Q104,34 104,58 Q100,57 99,56 Z', 0.09),
     p('sk-t', 'M95,8 Q120,2 145,8 Q120,13 95,8 Z', lightenHex(body, 0.12)),
+    ...hatPanel(cw, uid),
   ];
   if (h.band) {
     const band = safeHex(h.band);
@@ -273,7 +275,7 @@ function shako(cw: NormalizedFigure): Node[] {
   return out;
 }
 
-function pith(cw: NormalizedFigure): Node[] {
+function pith(cw: NormalizedFigure, uid: string): Node[] {
   const h = cw.hat;
   if (!h) return [];
   const body = safeHex(h.body);
@@ -281,6 +283,7 @@ function pith(cw: NormalizedFigure): Node[] {
     p('pi', 'M97,52 Q96,16 120,14 Q144,16 143,52 Z', body),
     shade('pi-s', 'M130,17 Q141,24 142,50 L134,52 Q135,30 130,17 Z', 0.12),
     light('pi-l', 'M102,24 Q99,36 99,50 L104,51 Q104,32 107,22 Z', 0.1),
+    ...hatPanel(cw, uid),
     <ellipse key="pi-br" cx="120" cy="53" rx="31" ry="7.5" fill={lightenHex(body, 0.06)} />,
     shade('pi-bs', 'M89,53 A31,7.5 0 0 0 151,53 A31,7.5 0 0 1 89,53 Z', 0.18),
   ];
@@ -343,7 +346,7 @@ function aussie(cw: NormalizedFigure): Node[] {
  * The ornament defaults to bare — the clean face IS the look — and the plume
  * stays optional through the standard plume system.
  */
-function contour(cw: NormalizedFigure): Node[] {
+function contour(cw: NormalizedFigure, uid: string): Node[] {
   const h = cw.hat;
   if (!h) return [];
   const body = safeHex(h.body);
@@ -353,6 +356,7 @@ function contour(cw: NormalizedFigure): Node[] {
     p('co-t', 'M103,8 L135,16 L133,20 L105,12 Z', lightenHex(body, 0.14)),
     shade('co-s', 'M128,14 L135,16 L139,60 Q131,63 127,64 Q130,38 128,14 Z', 0.14),
     light('co-l', 'M104,12 L109,13 Q106,36 106,60 Q103,59 102,58 Z', 0.09),
+    ...hatPanel(cw, uid),
   ];
   if (h.band) {
     out.push(p('co-b', 'M101.4,52 Q120,60 138.6,52 L139,58 Q120,66 101,58 Z', safeHex(h.band)));
@@ -673,6 +677,7 @@ export function figureLayers(raw: FigureConfig, uid: string): Node[] {
     buildDefs(cw, uid),
     prismDefs(cw, uid),
     wildwoodDefs(cw, uid),
+    emberDefs(cw, uid),
     ...ground(),
   ];
   if (flared) layers.push(<g key="shoes">{shoes(cw)}</g>);
@@ -712,11 +717,11 @@ export function figureLayers(raw: FigureConfig, uid: string): Node[] {
   );
   if (cw.crew) layers.push(<g key="crew">{crewNeck(cw)}</g>);
   if (cw.plume) layers.push(<g key="plume">{plume(cw)}</g>);
-  if (cw.hatType === 'shako') layers.push(<g key="hat">{shako(cw)}</g>);
-  if (cw.hatType === 'pith') layers.push(<g key="hat">{pith(cw)}</g>);
+  if (cw.hatType === 'shako') layers.push(<g key="hat">{shako(cw, uid)}</g>);
+  if (cw.hatType === 'pith') layers.push(<g key="hat">{pith(cw, uid)}</g>);
   if (cw.hatType === 'campaign') layers.push(<g key="hat">{campaign(cw)}</g>);
   if (cw.hatType === 'aussie') layers.push(<g key="hat">{aussie(cw)}</g>);
-  if (cw.hatType === 'contour') layers.push(<g key="hat">{contour(cw)}</g>);
+  if (cw.hatType === 'contour') layers.push(<g key="hat">{contour(cw, uid)}</g>);
   if (cw.hatType === 'busby') layers.push(<g key="hat">{busby(cw)}</g>);
   return layers;
 }

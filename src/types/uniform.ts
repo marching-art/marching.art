@@ -49,7 +49,7 @@ export interface GradStop {
 export type ProceduralPrint = 'sunburst' | 'opart' | 'pinstripe';
 
 /** Every procedural surface whose colors a director can override. */
-export type PrintColorKey = ProceduralPrint | 'plaid' | 'foil' | 'shatter' | 'brocade';
+export type PrintColorKey = ProceduralPrint | 'plaid' | 'foil' | 'shatter' | 'brocade' | 'ember';
 
 /**
  * Director color overrides for the figure's procedural prints. Each surface
@@ -57,7 +57,7 @@ export type PrintColorKey = ProceduralPrint | 'plaid' | 'foil' | 'shatter' | 'br
  * server-side): sunburst [center, mid, outer]; opart [base, dot A, dot B];
  * pinstripe [base, stripe]; plaid [base, band, cross band]; foil
  * [tone, highlight]; shatter [base, crack line]; brocade [base, motif,
- * fleck]. Derived shades (the burst's dark falloff, the op-art
+ * fleck]; ember [flame, core, lead line]. Derived shades (the burst's dark falloff, the op-art
  * wave, the plaid's thin band, the foil ramp) come from these in the
  * renderer. An absent surface renders with its stock palette
  * (PRINT_PALETTES in data/uniformRenderTheme).
@@ -69,7 +69,8 @@ export type TorsoStyle = 'jacket' | 'tunic' | 'jumpsuit' | 'dress' | 'longcoat';
 
 /**
  * 'streak' is a Prism Forge premium treatment (Lumen & Vane); 'gill' is a
- * Wildwood premium treatment (Alder & Moss).
+ * Wildwood premium treatment (Alder & Moss); 'yoke' is an Ember Glass
+ * premium treatment (Kiln & Lantern).
  */
 export type ChestTreatment =
   | 'none'
@@ -81,7 +82,8 @@ export type ChestTreatment =
   | 'swash'
   | 'vinylPanel'
   | 'streak'
-  | 'gill';
+  | 'gill'
+  | 'yoke';
 
 export type HatType = 'shako' | 'pith' | 'campaign' | 'aussie' | 'contour' | 'busby' | null;
 
@@ -101,6 +103,11 @@ export interface HatConfig {
   ornament?: HatOrnament;
   /** Mirror the hat (the aussie's lifted side + side feather swap sides). */
   flip?: boolean;
+  /**
+   * Front panel (Ember Glass pack): a solid hex or a print/gradient reference
+   * on the face of the shako, contour or pith, framed by the hat body.
+   */
+  panel?: FillSpec | null;
 }
 
 /**
@@ -247,6 +254,8 @@ export interface FigureConfig {
   torsoSplit?: TorsoSplitConfig | null;
   /** Define the patina brocade print (referenced as "url:brocade"; Wildwood). */
   brocade?: boolean;
+  /** Define the ember-glass print (referenced as "url:ember"; Ember Glass). */
+  ember?: boolean;
   /** Vein network across the torso (Wildwood pack). */
   veins?: VeinConfig | null;
   /**
@@ -308,6 +317,10 @@ export interface FigureConfig {
   streakCore?: HexColor | null;
   /** Gill fan inset color (chest 'gill'; chestReverse mirrors it). */
   gill?: HexColor | null;
+  /** Swept yoke color (chest 'yoke'; chestReverse mirrors it). */
+  yoke?: HexColor | null;
+  /** Piping band along the yoke's sweep; null → no piping. */
+  yokePiping?: HexColor | null;
 
   metal?: HexColor | null;
   collar?: HexColor | null;

@@ -14,7 +14,7 @@ import {
   PLUME_TYPE_OPTIONS,
 } from '../../data/uniformCatalog';
 import { FIGURE_HAIR_COLORS } from '../../data/uniformRenderTheme';
-import { darkenHex } from '../../utils/uniform';
+import { PANEL_HATS, darkenHex } from '../../utils/uniform';
 import { ChannelRow, LABEL, Pills, SECTION_LABEL, SwatchRow, Toggle } from './StudioControls';
 
 export default function HeadwearSection({
@@ -84,6 +84,14 @@ export default function HeadwearSection({
             />
           )}
         </div>
+      )}
+      {figure.hatType && PANEL_HATS.has(figure.hatType) && figure.hat && (
+        <HatPanelControls
+          figure={figure}
+          colorway={colorway}
+          onPatch={onPatch}
+          packLabel={packLabel}
+        />
       )}
       {figure.hatType && figure.hatType !== 'campaign' && figure.hat && (
         <div className="mt-2">
@@ -158,5 +166,71 @@ export default function HeadwearSection({
         </div>
       )}
     </section>
+  );
+}
+
+/**
+ * The hat's front panel (Ember Glass pack): none, a solid color, the torso's
+ * print carried up onto the hat, or the ember glass print at hat scale.
+ */
+function HatPanelControls({
+  figure,
+  colorway,
+  onPatch,
+  packLabel,
+}: {
+  figure: FigureConfig;
+  colorway: UniformColorway;
+  onPatch: (patch: Partial<FigureConfig>) => void;
+  packLabel: (label: string, packId: string) => string;
+}) {
+  const hat = figure.hat!;
+  const panel = hat.panel || null;
+  const torsoPrint =
+    figure.torsoFill?.startsWith('url:') && figure.torsoFill !== 'url:ember'
+      ? figure.torsoFill
+      : null;
+  const value = !panel
+    ? 'none'
+    : panel === 'url:ember'
+      ? 'ember'
+      : panel.startsWith('url:')
+        ? 'match'
+        : 'solid';
+  const setPanel = (v: string | null) =>
+    onPatch({
+      hat: {
+        ...hat,
+        panel:
+          v === 'solid'
+            ? colorway.secondary
+            : v === 'match'
+              ? torsoPrint
+              : v === 'ember'
+                ? 'url:ember'
+                : null,
+      },
+    });
+  return (
+    <div className="mt-2 space-y-1">
+      <span className={LABEL}>{packLabel('Front panel', 'pack_ember_glass')}</span>
+      <Pills
+        options={[
+          { value: 'none', label: 'None' },
+          { value: 'solid', label: 'Solid' },
+          ...(torsoPrint ? [{ value: 'match', label: 'Torso print' }] : []),
+          { value: 'ember', label: 'Ember glass' },
+        ]}
+        value={value}
+        onSelect={setPanel}
+      />
+      {value === 'solid' && (
+        <ChannelRow
+          label="Panel"
+          value={panel}
+          onChange={(v) => v && onPatch({ hat: { ...hat, panel: v } })}
+        />
+      )}
+    </div>
   );
 }
