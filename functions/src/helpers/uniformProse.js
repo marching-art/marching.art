@@ -20,7 +20,7 @@
 // director's free-text aiHints are delimited by the prompt builders instead.
 
 const { proseColorName } = require("./uniformValidation");
-const { armShowsVeins } = require("./uniformEntitlements");
+const { armShowsBranchwork } = require("./uniformEntitlements");
 
 const HEX_RE = /^#[0-9a-f]{6}$/i;
 
@@ -275,27 +275,27 @@ function normalizeFigure(raw) {
 }
 
 /**
- * Whether any Wildwood vein shows anywhere on the (normalized) figure — the
- * vein glow only draws on a visible vein.
+ * Whether any Wildwood branchwork shows anywhere on the (normalized) figure —
+ * the glow only draws on visible branchwork.
  * @param {object} fig
  * @returns {boolean}
  */
-function showsVeins(fig) {
+function showsBranchwork(fig) {
   const legs = [fig.legL, fig.legR];
   return Boolean(
     (fig.veins && isHex(fig.veins.color)) ||
-      armShowsVeins(fig.armL) ||
-      armShowsVeins(fig.armR) ||
+      armShowsBranchwork(fig.armL) ||
+      armShowsBranchwork(fig.armR) ||
       legs.some((l) => l && isHex(l.veins))
   );
 }
 
 /**
- * " that GLOWS … from within" when the figure's veins are bioluminescent.
+ * " that GLOWS … from within" when the figure's branchwork is bioluminescent.
  * @param {object} fig
  * @returns {string}
  */
-function veinGlowProse(fig) {
+function branchGlowProse(fig) {
   return isHex(fig.veinGlow)
     ? ` that GLOWS ${named(fig.veinGlow)} from within (soft bioluminescent light seeping along every line)`
     : "";
@@ -341,13 +341,13 @@ function armProse(fig, arm, torsoColor) {
     parts.push("no gauntlet cuff");
   }
   parts.push(isHex(arm.glove) ? `${named(arm.glove)} glove` : "BARE HAND (no glove)");
-  if (isHex(arm.veins) && armShowsVeins(arm)) {
+  if (isHex(arm.veins) && armShowsBranchwork(arm)) {
     const on = [];
     if (arm.type !== "bare") on.push("sleeve");
     if (arm.gauntlet) on.push("gauntlet");
     if (isHex(arm.glove)) on.push("the back of the glove");
     parts.push(
-      `raised metallic ${named(arm.veins)} VEIN line-art (a branching organic network like roots or mycelium) running from the shoulder down the arm across the ${on.join(", ")}${veinGlowProse(fig)}`
+      `raised metallic ${named(arm.veins)} BRANCHWORK line-art (a branching organic network like tree roots or coral) running from the shoulder down the arm across the ${on.join(", ")}${branchGlowProse(fig)}`
     );
   }
   return parts.join("; ");
@@ -379,7 +379,7 @@ function legProse(fig, leg, fallback) {
   if (isHex(l.kneePlate)) parts.push(`a faceted ${named(l.kneePlate)} diamond plate at the knee`);
   if (isHex(l.veins)) {
     parts.push(
-      `raised metallic ${named(l.veins)} VEIN line-art climbing from the hem up the leg, branching like roots${veinGlowProse(fig)}`
+      `raised metallic ${named(l.veins)} BRANCHWORK line-art climbing from the hem up the leg, branching like roots${branchGlowProse(fig)}`
     );
   }
   if (isHexPair(l.hemGlow)) {
@@ -638,9 +638,9 @@ function torsoProse(fig, cw) {
       ? `; SPLIT two-tone torso: the ${sp.flip ? "viewer's-LEFT" : "viewer's-RIGHT"} part of the torso — everything on that side of a diagonal from the viewer's ${sp.flip ? "LEFT" : "RIGHT"} shoulder down to the viewer's ${sp.flip ? "RIGHT" : "LEFT"} hip — is a contrasting panel in ${fillProse(fig, sp.fill) || `solid ${named(sp.color)}`}`
       : "";
   const vn = fig.veins;
-  const veins =
+  const branchwork =
     vn && isHex(vn.color)
-      ? `; a raised metallic ${named(vn.color)} VEIN NETWORK — branching organic line-art like tree roots or mycelium — climbs from the viewer's ${vn.flip ? "RIGHT" : "LEFT"} hip across the torso toward the shoulders${veinGlowProse(fig)}`
+      ? `; a raised metallic ${named(vn.color)} BRANCHWORK — branching organic line-art like tree roots or coral — climbs from the viewer's ${vn.flip ? "RIGHT" : "LEFT"} hip across the torso toward the shoulders${branchGlowProse(fig)}`
       : "";
   const finishes = [];
   if (fig.velvet) finishes.push("velvet (deep matte nap with soft sheen)");
@@ -652,11 +652,11 @@ function torsoProse(fig, cw) {
   if (fig.glow && isHex(fig.glowArt)) {
     finishes.push(`glowing ${named(fig.glowArt)} line-art / light piping traced across the torso`);
   }
-  if (isHex(fig.veinGlow) && showsVeins(fig)) {
-    finishes.push(`bioluminescent: every vein line glows ${named(fig.veinGlow)} from within`);
+  if (isHex(fig.veinGlow) && showsBranchwork(fig)) {
+    finishes.push(`bioluminescent: every branchwork line glows ${named(fig.veinGlow)} from within`);
   }
   return {
-    torso: `${style} in ${fill}${split}${veins}`,
+    torso: `${style} in ${fill}${split}${branchwork}`,
     torsoShort: `${style.split(":")[0].split(" (")[0]} in ${fillLabel(fig, fig.torsoFill, base)}`,
     finish: finishes.length ? finishes.join("; ") : "matte fabric, no sheen, no sequins, no glow",
     torsoColor: fill,

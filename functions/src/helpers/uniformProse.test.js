@@ -368,9 +368,9 @@ test("every Wildwood piece reaches the image prompt", () => {
     const hex = `#a1000${i.toString(16)}`;
     assert.ok(text.includes(hex), `spec is missing ${hex}`);
   }
-  // veins on a bare, ungloved arm draw nothing, so the prompt skips them
+  // branchwork on a bare, ungloved arm draw nothing, so the prompt skips them
   assert.ok(!text.includes("#a10009"));
-  for (const phrase of ["patina brocade", "vein network", "gill fan", "sheer", "bioluminescent", "viewer's right hip", "back of the glove"]) {
+  for (const phrase of ["patina brocade", "branchwork", "gill fan", "sheer", "bioluminescent", "viewer's right hip", "back of the glove"]) {
     assert.ok(text.includes(phrase), `spec is missing "${phrase}"`);
   }
   assert.ok(spec.summary.includes("gill fan"));

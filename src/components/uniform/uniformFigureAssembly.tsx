@@ -53,7 +53,13 @@ import {
 } from './uniformFigureParts';
 import { chest } from './uniformFigureChest';
 import { cuffGlow, legsPrism, prismDefs, torsoSplit } from './uniformFigurePrism';
-import { armVeins, drape, legsWildwood, torsoVeins, wildwoodDefs } from './uniformFigureWildwood';
+import {
+  armBranchwork,
+  drape,
+  legsWildwood,
+  torsoBranchwork,
+  wildwoodDefs,
+} from './uniformFigureWildwood';
 import { emberDefs, hatPanel } from './uniformFigureEmber';
 
 const DETACHED_SLEEVE_D =
@@ -133,10 +139,10 @@ function armSide(a: ArmConfig, cw: NormalizedFigure, uid: string, kp: string): N
     p(`${kp}-hd`, HAND_D, handC),
     shade(`${kp}-hds`, 'M76,248 Q79,258 75,265 Q80,259 80,248 Z', 0.15)
   );
-  // Wildwood veins run over everything that covers the arm, never bare skin
+  // Wildwood branchwork runs over everything that covers the arm, never bare skin
   const covered = [sleeveD, a.gauntlet ? GAUNTLET_D : null, a.glove ? HAND_D : null];
   out.push(
-    ...armVeins(
+    ...armBranchwork(
       a,
       covered.filter((d): d is string => Boolean(d)),
       cw,
@@ -693,7 +699,7 @@ export function figureLayers(raw: FigureConfig, uid: string): Node[] {
   if (cw.velvet) layers.push(<g key="velvet">{velvetSheen()}</g>);
   if (cw.iridescent) layers.push(<g key="irid">{iridescentSheen(uid)}</g>);
   if (cw.lame) layers.push(<g key="lame">{lameField()}</g>);
-  layers.push(<g key="veins">{torsoVeins(cw, uid)}</g>);
+  layers.push(<g key="branchwork">{torsoBranchwork(cw, uid)}</g>);
   layers.push(
     <g key="chest">{chest(cw, uid)}</g>,
     <g key="chestBadge">{chestBadge(cw)}</g>,

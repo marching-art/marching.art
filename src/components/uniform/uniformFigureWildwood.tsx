@@ -1,8 +1,8 @@
 // =============================================================================
 // UNIFORM FIGURE PARTS — Wildwood pack (Alder & Moss)
 // =============================================================================
-// The "living forest" design house: a branching raised-metal vein network for
-// the torso, sleeves and legs (optionally bioluminescent — every vein carries
+// The "living forest" design house: a branching raised-metal branchwork network for
+// the torso, sleeves and legs (optionally bioluminescent — every branch carries
 // a soft glow in one color), the pleated gill fan chest inset, the sheer
 // asymmetric drape, and the patina brocade print. Kept in its own module
 // (max-lines guardrail); the assembly and chest builders call in here. Every
@@ -12,9 +12,9 @@
 import React from 'react';
 import type { ArmConfig } from '../../types/uniform';
 import {
-  armShowsVeins,
+  armShowsBranchwork,
   darkenHex,
-  figureShowsVeins,
+  figureShowsBranchwork,
   lightenHex,
   resolvePrintPalettes,
   safeHex,
@@ -33,15 +33,15 @@ import {
 } from './uniformFigureParts';
 import { needsPrismGlow } from './uniformFigurePrism';
 
-/** One vein tier: [path, stroke width]. Trunk → branches → twigs taper. */
-type VeinTier = [string, number];
+/** One branch tier: [path, stroke width]. Trunk → branches → twigs taper. */
+type BranchTier = [string, number];
 
 /**
  * Torso network (viewer-left rise): a trunk from the hip to the collar with
  * branches reaching both edges, plus a smaller shoot on the far hem so the
  * whole front reads as one living system.
  */
-const TORSO_VEINS: VeinTier[] = [
+const TORSO_BRANCHES: BranchTier[] = [
   ['M96,262 Q100,230 108,206 Q116,184 114,160 Q112,140 122,120 Q128,110 138,104', 3.2],
   [
     'M108,206 Q96,194 90,176 M114,160 Q100,150 94,132 M122,120 Q112,112 104,104 M111,196 Q126,190 134,176 M116,172 Q130,166 140,150 M100,236 Q112,232 120,222 M146,262 Q142,240 146,220 Q150,204 146,190',
@@ -54,7 +54,7 @@ const TORSO_VEINS: VeinTier[] = [
 ];
 
 /** Arm network (arm-local, viewer-left): shoulder → wrist → back of hand. */
-const ARM_VEINS: VeinTier[] = [
+const ARM_BRANCHES: BranchTier[] = [
   ['M76,110 Q67,138 67,168 Q68,198 71,226 Q72,244 71,258', 2.2],
   [
     'M67,146 Q74,154 79,166 M68,184 Q62,194 61,206 M70,212 Q77,220 80,232 M71,236 Q66,242 64,250',
@@ -67,7 +67,7 @@ const ARM_VEINS: VeinTier[] = [
 ];
 
 /** Leg network (viewer-left): climbs from the hem up the outer leg. */
-const LEG_VEINS: VeinTier[] = [
+const LEG_BRANCHES: BranchTier[] = [
   ['M101,436 Q97,404 99,372 Q101,342 95,314 Q91,292 94,268', 2],
   [
     'M99,388 Q106,378 110,362 M98,352 Q105,342 109,326 M95,310 Q101,300 106,290 M100,414 Q93,406 90,394 M97,334 Q91,326 89,314',
@@ -91,14 +91,14 @@ const DRAPE_FOLD_D =
   'M96,240 Q90,300 84,352 Q80,390 76,428 L88,400 Q94,340 100,290 Q104,262 106,240 Z';
 const DRAPE_LINES = 'M100,240 Q94,320 88,400 M110,244 Q106,330 98,446 M92,250 Q80,330 72,392';
 
-/** Whether the bioluminescent veins need the shared glow filter defined. */
+/** Whether the bioluminescent branchwork needs the shared glow filter defined. */
 export function needsWildwoodGlow(cw: NormalizedFigure): boolean {
-  return Boolean(cw.veinGlow && figureShowsVeins(cw));
+  return Boolean(cw.veinGlow && figureShowsBranchwork(cw));
 }
 
 /**
  * Wildwood defs: the patina brocade pattern (when referenced) and the glow
- * filter when the veins glow but neither the figure's own `glow` flag nor a
+ * filter when the branchwork glows but neither the figure's own `glow` flag nor a
  * Prism Forge piece already defines it — never twice, so the id is unique.
  */
 export function wildwoodDefs(cw: NormalizedFigure, uid: string): Node {
@@ -157,13 +157,13 @@ export function wildwoodDefs(cw: NormalizedFigure, uid: string): Node {
 }
 
 /**
- * A tapered vein network in raised metal: a drop shadow, the metal body, and
+ * A tapered branch network in raised metal: a drop shadow, the metal body, and
  * a specular edge. When `glow` is set, a blurred halo in that color sits under
  * the metal and a faint lit core runs along it — the "concealed light".
  */
-function veinNodes(
+function branchNodes(
   kp: string,
-  tiers: VeinTier[],
+  tiers: BranchTier[],
   color: string,
   glow: string | null,
   uid: string
@@ -199,11 +199,11 @@ function veinNodes(
   return out;
 }
 
-/** The torso vein network, clipped to the garment; `flip` mirrors it. */
-export function torsoVeins(cw: NormalizedFigure, uid: string): Node[] {
+/** The torso branchwork, clipped to the garment; `flip` mirrors it. */
+export function torsoBranchwork(cw: NormalizedFigure, uid: string): Node[] {
   const v = cw.veins;
   if (!v) return [];
-  const nodes = veinNodes('tvn', TORSO_VEINS, v.color, cw.veinGlow || null, uid);
+  const nodes = branchNodes('tvn', TORSO_BRANCHES, v.color, cw.veinGlow || null, uid);
   return [
     <g key="tvn-g" clipPath={`url(#${uid}-tclip)`}>
       {v.flip ? mirrored('tvn-f', nodes) : nodes}
@@ -212,19 +212,19 @@ export function torsoVeins(cw: NormalizedFigure, uid: string): Node[] {
 }
 
 /**
- * One arm's veins (arm-local, viewer-left; the right side is mirrored by the
+ * One arm's branchwork (arm-local, viewer-left; the right side is mirrored by the
  * caller). `surfaces` are the outlines of everything that covers the arm — the
  * sleeve cut, the gauntlet, the glove — unioned into the clip, so the network
  * runs from fabric onto leather and never across bare skin.
  */
-export function armVeins(
+export function armBranchwork(
   a: ArmConfig,
   surfaces: string[],
   cw: NormalizedFigure,
   uid: string,
   kp: string
 ): Node[] {
-  if (!armShowsVeins(a) || !surfaces.length) return [];
+  if (!armShowsBranchwork(a) || !surfaces.length) return [];
   const cid = `${uid}-${kp}-vnc`;
   return [
     <clipPath key={`${kp}-vnc`} id={cid}>
@@ -233,12 +233,12 @@ export function armVeins(
       ))}
     </clipPath>,
     <g key={`${kp}-vn`} clipPath={`url(#${cid})`}>
-      {veinNodes(`${kp}-vn`, ARM_VEINS, a.veins || '', cw.veinGlow || null, uid)}
+      {branchNodes(`${kp}-vn`, ARM_BRANCHES, a.veins || '', cw.veinGlow || null, uid)}
     </g>,
   ];
 }
 
-/** Both legs' veins, clipped to each leg's cut — drawn over the legs. */
+/** Both legs' branchwork, clipped to each leg's cut — drawn over the legs. */
 export function legsWildwood(cw: NormalizedFigure, uid: string): Node[] {
   const side = (kp: string, l: NormalizedFigure['legL']): Node[] => {
     if (!l.veins) return [];
@@ -249,7 +249,7 @@ export function legsWildwood(cw: NormalizedFigure, uid: string): Node[] {
         <path d={d} />
       </clipPath>,
       <g key={`${kp}-vn`} clipPath={`url(#${cid})`}>
-        {veinNodes(`${kp}-vn`, LEG_VEINS, l.veins, cw.veinGlow || null, uid)}
+        {branchNodes(`${kp}-vn`, LEG_BRANCHES, l.veins, cw.veinGlow || null, uid)}
       </g>,
     ];
   };

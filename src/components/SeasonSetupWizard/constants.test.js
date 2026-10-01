@@ -1,5 +1,5 @@
-// @ts-nocheck -- grandfathered before checkJs; remove when this file is typed or cleaned up
 // Tests for SeasonSetupWizard constants
+import { describe, expect, test } from 'vitest';
 import registry from '../../config/classRegistry.json';
 import {
   ALL_CLASSES,
@@ -18,8 +18,9 @@ describe('SeasonSetupWizard constants', () => {
     test('unlock levels and budgets come from the class registry, in hierarchy order', () => {
       expect(CLASS_TABLE.map((c) => c.id)).toEqual(ALL_CLASSES);
       for (const cls of CLASS_TABLE) {
-        expect(cls.reqLevel).toBe(registry.classes[cls.id].unlockLevel);
-        expect(cls.budget).toBe(registry.classes[cls.id].pointCap);
+        const entry = registry.classes[/** @type {keyof typeof registry.classes} */ (cls.id)];
+        expect(cls.reqLevel).toBe(entry.unlockLevel);
+        expect(cls.budget).toBe(entry.pointCap);
       }
     });
 
@@ -134,6 +135,7 @@ describe('getCorpsClassName', () => {
   });
 
   test('handles undefined', () => {
+    // @ts-expect-error -- probes the runtime guard for a missing class id
     expect(getCorpsClassName(undefined)).toBe(undefined);
   });
 });
