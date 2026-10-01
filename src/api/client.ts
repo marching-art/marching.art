@@ -88,8 +88,10 @@ function initializeFirebase(): void {
 /**
  * Initialize App Check when (and only when) a reCAPTCHA Enterprise key ID is
  * configured. A no-op otherwise, so builds without the key are unaffected.
- * Fire-and-forget: a failure here must never block app startup (App Check is
- * not enforced until the backend rollout flips it on).
+ * Fire-and-forget: a failure here must never block app startup. Callables
+ * enforce App Check (`enforceAppCheck: true` in functions/index.js), so a
+ * build without the key — or with a failed init — gets "unauthenticated" from
+ * every function call; the hosting deploy refuses to build without the key.
  *
  * The key is a score-based reCAPTCHA Enterprise key (no challenges), created in
  * the Google Cloud console and registered under "reCAPTCHA Enterprise" on the
@@ -111,8 +113,8 @@ function initializeAppCheckIfConfigured(): void {
       });
     })
     .catch((error) => {
-      // Never fatal: log and continue. Until enforcement is on, missing tokens
-      // only surface in the console's App Check metrics.
+      // Never fatal: log and continue. Firestore and Storage don't enforce
+      // App Check, so the app still renders; function calls will be refused.
       console.error('App Check initialization failed:', error);
     });
 }
