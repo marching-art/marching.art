@@ -500,7 +500,9 @@ function styleFromFigure(fig) {
     fig.torsoSplit ||
     fig.chest === "streak" ||
     fig.veins ||
-    fig.chest === "gill"
+    fig.chest === "gill" ||
+    fig.ember ||
+    fig.chest === "yoke"
   ) {
     return "avant-garde";
   }

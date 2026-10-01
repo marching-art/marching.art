@@ -12,6 +12,7 @@ import { X, Send, Megaphone, Image as ImageIcon, Zap } from 'lucide-react';
 import Portal from '../Portal';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
+import { toApTitleCase } from '../../utils/headlineCase';
 import type { PressReleaseCorpsClass } from '../../api/pressReleases';
 import {
   PRESS_RELEASE_LIMITS,
@@ -56,6 +57,8 @@ const PressReleaseModal: React.FC<PressReleaseModalProps> = ({
     emptyPressReleaseForm(ownedCorps[0]?.corpsClass)
   );
   const [touched, setTouched] = useState(false);
+  // Headlines publish in AP title case; show the author what theirs becomes.
+  const headlinePreview = toApTitleCase(form.headline);
 
   useEscapeKey(onClose);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -220,7 +223,7 @@ const PressReleaseModal: React.FC<PressReleaseModalProps> = ({
                     <input
                       id="press-headline"
                       type="text"
-                      placeholder="e.g. Aurora unveils its 2026 production"
+                      placeholder="e.g. Aurora Unveils Its 2026 Production"
                       value={form.headline}
                       onChange={(e) => update('headline', e.target.value)}
                       maxLength={PRESS_RELEASE_LIMITS.headlineMax}
@@ -233,6 +236,10 @@ const PressReleaseModal: React.FC<PressReleaseModalProps> = ({
                     <div className="flex justify-between mt-1">
                       {errorFor('headline') ? (
                         <p className="text-[10px] text-red-500">{errorFor('headline')}</p>
+                      ) : headlinePreview && headlinePreview !== form.headline.trim() ? (
+                        <p className="text-[10px] text-muted min-w-0 truncate pr-2">
+                          Publishes as: <span className="text-white/80">{headlinePreview}</span>
+                        </p>
                       ) : (
                         <span />
                       )}

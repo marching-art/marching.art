@@ -64,12 +64,14 @@ import {
 const PRINT_PACKS: Record<string, string> = {
   shatter: 'pack_prism_forge',
   brocade: 'pack_wildwood',
+  ember: 'pack_ember_glass',
 };
 
 /** Pack prints with their own def flag, and the title of their color rows. */
-const PACK_PRINTS: Array<['shatter' | 'brocade', string]> = [
+const PACK_PRINTS: Array<['shatter' | 'brocade' | 'ember', string]> = [
   ['shatter', 'Shatter colors'],
   ['brocade', 'Brocade colors'],
+  ['ember', 'Ember glass colors'],
 ];
 
 // ---------------------------------------------------------------------------

@@ -1,14 +1,88 @@
 [
   {
+    "id": "2026-10-01-headline-title-case",
+    "date": "2026-10-01",
+    "title": "News headlines now read like a real publication",
+    "category": "improvement",
+    "summary": "Every headline on the news hub — daily recaps, community articles and press releases — now uses consistent AP-style title case, on the feed, the article page, share previews and Discord.",
+    "highlights": [
+      "Writing an article or press release? The form shows exactly how your headline will publish as you type.",
+      "No more ALL-CAPS headlines: shouted words are set in normal title case, while real abbreviations like DCI, GE1 and SCV stay capitalized."
+    ]
+  },
+  {
+    "id": "2026-10-01-schedule-travel-and-rivals",
+    "date": "2026-10-01",
+    "title": "Plan your Podium tour from the Schedule — travel costs and rivals on every show",
+    "category": "feature",
+    "summary": "Every upcoming show on the Schedule now shows what getting there would cost your Podium corps from your previous stop, flags the closest show each day, and tells you when one of your rivals is attending.",
+    "highlights": [
+      "Mileage, travel stamina, heat and any required flight for each show, measured from the last show you've scheduled before it (or where your corps is now).",
+      "A Closest tag marks the nearest show on each day, so you can build your tour day by day without a map.",
+      "Picking a show between two booked stops also shows the trip on to your next stop.",
+      "The same travel line appears on the Podium row when you open a show to register.",
+      "Rival attending: shows your rivals have signed up for are flagged, and rivals are tagged in each show's Attending list.",
+      "At the start of a season, before anyone has a score, rivals are matched on last season's results. The Dashboard marks these as Last season."
+    ]
+  },
+  {
+    "id": "2026-10-01-route-flight-order",
+    "date": "2026-10-01",
+    "title": "Upcoming route lists flights in the order you take them",
+    "category": "fix",
+    "summary": "On the Upcoming route, each flight or airfare note now appears just above the show it flies you to and names both cities, so the flight to Hawaii comes before the Hawaii show and the flight home comes after it."
+  },
+  {
+    "id": "2026-10-01-season-performance-achievements",
+    "date": "2026-10-01",
+    "title": "New achievements for how your season went",
+    "category": "feature",
+    "summary": "A new Season Performance category rewards where your season finished, not just that it happened — plus two new career steps between Season One and Five Year Plan. Veterans are credited automatically for past seasons on their next login.",
+    "highlights": [
+      "Contender, Finalist and Medal Stand: finish a season in the top 25, top 12 or top 3 of a competitive class.",
+      "On the Rise: finish higher in a class than you did the season before.",
+      "Full Tour: compete in 25 shows in a single season.",
+      "Triple Threat: compete in three classes in the same season.",
+      "Sophomore Season and Hat Trick: complete your second and third seasons.",
+      "Each one pays CorpsCoin the first time you earn it."
+    ]
+  },
+  {
+    "id": "2026-10-01-achievement-count-fix",
+    "date": "2026-10-01",
+    "title": "Achievement counts now match everywhere",
+    "category": "fix",
+    "summary": "Your profile and the Achievements page could show different achievement totals. Both now show the same count, and nothing is hidden.",
+    "highlights": [
+      "The three Podium Class achievements now appear on the Achievements page with their progress.",
+      "League championship titles and retired awards are listed in a new Special Honors section and shown as a separate +N on your profile.",
+      "An award that was saved twice is only counted once."
+    ]
+  },
+  {
+    "id": "2026-10-01-studio-ember-glass",
+    "date": "2026-10-01",
+    "title": "New Uniform Studio pack: the Ember Glass Collection",
+    "category": "feature",
+    "summary": "A new design house, Kiln & Lantern, brings the lit stained-glass look to the Uniform Studio: an Ember Glass print of flame-shaped panes that burn gold at their hearts inside heavy black lead lines, a swept shoulder yoke edged with a bold piping stripe, and a printed front panel for your shako. Try every piece on for free, then pick up the pack in the Shop to save it.",
+    "highlights": [
+      "Ember Glass print: glowing flame-tongue panes set in black lead, with editable flame, core and lead colors. Wear it on the torso, sleeves, legs or mock neck.",
+      "Swept yoke (Chest): a contrasting shoulder yoke cut on a flame-like curve, with an optional piping stripe. Other shoulder works too.",
+      "Front panel (Headwear): print or color the face of a shako, contour or pith — Ember Glass, your torso print, or a solid color.",
+      "Three new quick-pick colors: Ember, Flame Gold and Lead Black.",
+      "AI uniform portraits show every Ember Glass piece."
+    ]
+  },
+  {
     "id": "2026-09-30-studio-wildwood",
     "date": "2026-09-30",
     "title": "New Uniform Studio pack: the Wildwood Collection",
     "category": "feature",
-    "summary": "A new design house, Alder & Moss, brings a living-forest look to the Uniform Studio: a branching metallic vein network that can run across the torso, down the sleeves onto gloves and gauntlets, and up the legs — and can glow from within at night — plus a pleated gill fan, a sheer asymmetric drape and a Patina Brocade print. Try every piece on for free, then pick up the pack in the Shop to save it.",
+    "summary": "A new design house, Alder & Moss, brings a living-forest look to the Uniform Studio: raised metallic branchwork that can run across the torso, down the sleeves onto gloves and gauntlets, and up the legs — and can glow from within at night — plus a pleated gill fan, a sheer asymmetric drape and a Patina Brocade print. Try every piece on for free, then pick up the pack in the Shop to save it.",
     "highlights": [
-      "Vein network (Torso): raised metallic branching lines that climb from the hip to the shoulder, on either side.",
-      "Veins (Arms and Legs): carry the network down each sleeve onto the glove or gauntlet, and up from the hem.",
-      "Bioluminescent (Torso): every vein on the uniform glows in the color you choose.",
+      "Branchwork (Torso): raised metallic branching lines that climb from the hip to the shoulder, on either side.",
+      "Branchwork (Arms and Legs): carry the branches down each sleeve onto the glove or gauntlet, and up from the hem.",
+      "Bioluminescent (Torso): all the branchwork on the uniform glows in the color you choose.",
       "Gill fan (Chest): a pleated fan of fine ribs across one shoulder. Other shoulder works too.",
       "Sheer drape (Torso): a see-through panel that falls from one hip past the knee to a pointed hem.",
       "Patina Brocade print: aged teal damask with bronze flecks and editable colors. Wear it on the torso, sleeves or legs, or on a Prism Forge split panel.",

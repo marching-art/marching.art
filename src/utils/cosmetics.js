@@ -311,7 +311,15 @@ export const SHOP_ITEMS = [
     name: 'Wildwood Collection',
     price: 2000,
     description:
-      'Alder & Moss — the living-forest look: a branching metallic vein network for torso, sleeves and legs that can glow from within, a pleated gill fan, a sheer asymmetric drape and the patina brocade print',
+      'Alder & Moss — the living-forest look: raised metallic branchwork for torso, sleeves and legs that can glow from within, a pleated gill fan, a sheer asymmetric drape and the patina brocade print',
+  },
+  {
+    id: 'pack_ember_glass',
+    type: 'uniformPack',
+    name: 'Ember Glass Collection',
+    price: 1500,
+    description:
+      'Kiln & Lantern — the lit stained-glass look: the ember glass print of flame-tongue panes in black lead came, a swept shoulder yoke with a piping band, and a printed front panel for the shako, contour or pith',
   },
 ];
 

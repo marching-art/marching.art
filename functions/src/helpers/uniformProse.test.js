@@ -368,10 +368,39 @@ test("every Wildwood piece reaches the image prompt", () => {
     const hex = `#a1000${i.toString(16)}`;
     assert.ok(text.includes(hex), `spec is missing ${hex}`);
   }
-  // veins on a bare, ungloved arm draw nothing, so the prompt skips them
+  // branchwork on a bare, ungloved arm draw nothing, so the prompt skips them
   assert.ok(!text.includes("#a10009"));
-  for (const phrase of ["patina brocade", "vein network", "gill fan", "sheer", "bioluminescent", "viewer's right hip", "back of the glove"]) {
+  for (const phrase of ["patina brocade", "branchwork", "gill fan", "sheer", "bioluminescent", "viewer's right hip", "back of the glove"]) {
     assert.ok(text.includes(phrase), `spec is missing "${phrase}"`);
   }
   assert.ok(spec.summary.includes("gill fan"));
+});
+
+test("every Ember Glass piece reaches the image prompt", () => {
+  const spec = describeFigure({
+    colorway: { primary: "#e2540f", secondary: "#111114", accent: "#f4f2ec", metal: "silver" },
+    figure: {
+      skin: "#e0b48e",
+      jacket: "#111114",
+      torsoFill: "url:ember",
+      printColors: { ember: ["#a10001", "#a10002", "#a10003"] },
+      chest: "yoke",
+      yoke: "#a10004",
+      yokePiping: "#a10005",
+      armL: { type: "sleeve", color: "#111114", glove: "#111114" },
+      armR: { type: "sleeve", fill: "url:ember", glove: "#111114" },
+      hatType: "shako",
+      hat: { body: "#a10006", panel: "url:ember", ornament: "none" },
+      plume: { type: "upright", color: "#f4f2ec" },
+    },
+  });
+  const text = spec.block.toLowerCase();
+  for (const i of [1, 2, 3, 4, 5, 6]) {
+    assert.ok(text.includes(`#a1000${i}`), `spec is missing #a1000${i}`);
+  }
+  for (const phrase of ["ember glass", "stained glass", "lead-line", "swept yoke", "piping", "front face of the hat"]) {
+    assert.ok(text.includes(phrase), `spec is missing "${phrase}"`);
+  }
+  assert.ok(spec.summary.includes("swept contrasting yoke"));
+  assert.equal(fillProse({}, "url:ember").startsWith("an EMBER GLASS print"), true);
 });

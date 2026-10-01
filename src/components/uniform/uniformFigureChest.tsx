@@ -2,7 +2,8 @@
 // UNIFORM FIGURE PARTS — chest treatments
 // =============================================================================
 // The chest layer builder (braid, sash, baldric, plastron, buttons, swash,
-// vinyl panel, the Prism Forge light streak, and the Wildwood gill fan).
+// vinyl panel, the Prism Forge light streak, the Wildwood gill fan, and the
+// Ember Glass swept yoke).
 // Split from uniformFigureParts.tsx so that file stays under the max-lines
 // guardrail; see UniformFigure.tsx for the architecture notes.
 
@@ -12,6 +13,7 @@ import { FIGURE_INK } from '../../data/uniformRenderTheme';
 import { light, mirrored, p, sequinField, shade, strokeP, type Node } from './uniformFigureParts';
 import { lightStreak } from './uniformFigurePrism';
 import { gillFan } from './uniformFigureWildwood';
+import { sweptYoke } from './uniformFigureEmber';
 
 export function chest(cw: NormalizedFigure, uid: string): Node[] {
   const m = safeHex(cw.metal);
@@ -207,6 +209,9 @@ export function chest(cw: NormalizedFigure, uid: string): Node[] {
     case 'gill':
       // Wildwood gill fan (pleats + clip handled in the pack module)
       return gillFan(cw, uid);
+    case 'yoke':
+      // Ember Glass swept yoke (piping + clip handled in the pack module)
+      return sweptYoke(cw, uid);
     default:
       return [];
   }

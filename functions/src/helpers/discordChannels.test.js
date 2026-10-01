@@ -170,7 +170,7 @@ describe("published articles (#news)", () => {
       dayId: "day_12",
       articleType: "recap",
     }).embeds[0];
-    assert.match(embed.title, /Blue Devils hold on in Toledo/);
+    assert.match(embed.title, /Blue Devils Hold On in Toledo/);
     assert.equal(embed.url, "https://marching.art/article/season_2026_day_12_recap?src=discord");
     assert.equal(embed.image.url, "https://cdn.test/hero.jpg");
     assert.match(embed.footer.text, /Fantasy · Day 12/);
@@ -185,7 +185,7 @@ describe("published articles (#news)", () => {
       dayId: "day_5",
       articleType: "press_abc123",
     }).embeds[0];
-    assert.match(embed.title, /^📣 Aurora unveils 2026 program/);
+    assert.match(embed.title, /^📣 Aurora Unveils 2026 Program/);
     assert.match(embed.footer.text, /Press Release · Day 12/);
   });
 

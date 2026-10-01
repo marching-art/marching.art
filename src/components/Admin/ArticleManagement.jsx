@@ -5,6 +5,7 @@
 import React, { useState, useEffect } from 'react';
 import { FileText, Search, RefreshCw, ChevronDown } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { toApTitleCase } from '../../utils/headlineCase';
 import {
   listAllArticles,
   getArticleForEdit,
@@ -131,7 +132,9 @@ const ArticleManagement = () => {
   /** @param {ArticleListItem} article */
   const handleDelete = async (article) => {
     if (
-      !window.confirm(`Permanently delete "${article.headline}"?\n\nThis action cannot be undone.`)
+      !window.confirm(
+        `Permanently delete "${toApTitleCase(article.headline)}"?\n\nThis action cannot be undone.`
+      )
     ) {
       return;
     }

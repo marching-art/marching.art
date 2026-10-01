@@ -1,17 +1,17 @@
-// Wildwood pack (Alder & Moss): the vein network (torso, sleeves, legs), the
-// bioluminescent vein glow, the gill fan, the sheer drape and the patina
+// Wildwood pack (Alder & Moss): branchwork (torso, sleeves, legs, stored as
+// `veins`), its bioluminescent glow, the gill fan, the sheer drape and the patina
 // brocade print — rendered, derived, re-skinned, and gated consistently on
 // the client.
 import { describe, expect, it } from 'vitest';
 import { render } from '@testing-library/react';
 import UniformFigure from './UniformFigure';
 import type { FigureConfig } from '../../types/uniform';
-import { applyColorway, figureShowsVeins, withDerivedFlags } from '../../utils/uniform';
+import { applyColorway, figureShowsBranchwork, withDerivedFlags } from '../../utils/uniform';
 import { requiredPacksFor } from '../../utils/uniformPacks';
 
 const BASE: FigureConfig = { skin: '#8d5a3b', jacket: '#2b231d', hatType: 'shako' };
 
-/** The living-forest look: brocade coat, veins everywhere, glowing, gill, drape. */
+/** The living-forest look: brocade coat, branchwork everywhere, glowing, gill, drape. */
 const GROVE: FigureConfig = withDerivedFlags({
   ...BASE,
   torsoFill: 'url:brocade',
@@ -42,10 +42,10 @@ describe('Wildwood rendering', () => {
     expect(pattern).not.toBeNull();
     expect(pattern!.querySelector('rect')!.getAttribute('fill')).toBe('#1d4a4f');
     expect(pattern!.querySelectorAll('circle[fill="#b88a4a"]').length).toBeGreaterThan(0);
-    // exactly one glow filter, and the veins' halo uses it
+    // exactly one glow filter, and the branchwork halo uses it
     expect(container.querySelectorAll('filter[id$="-glow"]')).toHaveLength(1);
     expect(container.querySelectorAll('path[stroke="#5ff0dc"]').length).toBeGreaterThan(10);
-    // metal veins on the torso, both sleeves and both legs (one clip per limb)
+    // metal branchwork on the torso, both sleeves and both legs (one clip per limb)
     expect(container.querySelectorAll('path[stroke="#e4dccb"]').length).toBeGreaterThan(10);
     expect(container.querySelectorAll('clipPath[id$="-vnc"]')).toHaveLength(4);
     // the gill fan body and the sheer drape
@@ -73,7 +73,7 @@ describe('Wildwood rendering', () => {
     expect(container.querySelectorAll('filter[id$="-glow"]')).toHaveLength(1);
   });
 
-  it('keeps arm veins off bare skin', () => {
+  it('keeps arm branchwork off bare skin', () => {
     const figure = withDerivedFlags({
       ...BASE,
       armL: { type: 'bare', veins: '#e4dccb' },
@@ -86,7 +86,7 @@ describe('Wildwood rendering', () => {
     expect(clips[0].querySelectorAll('path')).toHaveLength(1);
   });
 
-  it('mirrors the torso veins, the drape and the gill independently', () => {
+  it('mirrors the torso branchwork, the drape and the gill independently', () => {
     const flipped = withDerivedFlags({
       ...GROVE,
       veins: { color: '#e4dccb', flip: true },
@@ -114,14 +114,14 @@ describe('Wildwood derived flags and colorway', () => {
     expect(withDerivedFlags({ ...BASE, brocade: true }).brocade).toBe(false);
   });
 
-  it('turns the glow filter on only while a glowing vein is visible', () => {
+  it('turns the glow filter on only while glowing branchwork is visible', () => {
     expect(withDerivedFlags({ ...BASE, veinGlow: '#5ff0dc' }).glow).toBe(false);
     expect(
       withDerivedFlags({ ...BASE, veins: { color: '#e4dccb' }, veinGlow: '#5ff0dc' }).glow
     ).toBe(true);
-    const bareVein = { ...BASE, armL: { type: 'bare' as const, veins: '#e4dccb' } };
-    expect(figureShowsVeins(bareVein)).toBe(false);
-    expect(withDerivedFlags({ ...bareVein, veinGlow: '#5ff0dc' }).glow).toBe(false);
+    const bareBranch = { ...BASE, armL: { type: 'bare' as const, veins: '#e4dccb' } };
+    expect(figureShowsBranchwork(bareBranch)).toBe(false);
+    expect(withDerivedFlags({ ...bareBranch, veinGlow: '#5ff0dc' }).glow).toBe(false);
   });
 
   it('re-skins every Wildwood color from the colorway', () => {

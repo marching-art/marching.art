@@ -16,21 +16,10 @@ import {
 } from '../../utils/corps';
 
 /** @typedef {import('../../types/user').UserProfile} UserProfile */
-/** @typedef {import('../../types/user').DirectorProfileInfo} DirectorProfileInfo */
-
 /**
- * Editable per-ensemble draft: every field is a string while editing
- * (`foundedYear` may still hold the stored number; notable shows are one per
- * line) and is normalized back to `EnsembleProfileInfo` on save.
- * @typedef {{
- *   tagline: string,
- *   mission: string,
- *   history: string,
- *   foundedYear: number | string,
- *   homeVenue: string,
- *   motto: string,
- *   notableShows: string,
- * }} EnsembleDraft
+ * The editable ensemble fields for one class, as form strings.
+ * @typedef {{ tagline: string, mission: string, history: string, foundedYear: string | number,
+ *   homeVenue: string, motto: string, notableShows: string }} EnsembleDraft
  */
 
 // Keyed by canonical class keys, matching what the data layer stores.
@@ -58,12 +47,8 @@ const SPECIALTY_OPTIONS = [
 ];
 
 /**
- * @param {{
- *   active: boolean,
- *   onClick: () => void,
- *   icon: React.ComponentType<{ className?: string }>,
- *   label: string,
- * }} props
+ * @param {{ active: boolean, onClick: () => void,
+ *   icon: React.ComponentType<{ className?: string }>, label: string }} props
  */
 const TabButton = ({ active, onClick, icon: Icon, label }) => (
   <button
@@ -81,7 +66,8 @@ const TabButton = ({ active, onClick, icon: Icon, label }) => (
 );
 
 /**
- * @param {{ label: string, hint?: string, count?: string, children: React.ReactNode }} props
+ * @param {{ label: string, hint?: string, children: React.ReactNode,
+ *   count?: string | number }} props
  */
 const Field = ({ label, hint, children, count }) => (
   <div>
@@ -116,16 +102,8 @@ const TextArea = ({ rows = 3, ...props }) => (
 );
 
 /**
- * @param {{
- *   profile: UserProfile,
- *   onClose: () => void,
- *   onSave: (payload: {
- *     displayName: string,
- *     location: string,
- *     directorInfo: DirectorProfileInfo,
- *     ensembleInfo: Record<string, Record<string, unknown>>,
- *   }) => Promise<void> | void,
- * }} props
+ * @param {{ profile: UserProfile, onClose: () => void,
+ *   onSave: (updates: Record<string, unknown>) => Promise<void> | void }} props
  */
 const ProfileEditModal = ({ profile, onClose, onSave }) => {
   useEscapeKey(onClose);
@@ -148,9 +126,7 @@ const ProfileEditModal = ({ profile, onClose, onSave }) => {
 
   const [activeTab, setActiveTab] = useState('director');
   const [activeEnsembleClass, setActiveEnsembleClass] = useState(
-    /** @type {string | null} */ (
-      availableCorps.find((c) => c.isRegistered)?.classKey || availableCorps[0]?.classKey || null
-    )
+    availableCorps.find((c) => c.isRegistered)?.classKey || availableCorps[0]?.classKey || null
   );
   const [saving, setSaving] = useState(false);
 
@@ -197,12 +173,11 @@ const ProfileEditModal = ({ profile, onClose, onSave }) => {
   const [ensembles, setEnsembles] = useState(initialEnsembles);
 
   /**
-   * @param {string | null} classKey
+   * @param {string} classKey
    * @param {keyof EnsembleDraft} field
    * @param {string} value
    */
   const updateEnsembleField = (classKey, field, value) => {
-    if (!classKey) return;
     setEnsembles((prev) => ({
       ...prev,
       [classKey]: { ...prev[classKey], [field]: value },

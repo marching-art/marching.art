@@ -91,8 +91,10 @@ const { correctPodiumHometown } = require("./src/callable/podiumHometown");
 const {
   getPodiumState,
   getPodiumRegistrationPreview,
+  getPodiumShowTravel,
   setPodiumAirfare,
 } = require("./src/callable/podiumRoute");
+const { getRivalShowAttendance } = require("./src/callable/rivalAttendance");
 const { retirePodiumCorps, unretirePodiumCorps } = require("./src/callable/podiumLifecycle");
 const {
   getPodiumStaffMarket,
@@ -459,6 +461,8 @@ module.exports = {
   getHostingHistory,
   getPodiumState,
   getPodiumRegistrationPreview,
+  getPodiumShowTravel,
+  getRivalShowAttendance,
   retirePodiumCorps,
   unretirePodiumCorps,
   getJointOverlaps,

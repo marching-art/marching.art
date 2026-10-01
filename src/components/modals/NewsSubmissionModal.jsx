@@ -8,6 +8,7 @@ import { X, Send, FileText, Sparkles, Image as ImageIcon } from 'lucide-react';
 import Portal from '../Portal';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
+import { toApTitleCase } from '../../utils/headlineCase';
 
 // A submitted news article is flaired for one of the game's two competition
 // worlds. The chosen id becomes the article's category (its feed/Discord flair).
@@ -55,6 +56,8 @@ const NewsSubmissionModal = ({ onClose, onSubmit, isSubmitting = false }) => {
     imageUrl: '',
   });
   const [errors, setErrors] = useState(/** @type {Record<string, string|null>} */ ({}));
+  // Headlines publish in AP title case; show the author what theirs becomes.
+  const headlinePreview = toApTitleCase(formData.headline);
 
   useEscapeKey(onClose);
 
@@ -221,6 +224,10 @@ const NewsSubmissionModal = ({ onClose, onSubmit, isSubmitting = false }) => {
                 <div className="flex justify-between mt-1">
                   {errors.headline ? (
                     <p className="text-[10px] text-red-500">{errors.headline}</p>
+                  ) : headlinePreview && headlinePreview !== formData.headline.trim() ? (
+                    <p className="text-[10px] text-muted min-w-0 truncate pr-2">
+                      Publishes as: <span className="text-white/80">{headlinePreview}</span>
+                    </p>
                   ) : (
                     <span />
                   )}

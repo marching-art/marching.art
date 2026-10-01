@@ -8,7 +8,7 @@
 // The mirror test keeps pack ids in lock-step with the shop catalog.
 
 import type { FigureConfig } from '../types/uniform';
-import { armShowsVeins } from './uniform';
+import { armShowsBranchwork, hatShowsPanel } from './uniform';
 
 export interface UniformPackMeta {
   /** Shop item id — pack ids must match SHOP_ITEMS type 'uniformPack' in
@@ -65,8 +65,14 @@ export const UNIFORM_PACKS: UniformPackMeta[] = [
     kind: 'pack',
     name: 'Wildwood Collection',
     house: 'Alder & Moss',
-    features:
-      'the vein network, bioluminescent glow, gill fan, sheer drape and patina brocade print',
+    features: 'branchwork, its bioluminescent glow, gill fan, sheer drape and patina brocade print',
+  },
+  {
+    id: 'pack_ember_glass',
+    kind: 'pack',
+    name: 'Ember Glass Collection',
+    house: 'Kiln & Lantern',
+    features: 'the ember glass print, swept yoke and printed hat panel',
   },
   {
     id: 'title_drum_major',
@@ -89,6 +95,7 @@ export function usesPrismForge(fig: FigureConfig): boolean {
     fig.torsoFill,
     fig.mockNeck,
     fig.torsoSplit?.fill,
+    hatShowsPanel(fig) ? fig.hat?.panel : null,
     ...arms.map((a) => a?.fill),
     ...legs.map((l) => l?.fill),
   ];
@@ -103,10 +110,36 @@ export function usesPrismForge(fig: FigureConfig): boolean {
 
 /**
  * Whether a figure wears any Wildwood piece (Alder & Moss): the brocade print
- * on any surface, the gill fan, the sheer drape, or veins anywhere they show
- * (a vein glow counts only while some vein is visible to carry it). Pure.
+ * on any surface, the gill fan, the sheer drape, or branchwork anywhere it shows
+ * (its glow counts only while some branchwork is visible to carry it). Pure.
  */
 export function usesWildwood(fig: FigureConfig): boolean {
+  const arms = [fig.armL, fig.armR];
+  const legs = [fig.legL, fig.legR];
+  const fills = [
+    fig.torsoFill,
+    fig.mockNeck,
+    fig.torsoSplit?.fill,
+    hatShowsPanel(fig) ? fig.hat?.panel : null,
+    ...arms.map((a) => a?.fill),
+    ...legs.map((l) => l?.fill),
+  ];
+  return Boolean(
+    fig.chest === 'gill' ||
+    fig.drape ||
+    fig.veins ||
+    fills.includes('url:brocade') ||
+    arms.some((a) => armShowsBranchwork(a)) ||
+    legs.some((l) => l?.veins)
+  );
+}
+
+/**
+ * Whether a figure wears any Ember Glass piece (Kiln & Lantern): the ember
+ * glass print on any surface, the swept yoke, or a hat front panel on a hat
+ * that shows one (a panel left on a campaign or aussie never counts). Pure.
+ */
+export function usesEmberGlass(fig: FigureConfig): boolean {
   const arms = [fig.armL, fig.armR];
   const legs = [fig.legL, fig.legR];
   const fills = [
@@ -116,14 +149,7 @@ export function usesWildwood(fig: FigureConfig): boolean {
     ...arms.map((a) => a?.fill),
     ...legs.map((l) => l?.fill),
   ];
-  return Boolean(
-    fig.chest === 'gill' ||
-    fig.drape ||
-    fig.veins ||
-    fills.includes('url:brocade') ||
-    arms.some((a) => armShowsVeins(a)) ||
-    legs.some((l) => l?.veins)
-  );
+  return Boolean(fig.chest === 'yoke' || hatShowsPanel(fig) || fills.includes('url:ember'));
 }
 
 /** Which shop item ids (packs + prestige titles) a figure requires. Pure. */
@@ -138,6 +164,7 @@ export function requiredPacksFor(figure: FigureConfig | undefined | null): strin
   }
   if (usesPrismForge(fig)) packs.add('pack_prism_forge');
   if (usesWildwood(fig)) packs.add('pack_wildwood');
+  if (usesEmberGlass(fig)) packs.add('pack_ember_glass');
   if (fig.aiguillette) packs.add('title_drum_major');
   return [...packs];
 }

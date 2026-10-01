@@ -42,9 +42,27 @@ const UNIFORM_PACKS = {
   pack_wildwood: {
     name: "Wildwood Collection",
     house: "Alder & Moss",
-    features: "the vein network, bioluminescent glow, gill fan, sheer drape and patina brocade print",
+    features: "branchwork, its bioluminescent glow, gill fan, sheer drape and patina brocade print",
+  },
+  pack_ember_glass: {
+    name: "Ember Glass Collection",
+    house: "Kiln & Lantern",
+    features: "the ember glass print, swept yoke and printed hat panel",
   },
 };
+
+/** Hats with a front face that can carry the Ember Glass panel. */
+const PANEL_HATS = new Set(["shako", "pith", "contour"]);
+
+/**
+ * Whether the hat's front panel draws: a panel on a hat with a front face.
+ * Mirrors hatShowsPanel in src/utils/uniform.ts. Pure.
+ * @param {any} fig
+ * @returns {boolean}
+ */
+function hatShowsPanel(fig) {
+  return Boolean(fig && fig.hat && fig.hat.panel && PANEL_HATS.has(fig.hatType));
+}
 
 /**
  * Prestige regalia gated on NON-pack shop items (titles). Same ownership
@@ -74,6 +92,7 @@ function usesPrismForge(fig) {
     fig.torsoFill,
     fig.mockNeck,
     fig.torsoSplit && fig.torsoSplit.fill,
+    hatShowsPanel(fig) ? fig.hat.panel : null,
     ...arms.map((a) => a && a.fill),
     ...legs.map((l) => l && l.fill),
   ];
@@ -87,21 +106,21 @@ function usesPrismForge(fig) {
 }
 
 /**
- * Whether an arm's Wildwood veins land on anything: a sleeve (full, half or
- * detached), a gauntlet, or a glove. Mirrors armShowsVeins in
+ * Whether an arm's Wildwood branchwork (stored as `veins`) lands on anything: a sleeve (full, half or
+ * detached), a gauntlet, or a glove. Mirrors armShowsBranchwork in
  * src/utils/uniform.ts. Pure.
  * @param {any} a
  * @returns {boolean}
  */
-function armShowsVeins(a) {
+function armShowsBranchwork(a) {
   if (!a || !a.veins || a.type === "none") return false;
   return a.type !== "bare" || Boolean(a.gauntlet || a.glove);
 }
 
 /**
  * Whether a figure wears any Wildwood piece (Alder & Moss): the brocade print
- * on any surface, the gill fan, the sheer drape, or veins anywhere they show
- * (a vein glow only draws on a visible vein, so it never counts alone). Pure.
+ * on any surface, the gill fan, the sheer drape, or branchwork anywhere it shows
+ * (its glow only draws on visible branchwork, so it never counts alone). Pure.
  * @param {any} fig
  * @returns {boolean}
  */
@@ -112,6 +131,7 @@ function usesWildwood(fig) {
     fig.torsoFill,
     fig.mockNeck,
     fig.torsoSplit && fig.torsoSplit.fill,
+    hatShowsPanel(fig) ? fig.hat.panel : null,
     ...arms.map((a) => a && a.fill),
     ...legs.map((l) => l && l.fill),
   ];
@@ -120,9 +140,29 @@ function usesWildwood(fig) {
       fig.drape ||
       fig.veins ||
       fills.includes("url:brocade") ||
-      arms.some(armShowsVeins) ||
+      arms.some(armShowsBranchwork) ||
       legs.some((l) => l && l.veins)
   );
+}
+
+/**
+ * Whether a figure wears any Ember Glass piece (Kiln & Lantern): the ember
+ * glass print on any surface, the swept yoke, or a hat front panel on a hat
+ * that shows one. Pure.
+ * @param {any} fig
+ * @returns {boolean}
+ */
+function usesEmberGlass(fig) {
+  const arms = [fig.armL, fig.armR];
+  const legs = [fig.legL, fig.legR];
+  const fills = [
+    fig.torsoFill,
+    fig.mockNeck,
+    fig.torsoSplit && fig.torsoSplit.fill,
+    ...arms.map((a) => a && a.fill),
+    ...legs.map((l) => l && l.fill),
+  ];
+  return Boolean(fig.chest === "yoke" || hatShowsPanel(fig) || fills.includes("url:ember"));
 }
 
 /**
@@ -142,6 +182,7 @@ function requiredPacksFor(figure) {
   }
   if (usesPrismForge(fig)) packs.add("pack_prism_forge");
   if (usesWildwood(fig)) packs.add("pack_wildwood");
+  if (usesEmberGlass(fig)) packs.add("pack_ember_glass");
   if (fig.aiguillette) packs.add("title_drum_major");
   return [...packs];
 }
@@ -177,7 +218,8 @@ function missingPacksMessage(missing) {
 module.exports = {
   UNIFORM_PACKS,
   PRESTIGE_UNLOCKS,
-  armShowsVeins,
+  armShowsBranchwork,
+  hatShowsPanel,
   requiredPacksFor,
   missingPacksFor,
   missingPacksMessage,

@@ -165,7 +165,10 @@ export function ArmControls({
       )}
       {arm.type !== 'none' && (
         <Toggle
-          label={packLabel(arm.type === 'bare' ? 'Veins (gauntlet/glove)' : 'Veins', WILDWOOD)}
+          label={packLabel(
+            arm.type === 'bare' ? 'Branchwork (gauntlet/glove)' : 'Branchwork',
+            WILDWOOD
+          )}
           checked={Boolean(arm.veins)}
           onChange={(v) =>
             onPatch({ veins: v ? METAL_HEX[colorway.metal] || METAL_HEX.gold : null })
@@ -174,7 +177,7 @@ export function ArmControls({
       )}
       {arm.type !== 'none' && arm.veins && (
         <ChannelRow
-          label="Arm veins"
+          label="Arm branchwork"
           value={arm.veins}
           onChange={(v) => v && onPatch({ veins: v })}
         />
@@ -313,7 +316,7 @@ export function LegControls({
           onChange={(v) => onPatch({ hemGlow: v ? [colorway.secondary, colorway.accent] : null })}
         />
         <Toggle
-          label={packLabel('Veins', WILDWOOD)}
+          label={packLabel('Branchwork', WILDWOOD)}
           checked={Boolean(leg.veins)}
           onChange={(v) => onPatch({ veins: v ? metal : null })}
         />
@@ -322,7 +325,7 @@ export function LegControls({
         <div className="grid grid-cols-2 gap-2">
           {leg.veins && (
             <ChannelRow
-              label="Leg veins"
+              label="Leg branchwork"
               value={leg.veins}
               onChange={(v) => v && onPatch({ veins: v })}
             />

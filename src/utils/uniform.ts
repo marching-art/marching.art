@@ -48,6 +48,14 @@ export function lightenHex(hex: string, f: number): string {
   return channel(safeHex(hex), (c) => c + (255 - c) * f);
 }
 
+/** Blend two colors: t=0 → `a`, t=1 → `b`. */
+export function mixHex(a: string, b: string, t: number): string {
+  const nb = parseInt(safeHex(b).slice(1), 16);
+  const target = [(nb >> 16) & 255, (nb >> 8) & 255, nb & 255];
+  let i = 0;
+  return channel(safeHex(a), (c) => c + (target[i++] - c) * t);
+}
+
 // =============================================================================
 // FIGURE NORMALIZATION (legacy symmetric shorthands → per-side configs)
 // =============================================================================
@@ -104,6 +112,7 @@ export const PRINT_COLOR_SLOT_COUNTS: Record<PrintColorKey, number> = {
   foil: 2, // tone, highlight
   shatter: 2, // base, crack line
   brocade: 3, // base, motif, fleck
+  ember: 3, // flame, core, lead line
 };
 
 /** The stock palette's editable slot values for one surface. */
@@ -124,6 +133,8 @@ export function printColorDefaults(key: PrintColorKey): string[] {
       return [pal.shatter.bg, pal.shatter.line];
     case 'brocade':
       return [pal.brocade.bg, pal.brocade.motif, pal.brocade.fleck];
+    case 'ember':
+      return [pal.ember.flame, pal.ember.core, pal.ember.lead];
   }
 }
 
@@ -141,6 +152,7 @@ export interface ResolvedPrintPalettes {
   foil: { stops: Array<[string, string]> };
   shatter: { bg: string; line: string; facet: string };
   brocade: { bg: string; motif: string; fleck: string; mottle: string };
+  ember: { flame: string; core: string; lead: string; mid: string; deep: string };
 }
 
 /**
@@ -219,7 +231,19 @@ export function resolvePrintPalettes(
   // the patina mottle is a sunken shade of the base, so it reads as age
   const brocade = { bg: brBg, motif: brMotif, fleck: brFleck, mottle: darkenHex(brBg, 0.28) };
 
-  return { sunburst: sun, opart: op, pinstripe: pin, plaid, foil, shatter, brocade };
+  const [emFlame, emCore, emLead] = has('ember')
+    ? slots('ember')
+    : [PRINT_PALETTES.ember.flame, PRINT_PALETTES.ember.core, PRINT_PALETTES.ember.lead];
+  // the glass panes ramp flame → core; `deep` is the scorched pane edge
+  const ember = {
+    flame: emFlame,
+    core: emCore,
+    lead: emLead,
+    mid: mixHex(emFlame, emCore, 0.5),
+    deep: darkenHex(emFlame, 0.32),
+  };
+
+  return { sunburst: sun, opart: op, pinstripe: pin, plaid, foil, shatter, brocade, ember };
 }
 
 // =============================================================================
@@ -384,6 +408,8 @@ export function applyColorway(figure: FigureConfig, cw: UniformColorway): Figure
     streak: figure.streak ? secondary : figure.streak,
     torsoSplit: figure.torsoSplit ? { ...figure.torsoSplit, color: secondary } : figure.torsoSplit,
     gill: figure.gill ? accent : figure.gill,
+    yoke: figure.yoke ? deep : figure.yoke,
+    yokePiping: figure.yokePiping ? accent : figure.yokePiping,
     veins: figure.veins ? { ...figure.veins, color: metal } : figure.veins,
     veinGlow: figure.veinGlow ? secondary : figure.veinGlow,
     drape: figure.drape ? { ...figure.drape, color: secondary } : figure.drape,
@@ -410,6 +436,10 @@ export function applyColorway(figure: FigureConfig, cw: UniformColorway): Figure
           body: darkenHex(primary, 0.55),
           band: figure.hat.band ? secondary : figure.hat.band,
           emblem: figure.hat.emblem ? metal : figure.hat.emblem,
+          panel:
+            figure.hat.panel && !String(figure.hat.panel).startsWith('url:')
+              ? secondary
+              : figure.hat.panel,
         }
       : figure.hat,
     plume: figure.plume
@@ -547,25 +577,45 @@ export function designWithinLimits(design: UniformDesignV2): boolean {
 }
 
 // =============================================================================
-// WILDWOOD VEIN VISIBILITY (shared by the renderer, the gate, derived flags)
+// WILDWOOD BRANCHWORK VISIBILITY (shared by the renderer, the gate, derived flags)
 // =============================================================================
 
 /**
- * Whether an arm's veins land on anything: a sleeve (full, half or
- * detached), a gauntlet, or a glove. Veins on a bare, ungloved arm draw
+ * Whether an arm's branchwork (stored as `veins`) lands on anything: a sleeve (full, half or
+ * detached), a gauntlet, or a glove. Branchwork on a bare, ungloved arm draws
  * nothing, so they neither render nor count toward the pack.
  */
-export function armShowsVeins(a: ArmConfig | null | undefined): boolean {
+export function armShowsBranchwork(a: ArmConfig | null | undefined): boolean {
   if (!a || !a.veins || a.type === 'none') return false;
   return a.type !== 'bare' || Boolean(a.gauntlet || a.glove);
 }
 
-/** Whether any vein is visible anywhere on the figure. */
-export function figureShowsVeins(figure: FigureConfig): boolean {
+/** Whether any branchwork is visible anywhere on the figure. */
+export function figureShowsBranchwork(figure: FigureConfig): boolean {
   const n = normalizeFigure(figure);
   return Boolean(
-    figure.veins || armShowsVeins(n.armL) || armShowsVeins(n.armR) || n.legL.veins || n.legR.veins
+    figure.veins ||
+    armShowsBranchwork(n.armL) ||
+    armShowsBranchwork(n.armR) ||
+    n.legL.veins ||
+    n.legR.veins
   );
+}
+
+// =============================================================================
+// EMBER GLASS HAT PANEL VISIBILITY (shared by the renderer, the gate, flags)
+// =============================================================================
+
+/** Hats with a flat front face that can carry the Ember Glass panel. */
+export const PANEL_HATS: ReadonlySet<string> = new Set(['shako', 'pith', 'contour']);
+
+/**
+ * Whether the hat's front panel draws: a panel set on a hat with a front
+ * face. A panel left on a campaign, aussie or busby draws nothing, so it
+ * neither renders nor counts toward the pack.
+ */
+export function hatShowsPanel(figure: Pick<FigureConfig, 'hatType' | 'hat'>): boolean {
+  return Boolean(figure.hat?.panel && figure.hatType && PANEL_HATS.has(figure.hatType));
 }
 
 // =============================================================================
@@ -578,6 +628,7 @@ function usesRef(figure: FigureConfig, ref: string): boolean {
     figure.torsoFill,
     figure.torsoSplit?.fill,
     typeof figure.mockNeck === 'string' ? figure.mockNeck : null,
+    hatShowsPanel(figure) ? figure.hat!.panel : null,
     n.armL.fill,
     n.armR.fill,
     n.legL.fill,
@@ -607,6 +658,7 @@ export function withDerivedFlags(figure: FigureConfig): FigureConfig {
     foilLeg: usesRef(figure, 'url:foil'),
     shatter: usesRef(figure, 'url:shatter'),
     brocade: usesRef(figure, 'url:brocade'),
+    ember: usesRef(figure, 'url:ember'),
     glow: Boolean(
       figure.glowArt ||
       n.armL.glowLine ||
@@ -616,7 +668,7 @@ export function withDerivedFlags(figure: FigureConfig): FigureConfig {
       n.armR.cuffGlow ||
       n.legL.hemGlow ||
       n.legR.hemGlow ||
-      (figure.veinGlow && figureShowsVeins(figure))
+      (figure.veinGlow && figureShowsBranchwork(figure))
     ),
     hairShow: !figure.hatType,
   };

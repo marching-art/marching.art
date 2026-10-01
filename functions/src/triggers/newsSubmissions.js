@@ -23,6 +23,7 @@ const {
 } = require("../helpers/newsSubmissionsShared");
 const { invalidateNewsCache } = require("./newsFeed");
 const { parseDirectorArticleId, softRemoveDirectorArticle } = require("../helpers/directorArticles");
+const { toApTitleCase } = require("../helpers/headlineCase");
 
 const geminiApiKey = defineSecret("GOOGLE_GENERATIVE_AI_API_KEY");
 
@@ -139,7 +140,7 @@ exports.submitNewsForApproval = onCall(
 
       // Create the submission
       const submission = {
-        headline: headline.trim(),
+        headline: toApTitleCase(headline),
         summary: summary.trim(),
         fullStory: fullStory.trim(),
         category,

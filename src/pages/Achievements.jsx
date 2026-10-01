@@ -8,17 +8,32 @@
 //
 // Catalog + progress come from src/data/achievementsCatalog.js (the client
 // mirror of the server award logic). Earned state is server-authoritative
-// (profile.achievements).
+// (profile.achievements). The header tally comes from summarizeAchievements,
+// the same one the profile and dashboard show; earned entries outside the
+// catalog (league titles, retired awards) are listed as Special Honors.
 
 import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Award, Coins, Check, Lock, ArrowLeft } from 'lucide-react';
+import { Award, Coins, Check, Lock, ArrowLeft, Crown } from 'lucide-react';
 import { useProfileStore } from '../store/profileStore';
 import {
-  ACHIEVEMENTS,
   ACHIEVEMENT_CATEGORIES,
-  evaluateAchievements,
+  HONORS_LABEL,
+  summarizeAchievements,
 } from '../data/achievementsCatalog';
+
+/**
+ * A stored earnedAt as a display date. Catalog awards store an ISO string;
+ * league titles store a Firestore Timestamp.
+ * @param {unknown} value
+ * @returns {string | null}
+ */
+const formatEarnedAt = (value) => {
+  if (!value) return null;
+  const v = /** @type {any} */ (value);
+  const date = typeof v.toDate === 'function' ? v.toDate() : new Date(v);
+  return Number.isNaN(date.getTime()) ? null : date.toLocaleDateString();
+};
 
 // Rarity styling — matches AchievementMini so a badge looks
 // the same everywhere it appears.
@@ -111,7 +126,7 @@ const AchievementCard = ({ a }) => {
           {/* Progress or earned date */}
           {a.earned ? (
             <div className="flex items-center gap-2 text-[10px] text-muted font-data">
-              {a.earnedAt && <span>{new Date(a.earnedAt).toLocaleDateString()}</span>}
+              {formatEarnedAt(a.earnedAt) && <span>{formatEarnedAt(a.earnedAt)}</span>}
               {a.ccReward > 0 && (
                 <span className="flex items-center gap-0.5 text-brand">
                   <Coins className="w-3 h-3" />+{a.ccReward} CC
@@ -152,12 +167,13 @@ const Achievements = () => {
   const corps = useProfileStore((state) => state.corps);
   const [filter, setFilter] = useState('all');
 
-  const evaluated = useMemo(() => evaluateAchievements(profile, corps), [profile, corps]);
-
-  const earnedCount = evaluated.filter((a) => a.earned).length;
-  const totalCount = ACHIEVEMENTS.length;
+  const { evaluated, earnedCount, totalCount, honors, ccEarned } = useMemo(
+    () => summarizeAchievements(profile, corps),
+    [profile, corps]
+  );
   const overallPct = totalCount ? Math.round((earnedCount / totalCount) * 100) : 0;
-  const ccEarned = evaluated.filter((a) => a.earned).reduce((sum, a) => sum + (a.ccReward || 0), 0);
+  // Honors are always earned, so they show under All and Earned only.
+  const showHonors = honors.length > 0 && (filter === 'all' || filter === 'earned');
 
   /** @param {any} a */
   const matchesFilter = (a) => {
@@ -210,7 +226,15 @@ const Achievements = () => {
                 {earnedCount}
                 <span className="text-muted">/{totalCount}</span>
               </div>
-              <div className="text-[10px] text-muted">earned</div>
+              <div className="text-[10px] text-muted">
+                earned
+                {honors.length > 0 && (
+                  <>
+                    {' '}
+                    · +{honors.length} {honors.length === 1 ? 'honor' : 'honors'}
+                  </>
+                )}
+              </div>
             </div>
           </div>
           <div className="h-1.5 bg-surface-raised">
@@ -246,7 +270,7 @@ const Achievements = () => {
         </div>
 
         {/* Categories */}
-        {grouped.length === 0 ? (
+        {grouped.length === 0 && !showHonors ? (
           <div className="bg-surface-card border border-line px-4 py-12 text-center">
             <Award className="w-10 h-10 text-muted mx-auto mb-3" />
             <p className="text-sm text-muted">Nothing here yet for this filter.</p>
@@ -273,6 +297,39 @@ const Achievements = () => {
                 </div>
               </section>
             ))}
+            {showHonors && (
+              <section className="bg-surface-card border border-line">
+                <div className="px-4 py-3 border-b border-line bg-surface-raised">
+                  <div className="flex items-center justify-between mb-1">
+                    <h2 className="text-[11px] font-bold uppercase tracking-wider text-secondary">
+                      {HONORS_LABEL}
+                    </h2>
+                    <span className="text-[10px] font-bold text-muted font-data tabular-nums">
+                      {honors.length}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-muted leading-snug">
+                    One-of-a-kind awards outside the list above — league championship titles and
+                    retired awards. They count on your profile but have no total to chase.
+                  </p>
+                </div>
+                <div className="p-3 grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {honors.map((h) => (
+                    <AchievementCard
+                      key={h.id}
+                      a={{
+                        ...h,
+                        description: h.description || '',
+                        rarity: h.rarity || 'legendary',
+                        icon: Crown,
+                        earned: true,
+                        pct: 100,
+                      }}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
           </div>
         )}
       </div>

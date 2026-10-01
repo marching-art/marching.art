@@ -17,6 +17,7 @@ const DIAGONALS = new Set(['sash', 'baldric', 'swash', 'streak']);
 const CHEST_PACKS: Record<string, string> = {
   streak: 'pack_prism_forge',
   gill: 'pack_wildwood',
+  yoke: 'pack_ember_glass',
 };
 
 export default function ChestSection({
@@ -65,6 +66,8 @@ export default function ChestSection({
             swash: v === 'swash' ? figure.swash || colorway.secondary : figure.swash,
             streak: v === 'streak' ? figure.streak || colorway.secondary : figure.streak,
             gill: v === 'gill' ? figure.gill || colorway.accent : figure.gill,
+            yoke: v === 'yoke' ? figure.yoke || darkenHex(colorway.primary, 0.6) : figure.yoke,
+            yokePiping: v === 'yoke' && figure.yoke == null ? colorway.accent : figure.yokePiping,
           });
         }}
       />
@@ -175,6 +178,26 @@ export default function ChestSection({
               value={figure.streakCore}
               onChange={(v) => onPatch({ streakCore: v })}
               clearable
+            />
+          </>
+        )}
+        {figure.chest === 'yoke' && (
+          <>
+            <ChannelRow
+              label="Yoke"
+              value={figure.yoke}
+              onChange={(v) => v && onPatch({ yoke: v })}
+            />
+            <ChannelRow
+              label="Piping"
+              value={figure.yokePiping}
+              onChange={(v) => onPatch({ yokePiping: v })}
+              clearable
+            />
+            <Toggle
+              label="Other shoulder"
+              checked={Boolean(figure.chestReverse)}
+              onChange={(v) => onPatch({ chestReverse: v })}
             />
           </>
         )}
