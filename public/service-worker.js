@@ -134,6 +134,15 @@ self.addEventListener('fetch', (event) => {
   // src/api/client.ts.
   if (url.hostname.includes('firestore.googleapis.com')) return;
 
+  // Skip third-party scripts and stylesheets (reCAPTCHA Enterprise's
+  // www.gstatic.com bundle, etc.). The js/css route below is meant for our own
+  // hashed assets; proxying someone else's script through the worker makes the
+  // worker's fetch() subject to the page CSP's connect-src (which doesn't list
+  // those hosts), so it fails and the page gets net::ERR_FAILED — on a
+  // returning visit that broke reCAPTCHA, so App Check never produced a token
+  // and every callable hung behind a spinner.
+  if (url.origin !== self.location.origin && /\.(?:js|css)$/i.test(url.pathname)) return;
+
   // Skip non-GET requests (POST, OPTIONS for CORS preflight, etc.)
   if (request.method !== 'GET') return;
 

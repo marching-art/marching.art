@@ -380,7 +380,21 @@ src/scripts/buildClientVenues.js` → re-run `buildPlaceIndex.js` (see its
   `firebase.json` + `vercel.json`). A failed exchange (403 "App attestation
   failed") makes the SDK throttle that browser for **24h**; affected players
   must clear site data or wait it out. Re-verify real-browser exchanges
-  return 200 before trusting enforcement.
+  return 200 before trusting enforcement. **Follow-up the same day:**
+  returning visitors (service worker installed) then got an endless spinner on
+  every callable-backed panel — `public/service-worker.js` proxied
+  cross-origin `.js` (reCAPTCHA's `www.gstatic.com/…/recaptcha__en.js`)
+  through its js/css route, the worker's `fetch()` is bound by the page CSP's
+  `connect-src`, so it failed (`net::ERR_FAILED`), `grecaptcha.ready` never
+  fired, and the Functions SDK awaits the App Check token _before_ its 70s
+  timeout — hanging forever. Fixed both ways: the worker no longer touches
+  third-party scripts/styles, and `initializeAppCheckIfConfigured`
+  (`src/api/client.ts`) only initializes App Check once reCAPTCHA Enterprise
+  is ready within 10s, otherwise skipping it for the session (tokenless calls
+  instead of a hang). Mobile cost of App Check on a cold visit is ~6.5s of
+  reCAPTCHA before the first callable (emulated mid-range Android, 4G); set
+  the Fraud Defense token TTL in the console to ~1 day so returning visits
+  reuse the cached token.
   Rollback: `enforceAppCheck: true → false` in `functions/index.js` and
   redeploy. Optional follow-up once it's quiet for a week: enforce App Check
   for Firestore and Storage too (console toggle per product; same

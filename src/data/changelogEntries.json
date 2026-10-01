@@ -1,5 +1,12 @@
 [
   {
+    "id": "2026-10-01-dashboard-endless-spinner",
+    "date": "2026-10-01",
+    "title": "Dashboard no longer gets stuck on a spinning circle",
+    "category": "fix",
+    "summary": "After today's security update, some returning players, especially on phones and in the installed app, saw parts of the Dashboard (like the Podium My Corps panel) spin forever. Those panels load normally again, and if a security check can't finish on your device, the game keeps working instead of waiting on it."
+  },
+  {
     "id": "2026-10-01-registration-details-on-profile",
     "date": "2026-10-01",
     "title": "What you write when registering a corps now shows on your profile",
