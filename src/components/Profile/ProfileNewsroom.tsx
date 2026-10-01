@@ -22,6 +22,7 @@ import { getDirectorArticles } from '../../api/directorArticles';
 import { getMyNewsSubmissions, type MyNewsSubmission } from '../../api/articleAdmin';
 import { getCategoryConfig } from '../Landing/newsFeedUtils';
 import { Heading } from '../ui';
+import { toApTitleCase } from '../../utils/headlineCase';
 
 export interface ProfileNewsroomProps {
   uid?: string | null;
@@ -96,7 +97,9 @@ const InReviewItem: React.FC<{ submission: MyNewsSubmission }> = ({ submission }
           {formatDate(submission.createdAt)}
         </time>
       </div>
-      <p className="text-sm font-bold text-white leading-snug">{submission.headline}</p>
+      <p className="text-sm font-bold text-white leading-snug">
+        {toApTitleCase(submission.headline)}
+      </p>
       <p className="text-xs text-muted mt-0.5">
         {submission.status === 'rejected'
           ? submission.rejectionReason || 'It didn’t meet the content guidelines.'
@@ -196,7 +199,9 @@ const ProfileNewsroom: React.FC<ProfileNewsroomProps> = ({ uid, isOwnProfile = f
                         {formatDate(article.createdAt)}
                       </time>
                     </div>
-                    <p className="text-sm font-bold text-white leading-snug">{article.headline}</p>
+                    <p className="text-sm font-bold text-white leading-snug">
+                      {toApTitleCase(article.headline)}
+                    </p>
                     {article.summary && (
                       <p className="text-xs text-muted mt-0.5 line-clamp-2">{article.summary}</p>
                     )}

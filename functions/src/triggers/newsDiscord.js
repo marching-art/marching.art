@@ -36,6 +36,7 @@ const {
   payloadOf,
   postToDiscordWebhook,
 } = require("../helpers/discord");
+const { toApTitleCase } = require("../helpers/headlineCase");
 
 // An article older than this when the trigger fires is a backfill, not news.
 const FRESH_WINDOW_MS = 6 * 60 * 60 * 1000;
@@ -85,7 +86,7 @@ function buildArticlePayload({ article, seasonId, dayId, articleType }) {
   const category = CATEGORY_LABELS[article.category] || article.category || "News";
   const emoji = article.category === PRESS_RELEASE_CATEGORY ? "📣" : "📰";
   const embed = {
-    title: `${emoji} ${clampName(article.headline, 200)}`,
+    title: `${emoji} ${clampName(toApTitleCase(article.headline), 200)}`,
     url: articleUrl({ seasonId, dayId, articleType }),
     description: article.summary ? clampName(article.summary, 400) : undefined,
     color: COLORS.news,

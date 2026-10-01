@@ -17,6 +17,7 @@ const { Type, MAGAZINE_STYLE } = require("./newsArticleShared");
 const { getShowWeather } = require("./weather");
 const { logger } = require("firebase-functions/v2");
 const { getContextualPlaceholder } = require("./mediaService");
+const { toApTitleCase } = require("./headlineCase");
 const {
   DCI_UNIFORMS,
   FANTASY_THEMES,
@@ -279,6 +280,9 @@ async function generateAllArticles({ db, dataDocId, seasonId, currentDay, onArti
     // Persist an article as soon as it is generated. A save failure is logged but
     // never aborts generation of the remaining articles.
     const persist = async (article) => {
+      if (article && typeof article.headline === "string") {
+        article.headline = toApTitleCase(article.headline);
+      }
       articles.push(article);
       ledger.record(article);
       if (typeof onArticleGenerated === "function") {

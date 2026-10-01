@@ -7,6 +7,7 @@ import { MessageSquare, RefreshCw, Check, X, Eye, Flag, EyeOff } from 'lucide-re
 import toast from 'react-hot-toast';
 import Portal from '../Portal';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
+import { toApTitleCase } from '../../utils/headlineCase';
 import {
   listCommentsForModeration,
   moderateComment,
@@ -381,7 +382,9 @@ const CommentRow = ({
         </div>
         <p className="text-sm text-muted line-clamp-2">{comment.content}</p>
         {comment.articleHeadline && (
-          <p className="text-[10px] text-muted mt-1 truncate">On: {comment.articleHeadline}</p>
+          <p className="text-[10px] text-muted mt-1 truncate">
+            On: {toApTitleCase(comment.articleHeadline)}
+          </p>
         )}
       </div>
 
@@ -529,7 +532,7 @@ const CommentPreviewModal = ({ comment, onClose, onApprove, onReject, onHide, is
             {comment.articleHeadline && (
               <div className="text-xs text-muted">
                 <span className="text-muted">On article:</span>{' '}
-                <span className="text-muted">{comment.articleHeadline}</span>
+                <span className="text-muted">{toApTitleCase(comment.articleHeadline)}</span>
               </div>
             )}
 

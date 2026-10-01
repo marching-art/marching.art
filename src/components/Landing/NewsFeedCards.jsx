@@ -20,6 +20,7 @@ import {
 } from './NewsFeedBadges';
 import { NewsFeedSkeleton } from './NewsFeedSkeletons';
 import { Heading } from '../ui';
+import { toApTitleCase } from '../../utils/headlineCase';
 
 /**
  * A feed story as NewsFeed.jsx hands it down: a NewsEntry plus the fields the
@@ -138,7 +139,7 @@ function HeroStory({ story, onClick, storyNumber, engagement }) {
         {showImage ? (
           <img
             src={story.imageUrl}
-            alt={story.headline}
+            alt={toApTitleCase(story.headline)}
             className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500"
             loading="eager"
             fetchPriority="high"
@@ -198,7 +199,7 @@ function HeroStory({ story, onClick, storyNumber, engagement }) {
           level="display"
           className="leading-[1.1] mb-4 group-hover:text-main transition-colors"
         >
-          {safeString(story.headline)}
+          {toApTitleCase(story.headline)}
         </Heading>
 
         {/* Summary */}
@@ -297,7 +298,7 @@ const TextStoryRow = memo(
           level="title"
           className="leading-snug mb-1.5 group-hover:underline decoration-gray-500 decoration-1 underline-offset-[3px]"
         >
-          {safeString(story.headline)}
+          {toApTitleCase(story.headline)}
         </Heading>
 
         {/* Summary line */}

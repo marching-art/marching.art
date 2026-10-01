@@ -25,6 +25,7 @@ function getSharp() {
   return sharpModule;
 }
 const { getDb } = require("../config");
+const { toApTitleCase } = require("../helpers/headlineCase");
 const {
   SITE_URL,
   buildScoresCardSvg,
@@ -220,12 +221,13 @@ exports.getShareHttp = onRequest(
       if (route.type === "article") {
         const article = await fetchArticle(db, route.articleId);
         if (article) {
+          const headline = toApTitleCase(article.headline);
           page = {
-            title: `${article.headline || "marching.art news"} | marching.art`,
+            title: `${headline || "marching.art news"} | marching.art`,
             description: clamp(article.summary || "Fantasy drum corps news on marching.art.", 200),
             imageUrl: article.imageUrl || DEFAULT_OG_IMAGE,
             redirectPath: `/article/${route.articleId}`,
-            imageAlt: article.headline || undefined,
+            imageAlt: headline || undefined,
           };
         }
       } else if (route.type === "scores") {
