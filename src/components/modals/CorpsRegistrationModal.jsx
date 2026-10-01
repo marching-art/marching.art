@@ -120,19 +120,22 @@ const CorpsRegistrationModal = ({
                 />
               </div>
 
-              {/* Group Description */}
+              {/* Mission — saved as ensembleInfo.mission, shown on the profile */}
               <div>
                 <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1">
-                  Group Description
+                  Corps Mission
                 </label>
                 <textarea
-                  placeholder="Describe your corps..."
+                  placeholder="What is your corps about?"
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   maxLength={500}
                   className="w-full h-20 px-3 py-2 bg-background border border-line rounded-none text-sm text-white placeholder-muted focus:outline-none focus:border-interactive resize-none"
                 />
-                <p className="text-[10px] text-muted mt-1">{formData.description.length}/500</p>
+                <p className="text-[10px] text-muted mt-1 flex justify-between gap-2">
+                  <span>Shown on your profile — edit anytime from Edit Profile.</span>
+                  <span className="tabular-nums">{formData.description.length}/500</span>
+                </p>
               </div>
 
               {/* Class Selection Table */}

@@ -100,6 +100,16 @@ exports.processCorpsDecisions = onCall({ cors: true }, async (request) => {
       if (isProfaneCorpsName(decision.corpsName) || isProfaneCorpsName(decision.location)) {
         throw new HttpsError("invalid-argument", "Profane language is not allowed.");
       }
+      // Optional mission statement — same 500-char cap and profanity rule as
+      // registerCorps; stored as ensembleInfo.mission (what the profile shows).
+      decision.description =
+        typeof decision.description === "string" ? decision.description.trim() : "";
+      if (decision.description.length > 500) {
+        throw new HttpsError("invalid-argument", "Corps description cannot exceed 500 characters.");
+      }
+      if (isProfaneCorpsName(decision.description)) {
+        throw new HttpsError("invalid-argument", "Profane language is not allowed.");
+      }
       // Show concept: same shape saveShowConcept accepts (structured
       // theme/musicSource/drillStyle plus an optional length-capped title).
       // Anything else — including the legacy free-text string — is dropped
@@ -303,6 +313,7 @@ exports.processCorpsDecisions = onCall({ cors: true }, async (request) => {
               // Cache home coords for encore proximity (helpers/corpsGeo.js).
               homeGeo: homeGeoFor(decision.location),
               showConcept: decision.showConcept || "",
+              ...(decision.description ? { ensembleInfo: { mission: decision.description } } : {}),
               seasonUid: currentSeasonUid,
               createdAt: FieldValue.serverTimestamp(),
               seasonHistory: [],

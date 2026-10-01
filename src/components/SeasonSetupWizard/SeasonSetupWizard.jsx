@@ -6,6 +6,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { processCorpsDecisions } from '../../api/functions';
+import { updateProfile } from '../../api/profile';
 import toast from 'react-hot-toast';
 import Portal from '../Portal';
 import { ClipboardList, ChevronRight, ChevronLeft, Check, X } from 'lucide-react';
@@ -33,7 +34,7 @@ import { friendlyCallableError } from '../../utils/callableErrors';
  * @typedef {{ corpsName?: string, totalSeasons?: number, corpsClass?: string, index: number }} RetiredCorps
  * @typedef {{ targetClass?: string, retiredIndex?: number, corpsName?: string, location?: string }} NewCorpsEntry
  * @typedef {{ corpsClass: string, action: string, targetClass?: string, corpsName?: string,
- *   location?: string, retiredIndex?: number }} CorpsDecision
+ *   location?: string, description?: string, retiredIndex?: number }} CorpsDecision
  */
 
 // =============================================================================
@@ -103,6 +104,7 @@ const SeasonSetupWizard = ({
     corpsName: '',
     directorName: profile?.displayName || '',
     location: '',
+    description: '',
     selectedClass: /** @type {string | null} */ (null),
   });
 
@@ -165,6 +167,20 @@ const SeasonSetupWizard = ({
 
   // Process corps verification decisions (step 0)
   const handleCorpsVerificationContinue = async () => {
+    // A "new" corps needs a name and home location (the server rejects a
+    // blank location) — say so instead of silently dropping the decision.
+    const incompleteNew = Object.entries(corpsDecisions).find(
+      ([classId, action]) =>
+        action === 'new' &&
+        (!newCorpsData[classId]?.corpsName?.trim() || !newCorpsData[classId]?.location?.trim())
+    );
+    if (incompleteNew) {
+      toast.error(
+        `Enter a name and home location for your new ${getCorpsClassName(incompleteNew[0])} corps`
+      );
+      return;
+    }
+
     setProcessing(true);
     try {
       /** @type {CorpsDecision[]} */
@@ -245,11 +261,25 @@ const SeasonSetupWizard = ({
           action: 'new',
           corpsName: formData.corpsName,
           location: formData.location,
+          // Stored as the corps' ensembleInfo.mission (shown on the profile)
+          description: formData.description,
         });
       }
 
       if (decisions.length > 0) {
         const result = await processCorpsDecisions({ decisions });
+
+        // The Director field is the profile's display name — persist an edit
+        // so what was entered here is what the profile shows. Best-effort: the
+        // corps is already registered, so a failure here only warns.
+        const directorName = formData.directorName.trim();
+        if (user?.uid && directorName && directorName !== (profile?.displayName || '')) {
+          try {
+            await updateProfile(user.uid, { displayName: directorName });
+          } catch {
+            toast.error('Corps registered, but your director name could not be saved');
+          }
+        }
 
         if ((result.data.corpsNeedingSetup?.length ?? 0) > 0) {
           setFinalCorpsNeedingSetup(result.data.corpsNeedingSetup);
@@ -383,6 +413,7 @@ const SeasonSetupWizard = ({
                     value={formData.corpsName}
                     onChange={(e) => setFormData({ ...formData, corpsName: e.target.value })}
                     placeholder="e.g., Phoenix Rising"
+                    maxLength={50}
                     className="w-full h-10 px-3 bg-background border border-line rounded-none text-sm text-white placeholder-muted focus:outline-none focus:border-interactive"
                   />
                 </div>
@@ -395,26 +426,44 @@ const SeasonSetupWizard = ({
                     value={formData.directorName}
                     onChange={(e) => setFormData({ ...formData, directorName: e.target.value })}
                     placeholder="Your name"
+                    maxLength={50}
                     className="w-full h-10 px-3 bg-background border border-line rounded-none text-sm text-white placeholder-muted focus:outline-none focus:border-interactive"
                   />
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1">
-                    Home Location
+                    Home Location *
                   </label>
                   <input
                     type="text"
                     value={formData.location}
                     onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                     placeholder="e.g., Indianapolis, IN"
+                    maxLength={50}
                     className="w-full h-10 px-3 bg-background border border-line rounded-none text-sm text-white placeholder-muted focus:outline-none focus:border-interactive"
                   />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1">
+                    Corps Mission
+                  </label>
+                  <textarea
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    placeholder="What is your corps about?"
+                    maxLength={500}
+                    className="w-full h-20 px-3 py-2 bg-background border border-line rounded-none text-sm text-white placeholder-muted focus:outline-none focus:border-interactive resize-none"
+                  />
+                  <p className="text-[10px] text-muted mt-1 flex justify-between gap-2">
+                    <span>Shown on your profile — edit anytime from Edit Profile.</span>
+                    <span className="tabular-nums">{formData.description.length}/500</span>
+                  </p>
                 </div>
               </div>
               <div className="px-4 py-3 border-t border-line flex justify-end">
                 <button
                   onClick={() => setStep(2)}
-                  disabled={!formData.corpsName.trim()}
+                  disabled={!formData.corpsName.trim() || !formData.location.trim()}
                   className="h-10 px-6 bg-interactive text-white font-bold text-sm uppercase tracking-wider flex items-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-interactive-hover"
                 >
                   Next
@@ -597,6 +646,14 @@ const SeasonSetupWizard = ({
                       </div>
                     </div>
                   </div>
+                  {formData.description.trim() && (
+                    <div className="mt-4">
+                      <div className="text-[10px] text-muted uppercase">Mission</div>
+                      <p className="text-sm text-secondary whitespace-pre-wrap">
+                        {formData.description.trim()}
+                      </p>
+                    </div>
+                  )}
                   <div className="mt-4 pt-4 border-t border-line">
                     <div className="flex justify-between items-center">
                       <span className="text-[10px] text-muted uppercase">Point Budget</span>

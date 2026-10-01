@@ -13,6 +13,7 @@ import {
   PROFILE_CORPS_CLASS_ORDER,
   resolveCorpsForClass,
   isCorpsClassUnlocked,
+  getEnsembleInfo,
 } from '../../utils/corps';
 
 /** @typedef {import('../../types/user').UserProfile} UserProfile */
@@ -156,7 +157,7 @@ const ProfileEditModal = ({ profile, onClose, onSave }) => {
     /** @type {Record<string, EnsembleDraft>} */
     const out = {};
     availableCorps.forEach((corps) => {
-      const info = corps.ensembleInfo || {};
+      const info = getEnsembleInfo(corps);
       out[corps.classKey] = {
         tagline: info.tagline || '',
         mission: info.mission || '',

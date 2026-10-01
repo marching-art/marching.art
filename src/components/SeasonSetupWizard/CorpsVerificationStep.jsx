@@ -203,7 +203,7 @@ const CorpsVerificationStep = ({
                     />
                     <input
                       type="text"
-                      placeholder="Location"
+                      placeholder="Home Location *"
                       value={newCorpsData[classId]?.location || ''}
                       onChange={(e) =>
                         setNewCorpsData({
@@ -326,7 +326,7 @@ const CorpsVerificationStep = ({
                         />
                         <input
                           type="text"
-                          placeholder="Location"
+                          placeholder="Home Location *"
                           value={newCorpsData[classId]?.location || ''}
                           onChange={(e) =>
                             setNewCorpsData({

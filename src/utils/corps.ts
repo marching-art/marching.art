@@ -1,7 +1,7 @@
 // Corps utility functions
 // Consolidated from multiple locations to prevent duplication
 
-import type { CorpsClass } from '../types';
+import type { CorpsClass, EnsembleProfileInfo } from '../types';
 
 // =============================================================================
 // CORPS CLASS ORDERING
@@ -57,6 +57,21 @@ export function resolveCorpsForClass<T>(
     if (corps[key] != null) return corps[key];
   }
   return undefined;
+}
+
+/**
+ * A corps' ensemble identity as the profile shows it. Registration writes the
+ * director's description to `ensembleInfo.mission`; corps registered before
+ * that carry it as a top-level `description` nothing rendered, so it fills an
+ * empty mission here (and in Edit Profile, where saving persists it).
+ */
+export function getEnsembleInfo(
+  corps:
+    { ensembleInfo?: EnsembleProfileInfo | null; description?: string | null } | null | undefined
+): EnsembleProfileInfo {
+  const info = corps?.ensembleInfo || {};
+  const legacy = typeof corps?.description === 'string' ? corps.description.trim() : '';
+  return !info.mission && legacy ? { ...info, mission: legacy } : info;
 }
 
 /**
