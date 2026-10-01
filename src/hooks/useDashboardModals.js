@@ -386,12 +386,14 @@ export function useDashboardModals(user, dashboardData, podiumContext = {}) {
           toast.error('Season data not loaded');
           return;
         }
-        // Note: registerCorps only reads { corpsName, location, description, class }
-        // server-side (functions/src/callable/registerCorps.js) — it never reads a
-        // showConcept, so the field is not sent here.
+        // registerCorps reads { corpsName, location, description, class }
+        // (functions/src/callable/registerCorps.js) and stores the description
+        // as the corps' ensembleInfo.mission — what the profile's Ensembles
+        // card shows. It never reads a showConcept, so that isn't sent.
         const result = await registerCorps({
           corpsName: formData.name,
           location: formData.location,
+          description: formData.description,
           class: formData.class,
         });
         if (result.data.success) {

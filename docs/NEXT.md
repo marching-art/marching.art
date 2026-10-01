@@ -406,6 +406,18 @@ src/scripts/buildClientVenues.js` → re-run `buildPlaceIndex.js` (see its
 
 ## Recently shipped (context, newest first — prune when stale)
 
+- 2026-10-01: **Registration details reach the profile** — the dashboard
+  `CorpsRegistrationModal` collected a description that `useDashboardModals`
+  never sent, and `registerCorps` wrote it (plus an auto `biography`) to
+  top-level fields nothing renders; the profile's Ensembles card reads only
+  `corps.{class}.ensembleInfo`. Both `registerCorps` and
+  `processCorpsDecisions` ("new") now store it as `ensembleInfo.mission`
+  (500 cap, profanity check); `utils/corps.getEnsembleInfo` backfills a
+  legacy `description` into an empty mission for display/Edit Profile. The
+  setup wizard gained the mission field, persists its Director field to
+  `displayName`, and requires Home Location up front (server already did).
+  Tests: `registerCorps.test.js`, `corps.test.js`, `utils/corps.test.ts`.
+
 - 2026-10-01: **No championship/prelims-titled shows on days 43-44** —
   `seasonSchedule.isBarredChampionshipEveShow` (title matches
   /championship|prelim/i on day 43 or 44). The off-season generator's filler

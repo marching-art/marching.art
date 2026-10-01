@@ -158,6 +158,34 @@ describe("registerCorps activeSeasonId", () => {
   });
 });
 
+describe("registerCorps description", () => {
+  beforeEach(() => setDbForTesting(null));
+  after(() => setDbForTesting(null));
+
+  test("lands in ensembleInfo.mission — the field the profile renders", async () => {
+    const { db, writes } = seed({ corps: {}, unlockedClasses: ["soundSport"] });
+    setDbForTesting(db);
+
+    await registerCorps.run(
+      authedRequest("u1", registerData({ description: "  Est. in a parking lot.  " }))
+    );
+
+    const corps = profileUpdate(writes)["corps.soundSport"];
+    assert.deepEqual(corps.ensembleInfo, { mission: "Est. in a parking lot." });
+    assert.equal(corps.description, undefined, "no write-only top-level description");
+    assert.equal(corps.biography, undefined, "no write-only auto biography");
+  });
+
+  test("a blank description writes no ensembleInfo", async () => {
+    const { db, writes } = seed({ corps: {}, unlockedClasses: ["soundSport"] });
+    setDbForTesting(db);
+
+    await registerCorps.run(authedRequest("u1", registerData({ description: "   " })));
+
+    assert.equal(profileUpdate(writes)["corps.soundSport"].ensembleInfo, undefined);
+  });
+});
+
 describe("registerCorps name reservation race", () => {
   beforeEach(() => setDbForTesting(null));
   after(() => setDbForTesting(null));

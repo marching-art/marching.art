@@ -180,6 +180,61 @@ describe("processCorpsDecisions input validation", () => {
     assert.equal(reservation.data.corpsName, "Starlight Cadets");
   });
 
+  test("stores the registration description as the profile's ensemble mission", async () => {
+    const { db, writes } = makeFakeDb(makeDocs());
+    setDbForTesting(db);
+
+    await processCorpsDecisions.run(authedRequest("u1", {
+      decisions: [{
+        corpsClass: "soundSport",
+        action: "new",
+        corpsName: "Starlight Cadets",
+        location: "Anytown, USA",
+        description: "  Small-town corps, big-stage sound.  ",
+      }],
+    }));
+
+    const stored = writes.find(
+      (w) => w.type === "update" && w.path === profilePath("u1")
+    ).data.corps.soundSport;
+    assert.deepEqual(stored.ensembleInfo, { mission: "Small-town corps, big-stage sound." });
+  });
+
+  test("omits ensembleInfo when no description is given, and caps/filters it", async () => {
+    const { db, writes } = makeFakeDb(makeDocs());
+    setDbForTesting(db);
+
+    await processCorpsDecisions.run(authedRequest("u1", {
+      decisions: [{
+        corpsClass: "soundSport", action: "new",
+        corpsName: "Starlight Cadets", location: "Anytown, USA",
+      }],
+    }));
+    const stored = writes.find(
+      (w) => w.type === "update" && w.path === profilePath("u1")
+    ).data.corps.soundSport;
+    assert.equal(stored.ensembleInfo, undefined);
+
+    await assert.rejects(
+      processCorpsDecisions.run(authedRequest("u1", {
+        decisions: [{
+          corpsClass: "soundSport", action: "new",
+          corpsName: "Fine Name", location: "Anytown", description: "z".repeat(501),
+        }],
+      })),
+      /cannot exceed 500 characters/
+    );
+    await assert.rejects(
+      processCorpsDecisions.run(authedRequest("u1", {
+        decisions: [{
+          corpsClass: "soundSport", action: "new",
+          corpsName: "Fine Name", location: "Anytown", description: "damn good",
+        }],
+      })),
+      /Profane language/
+    );
+  });
+
   test("stores a structured show concept sanitized to the saveShowConcept shape", async () => {
     const { db, writes } = makeFakeDb(makeDocs());
     setDbForTesting(db);

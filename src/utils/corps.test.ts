@@ -6,6 +6,7 @@ import { describe, it, expect } from 'vitest';
 import {
   CORPS_CLASS_ORDER,
   PROFILE_CORPS_CLASS_ORDER,
+  getEnsembleInfo,
   hasCompletedSeason,
   isCorpsClassUnlocked,
   resolveCorpsForClass,
@@ -121,5 +122,31 @@ describe('buildViewerCorpsMatcher / isViewerCorps', () => {
     expect(isViewerCorps(null, buildViewerCorpsMatcher(corps, 'me'))).toBe(false);
     expect(isViewerCorps({ corpsName: 'A Team' }, null)).toBe(false);
     expect(isViewerCorps({}, buildViewerCorpsMatcher(corps, 'me'))).toBe(false);
+  });
+});
+
+describe('getEnsembleInfo', () => {
+  it('returns ensembleInfo as stored', () => {
+    expect(getEnsembleInfo({ ensembleInfo: { mission: 'M', tagline: 'T' } })).toEqual({
+      mission: 'M',
+      tagline: 'T',
+    });
+  });
+
+  it('fills an empty mission from a legacy registration description', () => {
+    expect(
+      getEnsembleInfo({ description: '  Old words  ', ensembleInfo: { motto: 'Go' } })
+    ).toEqual({ motto: 'Go', mission: 'Old words' });
+  });
+
+  it('never overrides a mission the director wrote', () => {
+    expect(getEnsembleInfo({ description: 'old', ensembleInfo: { mission: 'new' } }).mission).toBe(
+      'new'
+    );
+  });
+
+  it('is empty for a missing corps or blank description', () => {
+    expect(getEnsembleInfo(undefined)).toEqual({});
+    expect(getEnsembleInfo({ description: '   ' })).toEqual({});
   });
 });

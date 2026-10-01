@@ -100,14 +100,22 @@ exports.registerCorps = onCall({ cors: true }, async (request) => {
       // Cache the corps' home coordinates (encore proximity, see corpsGeo.js).
       // null when the free-text location doesn't resolve to a known venue.
       homeGeo: homeGeoFor(location),
-      description: description || '',
       class: corpsClass,
       createdAt: FieldValue.serverTimestamp(),
       lineup: {},
       selectedShows: {},
       totalSeasonScore: 0,
-      biography: `The ${corpsName} from ${location}.`,
     };
+
+    // The registration description is the corps' mission statement: written
+    // straight into ensembleInfo, the field the profile's Ensembles card
+    // renders and Edit Profile edits. (It used to land in a top-level
+    // `description` beside an auto-generated `biography` — fields nothing
+    // reads, so what directors typed here never appeared anywhere.)
+    const trimmedDescription = typeof description === "string" ? description.trim() : "";
+    if (trimmedDescription) {
+      newCorpsData.ensembleInfo = { mission: trimmedDescription };
+    }
 
     // Stamp the corps with the season it was registered for. League
     // participation reads this first (helpers/leagueActivity.js) precisely so

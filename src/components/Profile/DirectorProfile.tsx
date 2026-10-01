@@ -35,6 +35,7 @@ import {
   PROFILE_CORPS_CLASS_ORDER,
   resolveCorpsForClass,
   isCorpsClassUnlocked,
+  getEnsembleInfo,
 } from '../../utils/corps';
 import CustomAvatarModal from './CustomAvatarModal';
 import AvatarSelectorModal from './AvatarSelectorModal';
@@ -582,7 +583,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                       classKey={classKey}
                       location={corps.location}
                       avatarUrl={corps.avatarUrl}
-                      info={corps.ensembleInfo || {}}
+                      info={getEnsembleInfo(corps)}
                       showTitle={getShowTitle(corps)}
                     />
                   ) : (
