@@ -53,6 +53,17 @@ describe("venueFor — standardized location resolution", () => {
     assert.equal(resolved.region, "TN");
   });
 
+  test("a multi-city show resolves to its last city, not the first", () => {
+    const winchester = venues.venueFor("Winchester, KY");
+    assert.equal(winchester && winchester.venueId, "winchester-ky");
+    for (const raw of ["Lexington/Winchester, Kentucky", "Lexington/Winchester, KY"]) {
+      assert.equal(venues.tourVenueFor(raw)?.venueId, "winchester-ky", raw);
+    }
+    assert.equal(venues.venueFor("Bloomington/Normal, Illinois")?.venueId, "normal-il");
+    // Lexington itself is still its own venue.
+    assert.equal(venues.venueFor("Lexington, KY")?.venueId, "lexington-ky");
+  });
+
   test("timezoneFor resolves through the standardized form", () => {
     // Indianapolis is stored as "Indianapolis, IN"; its timezone must resolve
     // (the furthest-west score-drop rule depends on it).

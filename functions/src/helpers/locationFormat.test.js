@@ -3,7 +3,7 @@
 const { test, describe } = require("node:test");
 const assert = require("node:assert/strict");
 
-const { standardizeLocation, isUnknownLocation } = require("./locationFormat");
+const { standardizeLocation, collapseMultiCity, isUnknownLocation } = require("./locationFormat");
 
 describe("standardizeLocation", () => {
   test("folds a full US state name to its two-letter code", () => {
@@ -115,5 +115,28 @@ describe("standardizeLocation — northern Mexico", () => {
   test("leaves Canadian BC/NL untouched", () => {
     assert.equal(standardizeLocation("Vancouver, British Columbia"), "Vancouver, BC");
     assert.equal(standardizeLocation("Gander, NL"), "Gander, NL");
+  });
+});
+
+describe("multi-city show locations", () => {
+  test("keeps the last city of a slash-joined name", () => {
+    assert.equal(standardizeLocation("Lexington/Winchester, KY"), "Winchester, KY");
+    assert.equal(standardizeLocation("Lexington/Winchester, Kentucky"), "Winchester, KY");
+    assert.equal(standardizeLocation("Bloomington/Normal, Illinois"), "Normal, IL");
+    assert.equal(standardizeLocation("Fort Edwards / Glens Falls, New York"), "Glens Falls, NY");
+    assert.equal(standardizeLocation("Lexington/Winchester Kentucky"), "Winchester, KY");
+  });
+
+  test("is idempotent and leaves hyphenated town names alone", () => {
+    assert.equal(standardizeLocation(standardizeLocation("Lexington/Winchester, KY")), "Winchester, KY");
+    assert.equal(standardizeLocation("Wilkes-Barre, Pennsylvania"), "Wilkes-Barre, PA");
+    assert.equal(standardizeLocation("Winston-Salem, NC"), "Winston-Salem, NC");
+  });
+
+  test("collapseMultiCity ignores blank segments and slash-free text", () => {
+    assert.equal(collapseMultiCity("Lexington/, KY"), "Lexington, KY");
+    assert.equal(collapseMultiCity("/Winchester, KY"), "Winchester, KY");
+    assert.equal(collapseMultiCity("Allentown, PA"), "Allentown, PA");
+    assert.equal(collapseMultiCity("A/B/C, OH"), "C, OH");
   });
 });

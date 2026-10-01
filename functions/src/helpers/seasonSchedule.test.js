@@ -7,7 +7,12 @@
 const { test, describe } = require("node:test");
 const assert = require("node:assert/strict");
 
-const { regionalTierForEventName, applyMultiNightMajors } = require("./seasonSchedule");
+const {
+  regionalTierForEventName,
+  applyMultiNightMajors,
+  restandardizeCompetitionLocations,
+  isBarredChampionshipEveShow,
+} = require("./seasonSchedule");
 const { mergeScheduleRefresh, buildScrapedEventUrlIndex } = require("./scheduleRefresh");
 
 describe("buildScrapedEventUrlIndex", () => {
@@ -331,5 +336,107 @@ describe("addShowToDay provenance", () => {
     const added = competitions.find((c) => c.name === "Some Show");
     assert.equal(added.eventTier, undefined);
     assert.equal(added.hostUid, undefined);
+  });
+});
+
+describe("multi-city show locations keep the last city", () => {
+  const startDate = new Date("2026-06-01T00:00:00Z");
+  const springTrainingDays = 21;
+  const dateForDay = (day) =>
+    new Date(startDate.getTime() + (day + springTrainingDays - 1) * 86400000).toISOString();
+
+  test("restandardizeCompetitionLocations heals a stored multi-city location", () => {
+    const stored = [
+      { id: "s_day3_0", day: 3, location: "Lexington/Winchester, KY" },
+      { id: "s_day4_0", day: 4, location: "Allentown, PA" },
+      { id: "s_day5_0", day: 5, location: "" },
+    ];
+    const { competitions, changed } = restandardizeCompetitionLocations(stored);
+    assert.equal(competitions[0].location, "Winchester, KY");
+    assert.equal(competitions[1], stored[1]);
+    assert.equal(competitions[2], stored[2]);
+    assert.deepEqual(changed, [{ id: "s_day3_0", from: "Lexington/Winchester, KY", to: "Winchester, KY" }]);
+    // Pure: the input rows are never mutated.
+    assert.equal(stored[0].location, "Lexington/Winchester, KY");
+  });
+
+  test("restandardizeCompetitionLocations is a no-op on a clean schedule", () => {
+    const { changed } = restandardizeCompetitionLocations([{ id: "a", location: "Winchester, KY" }]);
+    assert.deepEqual(changed, []);
+  });
+
+  test("a live refresh re-standardizes a matched show's stored location", () => {
+    const existing = [
+      {
+        id: "live_2026-26_day3_0",
+        name: "DCI Winchester",
+        location: "Lexington/Winchester, KY",
+        date: dateForDay(3),
+        day: 3,
+        week: 1,
+        type: "regular",
+      },
+    ];
+    const { competitions } = mergeScheduleRefresh(
+      existing,
+      [{ eventName: "DCI Winchester", location: "Lexington/Winchester, KY", date: dateForDay(3) }],
+      "live_2026-26",
+      startDate,
+      springTrainingDays
+    );
+    assert.equal(competitions.find((c) => c.day === 3).location, "Winchester, KY");
+  });
+
+  test("a newly scraped multi-city show is stored under the last city", () => {
+    const { competitions } = mergeScheduleRefresh(
+      [],
+      [{ eventName: "DCI Winchester", location: "Lexington/Winchester, KY", date: dateForDay(3) }],
+      "live_2026-26",
+      startDate,
+      springTrainingDays
+    );
+    assert.equal(competitions.find((c) => c.day === 3).location, "Winchester, KY");
+  });
+});
+
+describe("isBarredChampionshipEveShow", () => {
+  test("bars championship- and prelims-titled shows on days 43-44 only", () => {
+    for (const day of [43, 44]) {
+      assert.equal(isBarredChampionshipEveShow(day, "DCI Open Class World Championship Prelims"), true);
+      assert.equal(isBarredChampionshipEveShow(day, "Drum Corps Midwest Championship"), true);
+      assert.equal(isBarredChampionshipEveShow(day, "Division III Championships"), true);
+      assert.equal(isBarredChampionshipEveShow(day, "Tour Premiere Preliminaries"), true);
+      assert.equal(isBarredChampionshipEveShow(day, "Music on the March"), false);
+      assert.equal(isBarredChampionshipEveShow(day, null), false);
+    }
+    for (const day of [42, 45, 10]) {
+      assert.equal(isBarredChampionshipEveShow(day, "Drum Corps Midwest Championship"), false);
+    }
+  });
+
+  test("a live refresh never appends a barred show to day 43 or 44", () => {
+    const startDate = new Date("2026-06-01T00:00:00Z");
+    const springTrainingDays = 21;
+    const dateForDay = (day) =>
+      new Date(startDate.getTime() + (day + springTrainingDays - 1) * 86400000).toISOString();
+    const { competitions } = mergeScheduleRefresh(
+      [],
+      [
+        { eventName: "DCI Open Class World Championship Prelims", location: "Marion, IN", date: dateForDay(43) },
+        { eventName: "DCI Southern Indiana", location: "Evansville, IN", date: dateForDay(43) },
+        { eventName: "Midwest Championship", location: "Rockford, IL", date: dateForDay(44) },
+        { eventName: "Midwest Championship", location: "Rockford, IL", date: dateForDay(40) },
+      ],
+      "live_2026-26",
+      startDate,
+      springTrainingDays
+    );
+    assert.deepEqual(
+      competitions.map((c) => [c.day, c.name]),
+      [
+        [40, "Midwest Championship"],
+        [43, "DCI Southern Indiana"],
+      ]
+    );
   });
 });

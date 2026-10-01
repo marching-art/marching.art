@@ -34,6 +34,7 @@ const {
   shuffleArray,
   brandEventName,
   regionalTierForEventName,
+  isBarredChampionshipEveShow,
 } = require("./seasonSchedule");
 
 async function generateLiveSeasonSchedule(seasonLength, startDay, finalsYear, startDate, _finalsDate, springTrainingDays = SPRING_TRAINING_DAYS) {
@@ -71,6 +72,13 @@ async function generateLiveSeasonSchedule(seasonLength, startDay, finalsYear, st
       const diffFromStart = eventDate.getTime() - startDate.getTime();
       const calendarDay = Math.floor(diffFromStart / millisInDay) + 1;
       const dayNumber = calendarDay - springTrainingDays;
+
+      // A championship/prelims-titled event on day 43 or 44 stays off the
+      // schedule: Championship Week's rounds are marching.art's own.
+      if (isBarredChampionshipEveShow(dayNumber, event.eventName)) {
+        logger.info(`Skipped "${event.eventName}" on day ${dayNumber} (championship-titled show on a Championship Week eve).`);
+        continue;
+      }
 
       // Only include events within days 1-44 (non-championship days)
       if (dayNumber >= 1 && dayNumber <= 44) {
@@ -310,6 +318,9 @@ async function generateOffSeasonSchedule(seasonLength, startDay) {
 
     for (const show of potentialShows) {
       if (pickedShows.length >= numShowsToPick) break;
+      // Days 43-44: pass over championship/prelims-titled shows so the day
+      // fills from the rest of the archive pool instead.
+      if (isBarredChampionshipEveShow(day.offSeasonDay, show.eventName)) continue;
       if (!usedEventNames.has(show.eventName) && !usedLocations.has(show.location)) {
         pickedShows.push(show);
         usedEventNames.add(show.eventName);

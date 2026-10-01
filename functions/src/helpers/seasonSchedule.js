@@ -312,6 +312,44 @@ async function updateScheduleDay(seasonId, dayNumber, shows) {
 }
 
 /**
+ * Re-run standardizeLocation over a stored competitions array. Pure; returns a
+ * new array plus the rows whose location changed.
+ * @param {Array<{id?: string, location?: string}>} competitions
+ * @returns {{competitions: Array<object>, changed: Array<{id: (string|undefined), from: string, to: string}>}}
+ */
+function restandardizeCompetitionLocations(competitions) {
+  const changed = [];
+  const next = (competitions || []).map((comp) => {
+    if (!comp || typeof comp.location !== "string" || !comp.location) return comp;
+    const location = standardizeLocation(comp.location);
+    if (location === comp.location) return comp;
+    changed.push({ id: comp.id, from: comp.location, to: location });
+    return { ...comp, location };
+  });
+  return { competitions: next, changed };
+}
+
+/**
+ * Heal a stored season schedule in place: every competition location is run
+ * back through standardizeLocation, so rows written before a rule landed (a
+ * multi-city "Lexington/Winchester, KY" -> "Winchester, KY") match what a
+ * fresh generation would store. Transactional; a no-op when nothing changes.
+ * @param {string} seasonId
+ * @returns {Promise<Array<{id: (string|undefined), from: string, to: string}>>} rows changed
+ */
+async function standardizeScheduleLocations(seasonId) {
+  const db = getDb();
+  const scheduleRef = db.doc(`schedules/${seasonId}`);
+  return db.runTransaction(async (tx) => {
+    const snap = await tx.get(scheduleRef);
+    if (!snap.exists) return [];
+    const { competitions, changed } = restandardizeCompetitionLocations(snap.data().competitions);
+    if (changed.length) tx.update(scheduleRef, { competitions });
+    return changed;
+  });
+}
+
+/**
  * Adds a show to a specific day (without overwriting existing shows)
  * @param {string} seasonId - The season identifier
  * @param {number} dayNumber - The offSeasonDay
@@ -424,6 +462,26 @@ async function writeScheduleToCollection(seasonId, schedule) {
   logger.info(`Wrote ${competitions.length} competitions to schedules/${seasonId}`);
 }
 
+// Days 43-44 lead straight into Championship Week (days 45-49), whose Open/A
+// and World championship rounds are marching.art's own fixed events. A show on
+// either eve day titled as a championship or a prelims round reads as a
+// premature (or duplicate) championship, so no schedule builder places one
+// there: the off-season generator picks a different archive show for the day,
+// and live seasons leave the scraped event off the schedule.
+const CHAMPIONSHIP_EVE_DAYS = Object.freeze([43, 44]);
+const CHAMPIONSHIP_TITLE_RE = /championship|prelim/i;
+
+/**
+ * True when a show must not be scheduled on `day` because it is a
+ * championship- or prelims-titled show on a Championship Week eve (day 43/44).
+ * @param {number} day competition day (offSeasonDay)
+ * @param {string|null|undefined} eventName
+ * @returns {boolean}
+ */
+function isBarredChampionshipEveShow(day, eventName) {
+  return CHAMPIONSHIP_EVE_DAYS.includes(day) && CHAMPIONSHIP_TITLE_RE.test(String(eventName || ""));
+}
+
 function shuffleArray(array) {
   for (let i = array.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -505,9 +563,13 @@ module.exports = {
   getScheduleDays,
   getAllScheduleDays,
   updateScheduleDay,
+  restandardizeCompetitionLocations,
+  standardizeScheduleLocations,
   addShowToDay,
   shuffleArray,
   brandEventName,
   regionalTierForEventName,
   applyMultiNightMajors,
+  CHAMPIONSHIP_EVE_DAYS,
+  isBarredChampionshipEveShow,
 };

@@ -7,8 +7,8 @@
     "distinctRawLocations": 688,
     "entries": 687,
     "resolution": {
-      "exact": 630,
-      "fuzzy": 38,
+      "exact": 633,
+      "fuzzy": 35,
       "centroid": 0,
       "manual": 18,
       "seed": 1,
@@ -865,13 +865,13 @@
       "tzSource": "geo"
     },
     "bloomington normal, illinois": {
-      "venueId": "bloomington-il",
-      "city": "Bloomington",
+      "venueId": "normal-il",
+      "city": "Normal",
       "region": "IL",
       "country": "US",
-      "lat": 40.4842,
-      "lng": -88.9937,
-      "source": "fuzzy",
+      "lat": 40.5142,
+      "lng": -88.9906,
+      "source": "exact",
       "eventCount": 2,
       "rawVariants": [
         "Bloomington/Normal, Illinois"
@@ -3286,7 +3286,7 @@
       "country": "US",
       "lat": 43.3095,
       "lng": -73.644,
-      "source": "fuzzy",
+      "source": "exact",
       "eventCount": 1,
       "rawVariants": [
         "Fort Edwards/Glens Falls, New York"
@@ -5006,13 +5006,13 @@
       "tzSource": "geo"
     },
     "lexington winchester, kentucky": {
-      "venueId": "lexington-ky",
-      "city": "Lexington",
+      "venueId": "winchester-ky",
+      "city": "Winchester",
       "region": "KY",
       "country": "US",
-      "lat": 37.9887,
-      "lng": -84.4777,
-      "source": "fuzzy",
+      "lat": 37.9901,
+      "lng": -84.1797,
+      "source": "exact",
       "eventCount": 1,
       "rawVariants": [
         "Lexington/Winchester, Kentucky"

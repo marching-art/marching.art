@@ -47,6 +47,14 @@ export const ADMIN_JOBS: readonly AdminJob[] = [
     caution: true,
   },
   {
+    id: 'standardizeScheduleLocations',
+    name: 'Standardize Show Locations',
+    description:
+      'Rewrite the current schedule\'s show locations to "City, ST" (multi-city shows keep the last city).',
+    domain: 'season',
+    caution: true,
+  },
+  {
     id: 'scrapeCanary',
     name: 'Run Scrape Canary',
     description:
