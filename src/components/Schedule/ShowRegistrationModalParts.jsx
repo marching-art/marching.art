@@ -3,13 +3,14 @@
 // Extracted from ShowRegistrationModal.jsx for file-size hygiene.
 
 import { Link } from 'react-router-dom';
-import { AlertTriangle, Check, Landmark, Trophy, Users, X } from 'lucide-react';
+import { AlertTriangle, Check, Landmark, Swords, Trophy, Users, X } from 'lucide-react';
 import { formatEventName } from '../../utils/season';
 import { CLASS_CONFIG as CLASS_CONFIG_BY_ID, sameDayShowFor } from './showRegistrationConfig';
+import { TravelLine } from './ShowInsights';
 
 /** @typedef {{ name: string, shortName: string, color: string, bgColor: string }} ClassDisplay */
 /** @typedef {{ corpsName?: string, name?: string, selectedShows?: Record<string, Array<{day?: number, eventName: string}>> }} CorpsEntry */
-/** @typedef {{ corpsName?: string, corpsClass?: string, username?: string }} AttendeeRow */
+/** @typedef {{ uid?: string|null, corpsName?: string, corpsClass?: string, username?: string }} AttendeeRow */
 
 // Indexed by runtime class ids (strings from profile/corps maps), so widen the
 // literal-keyed config to a string lookup.
@@ -177,6 +178,7 @@ export const ChampionshipEnrollmentPanel = ({
  *   full: boolean,
  *   attendees: AttendeeRow[]|null,
  *   loading: boolean,
+ *   rivalKeys?: Set<string>,
  * }} props
  */
 export const HostedShowPanel = ({
@@ -187,6 +189,7 @@ export const HostedShowPanel = ({
   full,
   attendees,
   loading,
+  rivalKeys,
 }) => (
   <div className="mx-4 mt-4 p-3 bg-surface-sunken border border-cyan-500/30 space-y-3">
     <div className="flex items-start justify-between gap-2">
@@ -234,7 +237,7 @@ export const HostedShowPanel = ({
     )}
 
     {/* Attendee roster */}
-    <AttendeeRoster attendees={attendees} loading={loading} />
+    <AttendeeRoster attendees={attendees} loading={loading} rivalKeys={rivalKeys} />
   </div>
 );
 
@@ -247,8 +250,10 @@ export const HostedShowPanel = ({
  * @param {Object} props
  * @param {AttendeeRow[]|null} props.attendees - registered corps rows (null = not loaded yet).
  * @param {boolean} props.loading
+ * @param {Set<string>} [props.rivalKeys] - `${uid}|${corpsClass}` of the viewer's
+ *   rivals; those rows are tagged so a head-to-head stands out.
  */
-export const AttendeeRoster = ({ attendees, loading }) => (
+export const AttendeeRoster = ({ attendees, loading, rivalKeys }) => (
   <div>
     <div className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wider text-muted mb-2">
       <Users className="w-3 h-3" />
@@ -267,6 +272,12 @@ export const AttendeeRoster = ({ attendees, loading }) => (
               className="flex items-center gap-2 text-[11px]"
             >
               <span className="text-secondary truncate flex-1">{a.corpsName}</span>
+              {a.uid && rivalKeys?.has(`${a.uid}|${a.corpsClass}`) && (
+                <span className="flex-shrink-0 inline-flex items-center gap-0.5 text-[9px] px-1 py-0.5 font-bold uppercase bg-red-500/10 text-red-400">
+                  <Swords className="w-2.5 h-2.5" aria-hidden="true" />
+                  Rival
+                </span>
+              )}
               {config.name && (
                 <span
                   className={`flex-shrink-0 text-[9px] px-1 py-0.5 font-bold uppercase ${config.bgColor} ${config.color}`}
@@ -306,6 +317,7 @@ export const PodiumSelectionRow = ({
   picksThisWeek,
   maxPicks,
   autoSlotNote,
+  travel = null,
   onToggle,
 }) => {
   const disabled = isMyAutoDay || isEasternOffNight || isPast;
@@ -353,6 +365,14 @@ export const PodiumSelectionRow = ({
             </span>
           )}
         </div>
+        {/* The leg into this show from the corps' previous stop — mileage,
+            travel stamina, heat, any flight — so the pick is priced before
+            it's made. */}
+        {travel && !isMyAutoDay && !isPast && (
+          <div className="mt-1.5 text-[10px]">
+            <TravelLine travel={travel} />
+          </div>
+        )}
       </div>
     </button>
   );

@@ -48,6 +48,22 @@ export const getShowRegistrations = createCallable<
   { week: number; eventName: string; date?: string | null; day?: number },
   { registrations: ShowRegistration[] }
 >('getShowRegistrations');
+// The caller's rivals (profile.rivals, written nightly) who are on an upcoming
+// show's bill, keyed `${week}|${eventName}` — the Schedule's "Rival attending".
+export interface RivalAttendee {
+  uid: string;
+  username: string | null;
+  corpsName: string;
+  corpsClass: string;
+  versusClass: string; // which of the caller's corps this is a rival of
+  scoreDelta: number | null; // rival minus caller (null for SoundSport)
+  basis: 'season' | 'lastSeason'; // matched on last season before anyone scored
+  day: number | null;
+}
+export const getRivalShowAttendance = createCallable<
+  void,
+  { shows: Record<string, RivalAttendee[]> }
+>('getRivalShowAttendance');
 export const getUserRankings = createCallable<{ uid: string }, unknown>('getUserRankings');
 // Renamed to avoid conflict with profile.ts updateProfile (local Firestore)
 export const updateProfileCF = createCallable<{ displayName?: string; bio?: string }, void>(

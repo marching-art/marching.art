@@ -413,6 +413,16 @@ stamina + Corps Budget cost from the distance to the previous location — the e
 week" mechanic silently becomes a routing puzzle. A Texas swing after a Florida weekend is a real
 decision with a real cost, exactly like the actual tour.
 
+**Planning from the Schedule (open-information routing).** The routing puzzle is played on the
+Schedule page, not a paper map: every show the corps could still add carries the leg _into_ it from
+where the corps will be standing the night before — the venue of its last tour stop before that day,
+else its current location — with miles, travel stamina (Tour Manager applied), heat, and any airfare
+or mandatory over-ocean flight, plus the hop on to its next booked stop and a **Closest** tag on each
+day's nearest show (`getPodiumShowTravel` / `buildShowTravel`, the same math as the route sheet, so a
+card matches its leg once added). Shows a rival is attending are flagged too
+(`getRivalShowAttendance`). On the route sheet each flight/airfare note sits directly above the stop
+it flies to, named "From → To", so legs read in riding order.
+
 **Airfare (fly the long legs).** For any leg over the Long-Haul floor (~600 road miles — the
 `travel.airfare.eligibleTiers` list in `podium-config/balance`, currently Long Haul + Cross-Country)
 a director can pre-book **airfare** in the route portal to **halve that leg's travel-stamina hit**

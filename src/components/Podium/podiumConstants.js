@@ -74,6 +74,17 @@ export const TIER_LABELS = {
   legend: 'Legend',
 };
 
+// Travel-leg distance tiers (balanceConfig travel.tiers keys) — the route
+// sheet and the Schedule's per-show travel line label legs the same way.
+/** @type {Record<string, string>} */
+export const TRAVEL_TIER_LABELS = {
+  local: 'Local',
+  dayTrip: 'Day trip',
+  overnightHaul: 'Overnight haul',
+  longHaul: 'Long haul',
+  crossCountry: 'Cross-country',
+};
+
 export const CHALLENGE_PRESETS = {
   balanced: { label: 'Balanced', levels: 5 },
   safe: { label: 'Early & Clean', levels: 3 },
