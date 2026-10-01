@@ -94,6 +94,12 @@ export const PRINT_PALETTES = {
     motif: '#3f7f78',
     fleck: '#b88a4a',
   },
+  /** Ember Glass: stained-glass flame tongues set in black lead came. */
+  ember: {
+    flame: '#e2540f',
+    core: '#fbc02d',
+    lead: '#111114',
+  },
 } as const;
 
 /** Prism Forge light streak: the hot core line when no core color is set. */

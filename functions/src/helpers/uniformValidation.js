@@ -30,6 +30,7 @@ const CHESTS = new Set([
   "vinylPanel",
   "streak",
   "gill",
+  "yoke",
 ]);
 const HATS = new Set(["shako", "pith", "campaign", "aussie", "contour", "busby"]);
 const HAT_ORNAMENTS = new Set([
@@ -56,6 +57,7 @@ const PRINT_COLOR_SLOT_COUNTS = {
   foil: 2,
   shatter: 2,
   brocade: 3,
+  ember: 3,
 };
 const BUILTIN_FILL_REFS = new Set([
   "url:sun",
@@ -65,6 +67,7 @@ const BUILTIN_FILL_REFS = new Set([
   "url:foil",
   "url:shatter",
   "url:brocade",
+  "url:ember",
 ]);
 
 /** @param {unknown} v */
@@ -233,6 +236,11 @@ const FIGURE_FIELDS = {
   veinGlow: "hex",
   drape: "colorFlip",
   gill: "hex",
+  // Ember Glass (Kiln & Lantern) — saving requires the pack; ember is the
+  // derived print-def flag (the hat's front panel is checked under "hat")
+  ember: "bool",
+  yoke: "hex",
+  yokePiping: "hex",
   glow: "bool",
   glowArt: "hex",
   velvet: "bool",
@@ -453,7 +461,10 @@ function validateFigure(figure) {
           (value.emblem != null && !isHex(value.emblem)) ||
           (value.ornament != null && !HAT_ORNAMENTS.has(value.ornament)) ||
           (value.flip != null && typeof value.flip !== "boolean") ||
-          Object.keys(value).some((k) => !["body", "band", "emblem", "ornament", "flip"].includes(k))
+          (value.panel != null && !isFill(value.panel, gradRefs)) ||
+          Object.keys(value).some(
+            (k) => !["body", "band", "emblem", "ornament", "flip", "panel"].includes(k)
+          )
         ) {
           errors.push("figure.hat is invalid");
         }
@@ -655,6 +666,9 @@ const PROSE_COLORS = [
   ["oyster", 0xe4dccb],
   ["twilight mauve", 0x5c4960],
   ["bioluminescent aqua", 0x5ff0dc],
+  // Ember Glass palette (the pack's lit-glass vocabulary)
+  ["ember orange", 0xe2540f],
+  ["flame gold", 0xfbc02d],
 ];
 
 /**

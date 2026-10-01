@@ -34,6 +34,7 @@ const STOCK_PRINT_COLORS = {
   foil: ["#caa03c", "#f2df9a"],
   shatter: ["#16181d", "#c9ced6"],
   brocade: ["#1d4a4f", "#3f7f78", "#b88a4a"],
+  ember: ["#e2540f", "#fbc02d", "#111114"],
 };
 
 /** Hardware metals (METAL_HEX in src/data/uniformCatalog.ts). */
@@ -205,6 +206,10 @@ function fillProse(fig, fill, axis = "top to bottom") {
       const [base, motif, fleck] = printColors(fig, "brocade");
       return `a PATINA BROCADE print: ${named(base)} cloth woven with a tone-on-tone ${named(motif)} damask leaf-and-scroll motif, mottled like aged oxidized metal and flecked with ${named(fleck)}`;
     }
+    case "url:ember": {
+      const [flame, core, lead] = printColors(fig, "ember");
+      return `an EMBER GLASS print: like backlit stained glass, curving flame-tongue panes that glow ${named(core)} at their hearts and deepen to ${named(flame)} at their edges, set in heavy swooping ${named(lead)} lead-line outlines with thinner curling flame licks inside the panes`;
+    }
     default:
       if (fill.startsWith("url:")) return gradientProse(fig, fill.slice(4), axis);
       return null;
@@ -229,6 +234,7 @@ function fillLabel(fig, fill, fallbackHex) {
       "url:foil": "metallic foil",
       "url:shatter": "a shatter crack print",
       "url:brocade": "a patina brocade print",
+      "url:ember": "an ember stained-glass print",
     };
     if (labels[fill]) return labels[fill];
     if (fill.startsWith("url:") && gradientProse(fig, fill.slice(4), "")) return "an ombré gradient";
@@ -460,6 +466,13 @@ function chestProse(fig, metal) {
     }
     case "gill":
       return `a pleated GILL FAN inset in ${named(fig.gill)}: a wedge of fine radiating lamellae (like the gills of a mushroom or the ribs of a scallop shell) fanning out from a small dark boss at the center chest up across the ${reverse ? "viewer's LEFT" : "viewer's RIGHT"} shoulder`;
+    case "yoke": {
+      const side = reverse ? "RIGHT" : "LEFT";
+      const piping = isHex(fig.yokePiping)
+        ? `, edged along the whole curve by a bold ${named(fig.yokePiping)} piping stripe`
+        : "";
+      return `a SWEPT YOKE: the viewer's-${side} shoulder and upper side of the torso are a contrasting ${named(fig.yoke)} yoke, cut on a sweeping S-curve that runs from beside the collar down across the chest to the viewer's-${side} side seam below the armpit${piping}; the rest of the torso shows the jacket fabric`;
+    }
     case "vinylPanel":
       return `a glossy vinyl front panel in ${named(fig.panel)} from the collar to the hips with a ${named(INK.zipper)} center zipper, edged in ${isHex(fig.panelTrim) ? named(fig.panelTrim) : named(INK.visor)}`;
     default:
@@ -580,6 +593,10 @@ function headProse(fig, metal) {
     parts.push(`${ornament} ${where} in ${isHex(hat.emblem) ? named(hat.emblem) : metal}`);
   } else {
     parts.push("no front plate or badge (bare face)");
+  }
+  if (hat.panel && (type === "shako" || type === "pith" || type === "contour")) {
+    const face = fillProse(fig, hat.panel, "top to bottom") || `solid ${named(hat.panel)}`;
+    parts.push(`the FRONT FACE of the hat is a framed panel in ${face}, edged by the ${named(hat.body)} body on the sides, top and brim`);
   }
   if (type === "aussie") {
     parts.push(`brim pinned up on the ${hat.flip ? "viewer's LEFT" : "viewer's RIGHT"} side`);
@@ -766,6 +783,7 @@ function describeFigure(design) {
     vinylPanel: "a zippered vinyl front panel",
     streak: "a glowing light-streak slash",
     gill: "a pleated gill fan",
+    yoke: "a swept contrasting yoke",
   };
   const summary = [
     torsoShort,

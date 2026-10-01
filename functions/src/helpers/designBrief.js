@@ -149,7 +149,9 @@ function analyzeDesign(design) {
     traits.add("sequins");
   }
   if (fig.grads && Object.keys(fig.grads).length > 0) traits.add("fade");
-  if (fig.print || fig.plaid || fig.foilLeg || fig.shatter || fig.brocade) traits.add("print");
+  if (fig.print || fig.plaid || fig.foilLeg || fig.shatter || fig.brocade || fig.ember) {
+    traits.add("print");
+  }
   if (fig.glow || fig.glowArt || fig.veinGlow || arms.some((a) => a.glowLine)) traits.add("glow");
   if (fig.velvet) traits.add("velvet");
   if (fig.patent || arms.some((a) => a.patent)) traits.add("patent");

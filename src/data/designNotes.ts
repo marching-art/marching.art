@@ -40,6 +40,10 @@ export const DESIGN_NOTES: DesignNote[] = [
     text: 'Let the network travel: carry the veins from torso to sleeve to leg so the whole line reads as one organism.',
   },
   {
+    applies: (f) => Boolean(f.ember || f.chest === 'yoke' || f.hat?.panel),
+    text: 'Stained glass needs its lead: frame the burning panes in black and they glow brighter under the lights.',
+  },
+  {
     applies: (f) => Boolean(f.torsoSequin || f.sashSequin || f.baldricSequin),
     text: 'Sequins are for the back row: design the sparkle for the press box, not the mirror.',
   },
