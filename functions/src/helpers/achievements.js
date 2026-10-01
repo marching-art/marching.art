@@ -17,14 +17,59 @@
  * milestone is hit.
  */
 
+/**
+ * A profile/data document as the sweep reads it — a loose Firestore record;
+ * every field touched is defaulted.
+ * @typedef {Record<string, any>} ProfileData
+ */
+
+/**
+ * Post-update values claimDailyLogin passes in before they're written.
+ * @typedef {{
+ *   streak?: number,
+ *   level?: number,
+ *   unlockedClasses?: string[],
+ *   totalSeasons?: number,
+ *   classUnlockPaths?: Record<string, string>,
+ * }} StateOverrides
+ */
+
+/**
+ * One archived season row, normalized for the season-performance checks.
+ * @typedef {{classKey: string|null, seasonId: string|null, placement: number|null, shows: number}} SeasonRow
+ */
+
 /** CorpsCoin paid when an achievement is first earned, by rarity */
 const RARITY_CC = { common: 25, rare: 50, epic: 100, legendary: 250 };
 
+// Season Performance thresholds (mirrored in src/data/achievementsCatalog.js).
+// A season is 7 weeks: 4 shows a week for six weeks plus up to 7 in finals
+// week (helpers/showSelection.getMaxShowsForWeek) — 31 at most, so a Full
+// Tour means near-perfect attendance. 12 is the DCI Finals field.
+const SEASON_PERFORMANCE = {
+  contenderCut: 25,
+  finalistCut: 12,
+  medalCut: 3,
+  fullTourShows: 25,
+  multiClassCount: 3,
+};
+
 /**
- * Catalog entries. `earned(state)` receives a snapshot:
+ * Catalog entries. `earned(state)` receives the buildAchievementState snapshot:
  * { streak, level, unlockedClasses, hasFullLineup, totalShows, totalSeasons,
- *   leagueWins, classRanks }
+ *   leagueWins, classRanks, trophies counts, podium fields, and the
+ *   seasonPerformance results }
  */
+/**
+ * @typedef {ReturnType<typeof buildAchievementState>} AchievementState
+ * @typedef {{
+ *   id: string, title: string, description: string, icon: string,
+ *   rarity: 'common' | 'rare' | 'epic' | 'legendary', ccReward: number,
+ *   earned: (s: AchievementState) => boolean,
+ * }} CatalogEntry
+ */
+
+/** @type {CatalogEntry[]} */
 const ACHIEVEMENT_CATALOG = [
   // --- Streak tiers (coin paid via STREAK_MILESTONES, not here) ---
   { id: 'streak_3', title: '3 Day Streak!', description: 'Logged in 3 days in a row', icon: 'flame', rarity: 'common', ccReward: 0, earned: (s) => s.streak >= 3 },
@@ -60,8 +105,22 @@ const ACHIEVEMENT_CATALOG = [
   { id: 'shows_50', title: 'Tour Veteran', description: 'Competed in 50 career shows', icon: 'star', rarity: 'rare', ccReward: RARITY_CC.rare, earned: (s) => s.totalShows >= 50 },
   { id: 'shows_100', title: 'Century Tour', description: 'Competed in 100 career shows', icon: 'medal', rarity: 'epic', ccReward: RARITY_CC.epic, earned: (s) => s.totalShows >= 100 },
   { id: 'seasons_1', title: 'Season One', description: 'Completed your first season', icon: 'medal', rarity: 'common', ccReward: RARITY_CC.common, earned: (s) => s.totalSeasons >= 1 },
+  { id: 'seasons_2', title: 'Sophomore Season', description: 'Completed 2 seasons', icon: 'medal', rarity: 'common', ccReward: RARITY_CC.common, earned: (s) => s.totalSeasons >= 2 },
+  { id: 'seasons_3', title: 'Hat Trick', description: 'Completed 3 seasons', icon: 'medal', rarity: 'common', ccReward: RARITY_CC.common, earned: (s) => s.totalSeasons >= 3 },
   { id: 'seasons_5', title: 'Five Year Plan', description: 'Completed 5 seasons', icon: 'medal', rarity: 'rare', ccReward: RARITY_CC.rare, earned: (s) => s.totalSeasons >= 5 },
   { id: 'seasons_10', title: 'Decade of Drums', description: 'Completed 10 seasons', icon: 'crown', rarity: 'legendary', ccReward: RARITY_CC.legendary, earned: (s) => s.totalSeasons >= 10 },
+
+  // --- Season performance (archived seasonHistory rows; see seasonPerformance) ---
+  // How well a season went, not just that it happened: where it finished, how
+  // much the corps toured, breadth across classes, and season-over-season
+  // improvement. Every input is an archived résumé row, so these land on the
+  // first daily login after rollover and backfill for veterans automatically.
+  { id: 'season_top_25', title: 'Contender', description: `Finished a season in the top ${SEASON_PERFORMANCE.contenderCut} of a competitive class`, icon: 'star', rarity: 'common', ccReward: RARITY_CC.common, earned: (s) => s.bestSeasonPlacement != null && s.bestSeasonPlacement <= SEASON_PERFORMANCE.contenderCut },
+  { id: 'season_top_12', title: 'Finalist', description: `Finished a season in the top ${SEASON_PERFORMANCE.finalistCut} of a competitive class`, icon: 'medal', rarity: 'rare', ccReward: RARITY_CC.rare, earned: (s) => s.bestSeasonPlacement != null && s.bestSeasonPlacement <= SEASON_PERFORMANCE.finalistCut },
+  { id: 'season_top_3', title: 'Medal Stand', description: `Finished a season in the top ${SEASON_PERFORMANCE.medalCut} of a competitive class`, icon: 'trophy', rarity: 'epic', ccReward: RARITY_CC.epic, earned: (s) => s.bestSeasonPlacement != null && s.bestSeasonPlacement <= SEASON_PERFORMANCE.medalCut },
+  { id: 'season_climber', title: 'On the Rise', description: 'Finished higher in a class than your previous season there', icon: 'award', rarity: 'rare', ccReward: RARITY_CC.rare, earned: (s) => s.climbedPlacement },
+  { id: 'season_full_tour', title: 'Full Tour', description: `Competed in ${SEASON_PERFORMANCE.fullTourShows} shows in a single season`, icon: 'star', rarity: 'rare', ccReward: RARITY_CC.rare, earned: (s) => s.maxSeasonShows >= SEASON_PERFORMANCE.fullTourShows },
+  { id: 'season_multi_class', title: 'Triple Threat', description: `Competed in ${SEASON_PERFORMANCE.multiClassCount} classes in the same season`, icon: 'trophy', rarity: 'rare', ccReward: RARITY_CC.rare, earned: (s) => s.maxClassesInSeason >= SEASON_PERFORMANCE.multiClassCount },
 
   // --- League ---
   { id: 'league_join', title: 'League Player', description: 'Joined a league', icon: 'award', rarity: 'common', ccReward: RARITY_CC.common, earned: (s) => s.inLeague },
@@ -101,6 +160,7 @@ const ACHIEVEMENT_CATALOG = [
  * per seasonId, so counting distinct scored rows is idempotent and mirrors the
  * fantasy "competed in ≥1 show" bar for a completed season.
  */
+/** @param {ProfileData} profileData */
 function podiumSeasonsPlayed(profileData) {
   const rows = profileData.corps?.podiumClass?.seasonHistory || [];
   const seasonIds = new Set();
@@ -110,10 +170,99 @@ function podiumSeasonsPlayed(profileData) {
   return seasonIds.size;
 }
 
-/** Podium shows attended across archived seasons (résumé rows carry the count). */
+/**
+ * Podium shows attended across archived seasons (résumé rows carry the count).
+ * @param {ProfileData} profileData
+ */
 function podiumShowsAttended(profileData) {
   const rows = profileData.corps?.podiumClass?.seasonHistory || [];
-  return rows.reduce((sum, row) => sum + (row && row.showsAttended ? row.showsAttended : 0), 0);
+  return rows.reduce(
+    (/** @type {number} */ sum, /** @type {any} */ row) =>
+      sum + (row && row.showsAttended ? row.showsAttended : 0),
+    0
+  );
+}
+
+/**
+ * Every archived season row on the profile, grouped per corps history in
+ * archive (chronological) order. Active corps carry their résumé on
+ * corps.{class}.seasonHistory; a retired corps keeps its own on the
+ * retiredCorps record. A row's class is the class it was COMPETED in
+ * (row.corpsClass), falling back to the slot it sits in for older rows.
+ *
+ * @param {ProfileData} profileData
+ * @returns {SeasonRow[][]}
+ */
+function seasonHistories(profileData) {
+  /** @type {SeasonRow[][]} */
+  const lists = [];
+  /** @param {unknown} rows @param {string|null|undefined} fallbackClass */
+  const add = (rows, fallbackClass) => {
+    if (!Array.isArray(rows) || rows.length === 0) return;
+    lists.push(
+      rows.filter(Boolean).map((row) => ({
+        classKey: row.corpsClass || fallbackClass || null,
+        seasonId: row.seasonId || null,
+        placement: Number.isInteger(row.placement) && row.placement >= 1 ? row.placement : null,
+        shows: Number(row.showsAttended) || 0,
+      }))
+    );
+  };
+  for (const [slot, corps] of Object.entries(profileData.corps || {})) {
+    if (corps) add(corps.seasonHistory, slot);
+  }
+  for (const retired of profileData.retiredCorps || []) {
+    if (retired) add(retired.seasonHistory, retired.corpsClass);
+  }
+  return lists;
+}
+
+/**
+ * Season-performance snapshot for the Season Performance achievements:
+ *  - bestSeasonPlacement: best final placement in a ranked class (SoundSport
+ *    is ratings-only, so it never counts), or null when never placed;
+ *  - climbedPlacement: some corps finished higher in a class than its
+ *    previous archived season in that same class;
+ *  - maxSeasonShows: most shows one corps competed in during one season;
+ *  - maxClassesInSeason: most fantasy classes competed in during one season
+ *    (Podium is a separate game, so it doesn't add a class).
+ * Existence/max only — never sums — so a corps whose history appears on
+ * both an active slot and a retired record can't over-credit anything.
+ */
+/** @param {ProfileData} profileData */
+function seasonPerformance(profileData) {
+  /** @type {number|null} */
+  let bestSeasonPlacement = null;
+  let climbedPlacement = false;
+  let maxSeasonShows = 0;
+  /** @type {Map<string, Set<string>>} */
+  const classesBySeason = new Map();
+
+  for (const rows of seasonHistories(profileData)) {
+    /** @type {Map<string|null, number>} */
+    const lastPlacementByClass = new Map();
+    for (const row of rows) {
+      maxSeasonShows = Math.max(maxSeasonShows, row.shows);
+      if (row.seasonId && row.shows > 0 && row.classKey && row.classKey !== 'podiumClass') {
+        const classes = classesBySeason.get(row.seasonId) ?? new Set();
+        classes.add(row.classKey);
+        classesBySeason.set(row.seasonId, classes);
+      }
+      if (row.placement == null || row.classKey === 'soundSport') continue;
+      if (bestSeasonPlacement == null || row.placement < bestSeasonPlacement) {
+        bestSeasonPlacement = row.placement;
+      }
+      const previous = lastPlacementByClass.get(row.classKey);
+      if (previous != null && row.placement < previous) climbedPlacement = true;
+      lastPlacementByClass.set(row.classKey, row.placement);
+    }
+  }
+
+  let maxClassesInSeason = 0;
+  for (const classes of classesBySeason.values()) {
+    maxClassesInSeason = Math.max(maxClassesInSeason, classes.size);
+  }
+  return { bestSeasonPlacement, climbedPlacement, maxSeasonShows, maxClassesInSeason };
 }
 
 /**
@@ -125,6 +274,7 @@ function podiumShowsAttended(profileData) {
  * a Podium-only director's prestige-title / season-achievement gates without
  * ever over-crediting a both-games director or handing out a free class unlock.
  */
+/** @param {ProfileData} profileData */
 function reconciledTotalSeasons(profileData) {
   return Math.max(profileData.lifetimeStats?.totalSeasons || 0, podiumSeasonsPlayed(profileData));
 }
@@ -135,11 +285,16 @@ function reconciledTotalSeasons(profileData) {
  * unlockedClasses/totalSeasons) that aren't in profileData yet during its
  * transaction.
  */
+/**
+ * @param {ProfileData} profileData
+ * @param {StateOverrides} [overrides]
+ */
 function buildAchievementState(profileData, overrides = {}) {
   const corps = profileData.corps || {};
   const hasFullLineup = Object.values(corps).some(
     (c) => c && c.lineup && Object.keys(c.lineup).length === 8
   );
+  /** @type {Record<string, number>} */
   const classRanks = {};
   Object.entries(profileData.classRanks || {}).forEach(([cls, snapshot]) => {
     if (snapshot && typeof snapshot.rank === 'number') classRanks[cls] = snapshot.rank;
@@ -176,6 +331,9 @@ function buildAchievementState(profileData, overrides = {}) {
     // Podium display copy the boundary sweep writes onto the profile.
     podiumSeasons,
     podiumDivision: corps.podiumClass?.division || null,
+    // Archived-season results: bestSeasonPlacement, climbedPlacement,
+    // maxSeasonShows, maxClassesInSeason.
+    ...seasonPerformance(profileData),
   };
 }
 
@@ -183,9 +341,15 @@ function buildAchievementState(profileData, overrides = {}) {
  * Return catalog achievements the profile has newly earned (not yet in
  * profileData.achievements), as ready-to-store objects.
  */
+/**
+ * @param {ProfileData} profileData
+ * @param {StateOverrides} [overrides]
+ */
 function sweepProfileAchievements(profileData, overrides = {}) {
   const state = buildAchievementState(profileData, overrides);
-  const existingIds = new Set((profileData.achievements || []).map((a) => a.id));
+  const existingIds = new Set(
+    (profileData.achievements || []).map((/** @type {{id: string}} */ a) => a.id)
+  );
   const earnedAt = new Date().toISOString();
 
   return ACHIEVEMENT_CATALOG.filter((a) => !existingIds.has(a.id) && a.earned(state)).map(
@@ -209,8 +373,8 @@ function sweepProfileAchievements(profileData, overrides = {}) {
  * competition class EARLY via XP level (classUnlockPaths.* === 'xp') — the
  * recognition-asymmetry mark seasons/coin/backstop unlocks never get.
  *
- * @param {Object} profileData - profile snapshot
- * @param {Object} [overrides] - { classUnlockPaths } computed post-update
+ * @param {ProfileData} profileData - profile snapshot
+ * @param {StateOverrides} [overrides] - { classUnlockPaths } computed post-update
  *   during the caller's transaction
  * @returns {string[]} shop item ids to arrayUnion into cosmetics.owned
  */
@@ -230,7 +394,9 @@ function sweepCosmeticGrants(profileData, overrides = {}) {
 module.exports = {
   ACHIEVEMENT_CATALOG,
   RARITY_CC,
+  SEASON_PERFORMANCE,
   buildAchievementState,
+  seasonPerformance,
   sweepProfileAchievements,
   sweepCosmeticGrants,
   podiumSeasonsPlayed,

@@ -30,7 +30,7 @@ import {
   Settings,
   Link as LinkIcon,
 } from 'lucide-react';
-import type { UserProfile, CorpsClass } from '../../types';
+import type { UserProfile, CorpsClass, Achievement } from '../../types';
 import {
   PROFILE_CORPS_CLASS_ORDER,
   resolveCorpsForClass,
@@ -72,6 +72,11 @@ import { getXPProgress } from '../../utils/captionPricing';
 import CaptionMasteryPanel from './CaptionMasteryPanel';
 import SeasonHistorySection from './SeasonHistorySection';
 import WriterBadge from './WriterBadge';
+import {
+  formatAchievementTally,
+  summarizeAchievements,
+  uniqueStoredAchievements,
+} from '../../data/achievementsCatalog';
 import { Heading } from '../ui';
 
 // =============================================================================
@@ -198,7 +203,17 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
 
   // DEDUPED: Trophies are competition-based, achievements are profile.achievements
   const trophies = useMemo(() => getCompetitionTrophies(profile), [profile]);
-  const achievements = profile.achievements || [];
+  // The stored list deduped by id, newest first; the header tally is the same
+  // summary the /achievements page shows (catalog earned/total + honors), so
+  // the two surfaces can never report different numbers.
+  const achievements = useMemo(
+    () => (uniqueStoredAchievements(profile) as Achievement[]).reverse(),
+    [profile]
+  );
+  const achievementTally = useMemo(
+    () => formatAchievementTally(summarizeAchievements(profile)),
+    [profile]
+  );
   const [showAllAchievements, setShowAllAchievements] = useState(false);
 
   // Season history — every archived season, labeled with the class it was
@@ -652,7 +667,9 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
             </div>
             <div className="flex items-center gap-2">
               {achievements.length > 0 && (
-                <span className="text-[9px] text-muted">{achievements.length} earned</span>
+                <span className="text-[9px] text-muted font-data" title={achievementTally.long}>
+                  {achievementTally.short}
+                </span>
               )}
               {/* Own profile only — the page shows the viewer's own list. */}
               {isOwnProfile && (

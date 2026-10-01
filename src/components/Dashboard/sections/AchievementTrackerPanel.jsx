@@ -11,7 +11,7 @@ import React, { memo, useMemo } from 'react';
 import { Award, Crown } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useProfileStore } from '../../../store/profileStore';
-import { evaluateAchievements, ACHIEVEMENTS } from '../../../data/achievementsCatalog';
+import { summarizeAchievements } from '../../../data/achievementsCatalog';
 
 const AchievementTrackerPanel = memo(
   /** @param {{profile: any}} props */ ({ profile }) => {
@@ -20,26 +20,25 @@ const AchievementTrackerPanel = memo(
     // a recompute even if the rest of the profile snapshot is referentially equal.
     const earnedAchievements = profile?.achievements;
 
-    const { completed, nextUp, totalEarned } = useMemo(() => {
-      const evaluated = evaluateAchievements(profile, corps);
-      const done = evaluated.filter((a) => a.earned);
+    const { completed, nextUp, totalEarned, totalCount } = useMemo(() => {
+      const summary = summarizeAchievements(profile, corps);
+      const done = summary.evaluated.filter((a) => a.earned);
       // Incomplete sorted by pct desc (closest first), then goal asc (easier first)
-      const incomplete = evaluated
+      const incomplete = summary.evaluated
         .filter((a) => !a.earned)
         .sort((a, b) => b.pct - a.pct || a.goal - b.goal);
 
       return {
         completed: done,
         nextUp: incomplete.slice(0, 3),
-        totalEarned: done.length,
+        totalEarned: summary.earnedCount,
+        totalCount: summary.totalCount,
       };
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [profile, corps, earnedAchievements]);
 
     // Don't render if profile hasn't loaded
     if (!profile) return null;
-
-    const totalCount = ACHIEVEMENTS.length;
 
     return (
       <div className="bg-surface-card border border-line overflow-hidden">

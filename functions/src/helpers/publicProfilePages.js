@@ -73,6 +73,17 @@ function isProfilePrivate(profileData) {
   return profileData?.directorInfo?.profileVisibility === "members";
 }
 
+/** Entries with an id, first occurrence of each id kept. */
+function uniqueById(list) {
+  if (!Array.isArray(list)) return [];
+  const seen = new Set();
+  return list.filter((item) => {
+    if (!item || !item.id || seen.has(item.id)) return false;
+    seen.add(item.id);
+    return true;
+  });
+}
+
 /**
  * Reduce a raw profile doc to EXACTLY the public field set (same defaults,
  * same shapes as the former getPublicProfile callable returned). This is the single privacy
@@ -97,7 +108,9 @@ function pickPublicProfile(profileData) {
     favoriteCorps: data.favoriteCorps || "",
     xp: data.xp || 0,
     xpLevel: data.xpLevel || 1,
-    achievements: Array.isArray(data.achievements) ? data.achievements : [],
+    // Deduped by id: older writers could arrayUnion one award twice with
+    // different timestamps, which inflated the public count.
+    achievements: uniqueById(data.achievements),
     stats: data.stats || {
       seasonsPlayed: 0,
       championships: 0,
