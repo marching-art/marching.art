@@ -335,6 +335,28 @@ authentic (it's the Blue-Devils-hard-book gambit), but the condition system (§5
 expensive to actually clean. The interesting builds mix: an 8 in brass and GE1, 5s elsewhere, is a
 "music corps" identity that the recap will reflect all season.
 
+**Challenge model v2 (2026-10, decision 38) — what the engine actually does.** The original
+implementation took each caption's curve shape from the mined archetype whose ceiling sat nearest the
+target, which handed level 8 the early-saturating shape: all-8 outscored every other build on every
+show day of the season, and mid levels (4–5) were the worst opening build of all — the knob had one
+right answer. v2 (`scoring.challengeModel` in `balanceConfig.json`, `engine.curveForChallenge` /
+`perfFloorFor` / `fullRealizationFor`) makes it a bet with three per-level tables:
+
+- **Shape** — `dayOneShareByChallenge`: the share of its finals ceiling a caption's potential stands
+  at on day 1 (0.80 at level 1 → 0.62 at level 8), with the caption's growth rate taken from its
+  mined archetypes. Easy books are mostly there in June; hard books surge in August.
+- **Floor** — `floorFractionByChallenge` (0.55 → 0.43): what an unrehearsed caption still fields. A
+  dirty hard book scores below a dirty easy one.
+- **Realization** — `fullRealizationByChallenge` (0.64 → 0.73): the installed × clean attainment at
+  which the book pays in full. A hard book asks for more cleaning.
+
+Result (tier 4, `podiumSim.js` section H): the best uniform level by show day climbs
+1 → 1 → 5 → 5 → 6 → 8 → 8 → 8 across days 4–49 for a director who rehearses daily; finals rise
+with every level for that director; a corps left to the assistant director peaks at level 5 and loses
+points at 8; a director who plays ~15% of days peaks at 6. Each state is stamped with the model it was
+created under (`state.challengeModel`); an unstamped state is v1 for life, so a balance change never
+reshapes a season in flight.
+
 ### 5.2 Rehearsal — the seven blocks
 
 The daily verb. Each rehearsal day grants a number of **blocks** (base 3; modified by day type and
@@ -1756,6 +1778,13 @@ proven the machinery. Total: ~16–20 engineering weeks to beta.
     correction built in) into `podium-config/curves`, which the engine swaps in at runtime with
     shape validation — committed curveData is the permanent fallback. All 11 gazetteer centroid
     placeholders hand-corrected (incl. wrong-state source typos).
+
+38. **Challenge levels are a bet (challenge model v2, 2026-10).** Measured through the real engine,
+    all-8 beat every other build on every show day and mid levels were a trap, so the registration
+    ritual had one right answer. v2 (§5.1) gives each level its own curve shape, floor, and
+    realization threshold: easy books lead the opening weeks, hard books win finals only when cleaned.
+    Asserted by `podiumSim.js` section H and the v2 block in `engine.test.js`. States are stamped with
+    the model at registration; legacy states keep v1.
 
 **Still open:**
 

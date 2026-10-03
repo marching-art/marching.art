@@ -19,6 +19,9 @@
  *      higher reputation than it left with.
  *   F. Upset rate — a flawless Elite (tier 6) challenger beats a
  *      good-but-imperfect Champion (tier 7) in 30-45% of finals.
+ *   H. Challenge levels are a bet — easy books lead the opening weeks, the
+ *      best level climbs through the season, a cleaned hard book wins finals,
+ *      and an under-rehearsed one loses to an easier book.
  *
  * Run:  cd functions && node src/scripts/podiumSim.js
  * Exits non-zero if any assertion fails — CI-friendly.
@@ -177,6 +180,78 @@ function simulateSeason(strategy, repTier, seed) {
     );
   }
   return { finalsTotal: scores[scores.length - 1].total, scores, state };
+}
+
+/** The assistant director's template day (what an absent director's saved plan runs). */
+const ASSISTANT_PLAN = [
+  "warmup",
+  "fullEnsemble",
+  "visualEnsemble",
+  "brassSectionals",
+  "percussionSectionals",
+  "guardSectionals",
+  "visualBasics",
+  "fullEnsemble",
+  "visualEnsemble",
+  "brassSectionals",
+  "percussionSectionals",
+  "guardSectionals",
+];
+
+/**
+ * Simulate a season at a uniform challenge `level` for a director who plays
+ * (weakest-caption targeting, stamina-aware rests) on `playRate` of days and
+ * leaves the rest to the assistant director at its streak-decayed yield — the
+ * processor's real absence path.
+ * @returns {{scores: Array<{day: number, total: number}>}}
+ */
+function simulateCommitment(level, playRate, repTier, seed) {
+  const challenge = {};
+  for (const caption of engine.CAPTIONS) challenge[caption] = level;
+  const state = engine.createSeasonState({ challenge, repTier }, curves, cfg);
+  const plan = makeStrategies(seed).flawless.planDay;
+  const scores = [];
+  let streak = 0;
+  for (let day = 1; day <= 49; day++) {
+    const isShowDay = SHOW_DAYS.has(day);
+    const maxBlocks = engine.blocksAvailable(state, { isShowDay, isSpringTraining: false }, cfg);
+    const plays = engine.seededUnit(`${seed}|play|${day}`) < playRate;
+    let restDay = false;
+    let blocks = [];
+    let yieldMultiplier = 1;
+    if (plays) {
+      streak = 0;
+      ({ restDay, blocks } = plan(state, day, { blocks: maxBlocks }));
+    } else {
+      streak += 1;
+      yieldMultiplier = engine.assistantYieldFor(streak, cfg);
+      blocks = ASSISTANT_PLAN;
+    }
+    const blocksSoFar = {};
+    let used = 0;
+    if (!restDay) {
+      for (const blockType of blocks.slice(0, maxBlocks)) {
+        engine.allocateBlock(state, blockType, day, used, blocksSoFar, curves, cfg, {
+          isShowDay,
+          yieldMultiplier,
+        });
+        blocksSoFar[blockType] = (blocksSoFar[blockType] || 0) + 1;
+        used++;
+      }
+    }
+    engine.updateForm(state, day, `form|${seed}`, curves, cfg);
+    if (isShowDay) {
+      state.condition.stamina = Math.max(0, state.condition.stamina - cfg.condition.showStaminaCost);
+      scores.push({ day, total: engine.scoreCorps(state, day, `${seed}|${day}`, curves, cfg).total });
+    }
+    engine.endOfDay(
+      state,
+      day,
+      { restDay, blocksUsedToday: used, maxBlocksToday: maxBlocks, warmupUsed: (blocksSoFar.warmup || 0) > 0 },
+      cfg
+    );
+  }
+  return { scores };
 }
 
 // ---------------------------------------------------------------------------
@@ -371,6 +446,70 @@ function main() {
     "G2. no whole-field lockstep (unanimous-direction days < 20%)",
     unanimousFrac < 0.2,
     `${(unanimousFrac * 100).toFixed(0)}%`
+  );
+
+  // --- H. Challenge levels are a bet (challenge model v2, 2026-10) ---------
+  // Under v1 all-8 outscored every other build on EVERY show day and mid levels
+  // were a trap, so the registration knob had one right answer. v2 must hold:
+  // easy books lead the opening weeks, the best level climbs as the season
+  // goes on, a director who cleans every day wins finals at 8, and a corps
+  // left to the assistant director is better off with an easier book.
+  console.log("\nH. Challenge levels are a bet (tier 4, uniform challenge 1-8):");
+  const H_DAYS = [4, 10, 17, 24, 31, 38, 45, 49];
+  const H_SEEDS = 8;
+  const hTable = (playRate) => {
+    const table = {};
+    for (let level = 1; level <= 8; level++) {
+      table[level] = {};
+      for (let s = 0; s < H_SEEDS; s++) {
+        const { scores } = simulateCommitment(level, playRate, 4, `bet|${s}`);
+        for (const { day, total } of scores) {
+          if (H_DAYS.includes(day)) table[level][day] = (table[level][day] || 0) + total / H_SEEDS;
+        }
+      }
+    }
+    return table;
+  };
+  const bestLevel = (table, day) => {
+    let best = 1;
+    for (let level = 2; level <= 8; level++) if (table[level][day] > table[best][day]) best = level;
+    return best;
+  };
+  const grinder = hTable(1);
+  const light = hTable(0.15);
+  const absentee = hTable(0);
+  const levelClimb = H_DAYS.map((day) => bestLevel(grinder, day));
+  console.log(`    grinder best level by day: ${H_DAYS.map((d, i) => `${d}:${levelClimb[i]}`).join(" ")}`);
+  console.log(
+    `    finals by level — grinder ${[1, 2, 3, 4, 5, 6, 7, 8].map((l) => grinder[l][49].toFixed(1)).join(" ")}`
+  );
+  console.log(
+    `    finals by level — absent  ${[1, 2, 3, 4, 5, 6, 7, 8].map((l) => absentee[l][49].toFixed(1)).join(" ")}`
+  );
+  assert(
+    "H1. easy books lead the opening weeks (all-1 beats all-8 on days 4 and 10)",
+    grinder[1][4] > grinder[8][4] && grinder[1][10] > grinder[8][10],
+    `day 4 ${grinder[1][4].toFixed(1)} vs ${grinder[8][4].toFixed(1)}`
+  );
+  assert(
+    "H2. the best level climbs through the season (never falls; >= 3 distinct)",
+    levelClimb.every((level, i) => i === 0 || level >= levelClimb[i - 1]) && new Set(levelClimb).size >= 3,
+    levelClimb.join(" > ")
+  );
+  let finalsMonotone = true;
+  for (let level = 2; level <= 8; level++) {
+    if (grinder[level][49] <= grinder[level - 1][49]) finalsMonotone = false;
+  }
+  assert("H3. a cleaned hard book wins finals (grinder finals rise with every level)", finalsMonotone);
+  assert(
+    "H4. a dirty hard book is a risk (absent corps: an easier book beats all-8 at finals)",
+    bestLevel(absentee, 49) <= 5 && absentee[8][49] < absentee[bestLevel(absentee, 49)][49],
+    `best ${bestLevel(absentee, 49)}`
+  );
+  assert(
+    "H5. the right level tracks commitment (a 15%-play corps peaks below the grinder)",
+    bestLevel(light, 49) < bestLevel(grinder, 49),
+    `light ${bestLevel(light, 49)} vs grinder ${bestLevel(grinder, 49)}`
   );
 
   // --- Summary --------------------------------------------------------------

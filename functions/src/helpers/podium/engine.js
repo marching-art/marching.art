@@ -89,26 +89,137 @@ function bandValueAtPercentile(band, pct) {
 }
 
 /**
- * Derive a caption's growth-curve parameters from its challenge level:
- * the ceiling L targets the challenge-mapped percentile of the day-49 band,
- * and (k, d0) come from the archetype whose fitted L is nearest that target
- * (higher challenge -> later, slower-certain curves by construction of the
- * archetype set).
+ * Challenge-model versions. A season state is stamped with the model it was
+ * created under (createSeasonState) and keeps it for life, so a balance change
+ * never re-shapes a season already in flight.
+ *   1 — legacy: curve shape from the archetype with the nearest ceiling, one
+ *       rep-independent performance floor for every challenge level. Left
+ *       challenge 8 dominant on every day of the season (its nearest archetype
+ *       is the early-saturating one), and mid levels a trap.
+ *   2 — the challenge knob is a real bet: low levels reach more of their
+ *       (lower) ceiling early and hold a higher floor; high levels start
+ *       further back and only pay off if the book gets cleaned
+ *       (scoring.challengeModel).
+ */
+const LEGACY_CHALLENGE_MODEL = 1;
+
+/** The challenge-model version a fresh season state is stamped with. */
+function currentChallengeModel(cfg) {
+  const version = cfg.scoring.challengeModel && cfg.scoring.challengeModel.version;
+  return Number.isFinite(version) ? version : LEGACY_CHALLENGE_MODEL;
+}
+
+/** The challenge-model block when `model` opts into it, else null (legacy). */
+function challengeModelConfig(model, cfg) {
+  const cm = cfg.scoring.challengeModel;
+  return model >= 2 && cm && cm.dayOneShareByChallenge ? cm : null;
+}
+
+/**
+ * A caption's growth rate: the population-weighted mean `k` of its mined
+ * archetypes — how fast real corps-seasons actually climbed. Falls back to
+ * `challengeModel.growthRate` when the curve set carries no archetypes.
+ * @returns {number}
+ */
+function growthRateFor(caption, curves, cm) {
+  const archetypes = (curves.archetypes && curves.archetypes[caption]) || [];
+  let weight = 0;
+  let sum = 0;
+  for (const archetype of archetypes) {
+    const share = Number.isFinite(archetype.share) ? archetype.share : 0;
+    if (!(archetype.k > 0) || !(share > 0)) continue;
+    weight += share;
+    sum += archetype.k * share;
+  }
+  return weight > 0 ? sum / weight : cm.growthRate;
+}
+
+/**
+ * The inflection day `d0` at which a logistic of rate `k` reaches exactly
+ * `dayOneShare` of its day-49 value on day 1. That ratio falls monotonically
+ * as d0 moves later, so a bisection converges.
+ * @param {number} k growth rate (>0)
+ * @param {number} dayOneShare 0..1 (exclusive)
+ * @returns {number}
+ */
+function onsetDayForShare(k, dayOneShare) {
+  const share = (d0) => (1 + Math.exp(-k * (49 - d0))) / (1 + Math.exp(-k * (1 - d0)));
+  let lo = -500;
+  let hi = 549;
+  for (let i = 0; i < 80; i++) {
+    const mid = (lo + hi) / 2;
+    if (share(mid) > dayOneShare) lo = mid;
+    else hi = mid;
+  }
+  return (lo + hi) / 2;
+}
+
+/**
+ * Derive a caption's growth-curve parameters from its challenge level. The
+ * ceiling L targets the challenge-mapped percentile of the day-49 band under
+ * every model. The SHAPE depends on the model:
+ *   v1 — (k, d0) from the archetype whose fitted L is nearest that target.
+ *   v2 — the caption's mined growth rate, with the inflection placed so the
+ *        curve stands at `dayOneShareByChallenge[challenge]` of its finals
+ *        ceiling on day 1: an easy book is mostly there in June, a hard one
+ *        surges in August.
+ * @param {number} [model] challenge-model version (default: legacy)
  * @returns {{L: number, k: number, d0: number, norm: number}}
  */
-function curveForChallenge(caption, challenge, curves, cfg) {
+function curveForChallenge(caption, challenge, curves, cfg, model = LEGACY_CHALLENGE_MODEL) {
   const day49 = curves.bands[caption][48];
   const pct = cfg.scoring.challengeCeilingPercentile[String(challenge)];
   const L = bandValueAtPercentile(day49, pct);
-  const archetypes = curves.archetypes[caption];
-  let best = archetypes[0];
-  for (const archetype of archetypes) {
-    if (Math.abs(archetype.L - L) < Math.abs(best.L - L)) best = archetype;
+  let k;
+  let d0;
+  const cm = challengeModelConfig(model, cfg);
+  if (cm) {
+    k = growthRateFor(caption, curves, cm);
+    d0 = onsetDayForShare(k, cm.dayOneShareByChallenge[String(challenge)]);
+  } else {
+    const archetypes = curves.archetypes[caption];
+    let best = archetypes[0];
+    for (const archetype of archetypes) {
+      if (Math.abs(archetype.L - L) < Math.abs(best.L - L)) best = archetype;
+    }
+    k = best.k;
+    d0 = best.d0;
   }
   // Normalize so a fully-realized curve reaches its ceiling exactly at
-  // finals (the raw logistic is still ~6% shy of L at day 49).
-  const norm = 1 / (1 + Math.exp(-best.k * (49 - best.d0)));
-  return { L, k: best.k, d0: best.d0, norm };
+  // finals (the raw logistic is still shy of L at day 49).
+  const norm = 1 / (1 + Math.exp(-k * (49 - d0)));
+  return { L, k, d0, norm };
+}
+
+/**
+ * The fraction of potential an UNREHEARSED caption still fields (the
+ * reputation-independent performance floor). Legacy states share one floor;
+ * under v2 an easy book holds a higher floor than a hard one, so a hard book
+ * left dirty scores BELOW an easy book left dirty — the risk side of the bet.
+ * @param {number} challenge 1-8
+ * @param {number|undefined} model challenge-model version (undefined = legacy)
+ * @returns {number}
+ */
+function perfFloorFor(challenge, model, cfg) {
+  const cm = challengeModelConfig(model, cfg);
+  const table = cm && cm.floorFractionByChallenge;
+  if (table && table[String(challenge)] != null) return Number(table[String(challenge)]);
+  return cfg.scoring.perfFloorFraction;
+}
+
+/**
+ * The rehearsal attainment (installed x clean) at which a caption fields its
+ * whole book. Legacy states share one threshold; under v2 a hard book asks for
+ * more of it to be clean before it pays in full.
+ * @param {number} challenge 1-8
+ * @param {number|undefined} model challenge-model version (undefined = legacy)
+ * @returns {number}
+ */
+function fullRealizationFor(challenge, model, cfg) {
+  const cm = challengeModelConfig(model, cfg);
+  const table = cm && cm.fullRealizationByChallenge;
+  if (table && table[String(challenge)] != null) return Number(table[String(challenge)]);
+  return cfg.scoring.attainmentFullRealization;
 }
 
 /**
@@ -135,9 +246,12 @@ function veteranStartFraction(activityPercentile, cfg) {
  * @param {object} params { challenge: {caption: 1-8}, repTier: 1-7,
  *   auditions: {caption: 0-1 share of audition pool} (optional),
  *   activityPercentile: 0-100 last-season engagement (optional; drives the
- *     veteran head-start — see veteranStartFraction) }
+ *     veteran head-start — see veteranStartFraction),
+ *   challengeModel: model version to stamp (optional; defaults to the
+ *     configured current model — see currentChallengeModel) }
  */
 function createSeasonState(params, curves, cfg) {
+  const challengeModel = params.challengeModel ?? currentChallengeModel(cfg);
   // Veteran head-start: a returning grinder starts with more of the book
   // installed and clean. Washes out by finals (rehearsal caps both), so it
   // shapes ONLY the early season — never a finals total or promotion.
@@ -155,7 +269,7 @@ function createSeasonState(params, curves, cfg) {
     const auditionShift = Math.max(-0.1, Math.min(0.1, (share - 1 / 8) * 1.6));
     captions[caption] = {
       challenge,
-      curve: curveForChallenge(caption, challenge, curves, cfg),
+      curve: curveForChallenge(caption, challenge, curves, cfg, challengeModel),
       content: Math.min(1, 0.28 + auditionShift + contentBonus),
       clean: Math.min(1, 0.2 + cleanBonus),
       lastRehearsedDay: 0,
@@ -167,6 +281,8 @@ function createSeasonState(params, curves, cfg) {
     foodTier: params.foodTier || "standard",
     consecutiveMaxDays: 0,
     repTier: params.repTier || 1,
+    // Locked for the season: how challenge level shapes the curve and floor.
+    challengeModel,
     // Per-corps performance momentum (§4.2 trajectory model): an independent
     // random-walk in score-fraction units, evolved nightly by updateForm. Two
     // corps never share a form draw, so the field fluctuates individually.
@@ -448,8 +564,8 @@ function scoreCorps(state, day, varianceSeed, curves, cfg) {
     const cap = state.captions[caption];
     const band = curves.bands[caption][Math.min(48, Math.max(0, day - 1))];
     const { L, k, d0, norm } = cap.curve;
-    // This corps' OWN potential trajectory: its challenge-selected archetype
-    // shape (fit from real corps-seasons), normalized to reach its ceiling at
+    // This corps' OWN potential trajectory: its challenge-selected shape
+    // (see curveForChallenge), normalized to reach its ceiling at
     // finals. Smooth by construction — no shared per-day national floor.
     let potential = (L * (1 / (1 + Math.exp(-k * (day - d0))))) / norm;
     // Early-season lift: raises opening-show scores so the newcomer arc matches
@@ -463,11 +579,14 @@ function scoreCorps(state, day, varianceSeed, curves, cfg) {
     }
     // Rehearsal attainment: how much of the book is installed AND clean.
     const attainment = cap.content * (sc.cleanFloor + sc.cleanWeight * cap.clean);
-    const realized = Math.min(1, attainment / sc.attainmentFullRealization);
+    const realized = Math.min(1, attainment / fullRealizationFor(cap.challenge, state.challengeModel, cfg));
     // Position between the rep-independent floor and the rep-gated ceiling,
     // set ENTIRELY by this corps' own rehearsal. This is where effort becomes
     // score — and why two same-tier corps that rehearsed differently differ.
-    const frac = sc.perfFloorFraction + (ceilFrac - sc.perfFloorFraction) * realized;
+    // Under the v2 challenge model the floor falls as challenge rises, so a
+    // hard book only beats an easy one once enough of it is clean.
+    const floorFrac = perfFloorFor(cap.challenge, state.challengeModel, cfg);
+    const frac = floorFrac + (ceilFrac - floorFrac) * realized;
     // One-night judge wiggle, shaped by the caption's real day-over-day
     // movement (zero-median), seeded independently per corps + caption.
     const dist = deltaDistFor(caption, day, curves, cfg);
@@ -633,6 +752,11 @@ function assistantStreakAfter(previous, { playedSelf, restDay, assistant }) {
 module.exports = {
   assistantYieldFor,
   assistantStreakAfter,
+  LEGACY_CHALLENGE_MODEL,
+  currentChallengeModel,
+  onsetDayForShare,
+  perfFloorFor,
+  fullRealizationFor,
   CAPTIONS,
   BLOCK_TYPES,
   seededUnit,

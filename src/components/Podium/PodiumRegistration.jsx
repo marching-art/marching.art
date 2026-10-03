@@ -420,8 +420,8 @@ export default function PodiumRegistration({ podium }) {
           <div>
             <h2 className="text-sm font-bold text-white">Challenge levels</h2>
             <p className="text-xs text-muted">
-              Per caption, 1–8. Low = earlier, safer, capped. High = later, riskier, higher ceiling.
-              Locked for the season.
+              Per caption, 1–8. Low = strong from the first show, lower ceiling. High = slow start,
+              highest ceiling — but only if you keep rehearsing it clean. Locked for the season.
             </p>
           </div>
           {/* One-tap starting points — set every caption at once, then tune.

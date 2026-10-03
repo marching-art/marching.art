@@ -338,3 +338,126 @@ describe("assistant director fades with consecutive days away", () => {
     assert.equal(assistantStreakAfter(4, { playedSelf: false, restDay: false, assistant: false }), 4);
   });
 });
+
+describe("challenge model v2 — the challenge level is a bet, not a dominant pick", () => {
+  /** A corps at a uniform challenge with every caption at the given content/clean. */
+  function corpsAt(challengeLevel, content, clean, challengeModel) {
+    const challenge = {};
+    for (const caption of engine.CAPTIONS) challenge[caption] = challengeLevel;
+    const state = engine.createSeasonState({ challenge, repTier: 4, challengeModel }, curves, cfg);
+    for (const caption of engine.CAPTIONS) {
+      state.captions[caption].content = content;
+      state.captions[caption].clean = clean;
+    }
+    state.condition.stamina = 80;
+    state.condition.morale = 80;
+    return state;
+  }
+  // The same seed adds the same judge wiggle to both corps (it depends on the
+  // caption and seed, never the challenge), so the comparison isolates the model.
+  const total = (state, day) => engine.scoreCorps(state, day, `bet|${day}`, curves, cfg).total;
+
+  test("fresh states are stamped with the configured model", () => {
+    assert.equal(engine.currentChallengeModel(cfg), cfg.scoring.challengeModel.version);
+    assert.equal(corps(5, 4).challengeModel, cfg.scoring.challengeModel.version);
+  });
+
+  test("a v2 curve stands at its configured day-one share of the finals ceiling", () => {
+    for (const level of [1, 4, 8]) {
+      const curve = engine.curveForChallenge("B", level, curves, cfg, 2);
+      const at = (day) => (curve.L / (1 + Math.exp(-curve.k * (day - curve.d0)))) / curve.norm;
+      const want = cfg.scoring.challengeModel.dayOneShareByChallenge[String(level)];
+      assert.ok(Math.abs(at(1) / at(49) - want) < 1e-6, `level ${level}: ${at(1) / at(49)} vs ${want}`);
+      assert.ok(Math.abs(at(49) - curve.L) < 1e-9, "a realized curve reaches its ceiling at finals");
+    }
+  });
+
+  test("onsetDayForShare inverts the day-one share", () => {
+    const k = 0.05;
+    for (const share of [0.3, 0.62, 0.8, 0.95]) {
+      const d0 = engine.onsetDayForShare(k, share);
+      const got = (1 + Math.exp(-k * (49 - d0))) / (1 + Math.exp(-k * (1 - d0)));
+      assert.ok(Math.abs(got - share) < 1e-9, `${share} -> ${got}`);
+    }
+  });
+
+  test("an easy book leads the opening show at equal rehearsal", () => {
+    assert.ok(total(corpsAt(1, 0.4, 0.25), 4) > total(corpsAt(8, 0.4, 0.25), 4));
+  });
+
+  test("a cleaned hard book wins finals", () => {
+    assert.ok(total(corpsAt(8, 1, 1), 49) > total(corpsAt(5, 1, 1), 49));
+    assert.ok(total(corpsAt(5, 1, 1), 49) > total(corpsAt(1, 1, 1), 49));
+  });
+
+  /**
+   * A corps abandoned at registration: the assistant director runs a full
+   * rotation every day at its streak-decayed yield, the processor's real
+   * absence path. Returns its finals total.
+   */
+  function abandonedFinals(challengeLevel, challengeModel) {
+    const state = corpsAt(challengeLevel, 0.28, 0.2, challengeModel);
+    const rotation = [
+      "warmup",
+      "fullEnsemble",
+      "brassSectionals",
+      "percussionSectionals",
+      "visualEnsemble",
+      "guardSectionals",
+      "visualBasics",
+    ];
+    for (let day = 1; day <= 49; day++) {
+      const blocksSoFar = {};
+      for (let i = 0; i < cfg.rehearsal.blocksPerDay; i++) {
+        const bt = rotation[i % rotation.length];
+        engine.allocateBlock(state, bt, day, i, blocksSoFar, curves, cfg, {
+          yieldMultiplier: engine.assistantYieldFor(day, cfg),
+        });
+        blocksSoFar[bt] = (blocksSoFar[bt] || 0) + 1;
+      }
+      engine.endOfDay(
+        state,
+        day,
+        { restDay: false, blocksUsedToday: cfg.rehearsal.blocksPerDay, maxBlocksToday: 12, warmupUsed: true },
+        cfg
+      );
+    }
+    state.condition.stamina = 80;
+    state.condition.morale = 80;
+    return total(state, 49);
+  }
+
+  test("a hard book nobody cleans loses finals to an easier one (and did not under v1)", () => {
+    assert.ok(abandonedFinals(5) > abandonedFinals(8));
+    const legacy = engine.LEGACY_CHALLENGE_MODEL;
+    assert.ok(abandonedFinals(8, legacy) > abandonedFinals(5, legacy), "v1 had no risk at 8");
+  });
+
+  test("legacy (unstamped) states keep the v1 shape, floor, and realization for life", () => {
+    const legacy = engine.LEGACY_CHALLENGE_MODEL;
+    assert.equal(engine.perfFloorFor(8, legacy, cfg), cfg.scoring.perfFloorFraction);
+    assert.equal(engine.fullRealizationFor(8, legacy, cfg), cfg.scoring.attainmentFullRealization);
+    assert.equal(engine.perfFloorFor(8, undefined, cfg), cfg.scoring.perfFloorFraction);
+    // v1 shape: the archetype with the ceiling nearest the target.
+    const curve = engine.curveForChallenge("GE1", 8, curves, cfg, legacy);
+    const nearest = [...curves.archetypes.GE1].sort(
+      (a, b) => Math.abs(a.L - curve.L) - Math.abs(b.L - curve.L)
+    )[0];
+    assert.equal(curve.k, nearest.k);
+    assert.equal(curve.d0, nearest.d0);
+    // A v1 state reproduces the old ordering: all-8 led even on the opener.
+    assert.ok(total(corpsAt(8, 0.4, 0.25, legacy), 4) > total(corpsAt(1, 0.4, 0.25, legacy), 4));
+  });
+
+  test("hydrating a stored state honors its stamp (missing stamp = legacy)", () => {
+    const store = require("./store");
+    const stamped = store.dehydrateState(corps(8, 4));
+    assert.equal(stamped.challengeModel, cfg.scoring.challengeModel.version);
+    const v2 = store.hydrateState(stamped).captions.GE1.curve;
+    assert.deepEqual(v2, engine.curveForChallenge("GE1", 8, curves, cfg, stamped.challengeModel));
+    const { challengeModel: _drop, ...unstamped } = stamped;
+    const v1 = store.hydrateState(unstamped).captions.GE1.curve;
+    assert.deepEqual(v1, engine.curveForChallenge("GE1", 8, curves, cfg, engine.LEGACY_CHALLENGE_MODEL));
+    assert.notDeepEqual(v1, v2);
+  });
+});

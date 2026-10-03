@@ -206,7 +206,10 @@
     "airfare": {
       "milesPerCoin": 2,
       "staminaMultiplier": 0.5,
-      "eligibleTiers": ["longHaul", "crossCountry"]
+      "eligibleTiers": [
+        "longHaul",
+        "crossCountry"
+      ]
     },
     "unaffordableStaminaSurcharge": 6,
     "heatIndex": {
@@ -266,6 +269,41 @@
       "6": 84,
       "7": 93,
       "8": 100
+    },
+    "challengeModel": {
+      "_note": "Challenge model v2 (2026-10). Under v1 every caption's curve shape came from the archetype with the nearest ceiling, which handed challenge 8 the early-saturating shape: all-8 outscored every other build on every show day and mid levels were a trap. v2 makes the knob a bet. dayOneShareByChallenge: the fraction of its finals ceiling a caption's potential stands at on day 1 (an easy book is mostly there in June; a hard book surges in August), with the caption's growth rate taken from its mined archetypes (growthRate is the fallback). floorFractionByChallenge: the share of potential an unrehearsed caption still fields (replaces perfFloorFraction for v2 states) - a dirty hard book scores below a dirty easy one. fullRealizationByChallenge: the attainment (installed x clean) at which the book pays in full (replaces attainmentFullRealization) - a hard book asks for more cleaning. Targets, held by podiumSim section H: easy books lead the opening weeks, the best level climbs through the season, a director who cleans every day wins finals at 8, an absent one is better off with an easy book. States carry the version they were created under (state.challengeModel); a state with no stamp is v1 for life, so a change here never reshapes a season in flight.",
+      "version": 2,
+      "growthRate": 0.05,
+      "dayOneShareByChallenge": {
+        "1": 0.8,
+        "2": 0.774,
+        "3": 0.749,
+        "4": 0.723,
+        "5": 0.697,
+        "6": 0.671,
+        "7": 0.646,
+        "8": 0.62
+      },
+      "floorFractionByChallenge": {
+        "1": 0.55,
+        "2": 0.533,
+        "3": 0.516,
+        "4": 0.499,
+        "5": 0.481,
+        "6": 0.464,
+        "7": 0.447,
+        "8": 0.43
+      },
+      "fullRealizationByChallenge": {
+        "1": 0.64,
+        "2": 0.653,
+        "3": 0.666,
+        "4": 0.679,
+        "5": 0.691,
+        "6": 0.704,
+        "7": 0.717,
+        "8": 0.73
+      }
     }
   },
   "veteranStart": {
@@ -323,15 +361,41 @@
       },
       "autoRunPenalty": 0.5,
       "tiers": [
-        { "key": "dormant", "label": "Dormant", "minPercentile": 0 },
-        { "key": "casual", "label": "Casual", "minPercentile": 20 },
-        { "key": "committed", "label": "Committed", "minPercentile": 45 },
-        { "key": "dedicated", "label": "Dedicated", "minPercentile": 72 },
-        { "key": "ironCorps", "label": "Iron Corps", "minPercentile": 90 }
+        {
+          "key": "dormant",
+          "label": "Dormant",
+          "minPercentile": 0
+        },
+        {
+          "key": "casual",
+          "label": "Casual",
+          "minPercentile": 20
+        },
+        {
+          "key": "committed",
+          "label": "Committed",
+          "minPercentile": 45
+        },
+        {
+          "key": "dedicated",
+          "label": "Dedicated",
+          "minPercentile": 72
+        },
+        {
+          "key": "ironCorps",
+          "label": "Iron Corps",
+          "minPercentile": 90
+        }
       ],
       "recognition": {
-        "ironCorps": { "coin": 500, "xp": 300 },
-        "dedicated": { "coin": 200, "xp": 120 }
+        "ironCorps": {
+          "coin": 500,
+          "xp": 300
+        },
+        "dedicated": {
+          "coin": 200,
+          "xp": 120
+        }
       }
     }
   },
@@ -382,7 +446,10 @@
         "capacity": 30,
         "payoutPerCorpsCC": 35,
         "successAttendance": 12,
-        "unlock": { "tier": "highSchool", "successful": 2 }
+        "unlock": {
+          "tier": "highSchool",
+          "successful": 2
+        }
       },
       "nflStadium": {
         "label": "NFL Stadium",
@@ -390,7 +457,10 @@
         "capacity": 60,
         "payoutPerCorpsCC": 50,
         "successAttendance": 18,
-        "unlock": { "tier": "collegeBowl", "successful": 3 }
+        "unlock": {
+          "tier": "collegeBowl",
+          "successful": 3
+        }
       }
     },
     "maxEventsPerDay": 2,

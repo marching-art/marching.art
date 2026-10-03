@@ -804,7 +804,14 @@ function hydrateState(stored) {
     const cap = stored.captions[caption];
     state.captions[caption] = {
       ...cap,
-      curve: engine.curveForChallenge(caption, cap.challenge, curves, balance),
+      // A state predating the challenge-model stamp is legacy (v1) for life.
+      curve: engine.curveForChallenge(
+        caption,
+        cap.challenge,
+        curves,
+        balance,
+        stored.challengeModel ?? engine.LEGACY_CHALLENGE_MODEL
+      ),
     };
   }
   return state;
