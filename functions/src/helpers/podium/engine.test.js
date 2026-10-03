@@ -558,3 +558,69 @@ describe("judges' tapes — performing teaches (2026-10)", () => {
     assert.ok(cfg.rehearsal.showDayYieldMultiplier > 0.5 && cfg.rehearsal.showDayYieldMultiplier < 1);
   });
 });
+
+describe("morale v2 — graded fatigue, morale-led form, attrition (2026-10)", () => {
+  const day = (/** @type {any} */ state, /** @type {number} */ used, restDay = false) => {
+    engine.endOfDay(state, 10, { restDay, blocksUsedToday: used, maxBlocksToday: 12, warmupUsed: true }, cfg);
+    return state.condition.morale;
+  };
+  const freshAt = (/** @type {number} */ morale) => {
+    const state = corps(8, 4);
+    state.condition.morale = morale;
+    return state;
+  };
+
+  test("a full day drains, a sustainable day recovers, a rest day restores", () => {
+    assert.ok(day(freshAt(60), 12) < 60, "full load drains");
+    assert.ok(day(freshAt(60), 8) > 60, "sustainable load recovers");
+    assert.equal(day(freshAt(60), 0, true), 60 + cfg.condition.restDayMoraleRecovery);
+  });
+
+  test("leaving one block unused is no longer a free pass", () => {
+    assert.ok(day(freshAt(60), 11) < 60, "11 of 12 still wears the corps down");
+    assert.ok(day(freshAt(60), 11) > day(freshAt(60), 12), "but less than a full day");
+  });
+
+  test("morale pulls form: a happy corps trends hotter than a miserable one", () => {
+    const happy = freshAt(100);
+    const miserable = freshAt(0);
+    for (let d = 1; d <= 10; d++) {
+      engine.updateForm(happy, d, "same-seed", curves, cfg);
+      engine.updateForm(miserable, d, "same-seed", curves, cfg);
+    }
+    assert.ok(happy.form > miserable.form);
+  });
+
+  test("members quit only when morale collapses, and the loss is seeded", () => {
+    const rule = cfg.condition.attrition;
+    let healthyEvents = 0;
+    let collapsedEvents = 0;
+    for (let d = 1; d <= 40; d++) {
+      if (engine.applyAttrition(freshAt(rule.moraleBelow + 5), d, "corps", cfg)) healthyEvents++;
+      const collapsed = freshAt(0);
+      const event = engine.applyAttrition(collapsed, d, "corps", cfg);
+      if (event) {
+        collapsedEvents++;
+        assert.ok(event.contentLoss > 0);
+        assert.equal(collapsed.captions[event.caption].content, corps(8, 4).captions[event.caption].content - event.contentLoss);
+      }
+    }
+    assert.equal(healthyEvents, 0, "a corps above the line never loses members");
+    assert.ok(collapsedEvents > 0, "a collapsed corps does");
+    assert.deepEqual(
+      engine.applyAttrition(freshAt(0), 7, "corps", cfg),
+      engine.applyAttrition(freshAt(0), 7, "corps", cfg),
+      "deterministic per seed and day"
+    );
+  });
+
+  test("store.moraleOutlook reports today's sustainable load and the rest gain", () => {
+    const store = require("./store");
+    const outlook = store.moraleOutlook({ foodTier: "standard" }, 12);
+    assert.ok(outlook);
+    assert.equal(outlook.sustainableBlocks, Math.floor(cfg.condition.moraleModel.sustainableShare * 12 + 1e-9));
+    assert.ok(outlook.fullDayChange < 0);
+    assert.equal(outlook.restDayGain, cfg.condition.restDayMoraleRecovery);
+    assert.equal(outlook.attritionBelow, cfg.condition.attrition.moraleBelow);
+  });
+});

@@ -454,8 +454,25 @@ function endOfDay(state, day, opts, cfg) {
     }
   }
 
-  // Grind fatigue: consecutive max-block days sap morale (warmup mitigates).
-  if (!opts.restDay && opts.blocksUsedToday >= opts.maxBlocksToday) {
+  // Grind fatigue. With a `moraleModel` (2026-10) fatigue is GRADED by the
+  // day's workload: past `sustainableShare` of the day's blocks every extra
+  // block drains morale (warmup mitigates), below it the corps recovers a
+  // little — so volume and morale trade off smoothly, and leaving one block
+  // unused no longer resets a hidden streak. Rest days are handled below.
+  // Without it: the legacy rule — consecutive max-block days past a grace
+  // window drain morale, any other day recovers +1.
+  const mm = cfg.condition.moraleModel;
+  if (mm && !opts.restDay) {
+    const maxBlocks = Math.max(1, opts.maxBlocksToday || 1);
+    const load = Math.min(1, (opts.blocksUsedToday || 0) / maxBlocks);
+    const over = Math.max(0, load - mm.sustainableShare) / Math.max(1e-6, 1 - mm.sustainableShare);
+    const mitigation = opts.warmupUsed ? 1 - cfg.blocks.warmup.conditionEffect.fatigueMitigationPct / 100 : 1;
+    const delta = mm.dailyRecovery - over * mm.fatigueAtFullLoad * mitigation;
+    state.condition.morale = Math.max(0, Math.min(cfg.condition.moraleMax, state.condition.morale + delta));
+    state.consecutiveMaxDays = load >= 1 ? (state.consecutiveMaxDays || 0) + 1 : 0;
+  } else if (mm) {
+    state.consecutiveMaxDays = 0;
+  } else if (!opts.restDay && opts.blocksUsedToday >= opts.maxBlocksToday) {
     state.consecutiveMaxDays += 1;
     if (state.consecutiveMaxDays > cfg.condition.moraleGrindThresholdDays) {
       const mitigation = opts.warmupUsed
@@ -486,6 +503,44 @@ function endOfDay(state, day, opts, cfg) {
       state.condition.morale + cfg.condition.restDayMoraleRecovery + food.moraleDelta
     );
   }
+}
+
+/**
+ * Attrition (2026-10): a corps whose morale has collapsed loses members. Each
+ * night morale sits below `condition.attrition.moraleBelow`, a seeded draw
+ * (`chance`, scaled up the lower morale sits) decides whether someone quits;
+ * if so a seeded caption loses `contentLoss` of its installed content (the
+ * replacement has to learn the spots) and `cleanLoss` of its clean. Pure in
+ * its inputs (seeded, no clock). Returns the event, or null when nobody left
+ * or the rule is unconfigured. Mutates state.
+ * @param {any} state season state
+ * @param {number} day competition day
+ * @param {string} seed per-corps seed, e.g. `${seasonUid}|${uid}`
+ * @param {any} cfg balance config
+ * @returns {{day: number, caption: string, contentLoss: number, cleanLoss: number} | null}
+ */
+function applyAttrition(state, day, seed, cfg) {
+  const rule = cfg.condition && cfg.condition.attrition;
+  if (!rule || !(rule.moraleBelow > 0)) return null;
+  const morale = state.condition.morale;
+  if (!(morale < rule.moraleBelow)) return null;
+  // Deeper misery, likelier departures: chance at the threshold, rising
+  // linearly to `chance * maxScale` at morale 0.
+  const depth = 1 - morale / rule.moraleBelow;
+  const chance = rule.chance * (1 + depth * ((rule.maxScale || 1) - 1));
+  if (seededUnit(`${seed}|attrition|${day}`) >= chance) return null;
+  const caption = CAPTIONS[Math.floor(seededUnit(`${seed}|attrition-caption|${day}`) * CAPTIONS.length)];
+  const cap = state.captions[caption];
+  const contentLoss = Math.min(cap.content, rule.contentLoss || 0);
+  const cleanLoss = Math.min(cap.clean, rule.cleanLoss || 0);
+  cap.content -= contentLoss;
+  cap.clean -= cleanLoss;
+  return {
+    day,
+    caption,
+    contentLoss: Number(contentLoss.toFixed(4)),
+    cleanLoss: Number(cleanLoss.toFixed(4)),
+  };
 }
 
 /**
@@ -585,7 +640,13 @@ function updateForm(state, day, seed, curves, cfg) {
   // magnitude is set by fc.step (not by the raw point scale of the era's data).
   const spread = Math.max(1e-6, (dist.p95 - dist.p5) / 2);
   const shock = (sampleDelta(dist, u) - dist.p50) / spread;
-  let form = (state.form || 0) * (1 - fc.reversion) + shock * fc.step;
+  // Morale pulls the walk (2026-10, `form.moraleDrift`): centered on
+  // `form.moralePivot` (a well-run corps' morale), so good management is
+  // roughly neutral and a collapsing corps trends cold. Zero when unconfigured.
+  const pivot = fc.moralePivot ?? 60;
+  const morale = (state.condition && state.condition.morale) ?? pivot;
+  const moraleDrift = fc.moraleDrift ? ((morale - pivot) / Math.max(1, 100 - pivot)) * fc.moraleDrift : 0;
+  let form = (state.form || 0) * (1 - fc.reversion) + shock * fc.step + moraleDrift;
   form = Math.max(-fc.max, Math.min(fc.max, form));
   state.form = Number(form.toFixed(5));
   return state.form;
@@ -847,6 +908,7 @@ module.exports = {
   ensembleReadiness,
   allocateBlock,
   applyJudgesTapes,
+  applyAttrition,
   endOfDay,
   blocksAvailable,
   sampleDelta,

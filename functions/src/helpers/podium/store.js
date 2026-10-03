@@ -490,6 +490,30 @@ function planBlockCaps() {
 }
 
 /**
+ * What today's workload does to morale (morale v2, `condition.moraleModel`),
+ * for the planner: how many of today's blocks are sustainable (no fatigue),
+ * the morale change of a full day (with Stretch / PT), the gain of a rest day
+ * on the current food plan, and the morale below which members may quit.
+ * Null when the graded model is not configured.
+ * @param {any} state podium state (reads foodTier)
+ * @param {number} maxBlocksToday today's block cap
+ * @returns {{sustainableBlocks: number, fullDayChange: number, restDayGain: number, attritionBelow: number | null} | null}
+ */
+function moraleOutlook(state, maxBlocksToday) {
+  const mm = balance.condition.moraleModel;
+  if (!mm) return null;
+  const food = balance.condition.foodTiers[(state && state.foodTier) || "standard"] || balance.condition.foodTiers.standard;
+  const mitigation = 1 - balance.blocks.warmup.conditionEffect.fatigueMitigationPct / 100;
+  const attrition = /** @type {any} */ (balance.condition).attrition;
+  return {
+    sustainableBlocks: Math.floor(mm.sustainableShare * Math.max(0, maxBlocksToday || 0) + 1e-9),
+    fullDayChange: Number((mm.dailyRecovery - mm.fatigueAtFullLoad * mitigation).toFixed(1)),
+    restDayGain: balance.condition.restDayMoraleRecovery + (food.moraleDelta || 0),
+    attritionBelow: attrition ? attrition.moraleBelow : null,
+  };
+}
+
+/**
  * Today's ensemble readiness per gated block ({ fullEnsemble: 0.72, ... },
  * 0..1, three decimals) — the multiplier the NEXT tap of that block rehearses
  * at before the repeat ladder (engine.ensembleReadiness). Only blocks with a
@@ -884,6 +908,7 @@ module.exports = {
   computeTodayBlockBudget,
   planBlockCaps,
   blockReadiness,
+  moraleOutlook,
   loadPodiumChallengeFacts,
   profileRef,
   stateRef,

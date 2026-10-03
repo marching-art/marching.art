@@ -559,6 +559,13 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
         },
         store.balance
       );
+      // Attrition (morale v2): a corps whose morale has collapsed loses members
+      // overnight — a caption's spots must be re-learned. Seeded per corps.
+      const departure = engine.applyAttrition(state, competitionDay, `${seasonUid}|${uid}`, store.balance);
+      if (departure) {
+        state.lastAttrition = departure;
+        state.attritionCount = (state.attritionCount || 0) + 1;
+      }
 
       // Evolve this corps' INDEPENDENT performance form for the night. Seeded
       // only by (seasonUid, uid), so no two corps share a shock — the field

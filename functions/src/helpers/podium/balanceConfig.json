@@ -91,7 +91,7 @@
     "blocksPerDaySpringTraining": 20,
     "blocksOnShowDay": 8,
     "showDayYieldMultiplier": 0.75,
-    "primaryGain": 0.0235,
+    "primaryGain": 0.023,
     "repeatBlockMultipliers": [
       1.0,
       1.0,
@@ -146,7 +146,7 @@
     "moraleMax": 100,
     "overnightStaminaRecovery": 18,
     "restDayStaminaRecovery": 45,
-    "restDayMoraleRecovery": 10,
+    "restDayMoraleRecovery": 20,
     "showStaminaCost": 12,
     "lowStaminaThreshold": 30,
     "lowStaminaBlockPenalty": 4,
@@ -166,6 +166,19 @@
     ],
     "grindFatiguePerMaxDay": 6,
     "moraleGrindThresholdDays": 3,
+    "moraleModel": {
+      "_note": "Morale v2 (2026-10). Replaces the legacy grind rule (grindFatiguePerMaxDay / moraleGrindThresholdDays, kept as the fallback when this block is absent), which only counted days that used EVERY block - leaving one block unused reset it, so 11-of-12 kept morale pinned at 100 and morale barely touched the score. Now fatigue is graded by the day's load: below sustainableShare of the day's blocks the corps recovers dailyRecovery; past it, morale falls linearly to fatigueAtFullLoad at a full day (warmup mitigates by its fatigueMitigationPct). A rest day adds restDayMoraleRecovery (20, was 10). primaryGain re-anchored to 0.023 because a well-managed corps now rehearses at higher morale. Morale now pulls form (scoring.form.moraleDrift) and below condition.attrition.moraleBelow members quit (engine.applyAttrition). podiumSim section K: grinding every day loses to a managed rhythm, over-resting loses too.",
+      "sustainableShare": 0.7,
+      "dailyRecovery": 1,
+      "fatigueAtFullLoad": 7
+    },
+    "attrition": {
+      "moraleBelow": 30,
+      "chance": 0.12,
+      "maxScale": 3,
+      "contentLoss": 0.04,
+      "cleanLoss": 0.03
+    },
     "scoreModifierMaxPerCaption": 0.15,
     "blockYieldModifierMaxPct": 8,
     "foodTiers": {
@@ -267,7 +280,9 @@
     "form": {
       "max": 0.02,
       "step": 0.012,
-      "reversion": 0.3
+      "reversion": 0.3,
+      "moraleDrift": 0.002,
+      "moralePivot": 80
     },
     "repCeilingPercentileByTier": {
       "1": 25,

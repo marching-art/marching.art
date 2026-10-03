@@ -432,6 +432,16 @@ Two meters, both 0–100, both visible at all times:
   quality.
 - **Morale** — moved by results (beating a rival +, a slide −), rest cadence, food quality, and
   streaks of maxed-out rehearsal days (grind fatigue). Recovers on show days that go well.
+- **Morale v2 (2026-10, decision 41) — what the engine does.** Fatigue is graded by the day's
+  workload (`condition.moraleModel`): up to `sustainableShare` (70%) of the day's blocks the corps
+  recovers +1; past it morale falls linearly to `fatigueAtFullLoad` (−7, about −3.2 with Stretch /
+  PT) at a full day. A rest day adds +20 (was +10). Morale pulls the form walk
+  (`scoring.form.moraleDrift`, centered on `moralePivot` 80, so a well-run corps is neutral and a
+  collapsing one trends cold), and below morale 30 members quit (`condition.attrition`: a seeded
+  nightly chance, up to 3× at morale 0; a seeded caption loses 0.04 content / 0.03 clean —
+  `engine.applyAttrition`, `state.lastAttrition`). The planner states today's sustainable blocks,
+  the full-day and rest-day morale change, and warns near the attrition line
+  (`store.moraleOutlook`).
 
 Effects are deliberately gentle but persistent: high condition adds up to +0.15/caption and +5%
 block yield; depleted condition subtracts the same and, below thresholds, costs a rehearsal block
@@ -1832,6 +1842,18 @@ proven the machinery. Total: ~16–20 engineering weeks to beta.
     Sim F's upset band widened to 25–45% (29%): luck was cut on purpose (decision 39) and tapes
     make an off-year Champion's lapses cheaper; the harness's own 15–60% check is unchanged.
     Field-wide rules — they apply to the season in flight from the next show.
+
+41. **Morale is managed (2026-10).** The engine probe found morale vestigial: the grind rule
+    counted only days that used EVERY block, so leaving one unused kept morale at 100, and a
+    corps ground to morale 16 by Finals lost ~1 point. Shipped: graded workload fatigue, a +20
+    rest day, morale-led form, attrition below 30 (§5.3). `primaryGain` 0.0235 → 0.023 because
+    a managed corps now rehearses at higher morale (flawless tier-4 finals 91.8; ceilings
+    78 / 85 / 90 / 93 / 96 / 97 / 97.5; Champion in season 10). The flawless policy in
+    `podiumSim.js` / `podiumPacingHarness.js` now rests when stamina or morale sags and freshens
+    up before the majors (`managedRest`), and both harnesses apply attrition nightly. The pull is
+    deliberately gentle (0.002): at 0.004 a 6%-skip Champion fell 1.25 behind and lost to a
+    flawless Elite 73% of the time. `podiumSim.js` section K: grind −4.4 vs managed, 11-of-12
+    grind −2.6 (v1: +0.2, the exploit), twice-weekly rest −3.4; sim F upset 44%.
 
 **Still open:**
 

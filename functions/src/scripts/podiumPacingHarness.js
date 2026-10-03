@@ -38,6 +38,9 @@ const ROTATION = [
   "fullEnsemble",
 ];
 
+/** Majors and Championship Week nights a flawless director freshens up for. */
+const BIG_NIGHTS = [28, 35, 41, 47, 48, 49];
+
 /** A flawless director's day after warmup: every rehearsal block in turn. */
 const BALANCED_ORDER = [
   "fullEnsemble",
@@ -86,8 +89,13 @@ function playSeason(repTier, challengeLevel, seed, { skipRate = 0, optimal = fal
     const isShowDay = SHOW_DAYS.includes(day);
     const maxBlocks = engine.blocksAvailable(state, { isShowDay, isSpringTraining: false }, balance);
     const skippedDay = skipRate > 0 && engine.seededUnit(`${seed}|skip|${day}`) < skipRate;
-    const restFloor = optimal ? 45 : 25;
-    const rest = !isShowDay && !skippedDay && state.condition.stamina < restFloor;
+    // Flawless: rest when stamina or morale sags and freshen up before the
+    // majors (morale v2); the simple director rests only when spent.
+    const { stamina, morale } = state.condition;
+    const wantsRest = optimal
+      ? stamina < 45 || morale < 50 || (BIG_NIGHTS.includes(day + 1) && morale < 80)
+      : stamina < 25;
+    const rest = !isShowDay && !skippedDay && wantsRest;
     let used = 0;
     const blocksSoFar = {};
     if (!rest) {
@@ -113,6 +121,8 @@ function playSeason(repTier, challengeLevel, seed, { skipRate = 0, optimal = fal
       { restDay: rest, blocksUsedToday: used, maxBlocksToday: maxBlocks, warmupUsed: (blocksSoFar.warmup || 0) > 0 },
       balance
     );
+    // Members quit when morale collapses (morale v2), as the processor runs it.
+    engine.applyAttrition(state, day, `attr|${seed}`, balance);
     // Independent per-corps form evolves every day (seeded only by this corps).
     if (useForm) engine.updateForm(state, day, `form|${seed}`, curves, balance);
     if (isShowDay) {

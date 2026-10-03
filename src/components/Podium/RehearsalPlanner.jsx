@@ -84,6 +84,18 @@ export default function RehearsalPlanner({ podium }) {
 
   // Server-authoritative block budget (stamina-adjusted). Falls back to the
   // freshness-normalized local count if an older backend hasn't shipped these.
+  /** @type {{sustainableBlocks: number, fullDayChange: number, restDayGain: number, attritionBelow: number | null} | null} */
+  const moraleOutlook = data.moraleOutlook || null;
+  // A departure stays on the strip for three days.
+  const recentAttrition =
+    state.lastAttrition && competitionDay - state.lastAttrition.day <= 3
+      ? {
+          day: state.lastAttrition.day,
+          label:
+            /** @type {Record<string, string>} */ (CAPTION_LABELS)[state.lastAttrition.caption] ||
+            state.lastAttrition.caption,
+        }
+      : null;
   // Server-reported show-day shape (older backends: the pre-2026-10 values).
   const showDayBlocks = data.blockCaps?.showDay ?? 8;
   const showDayValuePct = data.showDayValuePct ?? 50;
@@ -220,6 +232,35 @@ export default function RehearsalPlanner({ podium }) {
           />
         </div>
       </div>
+
+      {/* Morale outlook (morale v2): what today's workload does to morale, so
+          the volume-vs-rest call is made with the numbers, not discovered at
+          Finals. Server-computed — a re-tune never desyncs it. */}
+      {moraleOutlook && !seasonOver && (
+        <div className="text-[10px] text-secondary leading-snug space-y-0.5">
+          <p>
+            Morale: the first {moraleOutlook.sustainableBlocks} blocks today are sustainable; past
+            that each block wears the corps down (a full day ≈{' '}
+            <span className="tabular-nums">{moraleOutlook.fullDayChange}</span> with Stretch / PT).
+            A rest day restores <span className="tabular-nums">+{moraleOutlook.restDayGain}</span>.
+            Morale carries into your show-night form.
+          </p>
+          {moraleOutlook.attritionBelow != null &&
+            condition.morale < moraleOutlook.attritionBelow + 10 && (
+              <p className="text-warning font-bold">
+                {condition.morale < moraleOutlook.attritionBelow
+                  ? 'Morale critical — members may quit overnight. Rest the corps.'
+                  : `Morale is near the line (${moraleOutlook.attritionBelow}) where members start quitting.`}
+              </p>
+            )}
+          {recentAttrition && (
+            <p className="text-warning">
+              A {recentAttrition.label} member quit on Day {recentAttrition.day} — their part is
+              being re-learned.
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Block allocator + schedule panel */}
       <div className="flex flex-col lg:flex-row gap-3">

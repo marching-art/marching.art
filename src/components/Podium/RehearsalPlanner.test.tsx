@@ -64,3 +64,38 @@ describe('RehearsalPlanner next-tap hint', () => {
     expect(blockButton('Full Ensemble').textContent).not.toContain('Next tap');
   });
 });
+
+describe('RehearsalPlanner morale outlook', () => {
+  const outlook = {
+    sustainableBlocks: 8,
+    fullDayChange: -3.2,
+    restDayGain: 20,
+    attritionBelow: 30,
+  };
+  const withMorale = (morale: number, extra: Record<string, unknown> = {}) => {
+    const podium = podiumWith({ moraleOutlook: outlook });
+    const data = podium.data as Record<string, unknown>;
+    data.state = { ...(data.state as object), condition: { stamina: 80, morale }, ...extra };
+    return podium;
+  };
+
+  it('states the sustainable load and the rest-day gain', () => {
+    render(<Planner podium={withMorale(70)} />);
+    expect(screen.getByText(/first 8 blocks today are sustainable/)).toBeTruthy();
+    expect(screen.getByText('+20')).toBeTruthy();
+    expect(screen.queryByText(/members/)).toBeNull();
+  });
+
+  it('warns before and below the attrition line', () => {
+    const { unmount } = render(<Planner podium={withMorale(35)} />);
+    expect(screen.getByText(/near the line \(30\)/)).toBeTruthy();
+    unmount();
+    render(<Planner podium={withMorale(20)} />);
+    expect(screen.getByText(/members may quit overnight/)).toBeTruthy();
+  });
+
+  it('names a recent departure', () => {
+    render(<Planner podium={withMorale(25, { lastAttrition: { day: 11, caption: 'B' } })} />);
+    expect(screen.getByText(/member quit on Day 11/)).toBeTruthy();
+  });
+});

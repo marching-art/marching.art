@@ -25,6 +25,8 @@
  *   I. Rehearsal choices matter — one-button spam loses, sectionals-first
  *      timing pays early, a daily director beats a part-timer, and identical
  *      play stays inside a bounded luck spread.
+ *   K. Morale is managed — grinding every day loses to a managed rest
+ *      rhythm, leaving one block unused is no exploit, over-resting loses.
  *   J. Shows pay their way — a moderate schedule breaks even against the
  *      automatic shows alone; an overloaded tour of long hauls still costs.
  *
@@ -69,6 +71,24 @@ function balancedDay(blocks) {
   return ["warmup", ...Array.from({ length: blocks - 1 }, (_, i) => BALANCED_ORDER[i % BALANCED_ORDER.length])];
 }
 
+/** Majors and Championship Week nights a flawless director freshens up for. */
+const BIG_NIGHTS = new Set([28, 35, 41, 47, 48, 49]);
+
+/**
+ * A flawless director's rest call (morale v2, 2026-10): rest when stamina or
+ * morale sags, and freshen up the day before a major unless already fresh.
+ * Never on a show night — the corps performs.
+ * @param {any} state season state
+ * @param {number} day competition day
+ * @param {Set<number>} [showDays] the corps' show schedule
+ * @returns {boolean}
+ */
+function managedRest(state, day, showDays = SHOW_DAYS) {
+  if (showDays.has(day)) return false;
+  const { stamina, morale } = state.condition;
+  return stamina < 45 || morale < 50 || (BIG_NIGHTS.has(day + 1) && morale < 80);
+}
+
 /**
  * Strategy = { name, challenge(caption)->1..8, planDay(state, day, ctx) ->
  * { restDay, blocks: [types] } }. Deterministic; `seed` varies weekly-plan
@@ -94,9 +114,10 @@ function makeStrategies(seed) {
     flawless: {
       challenge: () => 8,
       planDay: (state, day, { blocks }) => {
-        // Rests exactly when stamina demands it; warmup every working day,
-        // then an even mix of every block (balancedDay).
-        if (state.condition.stamina < 45 && !SHOW_DAYS.has(day)) {
+        // Rests when stamina or morale demands it and freshens up before the
+        // majors (managedRest); warmup every working day, then an even mix of
+        // every block (balancedDay).
+        if (managedRest(state, day)) {
           return { restDay: true, blocks: [] };
         }
         return { restDay: false, blocks: balancedDay(blocks) };
@@ -109,7 +130,7 @@ function makeStrategies(seed) {
         // mix, warmups, stamina-aware rests — but skips ~6% of days
         // outright. One bad habit, not a bad director.
         if (engine.seededUnit(`${seed}|skip|${day}`) < 0.06) return { restDay: false, blocks: [] };
-        if (state.condition.stamina < 45 && !SHOW_DAYS.has(day)) {
+        if (managedRest(state, day)) {
           return { restDay: true, blocks: [] };
         }
         return { restDay: false, blocks: balancedDay(blocks) };
@@ -174,6 +195,8 @@ function simulateSeason(strategy, repTier, seed) {
       },
       cfg
     );
+    // Members quit when morale collapses (morale v2), as the processor runs it.
+    engine.applyAttrition(state, day, `attr|${seed}`, cfg);
   }
   return { finalsTotal: scores[scores.length - 1].total, scores, state };
 }
@@ -204,8 +227,10 @@ const ASSISTANT_PLAN = [
  * @param {number} repTier reputation tier
  * @param {string} seed
  * @param {{dayPlan?: ((maxBlocks: number) => string[]) | null, showDays?: Set<number>,
- *   travelStamina?: number}} [opts] `showDays` overrides the show schedule;
- *   `travelStamina` is charged on top of the show's own stamina each show night
+ *   travelStamina?: number, restCall?: (state: any, day: number, showDays: Set<number>) => boolean}} [opts]
+ *   `showDays` overrides the show schedule; `travelStamina` is charged on top
+ *   of the show's own stamina each show night; `restCall` replaces the
+ *   flawless director's rest decision (managedRest)
  * @returns {{scores: Array<{day: number, total: number}>}}
  */
 function simulateCommitment(
@@ -213,20 +238,18 @@ function simulateCommitment(
   playRate,
   repTier,
   seed,
-  { dayPlan = null, showDays = SHOW_DAYS, travelStamina = 0 } = {}
+  { dayPlan = null, showDays = SHOW_DAYS, travelStamina = 0, restCall = managedRest } = {}
 ) {
   const challenge = {};
   for (const caption of engine.CAPTIONS) challenge[caption] = level;
   const state = engine.createSeasonState({ challenge, repTier }, curves, cfg);
-  // A fixed day plan (`dayPlan(maxBlocks)`) replaces the flawless director's
-  // choices on the days they play; rests stay stamina-aware either way.
-  const flawless = makeStrategies(seed).flawless.planDay;
-  const plan = dayPlan
-    ? (/** @type {any} */ st, /** @type {number} */ day, /** @type {{blocks: number}} */ ctx) =>
-        st.condition.stamina < 45 && !showDays.has(day)
-          ? { restDay: true, blocks: [] }
-          : { restDay: false, blocks: dayPlan(ctx.blocks) }
-    : flawless;
+  // The flawless director's rest calls on THIS schedule (managedRest), and
+  // their even block mix unless a fixed `dayPlan(maxBlocks)` replaces it.
+  const blocksFor = dayPlan || balancedDay;
+  const plan = (/** @type {any} */ st, /** @type {number} */ day, /** @type {{blocks: number}} */ ctx) =>
+    restCall(st, day, showDays)
+      ? { restDay: true, blocks: [] }
+      : { restDay: false, blocks: blocksFor(ctx.blocks) };
   const scores = [];
   let streak = 0;
   for (let day = 1; day <= 49; day++) {
@@ -272,6 +295,8 @@ function simulateCommitment(
       { restDay, blocksUsedToday: used, maxBlocksToday: maxBlocks, warmupUsed: (blocksSoFar.warmup || 0) > 0 },
       cfg
     );
+    // Members quit when morale collapses (morale v2), as the processor runs it.
+    engine.applyAttrition(state, day, `attr|${seed}`, cfg);
   }
   return { scores };
 }
@@ -587,6 +612,47 @@ function main() {
     `${(effortRate * 100).toFixed(0)}%`
   );
   assert("I4. luck is bounded (identical play spans <= 3.0 points p5-p95 at finals)", luckSpread <= 3, luckSpread.toFixed(2));
+
+  // --- K. Morale is managed (2026-10) --------------------------------------
+  // Before: fatigue counted only days that used EVERY block, so leaving one
+  // unused kept morale at 100, and a corps that ground itself to morale 16 by
+  // Finals lost ~1 point. Graded workload fatigue, a bigger rest day, morale
+  // pulling form, and attrition below morale 30 must make rhythm matter:
+  // grinding loses, the hidden-streak trick is gone, over-resting loses too.
+  console.log("\nK. Morale is managed (tier 4, challenge 8, even block mix):");
+  const K_SEEDS = 24;
+  const spentOnly = (/** @type {any} */ st, /** @type {number} */ day, /** @type {Set<number>} */ shows) =>
+    !shows.has(day) && st.condition.stamina < 45;
+  const twiceWeekly = (/** @type {any} */ st, /** @type {number} */ day, /** @type {Set<number>} */ shows) =>
+    !shows.has(day) && (day % 7 === 2 || day % 7 === 5 || st.condition.stamina < 45);
+  const rhythmFinals = (/** @type {any} */ opts) =>
+    mean(Array.from({ length: K_SEEDS }, (_, s) => showTotal(simulateCommitment(8, 1, 4, `morale|${s}`, opts), 49)));
+  const managedFinals = rhythmFinals({});
+  const grindFinals = rhythmFinals({ restCall: spentOnly });
+  const elevensFinals = rhythmFinals({
+    restCall: spentOnly,
+    dayPlan: (/** @type {number} */ n) => balancedDay(n - 1),
+  });
+  const overRestFinals = rhythmFinals({ restCall: twiceWeekly });
+  console.log(
+    `    finals: managed ${managedFinals.toFixed(2)} · grind ${grindFinals.toFixed(2)} · ` +
+      `11-of-12 grind ${elevensFinals.toFixed(2)} · rest twice a week ${overRestFinals.toFixed(2)}`
+  );
+  assert(
+    "K1. grinding every day loses (>= 2 below a managed rhythm)",
+    managedFinals - grindFinals >= 2,
+    (managedFinals - grindFinals).toFixed(2)
+  );
+  assert(
+    "K2. no hidden-streak trick (11-of-12 grind >= 1 below managed)",
+    managedFinals - elevensFinals >= 1,
+    (managedFinals - elevensFinals).toFixed(2)
+  );
+  assert(
+    "K3. over-resting loses too (twice-weekly rest >= 1.5 below managed)",
+    managedFinals - overRestFinals >= 1.5,
+    (managedFinals - overRestFinals).toFixed(2)
+  );
 
   // --- J. Shows pay their way (2026-10) -----------------------------------
   // Before: a show day's 8 blocks ran at half value and performing taught the

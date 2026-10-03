@@ -35,7 +35,7 @@ const SECTIONS = [
   {
     n: 5,
     title: 'Condition: stamina, morale, food, rest',
-    body: `Rehearsal costs stamina; low stamina cuts your yields. Nights recover some, a declared rest day recovers a lot. Grinding at maximum for days builds fatigue and drains morale. Your food plan (gas station, standard, full kitchen) nudges recovery — money buys margin, never access. A broke corps can always play; it just feels like a broke corps.`,
+    body: `Rehearsal costs stamina; low stamina cuts your yields. Nights recover some, a declared rest day recovers a lot. Morale tracks your workload: about two-thirds of a day’s blocks is sustainable, and every block past that wears the corps down (Stretch / PT softens it), while a rest day restores a big chunk. A happy corps performs hotter on show nights; a miserable one runs cold, and below 30 morale members start quitting — their part has to be re-learned. The planner shows today’s sustainable load. Your food plan (gas station, standard, full kitchen) nudges recovery — money buys margin, never access. A broke corps can always play; it just feels like a broke corps.`,
   },
   {
     n: 6,

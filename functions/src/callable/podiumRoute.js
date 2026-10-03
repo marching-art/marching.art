@@ -696,6 +696,9 @@ exports.getPodiumState = onCall({ cors: true }, async (request) => {
     // rehearsal-day block (the judges' tapes after the show make up the rest).
     showDayValuePct: Math.round(store.balance.rehearsal.showDayYieldMultiplier * 100),
     blockReadiness: store.blockReadiness(state),
+    // How today's workload moves morale (sustainable blocks, full-day and
+    // rest-day change, the attrition line) — null on the legacy rule.
+    moraleOutlook: store.moraleOutlook(state, maxBlocksToday),
     assistant,
     division,
     divisionLabel: divisions.DIVISION_LABELS[division],
