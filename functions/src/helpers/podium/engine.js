@@ -467,7 +467,11 @@ function endOfDay(state, day, opts, cfg) {
     const load = Math.min(1, (opts.blocksUsedToday || 0) / maxBlocks);
     const over = Math.max(0, load - mm.sustainableShare) / Math.max(1e-6, 1 - mm.sustainableShare);
     const mitigation = opts.warmupUsed ? 1 - cfg.blocks.warmup.conditionEffect.fatigueMitigationPct / 100 : 1;
-    const delta = mm.dailyRecovery - over * mm.fatigueAtFullLoad * mitigation;
+    // The food plan feeds morale every night (`nightlyMoraleDelta`): a full
+    // kitchen is a real weekly buy, not just a rest-day garnish.
+    const foodTier = cfg.condition.foodTiers[state.foodTier] || cfg.condition.foodTiers.standard;
+    const delta =
+      mm.dailyRecovery - over * mm.fatigueAtFullLoad * mitigation + (foodTier.nightlyMoraleDelta || 0);
     state.condition.morale = Math.max(0, Math.min(cfg.condition.moraleMax, state.condition.morale + delta));
     state.consecutiveMaxDays = load >= 1 ? (state.consecutiveMaxDays || 0) + 1 : 0;
   } else if (mm) {

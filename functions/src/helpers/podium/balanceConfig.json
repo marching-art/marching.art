@@ -195,7 +195,8 @@
       "fullKitchen": {
         "staminaRecoveryDelta": 3,
         "moraleDelta": 2,
-        "costPerWeek": 150
+        "costPerWeek": 150,
+        "nightlyMoraleDelta": 0.5
       }
     }
   },
@@ -453,8 +454,8 @@
   },
   "clinician": {
     "cost": 120,
-    "durationDays": 3,
-    "yieldBoost": 1.3
+    "durationDays": 5,
+    "yieldBoost": 1.5
   },
   "joint": {
     "ensembleBonus": 0.25,

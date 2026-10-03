@@ -624,3 +624,22 @@ describe("morale v2 — graded fatigue, morale-led form, attrition (2026-10)", (
     assert.equal(outlook.attritionBelow, cfg.condition.attrition.moraleBelow);
   });
 });
+
+describe("money buys real choices (2026-10)", () => {
+  test("a full kitchen lifts morale every night, not just on rest days", () => {
+    const night = (/** @type {string} */ foodTier) => {
+      const state = corps(8, 4);
+      state.foodTier = foodTier;
+      state.condition.morale = 60;
+      engine.endOfDay(state, 10, { restDay: false, blocksUsedToday: 8, maxBlocksToday: 12, warmupUsed: true }, cfg);
+      return state.condition.morale;
+    };
+    assert.ok(night("fullKitchen") > night("standard"));
+    assert.equal(night("gasStation"), night("standard"), "the free floor costs no nightly morale");
+  });
+
+  test("a clinician residency outvalues a few days of +30%", () => {
+    assert.ok(cfg.clinician.durationDays >= 5);
+    assert.ok(cfg.clinician.yieldBoost >= 1.5);
+  });
+});

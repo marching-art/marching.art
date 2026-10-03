@@ -27,6 +27,8 @@
  *      play stays inside a bounded luck spread.
  *   K. Morale is managed — grinding every day loses to a managed rest
  *      rhythm, leaving one block unused is no exploit, over-resting loses.
+ *   L. Money buys real choices — staff matter but stay bounded, the full
+ *      kitchen and a clinician residency are real buys.
  *   J. Shows pay their way — a moderate schedule breaks even against the
  *      automatic shows alone; an overloaded tour of long hauls still costs.
  *
@@ -35,6 +37,7 @@
  */
 
 const engine = require("../helpers/podium/engine");
+const staffMarket = require("../helpers/podium/staffMarket");
 const curves = require("../helpers/podium/curveData.json");
 const cfg = require("../helpers/podium/balanceConfig.json");
 
@@ -227,10 +230,13 @@ const ASSISTANT_PLAN = [
  * @param {number} repTier reputation tier
  * @param {string} seed
  * @param {{dayPlan?: ((maxBlocks: number) => string[]) | null, showDays?: Set<number>,
- *   travelStamina?: number, restCall?: (state: any, day: number, showDays: Set<number>) => boolean}} [opts]
+ *   travelStamina?: number, restCall?: (state: any, day: number, showDays: Set<number>) => boolean,
+ *   foodTier?: string, yieldBoost?: ((blockType: string, day: number) => number) | null}} [opts]
  *   `showDays` overrides the show schedule; `travelStamina` is charged on top
  *   of the show's own stamina each show night; `restCall` replaces the
- *   flawless director's rest decision (managedRest)
+ *   flawless director's rest decision (managedRest); `foodTier` sets the food
+ *   plan; `yieldBoost(blockType, day)` multiplies a block's yield (staff,
+ *   clinician)
  * @returns {{scores: Array<{day: number, total: number}>}}
  */
 function simulateCommitment(
@@ -238,11 +244,18 @@ function simulateCommitment(
   playRate,
   repTier,
   seed,
-  { dayPlan = null, showDays = SHOW_DAYS, travelStamina = 0, restCall = managedRest } = {}
+  {
+    dayPlan = null,
+    showDays = SHOW_DAYS,
+    travelStamina = 0,
+    restCall = managedRest,
+    foodTier = "standard",
+    yieldBoost = null,
+  } = {}
 ) {
   const challenge = {};
   for (const caption of engine.CAPTIONS) challenge[caption] = level;
-  const state = engine.createSeasonState({ challenge, repTier }, curves, cfg);
+  const state = engine.createSeasonState({ challenge, repTier, foodTier }, curves, cfg);
   // The flawless director's rest calls on THIS schedule (managedRest), and
   // their even block mix unless a fixed `dayPlan(maxBlocks)` replaces it.
   const blocksFor = dayPlan || balancedDay;
@@ -273,7 +286,7 @@ function simulateCommitment(
       for (const blockType of blocks.slice(0, maxBlocks)) {
         engine.allocateBlock(state, blockType, day, used, blocksSoFar, curves, cfg, {
           isShowDay,
-          yieldMultiplier,
+          yieldMultiplier: yieldMultiplier * (yieldBoost ? yieldBoost(blockType, day) : 1),
         });
         blocksSoFar[blockType] = (blocksSoFar[blockType] || 0) + 1;
         used++;
@@ -652,6 +665,59 @@ function main() {
     "K3. over-resting loses too (twice-weekly rest >= 1.5 below managed)",
     managedFinals - overRestFinals >= 1.5,
     (managedFinals - overRestFinals).toFixed(2)
+  );
+
+  // --- L. Money buys real choices (2026-10) --------------------------------
+  // Staff are the backbone (bounded, diminishing per coin — the division-equal
+  // budget cap is the covenant's guard); the full kitchen was a weak buy
+  // (+0.59 for 630 more Budget a season) and a 3-day clinician barely
+  // registered (+0.24 on Full Ensemble for 120). Food now lifts morale nightly
+  // and a clinician is a 5-day residency, so a constrained budget weighs staff,
+  // food and clinicians at comparable value per coin.
+  console.log("\nL. Money buys real choices (tier 4, challenge 8, daily director):");
+  const L_SEEDS = 24;
+  const moneyFinals = (/** @type {any} */ opts, /** @type {number} */ day = 49) =>
+    mean(Array.from({ length: L_SEEDS }, (_, s) => showTotal(simulateCommitment(8, 1, 4, `money|${s}`, opts), day)));
+  const journeymanRoster = Object.fromEntries(
+    [...engine.CAPTIONS, "programCoordinator"].map((specialty) => [
+      specialty,
+      { specialty, tier: "journeyman", boost: cfg.staff.tiers.journeyman.boost },
+    ])
+  );
+  const unstaffed = moneyFinals({});
+  const staffed = moneyFinals({
+    yieldBoost: (/** @type {string} */ blockType) =>
+      staffMarket.staffYieldMultiplier({ staff: journeymanRoster }, blockType, cfg),
+  });
+  const kitchen = moneyFinals({ foodTier: "fullKitchen" });
+  const clinicianDay24 = moneyFinals(
+    {
+      yieldBoost: (/** @type {string} */ blockType, /** @type {number} */ day) =>
+        blockType === "fullEnsemble" && day >= 20 && day < 20 + cfg.clinician.durationDays
+          ? cfg.clinician.yieldBoost
+          : 1,
+    },
+    24
+  );
+  const unstaffedDay24 = moneyFinals({}, 24);
+  console.log(
+    `    finals: no staff ${unstaffed.toFixed(2)} · full journeyman staff +${(staffed - unstaffed).toFixed(2)} · ` +
+      `full kitchen +${(kitchen - unstaffed).toFixed(2)} · Full Ensemble clinician (day 24) +${(clinicianDay24 - unstaffedDay24).toFixed(2)}`
+  );
+  assert(
+    "L1. staff matter but stay bounded (full journeyman staff +0.5 to +2.5 at finals)",
+    staffed - unstaffed >= 0.5 && staffed - unstaffed <= 2.5,
+    (staffed - unstaffed).toFixed(2)
+  );
+  assert(
+    "L2. the full kitchen is a real buy (>= +0.75 at finals; v1: +0.59)",
+    kitchen - unstaffed >= 0.75,
+    (kitchen - unstaffed).toFixed(2)
+  );
+  assert(
+    "L3. a clinician residency pays (Full Ensemble >= +0.3 by day 24)",
+    clinicianDay24 - unstaffedDay24 >= 0.3,
+    (clinicianDay24 - unstaffedDay24).toFixed(2)
   );
 
   // --- J. Shows pay their way (2026-10) -----------------------------------

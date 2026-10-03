@@ -1855,6 +1855,18 @@ proven the machinery. Total: ~16–20 engineering weeks to beta.
     flawless Elite 73% of the time. `podiumSim.js` section K: grind −4.4 vs managed, 11-of-12
     grind −2.6 (v1: +0.2, the exploit), twice-weekly rest −3.4; sim F upset 44%.
 
+42. **Money buys real choices (2026-10).** Re-measured after decisions 38–41 the item "money
+    barely moves score" was stale: a full journeyman staff (720 Budget) is worth +0.99 at Finals
+    for a daily director and more for a part-timer — bounded and diminishing per coin, which is
+    what the division-equal cap (§14.2.1) protects. The weak buys were the others: the full
+    kitchen (+0.59 for ~630 more Budget a season; its morale only applied on rest days) and the
+    clinician (+0.24 on Full Ensemble for 120). Shipped: `foodTiers.fullKitchen.nightlyMoraleDelta`
+    +0.5 (gas station unchanged — the free floor is not punished harder) and a clinician residency
+    of 5 days at +50% (was 3 days at +30%), with the terms served by `getPodiumState`
+    (`clinicianTerms`) instead of hard-coded in the panel. `podiumSim.js` section L: staff +0.99
+    (bounded 0.5–2.5), full kitchen +0.90 (v1 +0.59), Full Ensemble clinician +0.64 by day 24
+    (v1 +0.24) — staff, food and clinicians now trade at comparable value per coin.
+
 **Still open:**
 
 1. **Point-cap semantics** — largely resolved by the class-capability registry

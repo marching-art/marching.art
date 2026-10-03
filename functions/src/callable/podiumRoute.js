@@ -699,6 +699,13 @@ exports.getPodiumState = onCall({ cors: true }, async (request) => {
     // How today's workload moves morale (sustainable blocks, full-day and
     // rest-day change, the attrition line) — null on the legacy rule.
     moraleOutlook: store.moraleOutlook(state, maxBlocksToday),
+    // What a clinician residency costs and does — the panel renders these
+    // instead of hard-coding them.
+    clinicianTerms: {
+      cost: store.balance.clinician.cost,
+      durationDays: store.balance.clinician.durationDays,
+      boostPct: Math.round((store.balance.clinician.yieldBoost - 1) * 100),
+    },
     assistant,
     division,
     divisionLabel: divisions.DIVISION_LABELS[division],
