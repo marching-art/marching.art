@@ -692,6 +692,9 @@ exports.getPodiumState = onCall({ cors: true }, async (request) => {
     // repeat ladder (index = blocks of that type already run today) and each
     // ensemble block's readiness (sections' installed content).
     repeatLadder: store.balance.rehearsal.repeatBlockMultipliers,
+    // A show day's lighter run-through: each block's value as a percent of a
+    // rehearsal-day block (the judges' tapes after the show make up the rest).
+    showDayValuePct: Math.round(store.balance.rehearsal.showDayYieldMultiplier * 100),
     blockReadiness: store.blockReadiness(state),
     assistant,
     division,

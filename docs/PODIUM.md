@@ -347,7 +347,7 @@ right answer. v2 (`scoring.challengeModel` in `balanceConfig.json`, `engine.curv
   mined archetypes. Easy books are mostly there in June; hard books surge in August.
 - **Floor** — `floorFractionByChallenge` (0.55 → 0.43): what an unrehearsed caption still fields. A
   dirty hard book scores below a dirty easy one.
-- **Realization** — `fullRealizationByChallenge` (0.64 → 0.73): the installed × clean attainment at
+- **Realization** — `fullRealizationByChallenge` (0.62 → 0.70 since decision 40; was 0.64 → 0.73): the installed × clean attainment at
   which the book pays in full. A hard book asks for more cleaning.
 
 Result (tier 4, `podiumSim.js` section H): the best uniform level by show day climbs
@@ -555,8 +555,19 @@ minute?_ — falls out of the mechanics with zero special-casing.
 ### 5.4 Show days and the nightly drop
 
 - Podium corps attend the **same shows on the same schedule** as everyone else (selected via the
-  existing `selectUserShows` flow). Show days grant 1 rehearsal block (morning run-through), charge
-  performance stamina, and are the only days a Podium corps receives an official score.
+  existing `selectUserShows` flow). Show days grant a lighter run-through (8 blocks at
+  `showDayYieldMultiplier` value — ¾ since 2026-10, was ½), charge performance stamina, and are the
+  only days a Podium corps receives an official score.
+- **Judges' tapes (2026-10, decision 40).** Performing teaches: after every scored show the sheets
+  point at the corps' two weakest captions (lowest installed × clean) and it cleans them from the
+  tapes overnight (`shows.judgesTapes`: +0.08 clean / +0.03 content of headroom, at the caption's
+  challenge install rate; counts as rehearsing them for neglect decay; `engine.applyJudgesTapes`,
+  stored as `state.lastTapes` and shown on the caption panel). Applied after the score, so it pays
+  at the next show.
+- **Medal purses (2026-10).** A top-three finish in the corps' class that night (the medal rule,
+  `showRanking.js`) pays Corps Budget on top of the flat show payout — `budget.medalPurse` gold 25 /
+  silver 15 / bronze 10, credited in the nightly rank pass (`purse:<medal>`, earnings line). Where
+  you perform now matters, not just whether.
 - Scores post in the existing nightly pipeline. The recap entry carries the full caption breakdown,
   placement _within Podium Class only_, and phase-appropriate color ("Brass +0.3 since
   Tuesday — 2nd in class").
@@ -1806,6 +1817,21 @@ proven the machinery. Total: ~16–20 engineering weeks to beta.
     (+1.45), a daily director beats a 70%-play one in 82% of pairings (v1 tuning: 67%), identical
     play spans 2.3 points (v1: 4.2). These are field-wide rules: they apply to every corps from the
     deploy on, including a season in flight.
+
+40. **Shows pay their way (2026-10).** The engine probe found shows were worse than pure cost: a
+    show day's 8 blocks at half value made a full 29-show tour finish ~8 points below attending
+    only the 6 automatic shows, and a moderate 14-show tour ~1.2 below — the game paid directors
+    to skip shows and starve the fields. Shipped: show-day blocks at ¾ value, judges' tapes, medal
+    purses (§5.4). Because show days now grow the corps, the growth anchor was re-set:
+    `primaryGain` 0.027 → 0.0235, challenge-model `fullRealizationByChallenge` 0.64–0.73 →
+    0.62–0.70 (so a daily grinder still fully realizes a level-8 book), and
+    `reputation.climbThreshold` 82 → 84 (a fully-cleaned level-5 book otherwise crossed into
+    Champion within 20 seasons). Tier ceilings now land at 77 / 84 / 89 / 92 / 95 / 97 / 97 — the
+    §4.3 ladder; flawless reaches Champion in season 10–11. `podiumSim.js` section J: moderate
+    tour ≥ auto-only − 0.25 (now +0.0; v1 −1.2), a maximal tour of long hauls costs ≥ 1.5 (3.2).
+    Sim F's upset band widened to 25–45% (29%): luck was cut on purpose (decision 39) and tapes
+    make an off-year Champion's lapses cheaper; the harness's own 15–60% check is unchanged.
+    Field-wide rules — they apply to the season in flight from the next show.
 
 **Still open:**
 

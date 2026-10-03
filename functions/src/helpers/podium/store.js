@@ -679,7 +679,7 @@ function budgetCategoryOf(reason) {
   if (key === "camp") return "camp"; // spring-training housing/food
   if (key === "clinician") return "clinician";
   if (key === "commitment") return "commitment"; // CC dedicated from the wallet
-  if (key === "showPayout" || key === "fundraiser") return "earnings"; // in-class income
+  if (key === "showPayout" || key === "fundraiser" || key.startsWith("purse")) return "earnings"; // in-class income (purse:gold|silver|bronze)
   return "other";
 }
 
@@ -698,6 +698,18 @@ function accrueCategory(budget, reason, amount) {
   if (!budget.byCategory) budget.byCategory = {};
   const category = budgetCategoryOf(reason);
   budget.byCategory[category] = (budget.byCategory[category] || 0) + amount;
+}
+
+/**
+ * Corps Budget a medal pays (`balance.budget.medalPurse`, §5.4); 0 when unset.
+ * @param {string} medal "gold" | "silver" | "bronze"
+ * @param {any} [cfg] balance config (defaults to the live balance)
+ * @returns {number}
+ */
+function medalPurseFor(medal, cfg = balance) {
+  const purses = (cfg.budget && /** @type {any} */ (cfg.budget).medalPurse) || {};
+  const amount = Number(purses[medal]);
+  return Number.isFinite(amount) && amount > 0 ? amount : 0;
 }
 
 /** Credit the ledger (earnings/commitments). Mutates state. */
@@ -885,6 +897,7 @@ module.exports = {
   creditBudget,
   debitBudget,
   budgetCategoryOf,
+  medalPurseFor,
   spendByCategory,
   buildSeasonFinancialReport,
   SPEND_CATEGORIES,

@@ -398,6 +398,46 @@ function allocateBlock(state, blockType, day, blockIndexToday, blocksSoFarToday,
 }
 
 /**
+ * Judges' tapes (§5.4): performing teaches. After a scored show the judges'
+ * commentary points at the corps' weakest captions — the `captions` lowest by
+ * attainment (installed x clean) — and the corps cleans them from the tapes:
+ * `cleanGain` / `contentGain` of the remaining headroom, scaled by the same
+ * challenge install rate a rehearsal block uses (a harder book cleans
+ * slower). It also counts as rehearsing those captions for neglect decay.
+ * Applied AFTER the night's score, so it pays at the next show. Returns null
+ * (and changes nothing) when `cfg.shows.judgesTapes` is absent. Mutates state.
+ * @param {any} state season state
+ * @param {number} day competition day of the show
+ * @param {any} cfg balance config
+ * @returns {{day: number, captions: string[], gains: Record<string, {content: number, clean: number}>} | null}
+ */
+function applyJudgesTapes(state, day, cfg) {
+  const tapes = cfg.shows && cfg.shows.judgesTapes;
+  if (!tapes || !(tapes.captions > 0)) return null;
+  const sc = cfg.scoring;
+  const weakest = CAPTIONS.map((caption) => {
+    const cap = state.captions[caption];
+    return { caption, attainment: cap.content * (sc.cleanFloor + sc.cleanWeight * cap.clean) };
+  })
+    .sort((a, b) => a.attainment - b.attainment || CAPTIONS.indexOf(a.caption) - CAPTIONS.indexOf(b.caption))
+    .slice(0, tapes.captions)
+    .map((entry) => entry.caption);
+  /** @type {Record<string, {content: number, clean: number}>} */
+  const gains = {};
+  for (const caption of weakest) {
+    const cap = state.captions[caption];
+    const challengeMult = Math.pow(4 / cap.challenge, cfg.rehearsal.challengeGainExponent);
+    const contentGain = (tapes.contentGain || 0) * challengeMult * (1 - cap.content);
+    const cleanGain = (tapes.cleanGain || 0) * challengeMult * (1 - cap.clean);
+    cap.content = Math.min(1, cap.content + contentGain);
+    cap.clean = Math.min(1, cap.clean + cleanGain);
+    cap.lastRehearsedDay = Math.max(cap.lastRehearsedDay || 0, day);
+    gains[caption] = { content: Number(contentGain.toFixed(5)), clean: Number(cleanGain.toFixed(5)) };
+  }
+  return { day, captions: weakest, gains };
+}
+
+/**
  * End-of-day processing: neglect decay, overnight recovery, grind fatigue.
  * Mutates state.
  * @param {object} opts { restDay, blocksUsedToday, maxBlocksToday, warmupUsed }
@@ -806,6 +846,7 @@ module.exports = {
   createSeasonState,
   ensembleReadiness,
   allocateBlock,
+  applyJudgesTapes,
   endOfDay,
   blocksAvailable,
   sampleDelta,

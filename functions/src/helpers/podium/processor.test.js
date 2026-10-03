@@ -392,3 +392,24 @@ describe("championship cut published with the recap (store.championshipCutFor)",
     assert.ok(!cut.uids.includes("out"));
   });
 });
+
+describe("medal purses (shows pay their way, 2026-10)", () => {
+  const { medalPurseFor } = store;
+  test("a podium finish pays the configured purse; anything else pays nothing", () => {
+    const purses = store.balance.budget.medalPurse;
+    assert.equal(medalPurseFor("gold", store.balance), purses.gold);
+    assert.equal(medalPurseFor("silver", store.balance), purses.silver);
+    assert.equal(medalPurseFor("bronze", store.balance), purses.bronze);
+    assert.ok(purses.gold > purses.silver && purses.silver > purses.bronze);
+    assert.equal(medalPurseFor("tin", store.balance), 0);
+    assert.equal(medalPurseFor("gold", { budget: {} }), 0, "unset purse table pays nothing");
+  });
+
+  test("purses land in the earnings line of the season ledger", () => {
+    assert.equal(store.budgetCategoryOf("purse:gold"), "earnings");
+    const state = {};
+    store.creditBudget(state, 25, "purse:gold", 12);
+    assert.equal(state.budget.balance, 25);
+    assert.equal(state.budget.byCategory.earnings, 25);
+  });
+});

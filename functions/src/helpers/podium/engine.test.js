@@ -513,3 +513,48 @@ describe("rehearsal depth — ensemble readiness and the repeat ladder", () => {
     assert.ok(readiness.fullEnsemble > 0 && readiness.fullEnsemble <= 1);
   });
 });
+
+describe("judges' tapes — performing teaches (2026-10)", () => {
+  const attainment = (/** @type {any} */ cap) =>
+    cap.content * (cfg.scoring.cleanFloor + cfg.scoring.cleanWeight * cap.clean);
+
+  test("cleans the weakest captions after a show, counting as rehearsal", () => {
+    const state = corps(6, 4);
+    engine.CAPTIONS.forEach((caption, i) => {
+      state.captions[caption].content = 0.5 + i * 0.05;
+      state.captions[caption].clean = 0.4;
+      state.captions[caption].lastRehearsedDay = 2;
+    });
+    const before = JSON.parse(JSON.stringify(state.captions));
+    const tapes = engine.applyJudgesTapes(state, 10, cfg);
+    assert.ok(tapes);
+    const want = [...engine.CAPTIONS]
+      .sort((a, b) => attainment(before[a]) - attainment(before[b]))
+      .slice(0, cfg.shows.judgesTapes.captions);
+    assert.deepEqual(tapes.captions, want);
+    for (const caption of engine.CAPTIONS) {
+      const taped = want.includes(caption);
+      assert.equal(state.captions[caption].clean > before[caption].clean, taped, caption);
+      assert.equal(state.captions[caption].lastRehearsedDay, taped ? 10 : 2, caption);
+    }
+  });
+
+  test("a harder book cleans slower from the same tapes", () => {
+    const easy = corps(2, 4);
+    const hard = corps(8, 4);
+    const caption = engine.applyJudgesTapes(easy, 10, cfg).captions[0];
+    engine.applyJudgesTapes(hard, 10, cfg);
+    assert.ok(easy.captions[caption].clean > hard.captions[caption].clean);
+  });
+
+  test("no tapes config means no change", () => {
+    const state = corps(5, 4);
+    const before = JSON.stringify(state);
+    assert.equal(engine.applyJudgesTapes(state, 10, { ...cfg, shows: undefined }), null);
+    assert.equal(JSON.stringify(state), before);
+  });
+
+  test("a show-day block is worth less than a rehearsal-day block, but more than half", () => {
+    assert.ok(cfg.rehearsal.showDayYieldMultiplier > 0.5 && cfg.rehearsal.showDayYieldMultiplier < 1);
+  });
+});

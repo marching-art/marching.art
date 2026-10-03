@@ -18,13 +18,15 @@
  *   E. Dormancy invariant — a corps NEVER returns from absence with
  *      higher reputation than it left with.
  *   F. Upset rate — a flawless Elite (tier 6) challenger beats a
- *      good-but-imperfect Champion (tier 7) in 30-45% of finals.
+ *      good-but-imperfect Champion (tier 7) in 25-45% of finals.
  *   H. Challenge levels are a bet — easy books lead the opening weeks, the
  *      best level climbs through the season, a cleaned hard book wins finals,
  *      and an under-rehearsed one loses to an easier book.
  *   I. Rehearsal choices matter — one-button spam loses, sectionals-first
  *      timing pays early, a daily director beats a part-timer, and identical
  *      play stays inside a bounded luck spread.
+ *   J. Shows pay their way — a moderate schedule breaks even against the
+ *      automatic shows alone; an overloaded tour of long hauls still costs.
  *
  * Run:  cd functions && node src/scripts/podiumSim.js
  * Exits non-zero if any assertion fails — CI-friendly.
@@ -158,6 +160,8 @@ function simulateSeason(strategy, repTier, seed) {
     if (isShowDay) {
       state.condition.stamina = Math.max(0, state.condition.stamina - cfg.condition.showStaminaCost);
       scores.push({ day, ...engine.scoreCorps(state, day, `${seed}|${day}`, curves, cfg) });
+      // Judges' tapes after every scored show, as the nightly processor does.
+      engine.applyJudgesTapes(state, day, cfg);
     }
     engine.endOfDay(
       state,
@@ -199,10 +203,18 @@ const ASSISTANT_PLAN = [
  * @param {number} playRate share of days the director plays (0-1)
  * @param {number} repTier reputation tier
  * @param {string} seed
- * @param {{dayPlan?: ((maxBlocks: number) => string[]) | null}} [opts]
+ * @param {{dayPlan?: ((maxBlocks: number) => string[]) | null, showDays?: Set<number>,
+ *   travelStamina?: number}} [opts] `showDays` overrides the show schedule;
+ *   `travelStamina` is charged on top of the show's own stamina each show night
  * @returns {{scores: Array<{day: number, total: number}>}}
  */
-function simulateCommitment(level, playRate, repTier, seed, { dayPlan = null } = {}) {
+function simulateCommitment(
+  level,
+  playRate,
+  repTier,
+  seed,
+  { dayPlan = null, showDays = SHOW_DAYS, travelStamina = 0 } = {}
+) {
   const challenge = {};
   for (const caption of engine.CAPTIONS) challenge[caption] = level;
   const state = engine.createSeasonState({ challenge, repTier }, curves, cfg);
@@ -211,14 +223,14 @@ function simulateCommitment(level, playRate, repTier, seed, { dayPlan = null } =
   const flawless = makeStrategies(seed).flawless.planDay;
   const plan = dayPlan
     ? (/** @type {any} */ st, /** @type {number} */ day, /** @type {{blocks: number}} */ ctx) =>
-        st.condition.stamina < 45 && !SHOW_DAYS.has(day)
+        st.condition.stamina < 45 && !showDays.has(day)
           ? { restDay: true, blocks: [] }
           : { restDay: false, blocks: dayPlan(ctx.blocks) }
     : flawless;
   const scores = [];
   let streak = 0;
   for (let day = 1; day <= 49; day++) {
-    const isShowDay = SHOW_DAYS.has(day);
+    const isShowDay = showDays.has(day);
     const maxBlocks = engine.blocksAvailable(state, { isShowDay, isSpringTraining: false }, cfg);
     const plays = engine.seededUnit(`${seed}|play|${day}`) < playRate;
     let restDay = false;
@@ -246,8 +258,13 @@ function simulateCommitment(level, playRate, repTier, seed, { dayPlan = null } =
     }
     engine.updateForm(state, day, `form|${seed}`, curves, cfg);
     if (isShowDay) {
-      state.condition.stamina = Math.max(0, state.condition.stamina - cfg.condition.showStaminaCost);
+      state.condition.stamina = Math.max(
+        0,
+        state.condition.stamina - cfg.condition.showStaminaCost - travelStamina
+      );
       scores.push({ day, total: engine.scoreCorps(state, day, `${seed}|${day}`, curves, cfg).total });
+      // Judges' tapes after every scored show, as the nightly processor does.
+      engine.applyJudgesTapes(state, day, cfg);
     }
     engine.endOfDay(
       state,
@@ -376,7 +393,10 @@ function main() {
   }
   const upsetRate = upsets / trials;
   console.log(`    upset rate: ${(upsetRate * 100).toFixed(0)}% (${upsets}/${trials})`);
-  assert("F. upset rate in 30-45%", upsetRate >= 0.3 && upsetRate <= 0.45, `${(upsetRate * 100).toFixed(0)}%`);
+  // 25-45% since 2026-10: luck was cut on purpose (decision 39) and the
+  // judges' tapes make an off-year Champion's missed days cheaper to recover
+  // (decision 40), so the Elite now wins on the Champion's lapses, not dice.
+  assert("F. upset rate in 25-45%", upsetRate >= 0.25 && upsetRate <= 0.45, `${(upsetRate * 100).toFixed(0)}%`);
 
   // --- G. Independence (the 2026-07 trajectory-model fix) ------------------
   // The original bug: every corps was anchored to the same per-day historical
@@ -567,6 +587,44 @@ function main() {
     `${(effortRate * 100).toFixed(0)}%`
   );
   assert("I4. luck is bounded (identical play spans <= 3.0 points p5-p95 at finals)", luckSpread <= 3, luckSpread.toFixed(2));
+
+  // --- J. Shows pay their way (2026-10) -----------------------------------
+  // Before: a show day's 8 blocks ran at half value and performing taught the
+  // corps nothing, so a full schedule finished ~8 points below attending only
+  // the automatic shows — the game paid directors to skip shows and starve
+  // the fields. Show-day blocks at 3/4 value plus the judges' tapes must make
+  // a moderate schedule at least break even, while an overloaded tour of long
+  // hauls still costs — routing and rest decide it, not avoidance.
+  console.log("\nJ. Shows pay their way (tier 4, challenge 8, even block mix):");
+  const AUTO_ONLY = new Set([28, 35, 41, 47, 48, 49]);
+  const MODERATE = new Set([4, 10, 13, 17, 20, 24, 28, 31, 35, 38, 41, 47, 48, 49]);
+  const MAXIMAL = new Set([
+    2, 4, 6, 7, 9, 11, 13, 14, 16, 18, 20, 21, 23, 25, 27, 28, 30, 32, 34, 35, 37, 39, 40, 41, 43, 44, 47, 48, 49,
+  ]);
+  const J_SEEDS = 24;
+  const scheduleFinals = (/** @type {Set<number>} */ showDays, /** @type {number} */ travelStamina) =>
+    mean(
+      Array.from({ length: J_SEEDS }, (_, s) =>
+        showTotal(simulateCommitment(8, 1, 4, `shows|${s}`, { showDays, travelStamina }), 49)
+      )
+    );
+  const autoOnly = scheduleFinals(AUTO_ONLY, 4);
+  const moderate = scheduleFinals(MODERATE, 4);
+  const maximalFar = scheduleFinals(MAXIMAL, 9);
+  console.log(
+    `    finals: auto-only (6 shows) ${autoOnly.toFixed(2)} · moderate (14) ${moderate.toFixed(2)} · ` +
+      `maximal on long hauls (29) ${maximalFar.toFixed(2)}`
+  );
+  assert(
+    "J1. a moderate schedule breaks even (>= auto-only - 0.25)",
+    moderate >= autoOnly - 0.25,
+    `${(moderate - autoOnly).toFixed(2)}`
+  );
+  assert(
+    "J2. an overloaded tour of long hauls still costs (>= 1.5 below moderate)",
+    moderate - maximalFar >= 1.5,
+    `${(moderate - maximalFar).toFixed(2)}`
+  );
 
   // --- Summary --------------------------------------------------------------
   const summary =

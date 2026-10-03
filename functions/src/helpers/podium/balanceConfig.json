@@ -90,8 +90,8 @@
     "blocksPerDay": 12,
     "blocksPerDaySpringTraining": 20,
     "blocksOnShowDay": 8,
-    "showDayYieldMultiplier": 0.5,
-    "primaryGain": 0.027,
+    "showDayYieldMultiplier": 0.75,
+    "primaryGain": 0.0235,
     "repeatBlockMultipliers": [
       1.0,
       1.0,
@@ -289,7 +289,7 @@
       "8": 100
     },
     "challengeModel": {
-      "_note": "Challenge model v2 (2026-10). Under v1 every caption's curve shape came from the archetype with the nearest ceiling, which handed challenge 8 the early-saturating shape: all-8 outscored every other build on every show day and mid levels were a trap. v2 makes the knob a bet. dayOneShareByChallenge: the fraction of its finals ceiling a caption's potential stands at on day 1 (an easy book is mostly there in June; a hard book surges in August), with the caption's growth rate taken from its mined archetypes (growthRate is the fallback). floorFractionByChallenge: the share of potential an unrehearsed caption still fields (replaces perfFloorFraction for v2 states) - a dirty hard book scores below a dirty easy one. fullRealizationByChallenge: the attainment (installed x clean) at which the book pays in full (replaces attainmentFullRealization) - a hard book asks for more cleaning. Targets, held by podiumSim section H: easy books lead the opening weeks, the best level climbs through the season, a director who cleans every day wins finals at 8, an absent one is better off with an easy book. States carry the version they were created under (state.challengeModel); a state with no stamp is v1 for life, so a change here never reshapes a season in flight.",
+      "_note": "Challenge model v2 (2026-10). Under v1 every caption's curve shape came from the archetype with the nearest ceiling, which handed challenge 8 the early-saturating shape: all-8 outscored every other build on every show day and mid levels were a trap. v2 makes the knob a bet. dayOneShareByChallenge: the fraction of its finals ceiling a caption's potential stands at on day 1 (an easy book is mostly there in June; a hard book surges in August), with the caption's growth rate taken from its mined archetypes (growthRate is the fallback). floorFractionByChallenge: the share of potential an unrehearsed caption still fields (replaces perfFloorFraction for v2 states) - a dirty hard book scores below a dirty easy one. fullRealizationByChallenge: the attainment (installed x clean) at which the book pays in full (replaces attainmentFullRealization) - a hard book asks for more cleaning (re-tuned 0.62-0.70 with the 2026-10 show-day change). Targets, held by podiumSim section H: easy books lead the opening weeks, the best level climbs through the season, a director who cleans every day wins finals at 8, an absent one is better off with an easy book. States carry the version they were created under (state.challengeModel); a state with no stamp is v1 for life, so a change here never reshapes a season in flight.",
       "version": 2,
       "growthRate": 0.05,
       "dayOneShareByChallenge": {
@@ -313,14 +313,14 @@
         "8": 0.43
       },
       "fullRealizationByChallenge": {
-        "1": 0.64,
-        "2": 0.653,
-        "3": 0.666,
-        "4": 0.679,
-        "5": 0.691,
-        "6": 0.704,
-        "7": 0.717,
-        "8": 0.73
+        "1": 0.62,
+        "2": 0.631,
+        "3": 0.643,
+        "4": 0.654,
+        "5": 0.666,
+        "6": 0.677,
+        "7": 0.689,
+        "8": 0.7
       }
     }
   },
@@ -343,7 +343,7 @@
       "7": 90
     },
     "seasonGainCap": 9,
-    "climbThreshold": 82,
+    "climbThreshold": 84,
     "underperformThreshold": 45,
     "gainWindow": 8,
     "underperformDecay": 2,
@@ -425,6 +425,11 @@
       "worldClass": 6000
     },
     "showPayout": 30,
+    "medalPurse": {
+      "gold": 25,
+      "silver": 15,
+      "bronze": 10
+    },
     "fundraiser": {
       "yield": 3,
       "staminaCost": 2
@@ -498,6 +503,14 @@
       "openClassFinals": 8,
       "worldSemifinals": 25,
       "worldFinals": 12
+    }
+  },
+  "shows": {
+    "_note": "Shows are not pure cost (2026-10). Before: a show day's 8 blocks ran at half value, so a full show schedule finished ~8 points below attending only the automatic shows - the game paid you to skip shows. Now show-day blocks run at 3/4 value (rehearsal.showDayYieldMultiplier) and judgesTapes: after every scored show the judges' sheets point at the corps' `captions` weakest captions (lowest installed x clean) and it cleans them from the tapes - cleanGain / contentGain of the remaining headroom, at the caption's challenge install rate (engine.applyJudgesTapes). Result (podiumSim section J): a moderate schedule is a hair best, a maximal schedule costs ~1.5 points on nearby shows and ~3 on long hauls - routing and rest decide it. budget.medalPurse pays Corps Budget for a top-3 finish (same rule as the medal).",
+    "judgesTapes": {
+      "captions": 2,
+      "cleanGain": 0.08,
+      "contentGain": 0.03
     }
   },
   "fanFavorite": {

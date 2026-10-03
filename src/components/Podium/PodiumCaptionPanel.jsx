@@ -4,7 +4,7 @@
 // Scores-tab redesign (Phase 6); this is the daily working view.
 
 import React from 'react';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Film } from 'lucide-react';
 import { PODIUM_CAPTIONS, CAPTION_LABELS, REP_TIER_NAMES } from './podiumConstants';
 
 /**
@@ -41,6 +41,17 @@ export default function PodiumCaptionPanel({ podium }) {
 
   const day = podium.data.competitionDay;
   const repTier = state.repTier || 1;
+  // Judges' tapes from the latest show (§5.4): the two weakest captions the
+  // sheets pointed at, cleaned from the tapes overnight. Shown until the next
+  // show replaces them.
+  /** @type {{ day: number, captions: string[] } | null} */
+  const tapes =
+    state.lastTapes &&
+    Array.isArray(state.lastTapes.captions) &&
+    state.lastTapes.captions.length > 0
+      ? state.lastTapes
+      : null;
+  const tapedCaptions = new Set(tapes ? tapes.captions : []);
 
   return (
     <div className="bg-surface-card border border-line rounded-none p-4 space-y-3">
@@ -67,6 +78,19 @@ export default function PodiumCaptionPanel({ podium }) {
         </span>
       </div>
 
+      {tapes && (
+        <p className="flex items-start gap-1.5 text-[10px] text-secondary">
+          <Film className="w-3 h-3 mt-px text-interactive shrink-0" aria-hidden="true" />
+          <span>
+            Judges’ tapes, Day {tapes.day}: the sheets flagged{' '}
+            {tapes.captions
+              .map((c) => /** @type {Record<string, string>} */ (CAPTION_LABELS)[c] || c)
+              .join(' and ')}{' '}
+            — cleaned from the tapes overnight.
+          </span>
+        </p>
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
         {PODIUM_CAPTIONS.map((caption) => {
           const cap = state.captions[caption] || {};
@@ -80,6 +104,12 @@ export default function PodiumCaptionPanel({ podium }) {
                   {neglected && (
                     <span title={`Unrehearsed ${idleDays} days — cleanliness is decaying`}>
                       <AlertTriangle className="w-3 h-3 text-warning" />
+                    </span>
+                  )}
+                  {tapedCaptions.has(caption) && (
+                    <span title={`Worked from the Day ${tapes?.day} judges’ tapes`}>
+                      <Film className="w-3 h-3 text-interactive" aria-hidden="true" />
+                      <span className="sr-only">Worked from the judges’ tapes</span>
                     </span>
                   )}
                 </div>

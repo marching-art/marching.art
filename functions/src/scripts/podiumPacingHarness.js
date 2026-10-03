@@ -120,6 +120,9 @@ function playSeason(repTier, challengeLevel, seed, { skipRate = 0, optimal = fal
         0,
         state.condition.stamina - balance.condition.showStaminaCost
       );
+      // The night's judges' tapes clean the weakest captions (§5.4), exactly
+      // as the processor applies them after every scored show.
+      if (day < 49) engine.applyJudgesTapes(state, day, balance);
     }
   }
   return engine.scoreCorps(state, 49, `harness|${seed}`, curves, balance);

@@ -1,6 +1,6 @@
 // RehearsalPlanner — the Podium Class daily verb (Phase 2, design §6.1).
 // One screen: pick today's rehearsal blocks (12 on a normal day, 20 in spring
-// training, 8 on a show day at half value each), watch the Action Complete
+// training, 8 on a show day at reduced value each), watch the Action Complete
 // panel, or declare a rest day. Condition strip included. After the 9 PM ET
 // show the day has rolled but the blocks stay closed until 2 AM ET (a corps
 // doesn't rehearse after the show) — the grid gives way to a lights-out notice
@@ -84,6 +84,9 @@ export default function RehearsalPlanner({ podium }) {
 
   // Server-authoritative block budget (stamina-adjusted). Falls back to the
   // freshness-normalized local count if an older backend hasn't shipped these.
+  // Server-reported show-day shape (older backends: the pre-2026-10 values).
+  const showDayBlocks = data.blockCaps?.showDay ?? 8;
+  const showDayValuePct = data.showDayValuePct ?? 50;
   /** @type {number[]} */
   const repeatLadder = Array.isArray(data.repeatLadder) ? data.repeatLadder : [];
   /** @type {Record<string, number>} */
@@ -169,7 +172,7 @@ export default function RehearsalPlanner({ podium }) {
           <span className="text-[10px] text-secondary ml-auto text-right leading-tight">
             {today.restDay
               ? 'Resting — you still perform with today’s book'
-              : 'Light run-through: 8 blocks, half value each'}
+              : `Light run-through: ${showDayBlocks} blocks, ${showDayValuePct}% value each · judges’ tapes after the show`}
           </span>
         </div>
       )}

@@ -25,7 +25,7 @@ const SECTIONS = [
   {
     n: 3,
     title: 'The daily loop',
-    body: `Every day you get 12 rehearsal blocks (20 in spring training; on show days you get 8, each worth half). A corps doesn't rehearse after the show: the day ends with the 9 PM ET recap and the next day's blocks open at 2 AM ET. Seven block types cover the ensemble: Stretching/PT, Visual Basics, Visual Ensemble, Guard Sectionals, Brass Sectionals, Percussion Sectionals (battery + front ensemble), and Full Ensemble. Each block installs CONTENT early and CLEANS it late — the balance shifts across the season, just like a real summer. Hammering the same block all day pays less per rep after the first four. A caption you ignore starts to decay after a few days.`,
+    body: `Every day you get 12 rehearsal blocks (20 in spring training; on show days you get 8, each worth three-quarters, and the judges’ tapes after the show clean up your two weakest captions). A corps doesn't rehearse after the show: the day ends with the 9 PM ET recap and the next day's blocks open at 2 AM ET. Seven block types cover the ensemble: Stretching/PT, Visual Basics, Visual Ensemble, Guard Sectionals, Brass Sectionals, Percussion Sectionals (battery + front ensemble), and Full Ensemble. Each block installs CONTENT early and CLEANS it late — the balance shifts across the season, just like a real summer. Hammering the same block all day pays less per rep after the first four. A caption you ignore starts to decay after a few days.`,
   },
   {
     n: 4,
@@ -40,7 +40,7 @@ const SECTIONS = [
   {
     n: 6,
     title: 'The tour: shows, travel, majors',
-    body: `Pick up to 4 shows a week from the same schedule every class uses (weeks with a major allow 3, and finals week allows 2 on its open days). Miles cost Corps Budget and stamina — routing matters, and southern venues in July drain more. Three majors anchor the season for everyone: the Southwestern Championship in San Antonio (Day 28), the Southeastern in Atlanta (Day 35), and the two-night Eastern Classic in Allentown (Days 41–42, one registration covers both nights, you perform your assigned night). Podium corps attend all three automatically, plus Championship Week in Indianapolis — the Podium Division runs the exact same finals-week bracket as the Fantasy Division, in parallel, scored the Podium way on its own results board: Open & A Class Prelims (Day 45), Open & A Class Finals (Day 46 — top 8 Open, top 4 A advance), then everyone marches World Championship Prelims (Day 47), the top 25 to Semifinals (Day 48), and the top 12 to Finals (Day 49).`,
+    body: `Pick up to 4 shows a week from the same schedule every class uses (weeks with a major allow 3, and finals week allows 2 on its open days). Miles cost Corps Budget and stamina — routing matters, and southern venues in July drain more. Three majors anchor the season for everyone: the Southwestern Championship in San Antonio (Day 28), the Southeastern in Atlanta (Day 35), and the two-night Eastern Classic in Allentown (Days 41–42, one registration covers both nights, you perform your assigned night). Podium corps attend all three automatically, plus Championship Week in Indianapolis — the Podium Division runs the exact same finals-week bracket as the Fantasy Division, in parallel, scored the Podium way on its own results board: Open & A Class Prelims (Day 45), Open & A Class Finals (Day 46 — top 8 Open, top 4 A advance), then everyone marches World Championship Prelims (Day 47), the top 25 to Semifinals (Day 48), and the top 12 to Finals (Day 49). Performing teaches: after every scored show your corps works the judges’ tapes, cleaning the two captions the sheets flagged as weakest, so a sensible tour pays its way — it’s the long hauls and the no-rest stretches that cost you. A top-three finish in your class also pays a Corps Budget purse (gold 25, silver 15, bronze 10) on top of the show payout.`,
   },
   {
     n: 7,
@@ -60,7 +60,7 @@ const SECTIONS = [
   {
     n: 10,
     title: 'Money: Corps Budget and CorpsCoin',
-    body: `Your Corps Budget is the season operating ledger: funded by an optional capped CorpsCoin commitment plus show payouts and fundraiser blocks; spent on travel, food, camp days, and clinicians. CorpsCoin is the game-wide currency. Nothing you can buy ever adds a point to a score — donations and purchases grant zero competitive advantage, ever.`,
+    body: `Your Corps Budget is the season operating ledger: funded by an optional capped CorpsCoin commitment plus show payouts, medal purses and fundraiser blocks; spent on travel, food, camp days, and clinicians. CorpsCoin is the game-wide currency. Nothing you can buy ever adds a point to a score — donations and purchases grant zero competitive advantage, ever.`,
   },
   {
     n: 11,
