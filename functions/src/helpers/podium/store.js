@@ -490,6 +490,24 @@ function planBlockCaps() {
 }
 
 /**
+ * Today's ensemble readiness per gated block ({ fullEnsemble: 0.72, ... },
+ * 0..1, three decimals) — the multiplier the NEXT tap of that block rehearses
+ * at before the repeat ladder (engine.ensembleReadiness). Only blocks with a
+ * readiness rule appear, so an empty object means nothing is gated.
+ * @param {any} state stored or hydrated podium state (reads caption content)
+ * @returns {Record<string, number>}
+ */
+function blockReadiness(state) {
+  /** @type {Record<string, number>} */
+  const out = {};
+  for (const [blockType, block] of Object.entries(balance.blocks)) {
+    if (!(/** @type {any} */ (block).readiness)) continue;
+    out[blockType] = Number(engine.ensembleReadiness(state, block).toFixed(3));
+  }
+  return out;
+}
+
+/**
  * The two facts the daily-challenge verifiers can't read off the profile,
  * because Podium keeps its show picks and (as a string, not a `{theme}` object)
  * its show concept in this server-only state doc. Returns null when the
@@ -853,6 +871,7 @@ module.exports = {
   showPickFor,
   computeTodayBlockBudget,
   planBlockCaps,
+  blockReadiness,
   loadPodiumChallengeFacts,
   profileRef,
   stateRef,

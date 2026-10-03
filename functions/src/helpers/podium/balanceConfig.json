@@ -29,6 +29,14 @@
         "VA": 1.0,
         "CG": 0.45
       },
+      "readiness": {
+        "captions": [
+          "VP",
+          "CG"
+        ],
+        "fullAt": 0.6,
+        "floor": 0.35
+      },
       "staminaCost": 2.75
     },
     "guardSectionals": {
@@ -65,6 +73,16 @@
         "MA": 1.0,
         "P": 0.45
       },
+      "readiness": {
+        "captions": [
+          "B",
+          "P",
+          "CG",
+          "VP"
+        ],
+        "fullAt": 0.6,
+        "floor": 0.35
+      },
       "staminaCost": 3.25
     }
   },
@@ -73,20 +91,20 @@
     "blocksPerDaySpringTraining": 20,
     "blocksOnShowDay": 8,
     "showDayYieldMultiplier": 0.5,
-    "primaryGain": 0.025,
+    "primaryGain": 0.027,
     "repeatBlockMultipliers": [
       1.0,
       1.0,
-      1.0,
-      1.0,
-      0.6,
-      0.6,
-      0.6,
-      0.6,
+      0.8,
+      0.65,
+      0.5,
+      0.4,
       0.35,
-      0.35,
-      0.35,
-      0.35
+      0.3,
+      0.25,
+      0.25,
+      0.25,
+      0.25
     ],
     "assistantYield": 0.85,
     "assistantDecay": {
@@ -247,8 +265,8 @@
     "judgeNoiseScale": 0.6,
     "softCapKnee": 0.96,
     "form": {
-      "max": 0.04,
-      "step": 0.023,
+      "max": 0.02,
+      "step": 0.012,
       "reversion": 0.3
     },
     "repCeilingPercentileByTier": {

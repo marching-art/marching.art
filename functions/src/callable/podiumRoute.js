@@ -688,6 +688,11 @@ exports.getPodiumState = onCall({ cors: true }, async (request) => {
     rehearsalOpensAt:
       overnight.locked && overnight.opensAt ? overnight.opensAt.toISOString() : null,
     blockCaps,
+    // What the next tap of each block is worth before staff/condition: the
+    // repeat ladder (index = blocks of that type already run today) and each
+    // ensemble block's readiness (sections' installed content).
+    repeatLadder: store.balance.rehearsal.repeatBlockMultipliers,
+    blockReadiness: store.blockReadiness(state),
     assistant,
     division,
     divisionLabel: divisions.DIVISION_LABELS[division],

@@ -760,6 +760,9 @@ exports.allocateRehearsalBlock = onCall({ cors: true }, async (request) => {
       // The cap the block was accepted against, so the planner's "n / cap"
       // keeps its denominator through a run of taps.
       maxBlocksToday: maxBlocks,
+      // Readiness moves as sectionals install the parts; the planner's
+      // next-tap hints read it from here between full reloads.
+      blockReadiness: store.blockReadiness(state),
     };
   });
 

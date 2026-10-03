@@ -22,6 +22,9 @@
  *   H. Challenge levels are a bet — easy books lead the opening weeks, the
  *      best level climbs through the season, a cleaned hard book wins finals,
  *      and an under-rehearsed one loses to an easier book.
+ *   I. Rehearsal choices matter — one-button spam loses, sectionals-first
+ *      timing pays early, a daily director beats a part-timer, and identical
+ *      play stays inside a bounded luck spread.
  *
  * Run:  cd functions && node src/scripts/podiumSim.js
  * Exits non-zero if any assertion fails — CI-friendly.
@@ -42,6 +45,27 @@ const ROTATION = [
   "visualEnsemble",
   "guardSectionals",
 ];
+
+/** A flawless director's day after warmup: every rehearsal block in turn. */
+const BALANCED_ORDER = [
+  "fullEnsemble",
+  "visualBasics",
+  "brassSectionals",
+  "percussionSectionals",
+  "guardSectionals",
+  "visualEnsemble",
+];
+
+/**
+ * Warmup, then an even mix of every rehearsal block. Under the repeat ladder
+ * and ensemble readiness this beats weakest-caption targeting that tops the day
+ * up with Full Ensemble (the pre-2026-10 flawless policy).
+ * @param {number} blocks blocks available today
+ * @returns {string[]}
+ */
+function balancedDay(blocks) {
+  return ["warmup", ...Array.from({ length: blocks - 1 }, (_, i) => BALANCED_ORDER[i % BALANCED_ORDER.length])];
+}
 
 /**
  * Strategy = { name, challenge(caption)->1..8, planDay(state, day, ctx) ->
@@ -68,57 +92,25 @@ function makeStrategies(seed) {
     flawless: {
       challenge: () => 8,
       planDay: (state, day, { blocks }) => {
-        // Rests exactly when stamina demands it; warmup every working day;
-        // targets the weakest captions with remaining blocks.
+        // Rests exactly when stamina demands it; warmup every working day,
+        // then an even mix of every block (balancedDay).
         if (state.condition.stamina < 45 && !SHOW_DAYS.has(day)) {
           return { restDay: true, blocks: [] };
         }
-        const weakest = Object.entries(state.captions)
-          .map(([caption, c]) => ({ caption, value: c.content * (0.72 + 0.28 * c.clean) }))
-          .sort((a, b) => a.value - b.value)
-          .map((e) => e.caption);
-        const picks = [];
-        for (const caption of weakest) {
-          for (const [blockType, block] of Object.entries(cfg.blocks)) {
-            if (blockType === "warmup") continue;
-            if ((block.captions[caption] || 0) >= 1 && !picks.includes(blockType)) {
-              picks.push(blockType);
-              break;
-            }
-          }
-          if (picks.length >= blocks - 1) break;
-        }
-        while (picks.length < blocks - 1) picks.push("fullEnsemble");
-        return { restDay: false, blocks: ["warmup", ...picks] };
+        return { restDay: false, blocks: balancedDay(blocks) };
       },
     },
     goodButImperfect: {
       challenge: () => 8,
       planDay: (state, day, { blocks }) => {
-        // The complacent champion: plays a champion's game — weakest-caption
-        // targeting, warmups, stamina-aware rests — but skips ~6% of days
+        // The complacent champion: plays a champion's game — an even block
+        // mix, warmups, stamina-aware rests — but skips ~6% of days
         // outright. One bad habit, not a bad director.
         if (engine.seededUnit(`${seed}|skip|${day}`) < 0.06) return { restDay: false, blocks: [] };
         if (state.condition.stamina < 45 && !SHOW_DAYS.has(day)) {
           return { restDay: true, blocks: [] };
         }
-        const weakest = Object.entries(state.captions)
-          .map(([caption, c]) => ({ caption, value: c.content * (0.72 + 0.28 * c.clean) }))
-          .sort((a, b) => a.value - b.value)
-          .map((e) => e.caption);
-        const picks = [];
-        for (const caption of weakest) {
-          for (const [blockType, block] of Object.entries(cfg.blocks)) {
-            if (blockType === "warmup") continue;
-            if ((block.captions[caption] || 0) >= 1 && !picks.includes(blockType)) {
-              picks.push(blockType);
-              break;
-            }
-          }
-          if (picks.length >= blocks - 1) break;
-        }
-        while (picks.length < blocks - 1) picks.push("fullEnsemble");
-        return { restDay: false, blocks: ["warmup", ...picks] };
+        return { restDay: false, blocks: balancedDay(blocks) };
       },
     },
     brassSpam: {
@@ -203,13 +195,26 @@ const ASSISTANT_PLAN = [
  * (weakest-caption targeting, stamina-aware rests) on `playRate` of days and
  * leaves the rest to the assistant director at its streak-decayed yield — the
  * processor's real absence path.
+ * @param {number} level uniform challenge level 1-8
+ * @param {number} playRate share of days the director plays (0-1)
+ * @param {number} repTier reputation tier
+ * @param {string} seed
+ * @param {{dayPlan?: ((maxBlocks: number) => string[]) | null}} [opts]
  * @returns {{scores: Array<{day: number, total: number}>}}
  */
-function simulateCommitment(level, playRate, repTier, seed) {
+function simulateCommitment(level, playRate, repTier, seed, { dayPlan = null } = {}) {
   const challenge = {};
   for (const caption of engine.CAPTIONS) challenge[caption] = level;
   const state = engine.createSeasonState({ challenge, repTier }, curves, cfg);
-  const plan = makeStrategies(seed).flawless.planDay;
+  // A fixed day plan (`dayPlan(maxBlocks)`) replaces the flawless director's
+  // choices on the days they play; rests stay stamina-aware either way.
+  const flawless = makeStrategies(seed).flawless.planDay;
+  const plan = dayPlan
+    ? (/** @type {any} */ st, /** @type {number} */ day, /** @type {{blocks: number}} */ ctx) =>
+        st.condition.stamina < 45 && !SHOW_DAYS.has(day)
+          ? { restDay: true, blocks: [] }
+          : { restDay: false, blocks: dayPlan(ctx.blocks) }
+    : flawless;
   const scores = [];
   let streak = 0;
   for (let day = 1; day <= 49; day++) {
@@ -511,6 +516,57 @@ function main() {
     bestLevel(light, 49) < bestLevel(grinder, 49),
     `light ${bestLevel(light, 49)} vs grinder ${bestLevel(grinder, 49)}`
   );
+
+  // --- I. Rehearsal choices matter (gameplay depth, 2026-10) --------------
+  // The 2026-10 engine probe found warmup + 11x Full Ensemble within ~1 point
+  // of the best plan, Full Ensemble spam ahead of a sectionals-first opener,
+  // and one night's form swing (~3.6 points p5-p95) larger than the gap
+  // between a careful plan and a lazy one. Ensemble readiness, the repeat
+  // ladder and a calmer form walk must hold the opposite.
+  console.log("\nI. Rehearsal choices matter (tier 4, challenge 8):");
+  const I_SEEDS = 40;
+  const feSpam = (/** @type {number} */ n) => ["warmup", ...Array(n - 1).fill("fullEnsemble")];
+  const sectionalsFirst = (/** @type {number} */ n) => [
+    "warmup",
+    ...Array.from({ length: n - 1 }, (_, i) =>
+      ["brassSectionals", "percussionSectionals", "guardSectionals", "visualBasics"][i % 4]
+    ),
+  ];
+  const showTotal = (/** @type {{scores: Array<{day: number, total: number}>}} */ run, /** @type {number} */ day) =>
+    /** @type {{total: number}} */ (run.scores.find((s) => s.day === day)).total;
+  const iRuns = (/** @type {number} */ playRate, /** @type {any} */ opts = {}) =>
+    Array.from({ length: I_SEEDS }, (_, s) => simulateCommitment(8, playRate, 4, `depth|${s}`, opts));
+  const mean = (/** @type {number[]} */ xs) => xs.reduce((a, b) => a + b, 0) / xs.length;
+  const iBalanced = iRuns(1);
+  const iSpam = iRuns(1, { dayPlan: feSpam });
+  const iSections = iRuns(1, { dayPlan: sectionalsFirst });
+  const iPartTime = iRuns(0.7);
+  const balancedFinals = iBalanced.map((r) => showTotal(r, 49));
+  const spamGap = mean(balancedFinals) - mean(iSpam.map((r) => showTotal(r, 49)));
+  const openerEdge = mean(iSections.map((r) => showTotal(r, 10))) - mean(iSpam.map((r) => showTotal(r, 10)));
+  const partTimeFinals = iPartTime.map((r) => showTotal(r, 49));
+  let effortWins = 0;
+  for (const a of balancedFinals) for (const b of partTimeFinals) if (a > b) effortWins++;
+  const effortRate = effortWins / (balancedFinals.length * partTimeFinals.length);
+  const sorted = [...balancedFinals].sort((a, b) => a - b);
+  const luckSpread = sorted[Math.floor(I_SEEDS * 0.95) - 1] - sorted[Math.floor(I_SEEDS * 0.05)];
+  console.log(
+    `    finals: balanced ${mean(balancedFinals).toFixed(2)} · FE spam gap ${spamGap.toFixed(2)} · ` +
+      `day-10 sectionals-first edge ${openerEdge.toFixed(2)} · daily beats 70%-play ${(effortRate * 100).toFixed(0)}% · ` +
+      `identical-play spread ${luckSpread.toFixed(2)}`
+  );
+  assert("I1. one-button spam loses (Full Ensemble spam >= 3 points behind an even mix)", spamGap >= 3, spamGap.toFixed(2));
+  assert(
+    "I2. timing matters (sectionals-first leads Full Ensemble spam on day 10 by >= 1)",
+    openerEdge >= 1,
+    openerEdge.toFixed(2)
+  );
+  assert(
+    "I3. effort beats luck (a daily director out-scores a 70%-play one in >= 78% of pairings; v1 tuning: 67%)",
+    effortRate >= 0.78,
+    `${(effortRate * 100).toFixed(0)}%`
+  );
+  assert("I4. luck is bounded (identical play spans <= 3.0 points p5-p95 at finals)", luckSpread <= 3, luckSpread.toFixed(2));
 
   // --- Summary --------------------------------------------------------------
   const summary =

@@ -387,9 +387,17 @@ Notes:
 - Color guard (`CG`) has its own sectional block (primary CG, secondary VA/GE2 — the guard _is_
   a visual-effect engine) and still gains secondarily from Visual Ensemble and Full Ensemble, so
   a guard-forward build is viable and an ensemble-only guard stays merely adequate.
-- **Diminishing returns within a day:** the 2nd consecutive block of the same type yields ~60%, the
-  3rd ~35%. Balance is mechanically rewarded, spam is not — this is the direct implementation of
-  "realistic variation in caption peaks and lows based on a balance of rehearsal."
+- **Diminishing returns within a day:** the first two blocks of a type each day run at full value,
+  then the ladder tapers (`repeatBlockMultipliers`: 1, 1, 0.8, 0.65, 0.5, 0.4, … 0.25 since 2026-10;
+  it was 4 full reps, then 0.6, then 0.35). Balance is mechanically rewarded, spam is not — this is
+  the direct implementation of "realistic variation in caption peaks and lows based on a balance of
+  rehearsal."
+- **Ensemble readiness (2026-10, decision 39):** Full Ensemble and Visual Ensemble assemble the
+  sections' parts, so they rehearse at full value only once those parts are installed —
+  `blocks.<type>.readiness`: the mean `content` of the gating captions (Full Ensemble: B, P, CG, VP;
+  Visual Ensemble: VP, CG) over `fullAt` (0.6), never below `floor` (0.35). Sectionals first,
+  ensembles once the book is in: the opening weeks have a right order. The planner shows each
+  block's next-tap value (repeat ladder × readiness) before the tap.
 - **Phase-dependent yield:** early season, blocks feed mostly `content`; late season, mostly
   `clean`. The engine surfaces this ("Full Ensemble today: +2.1% GE content, +0.4% clean") so the
   player learns the season's texture.
@@ -1785,6 +1793,19 @@ proven the machinery. Total: ~16–20 engineering weeks to beta.
     realization threshold: easy books lead the opening weeks, hard books win finals only when cleaned.
     Asserted by `podiumSim.js` section H and the v2 block in `engine.test.js`. States are stamped with
     the model at registration; legacy states keep v1.
+
+39. **Rehearsal choices matter (2026-10).** The engine probe found warmup + 11 Full Ensemble within
+    ~1 point of the best plan, Full Ensemble spam 5.6 points AHEAD of a sectionals-first opener on
+    day 10, and a ~4-point p5–p95 form swing for identical play — luck outweighed the plan. Shipped:
+    ensemble readiness (§5.2), a tapering repeat ladder (two full reps), the form walk halved
+    (`scoring.form` max 0.04 → 0.02, step 0.023 → 0.012), and `primaryGain` 0.025 → 0.027 so a
+    balanced director's finals sit where they did (tier-4 flawless 89.5; Champion still season 11).
+    The flawless policy in `podiumSim.js` / `podiumPacingHarness.js` is now an even mix of every
+    block (`balancedDay`) — weakest-caption targeting topped up with Full Ensemble is no longer
+    near-optimal. `podiumSim.js` section I: spam loses ≥ 3 (5.9), sectionals-first leads on day 10
+    (+1.45), a daily director beats a 70%-play one in 82% of pairings (v1 tuning: 67%), identical
+    play spans 2.3 points (v1: 4.2). These are field-wide rules: they apply to every corps from the
+    deploy on, including a season in flight.
 
 **Still open:**
 

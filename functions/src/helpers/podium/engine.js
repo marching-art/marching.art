@@ -291,6 +291,28 @@ function createSeasonState(params, curves, cfg) {
 }
 
 /**
+ * Ensemble readiness (0..1 yield multiplier): an ensemble block assembles the
+ * sections' parts, so it only rehearses at full value once enough of those
+ * parts are installed. `block.readiness` lists the section captions whose mean
+ * CONTENT gates the block; the multiplier rises linearly to 1 at `fullAt` and
+ * never drops below `floor`. A block without a readiness rule returns 1, so a
+ * config without one rehearses exactly as before. Pure.
+ * @param {any} state season state
+ * @param {any} block a cfg.blocks entry
+ * @returns {number}
+ */
+function ensembleReadiness(state, block) {
+  const rule = block && block.readiness;
+  if (!rule || !Array.isArray(rule.captions) || rule.captions.length === 0 || !(rule.fullAt > 0)) {
+    return 1;
+  }
+  let sum = 0;
+  for (const caption of rule.captions) sum += (state.captions[caption] && state.captions[caption].content) || 0;
+  const mean = sum / rule.captions.length;
+  return Math.max(rule.floor || 0, Math.min(1, mean / rule.fullAt));
+}
+
+/**
  * Allocate one rehearsal block. Mutates state; returns itemized gains
  * (the "Action Complete" panel payload).
  * @param {object} state season state
@@ -316,6 +338,9 @@ function allocateBlock(state, blockType, day, blockIndexToday, blocksSoFarToday,
     cfg.rehearsal.repeatBlockMultipliers[
       Math.min(repeats, cfg.rehearsal.repeatBlockMultipliers.length - 1)
     ];
+  // Judged BEFORE this block's own gains land: the parts as they stood when
+  // the ensemble walked onto the field.
+  const readinessMult = ensembleReadiness(state, block);
   const [contentShare, cleanShare] = contentSplitForDay(Math.max(1, day), cfg);
   // Spring training installs: force content-heavy split regardless of date.
   const [cShare, clShare] = day < 1 ? [0.85, 0.15] : [contentShare, cleanShare];
@@ -340,7 +365,14 @@ function allocateBlock(state, blockType, day, blockIndexToday, blocksSoFarToday,
     // Higher challenge installs slower (harder book).
     const challengeMult = Math.pow(4 / cap.challenge, cfg.rehearsal.challengeGainExponent);
     const gain =
-      cfg.rehearsal.primaryGain * weight * repeatMult * challengeMult * conditionMult * yieldMultiplier * showDayMult;
+      cfg.rehearsal.primaryGain *
+      weight *
+      repeatMult *
+      readinessMult *
+      challengeMult *
+      conditionMult *
+      yieldMultiplier *
+      showDayMult;
     const contentGain = gain * cShare * (1 - cap.content);
     const cleanGain = gain * clShare * (1 - cap.clean);
     cap.content = Math.min(1, cap.content + contentGain);
@@ -355,7 +387,14 @@ function allocateBlock(state, blockType, day, blockIndexToday, blocksSoFarToday,
   const staminaCost = block.staminaCost * (1 - costReduction) * showDayMult;
   state.condition.stamina = Math.max(0, state.condition.stamina - staminaCost);
 
-  return { blockType, day, gains, staminaCost, repeatMult };
+  return {
+    blockType,
+    day,
+    gains,
+    staminaCost,
+    repeatMult,
+    readinessMult: Number(readinessMult.toFixed(3)),
+  };
 }
 
 /**
@@ -765,6 +804,7 @@ module.exports = {
   curveForChallenge,
   veteranStartFraction,
   createSeasonState,
+  ensembleReadiness,
   allocateBlock,
   endOfDay,
   blocksAvailable,

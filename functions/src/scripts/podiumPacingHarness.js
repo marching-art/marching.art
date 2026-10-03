@@ -38,12 +38,22 @@ const ROTATION = [
   "fullEnsemble",
 ];
 
+/** A flawless director's day after warmup: every rehearsal block in turn. */
+const BALANCED_ORDER = [
+  "fullEnsemble",
+  "visualBasics",
+  "brassSectionals",
+  "percussionSectionals",
+  "guardSectionals",
+  "visualEnsemble",
+];
+
 /**
  * The ordered block plan for one day.
  * @param {object} state season state
  * @param {number} maxBlocks blocks available today
- * @param {boolean} optimal true = a flawless director (warmup + weakest-caption
- *   targeting); false = a diligent-but-simple rotation
+ * @param {boolean} optimal true = a flawless director (warmup + an even mix of
+ *   every block, BALANCED_ORDER); false = a diligent-but-simple rotation
  * @param {{index:number}} rot rotation cursor (mutated) for the simple policy
  */
 function planDay(state, maxBlocks, optimal, rot) {
@@ -52,25 +62,11 @@ function planDay(state, maxBlocks, optimal, rot) {
     for (let i = 0; i < maxBlocks; i++) blocks.push(ROTATION[rot.index++ % ROTATION.length]);
     return blocks;
   }
-  // Flawless: warmup first, then hit the weakest captions with the block whose
-  // primary caption they are — the policy podiumSim.js proves reaches Champion.
-  const weakest = Object.entries(state.captions)
-    .map(([caption, cap]) => ({ caption, value: cap.content * (0.72 + 0.28 * cap.clean) }))
-    .sort((a, b) => a.value - b.value)
-    .map((e) => e.caption);
-  const picks = ["warmup"];
-  for (const caption of weakest) {
-    for (const [blockType, block] of Object.entries(balance.blocks)) {
-      if (blockType === "warmup") continue;
-      if ((block.captions[caption] || 0) >= 1 && !picks.includes(blockType)) {
-        picks.push(blockType);
-        break;
-      }
-    }
-    if (picks.length >= maxBlocks) break;
-  }
-  while (picks.length < maxBlocks) picks.push("fullEnsemble");
-  return picks.slice(0, maxBlocks);
+  // Flawless: warmup first, then every rehearsal block in turn, Full Ensemble
+  // first. Under the repeat ladder and ensemble readiness (sections must be
+  // installed before Full / Visual Ensemble pay in full) an even mix beats
+  // weakest-caption targeting that tops the day up with Full Ensemble.
+  return ["warmup", ...Array.from({ length: maxBlocks - 1 }, (_, i) => BALANCED_ORDER[i % BALANCED_ORDER.length])];
 }
 
 /**

@@ -84,6 +84,10 @@ export default function RehearsalPlanner({ podium }) {
 
   // Server-authoritative block budget (stamina-adjusted). Falls back to the
   // freshness-normalized local count if an older backend hasn't shipped these.
+  /** @type {number[]} */
+  const repeatLadder = Array.isArray(data.repeatLadder) ? data.repeatLadder : [];
+  /** @type {Record<string, number>} */
+  const blockReadiness = data.blockReadiness || {};
   const confirmedUsed = data.blocksUsedToday ?? today.blocksUsed ?? 0;
   const maxBlocksToday = data.maxBlocksToday ?? null;
   const confirmedRemaining =
@@ -251,6 +255,15 @@ export default function RehearsalPlanner({ podium }) {
               const pendingCount = pending[block.id] || 0;
               const count = confirmedCount + pendingCount;
               const budgetSpent = blocksRemainingToday !== null && blocksRemainingToday <= 0;
+              // What the NEXT tap is worth before staff and condition: the
+              // repeat ladder for this block today x its ensemble readiness.
+              // Both come from the server, so a re-tune never desyncs the hint.
+              const ladderStep =
+                repeatLadder.length > 0
+                  ? repeatLadder[Math.min(count, repeatLadder.length - 1)]
+                  : 1;
+              const readiness = blockReadiness[block.id] ?? 1;
+              const nextValue = ladderStep * readiness;
               return (
                 <button
                   key={block.id}
@@ -272,6 +285,13 @@ export default function RehearsalPlanner({ podium }) {
                     </span>
                   </div>
                   <div className="text-[10px] text-muted mt-0.5">{block.detail}</div>
+                  {nextValue < 0.995 && (
+                    <div className="text-[10px] text-warning mt-0.5 tabular-nums">
+                      Next tap ×{nextValue.toFixed(2)}
+                      {readiness < 0.995 && ` · sections ${Math.round(readiness * 100)}% ready`}
+                      {ladderStep < 1 && ' · repeat'}
+                    </div>
+                  )}
                 </button>
               );
             })}
@@ -371,6 +391,9 @@ export default function RehearsalPlanner({ podium }) {
             Action complete — {BLOCKS.find((b) => b.id === lastPanel.blockType)?.label}
             {(lastPanel.repeatMult ?? 1) < 1 && (
               <span className="text-warning"> · repeat yield ×{lastPanel.repeatMult}</span>
+            )}
+            {(lastPanel.readinessMult ?? 1) < 1 && (
+              <span className="text-warning"> · ensemble readiness ×{lastPanel.readinessMult}</span>
             )}
           </div>
           <div className="flex flex-wrap gap-x-4 gap-y-0.5">

@@ -461,3 +461,55 @@ describe("challenge model v2 — the challenge level is a bet, not a dominant pi
     assert.notDeepEqual(v1, v2);
   });
 });
+
+describe("rehearsal depth — ensemble readiness and the repeat ladder", () => {
+  const fe = cfg.blocks.fullEnsemble;
+
+  test("an ensemble block is gated on its sections' installed content", () => {
+    const state = corps(8, 4);
+    const rule = fe.readiness;
+    for (const caption of rule.captions) state.captions[caption].content = 0;
+    assert.equal(engine.ensembleReadiness(state, fe), rule.floor, "never below the floor");
+    for (const caption of rule.captions) state.captions[caption].content = rule.fullAt / 2;
+    assert.ok(Math.abs(engine.ensembleReadiness(state, fe) - Math.max(rule.floor, 0.5)) < 1e-9);
+    for (const caption of rule.captions) state.captions[caption].content = rule.fullAt;
+    assert.equal(engine.ensembleReadiness(state, fe), 1, "full value once the parts are learned");
+  });
+
+  test("ungated blocks and rule-less configs rehearse at full value", () => {
+    const state = corps(8, 4);
+    assert.equal(engine.ensembleReadiness(state, cfg.blocks.brassSectionals), 1);
+    assert.equal(engine.ensembleReadiness(state, { captions: { GE1: 1 } }), 1);
+    assert.equal(engine.ensembleReadiness(state, undefined), 1);
+  });
+
+  test("allocateBlock applies readiness to growth (not stamina) and reports it", () => {
+    const ready = corps(8, 4);
+    const raw = corps(8, 4);
+    for (const caption of fe.readiness.captions) ready.captions[caption].content = 1;
+    const readyPanel = engine.allocateBlock(ready, "fullEnsemble", 5, 0, {}, curves, cfg, {});
+    const rawPanel = engine.allocateBlock(raw, "fullEnsemble", 5, 0, {}, curves, cfg, {});
+    assert.equal(readyPanel.readinessMult, 1);
+    assert.ok(rawPanel.readinessMult < 1);
+    // GE1 sits outside the gate's captions, so both start equal there.
+    assert.ok(rawPanel.gains.GE1.content < readyPanel.gains.GE1.content);
+    assert.equal(rawPanel.staminaCost, readyPanel.staminaCost);
+  });
+
+  test("the repeat ladder keeps two full-value reps, then tapers", () => {
+    const ladder = cfg.rehearsal.repeatBlockMultipliers;
+    assert.equal(ladder[0], 1);
+    assert.equal(ladder[1], 1);
+    for (let i = 2; i < ladder.length; i++) assert.ok(ladder[i] <= ladder[i - 1]);
+    assert.ok(ladder[2] < 1, "a third rep of the same block already costs yield");
+  });
+
+  test("store.blockReadiness lists only gated blocks", () => {
+    const store = require("./store");
+    const readiness = store.blockReadiness(corps(8, 4));
+    for (const [blockType, block] of Object.entries(cfg.blocks)) {
+      assert.equal(blockType in readiness, Boolean(block.readiness), blockType);
+    }
+    assert.ok(readiness.fullEnsemble > 0 && readiness.fullEnsemble <= 1);
+  });
+});
