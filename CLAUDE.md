@@ -69,4 +69,5 @@ current — the visible cadence that answers "is this game still being worked on
 changed in a sentence ("morale matters more", "shows are worth attending") —
 no numbers, percentages, costs, durations, or how-it-works detail, and no
 `highlights` that spell out the effect. Players discover the effects through
-trial and error. Bug fixes may still say what was broken.
+trial and error. One entry per shipped push, however many commits it spans.
+Bug fixes may still say what was broken.

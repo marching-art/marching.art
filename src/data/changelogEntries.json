@@ -1,52 +1,10 @@
 [
   {
-    "id": "2026-10-04-podium-book-rewrite",
+    "id": "2026-10-04-podium-gameplay-update",
     "date": "2026-10-04",
-    "title": "Podium: rewrite your book mid-season",
+    "title": "A deeper Podium season",
     "category": "feature",
-    "summary": "Once a season you can now rewrite part of your show. Whether and when to do it is up to you."
-  },
-  {
-    "id": "2026-10-04-podium-book-learned",
-    "date": "2026-10-04",
-    "title": "Podium: your caption panel tells you more",
-    "category": "improvement",
-    "summary": "The caption panel now marks captions that have gone as far as their book allows."
-  },
-  {
-    "id": "2026-10-03-podium-money-choices",
-    "date": "2026-10-03",
-    "title": "Podium: Corps Budget choices rebalanced",
-    "category": "balance",
-    "summary": "Some Corps Budget purchases now matter more than they used to. Experiment to find where your money goes furthest."
-  },
-  {
-    "id": "2026-10-03-podium-morale-matters",
-    "date": "2026-10-03",
-    "title": "Podium: morale matters more",
-    "category": "balance",
-    "summary": "How hard you push your corps now shows up more in how it performs. The planner gives you a read on your corps' condition."
-  },
-  {
-    "id": "2026-10-03-podium-shows-pay-their-way",
-    "date": "2026-10-03",
-    "title": "Podium: shows are worth attending",
-    "category": "balance",
-    "summary": "Performing is now part of how a corps improves, and strong finishes are rewarded. How you route your tour still matters."
-  },
-  {
-    "id": "2026-10-03-podium-rehearsal-choices-matter",
-    "date": "2026-10-03",
-    "title": "Podium: how you rehearse matters more",
-    "category": "balance",
-    "summary": "Your daily rehearsal plan now has more effect on your scores, and the planner tells you more about each block before you tap it."
-  },
-  {
-    "id": "2026-10-03-podium-challenge-levels-matter",
-    "date": "2026-10-03",
-    "title": "Podium: challenge levels are a real choice",
-    "category": "balance",
-    "summary": "Every challenge level now has its own strengths and risks over the course of a season. Pick the one that fits how you play."
+    "summary": "The Podium Division got a big gameplay update: the choices you make as a director, from your book to your rehearsals, tour, corps condition and Corps Budget, now carry more weight, and there's something new to try mid-season. Experiment and see what works."
   },
   {
     "id": "2026-10-01-dashboard-endless-spinner",
