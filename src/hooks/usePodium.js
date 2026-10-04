@@ -39,8 +39,6 @@ export function usePodium(enabled) {
    * confirmed allocation). Fields are all optional: older backends omit some.
    * @typedef {{
    *   blockType?: string;
-   *   repeatMult?: number;
-   *   readinessMult?: number;
    *   budgetEarned?: number;
    *   gains?: Record<string, { content: number; clean: number }>;
    * }} PodiumActionPanel
@@ -104,8 +102,6 @@ export function usePodium(enabled) {
               typeof payload.maxBlocksToday === 'number'
                 ? payload.maxBlocksToday
                 : previous.maxBlocksToday,
-            // Sectionals raise ensemble readiness tap by tap.
-            blockReadiness: payload.blockReadiness ?? previous.blockReadiness,
           }
         : previous
     );

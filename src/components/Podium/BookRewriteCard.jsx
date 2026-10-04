@@ -1,9 +1,8 @@
 // BookRewriteCard — the once-a-season book rewrite (2026-10, PODIUM.md decision
 // 44). A director may move up to `maxCaptions` captions to a new challenge
-// level through `lastDay`, for the arranger fee in Corps Budget. Raised
-// captions are new material and lose part of what was installed and clean, so
-// it is a timing bet: early rewrites can pay at Finals, late ones cost more
-// than they gain. Terms come from the server (balance-tunable).
+// level through `lastDay`, for the arranger fee in Corps Budget. The card
+// states the terms only — what a rewrite costs the corps, and when it pays,
+// are for directors to discover (decision 47). Terms come from the server.
 
 import React, { useState } from 'react';
 import { PenLine, Loader2 } from 'lucide-react';
@@ -26,7 +25,7 @@ const labelOf = (caption) =>
 export default function BookRewriteCard({ podium }) {
   const data = podium.data || {};
   const state = data.state;
-  /** @type {{fee: number, lastDay: number, maxCaptions: number, raiseKeepContentPct: number, raiseKeepCleanPct: number} | null} */
+  /** @type {{fee: number, lastDay: number, maxCaptions: number} | null} */
   const terms = data.bookRewriteTerms || null;
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState(/** @type {string[]} */ ([]));
@@ -106,10 +105,8 @@ export default function BookRewriteCard({ podium }) {
         Rewrite the book
       </div>
       <p className="text-[10px] text-secondary leading-snug">
-        Move up to {terms.maxCaptions} captions to a new challenge level. A harder book is new
-        material: raised captions keep {terms.raiseKeepContentPct}% of what’s installed and{' '}
-        {terms.raiseKeepCleanPct}% of what’s clean. Early rewrites can pay off at Finals; late ones
-        usually cost more than they gain. Once per season · {terms.fee} Budget.
+        Move up to {terms.maxCaptions} captions to a new challenge level. Once per season, through
+        Day {terms.lastDay} · {terms.fee} Budget.
       </p>
       <div className="flex flex-wrap gap-2">
         {FAMILIES.map((family) => (

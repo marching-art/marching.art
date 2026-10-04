@@ -708,7 +708,6 @@ exports.allocateRehearsalBlock = onCall({ cors: true }, async (request) => {
         gains: {},
         budgetEarned: fundraiserYield,
         staminaCost,
-        repeatMult: 1,
       };
     } else {
       const blocksSoFar = {};
@@ -738,6 +737,11 @@ exports.allocateRehearsalBlock = onCall({ cors: true }, async (request) => {
         store.balance,
         { yieldMultiplier: staffMult * clinicianMult * jointMult, isShowDay }
       );
+      // Discovery over disclosure (PODIUM.md decision 47): the panel reports
+      // what the block added, never the hidden repeat / readiness multipliers
+      // that shaped it — directors learn those by comparing their gains.
+      delete panel.repeatMult;
+      delete panel.readinessMult;
       if (clinicianActive) panel.clinicianBoost = store.balance.clinician.yieldBoost;
       if (staffMult > 1) panel.staffBoost = Number((staffMult - 1).toFixed(3));
       if (jointActive && jointMult > 1) {
@@ -760,9 +764,6 @@ exports.allocateRehearsalBlock = onCall({ cors: true }, async (request) => {
       // The cap the block was accepted against, so the planner's "n / cap"
       // keeps its denominator through a run of taps.
       maxBlocksToday: maxBlocks,
-      // Readiness moves as sectionals install the parts; the planner's
-      // next-tap hints read it from here between full reloads.
-      blockReadiness: store.blockReadiness(state),
     };
   });
 

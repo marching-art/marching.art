@@ -469,8 +469,8 @@ function bookRewriteRefusal(state, captions, toLevel, day, cfg) {
  * Apply a book rewrite (validated by bookRewriteRefusal). A raised caption is
  * new material: it keeps `raise.keepContent` / `raise.keepClean` of what was
  * installed and clean; a simplified one keeps more (`lower.*`). The caller
- * re-derives the curve (store.hydrateState does it from `challenge`). Clears
- * the rewritten captions' "book learned" day. Mutates state; returns the
+ * re-derives the curve (store.hydrateState does it from `challenge`). Mutates
+ * state; returns the
  * record stored at `state.bookRewrite`.
  * @param {any} state season state
  * @param {string[]} captions
@@ -490,7 +490,6 @@ function applyBookRewrite(state, captions, toLevel, day, cfg) {
     cap.challenge = toLevel;
     cap.content = cap.content * keep.keepContent;
     cap.clean = cap.clean * keep.keepClean;
-    if (state.bookLearnedDay) delete state.bookLearnedDay[caption];
   }
   state.bookRewrite = { day, toLevel, from };
   return state.bookRewrite;
@@ -751,8 +750,9 @@ function realizedFor(cap, challengeModel, cfg) {
 }
 
 /**
- * Every caption's realization ({ GE1: 0.93, ... }, three decimals) for the
- * caption panel and the nightly "book learned" record.
+ * Every caption's realization ({ GE1: 0.93, ... }, three decimals) — an
+ * analysis readout for the sims (podiumSim section M). Never shown to players
+ * (decision 47).
  * @param {any} state season state (stored or hydrated)
  * @param {any} cfg balance config
  * @returns {Record<string, number>}

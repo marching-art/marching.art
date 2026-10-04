@@ -419,14 +419,11 @@ export default function PodiumRegistration({ podium }) {
         <div className="space-y-4">
           <div>
             <h2 className="text-sm font-bold text-white">Challenge levels</h2>
-            <p className="text-xs text-muted">
-              Per caption, 1–8. Low = strong from the first show, lower ceiling. High = slow start,
-              highest ceiling — but only if you keep rehearsing it clean. Locked for the season.
-            </p>
+            <p className="text-xs text-muted">Per caption, 1–8. Locked for the season.</p>
           </div>
           {/* One-tap starting points — set every caption at once, then tune.
-              Wires the CHALLENGE_PRESETS the game defines (balanced / early &
-              clean / August book). A preset is "active" only while all eight
+              Wires the CHALLENGE_PRESETS the game defines (balanced /
+              conservative / ambitious). A preset is "active" only while all eight
               still sit at its level. */}
           <div className="flex flex-wrap gap-2">
             {Object.entries(CHALLENGE_PRESETS).map(([id, preset]) => {

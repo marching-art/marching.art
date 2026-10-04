@@ -105,7 +105,8 @@ describe("computeOverlaps (ranked windows)", () => {
     assert.ok(windows.every((w) => w.isFree && w.travelTier === null), "all within a day trip → free");
     assert.equal(windows[0].city, "Akron, OH", "partner's city hosts");
     assert.equal(windows[0].stadium, "Summa Field at InfoCision Stadium", "stadium shown when on file");
-    assert.equal(windows[0].ensembleBonusPct, 25, "first pairing = full bonus");
+    // The bonus itself is never shown to directors (PODIUM.md decision 47).
+    assert.equal("ensembleBonusPct" in windows[0], false);
   });
 
   test("the proposer's Tour Manager cuts the stamina each window shows", () => {

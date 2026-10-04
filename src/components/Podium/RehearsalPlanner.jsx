@@ -84,8 +84,6 @@ export default function RehearsalPlanner({ podium }) {
 
   // Server-authoritative block budget (stamina-adjusted). Falls back to the
   // freshness-normalized local count if an older backend hasn't shipped these.
-  /** @type {{sustainableBlocks: number, fullDayChange: number, restDayGain: number, attritionBelow: number | null} | null} */
-  const moraleOutlook = data.moraleOutlook || null;
   // A departure stays on the strip for three days.
   const recentAttrition =
     state.lastAttrition && competitionDay - state.lastAttrition.day <= 3
@@ -96,13 +94,6 @@ export default function RehearsalPlanner({ podium }) {
             state.lastAttrition.caption,
         }
       : null;
-  // Server-reported show-day shape (older backends: the pre-2026-10 values).
-  const showDayBlocks = data.blockCaps?.showDay ?? 8;
-  const showDayValuePct = data.showDayValuePct ?? 50;
-  /** @type {number[]} */
-  const repeatLadder = Array.isArray(data.repeatLadder) ? data.repeatLadder : [];
-  /** @type {Record<string, number>} */
-  const blockReadiness = data.blockReadiness || {};
   const confirmedUsed = data.blocksUsedToday ?? today.blocksUsed ?? 0;
   const maxBlocksToday = data.maxBlocksToday ?? null;
   const confirmedRemaining =
@@ -184,7 +175,7 @@ export default function RehearsalPlanner({ podium }) {
           <span className="text-[10px] text-secondary ml-auto text-right leading-tight">
             {today.restDay
               ? 'Resting — you still perform with today’s book'
-              : `Light run-through: ${showDayBlocks} blocks, ${showDayValuePct}% value each · judges’ tapes after the show`}
+              : 'Light run-through before the show'}
           </span>
         </div>
       )}
@@ -233,33 +224,12 @@ export default function RehearsalPlanner({ podium }) {
         </div>
       </div>
 
-      {/* Morale outlook (morale v2): what today's workload does to morale, so
-          the volume-vs-rest call is made with the numbers, not discovered at
-          Finals. Server-computed — a re-tune never desyncs it. */}
-      {moraleOutlook && !seasonOver && (
-        <div className="text-[10px] text-secondary leading-snug space-y-0.5">
-          <p>
-            Morale: the first {moraleOutlook.sustainableBlocks} blocks today are sustainable; past
-            that each block wears the corps down (a full day ≈{' '}
-            <span className="tabular-nums">{moraleOutlook.fullDayChange}</span> with Stretch / PT).
-            A rest day restores <span className="tabular-nums">+{moraleOutlook.restDayGain}</span>.
-            Morale carries into your show-night form.
-          </p>
-          {moraleOutlook.attritionBelow != null &&
-            condition.morale < moraleOutlook.attritionBelow + 10 && (
-              <p className="text-warning font-bold">
-                {condition.morale < moraleOutlook.attritionBelow
-                  ? 'Morale critical — members may quit overnight. Rest the corps.'
-                  : `Morale is near the line (${moraleOutlook.attritionBelow}) where members start quitting.`}
-              </p>
-            )}
-          {recentAttrition && (
-            <p className="text-warning">
-              A {recentAttrition.label} member quit on Day {recentAttrition.day} — their part is
-              being re-learned.
-            </p>
-          )}
-        </div>
+      {/* Outcome, not advice (PODIUM.md decision 47): a departure is reported
+          after it happens; the thresholds behind it are for directors to find. */}
+      {recentAttrition && !seasonOver && (
+        <p className="text-[10px] text-warning">
+          A {recentAttrition.label} member quit on Day {recentAttrition.day}.
+        </p>
       )}
 
       {/* Block allocator + schedule panel */}
@@ -299,15 +269,6 @@ export default function RehearsalPlanner({ podium }) {
               const pendingCount = pending[block.id] || 0;
               const count = confirmedCount + pendingCount;
               const budgetSpent = blocksRemainingToday !== null && blocksRemainingToday <= 0;
-              // What the NEXT tap is worth before staff and condition: the
-              // repeat ladder for this block today x its ensemble readiness.
-              // Both come from the server, so a re-tune never desyncs the hint.
-              const ladderStep =
-                repeatLadder.length > 0
-                  ? repeatLadder[Math.min(count, repeatLadder.length - 1)]
-                  : 1;
-              const readiness = blockReadiness[block.id] ?? 1;
-              const nextValue = ladderStep * readiness;
               return (
                 <button
                   key={block.id}
@@ -329,13 +290,6 @@ export default function RehearsalPlanner({ podium }) {
                     </span>
                   </div>
                   <div className="text-[10px] text-muted mt-0.5">{block.detail}</div>
-                  {nextValue < 0.995 && (
-                    <div className="text-[10px] text-warning mt-0.5 tabular-nums">
-                      Next tap ×{nextValue.toFixed(2)}
-                      {readiness < 0.995 && ` · sections ${Math.round(readiness * 100)}% ready`}
-                      {ladderStep < 1 && ' · repeat'}
-                    </div>
-                  )}
                 </button>
               );
             })}
@@ -432,13 +386,10 @@ export default function RehearsalPlanner({ podium }) {
       {lastPanel && (
         <div className="border border-green-500/30 bg-green-500/10 rounded-none px-3 py-2">
           <div className="text-[10px] font-bold uppercase tracking-wider text-green-400 mb-1">
+            {/* Gains only — no multipliers. Directors learn how repeats and
+                timing pay by comparing what each tap actually added
+                (discovery over disclosure, PODIUM.md decision 47). */}
             Action complete — {BLOCKS.find((b) => b.id === lastPanel.blockType)?.label}
-            {(lastPanel.repeatMult ?? 1) < 1 && (
-              <span className="text-warning"> · repeat yield ×{lastPanel.repeatMult}</span>
-            )}
-            {(lastPanel.readinessMult ?? 1) < 1 && (
-              <span className="text-warning"> · ensemble readiness ×{lastPanel.readinessMult}</span>
-            )}
           </div>
           <div className="flex flex-wrap gap-x-4 gap-y-0.5">
             {(lastPanel.budgetEarned ?? 0) > 0 && (

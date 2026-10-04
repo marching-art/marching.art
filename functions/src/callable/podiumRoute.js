@@ -7,7 +7,6 @@
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const { assertWriteBudget } = require('../helpers/callableGuards');
 const store = require('../helpers/podium/store');
-const engine = require('../helpers/podium/engine');
 const venues = require('../helpers/podium/venues');
 const jointHelper = require('../helpers/podium/joint');
 const career = require('../helpers/podium/career');
@@ -232,7 +231,6 @@ function buildRouteLegs(state, upcoming, { jointByDay, locations, today = 0 }) {
         label: `Joint rehearsal · ${joint.partnerCorpsName || 'corps'}`,
         isJoint: true,
         partnerCorpsName: joint.partnerCorpsName || null,
-        ensembleBonusPct: Math.round(((joint.bonusMult || 1) - 1) * 100),
         tier: joint.travelTier || null,
         miles: move ? move.miles : null,
         coinCost: tierCfg ? tierCfg.coinCost : 0,
@@ -609,20 +607,10 @@ exports.getPodiumState = onCall({ cors: true }, async (request) => {
   // same rule allocateRehearsalBlock enforces, so the planner can show the
   // opening time instead of bouncing taps off the server.
   const overnight = getPodiumRehearsalWindow();
-  // Assistant director outlook (design §5.2): how many days in a row the
-  // assistant has run the corps, and the yield it will run at if the director
-  // stays away tomorrow — fading past the grace window down to the floor.
-  const assistantStreak = state.assistantStreak || 0;
-  const assistantDecay = store.balance.rehearsal.assistantDecay;
-  const assistant = {
-    streak: assistantStreak,
-    yieldPct: Math.round(engine.assistantYieldFor(1, store.balance) * 100),
-    nextYieldPct: Math.round(engine.assistantYieldFor(assistantStreak + 1, store.balance) * 100),
-    graceDays: assistantDecay ? assistantDecay.graceDays : 0,
-    floorPct: Math.round(
-      (assistantDecay ? assistantDecay.floor : store.balance.rehearsal.assistantYield) * 100
-    ),
-  };
+  // Assistant director (design §5.2): how many days in a row it has run the
+  // corps — a fact the director can see. Its yield and how it fades are for
+  // directors to discover (PODIUM.md decision 47).
+  const assistant = { streak: state.assistantStreak || 0 };
   const routePreview = await buildRoutePreview(
     db,
     seasonData,
@@ -688,32 +676,18 @@ exports.getPodiumState = onCall({ cors: true }, async (request) => {
     rehearsalOpensAt:
       overnight.locked && overnight.opensAt ? overnight.opensAt.toISOString() : null,
     blockCaps,
-    // What the next tap of each block is worth before staff/condition: the
-    // repeat ladder (index = blocks of that type already run today) and each
-    // ensemble block's readiness (sections' installed content).
-    repeatLadder: store.balance.rehearsal.repeatBlockMultipliers,
-    // A show day's lighter run-through: each block's value as a percent of a
-    // rehearsal-day block (the judges' tapes after the show make up the rest).
-    showDayValuePct: Math.round(store.balance.rehearsal.showDayYieldMultiplier * 100),
-    blockReadiness: store.blockReadiness(state),
-    // How today's workload moves morale (sustainable blocks, full-day and
-    // rest-day change, the attrition line) — null on the legacy rule.
-    moraleOutlook: store.moraleOutlook(state, maxBlocksToday),
-    // How much of its book each caption fields (1 = fully learned; more
-    // rehearsal no longer raises it — decision 43).
-    captionRealization: engine.captionRealization(state, store.balance),
-    // What a clinician residency costs and does — the panel renders these
-    // instead of hard-coding them.
     // Book rewrite terms (once a season) — the caption panel's rewrite card.
+    // Terms only: what a rewrite costs the corps is for directors to find
+    // (PODIUM.md decision 47).
     bookRewriteTerms: store.balance.bookRewrite
       ? {
           fee: store.balance.bookRewrite.fee,
           lastDay: store.balance.bookRewrite.lastDay,
           maxCaptions: store.balance.bookRewrite.maxCaptions,
-          raiseKeepContentPct: Math.round(store.balance.bookRewrite.raise.keepContent * 100),
-          raiseKeepCleanPct: Math.round(store.balance.bookRewrite.raise.keepClean * 100),
         }
       : null,
+    // What a clinician residency costs and does — the panel renders these
+    // instead of hard-coding them.
     clinicianTerms: {
       cost: store.balance.clinician.cost,
       durationDays: store.balance.clinician.durationDays,
