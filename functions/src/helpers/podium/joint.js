@@ -241,14 +241,13 @@ function applyJointTravel(state, charge, competitionDay, debitBudget, cfg) {
  * @returns {Array<{day:number, week:number, hostVenueId:string|null,
  *   city:string|null, stadium:string|null, milesApart:number|null,
  *   travelTier:string|null, isFree:boolean, staminaCost:number,
- *   coinCost:number, ensembleBonusPct:number, priorPairs:number}>}
+ *   coinCost:number, priorPairs:number}>}
  */
 function computeOverlaps(myState, theirState, myUid, theirUid, ctx) {
   const { competitionDay, scheduleLocations, easternAssignments, storeModule, cfg } = ctx;
   const maxPerWeek = cfg.joint.maxPerWeek;
   const lastDay = Math.min(49, competitionDay + cfg.joint.proposalMaxAheadDays);
   const priorPairs = pairCountWith(myState, theirUid);
-  const ensembleBonusPct = Math.round((ensembleBonusFor(priorPairs, cfg) - 1) * 100);
   const windows = [];
 
   for (let day = competitionDay + 1; day <= lastDay; day++) {
@@ -289,7 +288,6 @@ function computeOverlaps(myState, theirState, myUid, theirUid, ctx) {
       isFree: !travelTier,
       staminaCost,
       coinCost,
-      ensembleBonusPct,
       priorPairs,
     });
   }

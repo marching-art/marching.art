@@ -285,16 +285,6 @@ ops step below)_
 
 ## Product bets (owner-ranked; pick deliberately, they're design-heavy)
 
-- **Older Podium hints — owner call (decision 47).** These predate the
-  2026-10 push and still disclose mechanics or steer strategy; keep or strip:
-  the caption panel's "Unrehearsed N days — cleanliness is decaying" icon;
-  the assistant-director yield readouts and "85% yield" plan copy
-  (`CorpsConditionPanel`, also stale — the yield is now 88%); the plan
-  editor's "Lead with Stretch / PT to cut the stamina cost" tip; the joint
-  rehearsal panel's "+25%, decaying for repeat pairs"; the registration
-  challenge line ("Low = earlier, safer, capped…") and the guide's "1 = safe
-  and clean early, 8 = a monster book that only pays off if you clean it";
-  per-leg travel/heat stamina numbers on the route and Schedule cards.
 - **Podium gameplay depth** — closed 2026-10-04. The 2026-10 engine probe's
   findings shipped as PODIUM.md decisions 38–44 (challenge model v2, rehearsal
   depth, shows pay their way, morale, money choices, the safe-book readout,
@@ -438,8 +428,10 @@ src/scripts/buildClientVenues.js` → re-run `buildPlaceIndex.js` (see its
 ## Recently shipped (context, newest first — prune when stale)
 
 - 2026-10-04: **Podium discovery over disclosure** — strategy-steering
-  hints from the gameplay push removed (decision 47); outcome reports and
-  purchase terms kept.
+  hints removed (decision 47): the gameplay push's planner/morale/caption/
+  rewrite hints, then the older ones (decay icon, assistant yields, Stretch/PT
+  tip, joint bonus %, challenge advice copy). Outcome reports, purchase terms,
+  and travel/heat stamina numbers kept (owner call).
 - 2026-10-04: **Podium A/B vs main** — `podiumCompare.js` plays the branch
   against `origin/main`; three regressions fixed (part-timers, heavy tours,
   kitchen backfire), decision 46. Re-run it before any future balance pass.

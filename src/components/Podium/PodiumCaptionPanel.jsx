@@ -1,10 +1,11 @@
 // PodiumCaptionPanel — Zone C analyzer analogue for Podium Class (Phase 2).
-// Per-caption content/clean progress with challenge level and neglect
-// warnings. The full trajectory-vs-percentile-band chart lands with the
-// Scores-tab redesign (Phase 6); this is the daily working view.
+// Per-caption content/clean progress with challenge level and the latest
+// judges' tapes. No mechanic warnings (PODIUM.md decision 47): a neglected
+// caption shows in its own bars. The full trajectory-vs-percentile-band chart
+// lands with the Scores-tab redesign (Phase 6); this is the daily working view.
 
 import React from 'react';
-import { AlertTriangle, Film } from 'lucide-react';
+import { Film } from 'lucide-react';
 import { PODIUM_CAPTIONS, CAPTION_LABELS, REP_TIER_NAMES } from './podiumConstants';
 import BookRewriteCard from './BookRewriteCard';
 
@@ -40,7 +41,6 @@ export default function PodiumCaptionPanel({ podium }) {
   const state = podium.data?.state;
   if (!state?.captions) return null;
 
-  const day = podium.data.competitionDay;
   const repTier = state.repTier || 1;
   // Judges' tapes from the latest show (§5.4): the two weakest captions the
   // sheets pointed at, cleaned from the tapes overnight. Shown until the next
@@ -95,18 +95,11 @@ export default function PodiumCaptionPanel({ podium }) {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
         {PODIUM_CAPTIONS.map((caption) => {
           const cap = state.captions[caption] || {};
-          const idleDays = day - (cap.lastRehearsedDay || 0);
-          const neglected = idleDays > 3 && day > 0;
           return (
             <div key={caption} className="flex items-center gap-3">
               <div className="w-28 shrink-0">
                 <div className="text-[11px] font-bold text-white flex items-center gap-1">
                   {caption}
-                  {neglected && (
-                    <span title={`Unrehearsed ${idleDays} days — cleanliness is decaying`}>
-                      <AlertTriangle className="w-3 h-3 text-warning" />
-                    </span>
-                  )}
                   {tapedCaptions.has(caption) && (
                     <span title={`Worked from the Day ${tapes?.day} judges’ tapes`}>
                       <Film className="w-3 h-3 text-interactive" aria-hidden="true" />

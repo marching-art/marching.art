@@ -151,9 +151,8 @@ export default function CorpsConditionPanel({ podium }) {
   // copy, and the server's maxBlocksForPlanType can't drift; the fallbacks keep
   // it usable against an older backend.
   const caps = podium.data?.blockCaps || { rehearsal: 12, showDay: 8, springTraining: 20 };
-  // The assistant's yield fades with every consecutive day away (server-computed
-  // from balance; §5.2). Shown so "the assistant never sleeps" reads honestly:
-  // it never sleeps, but it does get worse without you.
+  // How many days running the assistant has had the corps — a fact, never its
+  // yield or how that fades (discovery over disclosure, PODIUM.md decision 47).
   const assistant = podium.data?.assistant || null;
   const PLAN_TYPES = [
     {
@@ -164,7 +163,7 @@ export default function CorpsConditionPanel({ podium }) {
       runsOn: "rehearsal days you don't log in",
       hint: `The full grind — up to ${caps.rehearsal} blocks. This is the fallback for any day type you leave unplanned.`,
       empty:
-        'No rehearsal-day plan — days you miss are lost entirely. Set one and the assistant rehearses it at 85% yield while you’re away.',
+        'No rehearsal-day plan — days you miss are lost entirely. Set one and the assistant rehearses it while you’re away.',
     },
     {
       id: /** @type {const} */ ('show'),
@@ -347,18 +346,9 @@ export default function CorpsConditionPanel({ podium }) {
           </button>
         </div>
 
-        {assistant && (
+        {assistant && assistant.streak > 0 && (
           <p className="text-[10px] text-muted mb-2">
-            {assistant.streak > 0
-              ? `On autopilot ${assistant.streak} day${assistant.streak === 1 ? '' : 's'} running — `
-              : ''}
-            {assistant.streak > assistant.graceDays
-              ? `the assistant is down to ${assistant.nextYieldPct}% yield`
-              : `the assistant runs your plan at ${assistant.yieldPct}% yield`}
-            {assistant.graceDays > 0
-              ? `, fading after ${assistant.graceDays} days away to a ${assistant.floorPct}% floor.`
-              : '.'}{' '}
-            Rehearsing or declaring rest yourself resets it.
+            On autopilot {assistant.streak} day{assistant.streak === 1 ? '' : 's'} running.
           </p>
         )}
 
@@ -400,9 +390,7 @@ export default function CorpsConditionPanel({ podium }) {
                   </span>
                 ))}
               </div>
-              <p className="text-[9px] text-muted">
-                Runs this order at 85% yield on {activePlanType.runsOn}.
-              </p>
+              <p className="text-[9px] text-muted">Runs this order on {activePlanType.runsOn}.</p>
             </div>
           ) : (
             <div className="flex items-start gap-2 rounded-none border border-warning/30 bg-warning/5 px-3 py-2">
@@ -524,10 +512,7 @@ export default function CorpsConditionPanel({ podium }) {
               </div>
             </div>
 
-            <p className="text-[9px] text-muted leading-relaxed">
-              {activePlanType.hint} Lead with Stretch / PT to cut the stamina cost of the blocks
-              that follow, and avoid repeating a block back-to-back — repeats yield less.
-            </p>
+            <p className="text-[9px] text-muted leading-relaxed">{activePlanType.hint}</p>
           </div>
         )}
       </div>

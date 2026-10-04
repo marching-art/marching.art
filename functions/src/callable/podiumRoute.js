@@ -7,7 +7,6 @@
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const { assertWriteBudget } = require('../helpers/callableGuards');
 const store = require('../helpers/podium/store');
-const engine = require('../helpers/podium/engine');
 const venues = require('../helpers/podium/venues');
 const jointHelper = require('../helpers/podium/joint');
 const career = require('../helpers/podium/career');
@@ -232,7 +231,6 @@ function buildRouteLegs(state, upcoming, { jointByDay, locations, today = 0 }) {
         label: `Joint rehearsal · ${joint.partnerCorpsName || 'corps'}`,
         isJoint: true,
         partnerCorpsName: joint.partnerCorpsName || null,
-        ensembleBonusPct: Math.round(((joint.bonusMult || 1) - 1) * 100),
         tier: joint.travelTier || null,
         miles: move ? move.miles : null,
         coinCost: tierCfg ? tierCfg.coinCost : 0,
@@ -609,20 +607,10 @@ exports.getPodiumState = onCall({ cors: true }, async (request) => {
   // same rule allocateRehearsalBlock enforces, so the planner can show the
   // opening time instead of bouncing taps off the server.
   const overnight = getPodiumRehearsalWindow();
-  // Assistant director outlook (design §5.2): how many days in a row the
-  // assistant has run the corps, and the yield it will run at if the director
-  // stays away tomorrow — fading past the grace window down to the floor.
-  const assistantStreak = state.assistantStreak || 0;
-  const assistantDecay = store.balance.rehearsal.assistantDecay;
-  const assistant = {
-    streak: assistantStreak,
-    yieldPct: Math.round(engine.assistantYieldFor(1, store.balance) * 100),
-    nextYieldPct: Math.round(engine.assistantYieldFor(assistantStreak + 1, store.balance) * 100),
-    graceDays: assistantDecay ? assistantDecay.graceDays : 0,
-    floorPct: Math.round(
-      (assistantDecay ? assistantDecay.floor : store.balance.rehearsal.assistantYield) * 100
-    ),
-  };
+  // Assistant director (design §5.2): how many days in a row it has run the
+  // corps — a fact the director can see. Its yield and how it fades are for
+  // directors to discover (PODIUM.md decision 47).
+  const assistant = { streak: state.assistantStreak || 0 };
   const routePreview = await buildRoutePreview(
     db,
     seasonData,

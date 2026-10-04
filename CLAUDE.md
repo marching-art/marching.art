@@ -76,3 +76,4 @@ Bug fixes may still say what was broken.
 outcomes (what a tap added, what the judges flagged, who quit) and purchase
 terms (what something costs and buys) — never hidden multipliers, thresholds,
 or strategy advice ("next tap ×0.8", "rest now", "raise your challenge").
+Travel and heat stamina costs on the tour cards stay (owner call).

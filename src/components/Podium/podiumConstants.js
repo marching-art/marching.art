@@ -87,8 +87,8 @@ export const TRAVEL_TIER_LABELS = {
 
 export const CHALLENGE_PRESETS = {
   balanced: { label: 'Balanced', levels: 5 },
-  safe: { label: 'Early & Clean', levels: 3 },
-  ambitious: { label: 'August Book', levels: 7 },
+  safe: { label: 'Conservative', levels: 3 },
+  ambitious: { label: 'Ambitious', levels: 7 },
 };
 
 export const AUDITION_PRESETS = [

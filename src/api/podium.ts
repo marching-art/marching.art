@@ -81,7 +81,6 @@ export interface PodiumRouteLeg {
   // Set on a joint-rehearsal leg (design §5.12).
   isJoint?: boolean;
   partnerCorpsName?: string | null;
-  ensembleBonusPct?: number;
 }
 
 // Where the corps is standing right now (design §5.12): the venue of its most
@@ -160,14 +159,6 @@ export interface PodiumBlockCaps {
 export interface PodiumAssistantOutlook {
   /** Consecutive days the assistant has run the corps (0 = the director played today/yesterday). */
   streak: number;
-  /** The assistant's yield on the first missed day, in percent. */
-  yieldPct: number;
-  /** The yield it will run at tomorrow if the director stays away, in percent. */
-  nextYieldPct: number;
-  /** Missed days before the yield starts fading. */
-  graceDays: number;
-  /** The yield never fades below this, in percent. */
-  floorPct: number;
 }
 
 export interface PodiumStateResponse {
@@ -723,7 +714,6 @@ export interface JointOverlapWindow {
   isFree: boolean;
   staminaCost: number;
   coinCost: number;
-  ensembleBonusPct: number;
   priorPairs: number;
 }
 

@@ -82,9 +82,6 @@ function WindowCard({ win, selected, onSelect }) {
         >
           {win.isFree ? 'Free' : `−${win.coinCost} CC · −${win.staminaCost} stamina`}
         </div>
-        <div className="text-[8px] font-mono uppercase tracking-wider text-secondary border border-line rounded-none px-1.5 py-0.5 inline-block">
-          Ens +{win.ensembleBonusPct}%
-        </div>
       </div>
     </button>
   );
@@ -135,7 +132,7 @@ function IncomingCard({ proposal, busy, blocked, onAccept, onDecline }) {
             <div className="text-[8px] font-mono uppercase tracking-wider text-muted mb-1">
               Your gain
             </div>
-            <div className="text-[13px] font-bold text-secondary">Ensemble +25%</div>
+            <div className="text-[13px] font-bold text-secondary">A sharper Full Ensemble</div>
             <div className="text-[9px] text-muted mt-0.5">+ morale &amp; the scrimmage report.</div>
           </div>
         </div>
@@ -413,10 +410,10 @@ export default function JointRehearsalPanel() {
 
       <p className="text-[10px] text-muted leading-relaxed">
         Pick a rival and the system maps both tours, then ranks the open days you could share — each
-        with its host city, distance, and stamina cost. Full Ensemble sharpens (+25%, decaying for
-        repeat partners), morale lifts, and both directors get a private scrimmage report. One per
-        week; the proposer covers any travel. A joint is a day trip: your route picks up from your
-        last show afterward, with no extra leg to get back on tour.
+        with its host city, distance, and stamina cost. Full Ensemble sharpens, morale lifts, and
+        both directors get a private scrimmage report. One per week; the proposer covers any travel.
+        A joint is a day trip: your route picks up from your last show afterward, with no extra leg
+        to get back on tour.
       </p>
 
       {!data && !error && (

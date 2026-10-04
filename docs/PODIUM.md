@@ -1927,7 +1927,15 @@ proven the machinery. Total: ~16–20 engineering weeks to beta.
     that only fed them (`repeatLadder`, `blockReadiness`, `showDayValuePct`, `moraleOutlook`,
     `captionRealization`, the rewrite keep-percentages) are gone. Kept: outcome reports (gains per
     caption, judges' tapes flagged, a member quit) and purchase terms (what a clinician or rewrite
-    costs and buys). Older hints that predate the push are listed in NEXT.md for the owner's call.
+    costs and buys). Second pass, older hints (owner call): the caption panel's neglect/decay icon;
+    the assistant director's yield readouts and "85% yield" copy (the panel now shows only how many
+    days the assistant has run the corps; `getPodiumState.assistant` is `{ streak }`); the plan
+    editor's "Lead with Stretch / PT… repeats yield less" tip; the joint rehearsal's "+25%,
+    decaying for repeat partners" copy and per-window bonus badge (`ensembleBonusPct` dropped from
+    the windows and route legs); the registration challenge line and guide's "1 = safe and clean
+    early, 8 = a monster book…" (presets renamed Conservative / Ambitious). **Kept by owner
+    decision:** travel and heat stamina numbers on the route, Schedule, airfare and joint-rehearsal
+    cards — tour planning information, not a hidden mechanic.
 
 **Still open:**
 
