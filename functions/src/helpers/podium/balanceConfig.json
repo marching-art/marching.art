@@ -90,8 +90,8 @@
     "blocksPerDay": 12,
     "blocksPerDaySpringTraining": 20,
     "blocksOnShowDay": 8,
-    "showDayYieldMultiplier": 0.75,
-    "primaryGain": 0.023,
+    "showDayYieldMultiplier": 0.8,
+    "primaryGain": 0.022,
     "repeatBlockMultipliers": [
       1.0,
       1.0,
@@ -106,11 +106,11 @@
       0.25,
       0.25
     ],
-    "assistantYield": 0.85,
+    "assistantYield": 0.88,
     "assistantDecay": {
       "graceDays": 3,
-      "perDay": 0.08,
-      "floor": 0.35
+      "perDay": 0.06,
+      "floor": 0.4
     },
     "contentSplitRamp": {
       "startContentShare": 0.8,
@@ -193,10 +193,10 @@
         "costPerWeek": 60
       },
       "fullKitchen": {
-        "staminaRecoveryDelta": 3,
+        "staminaRecoveryDelta": 1,
         "moraleDelta": 2,
         "costPerWeek": 150,
-        "nightlyMoraleDelta": 0.5
+        "nightlyMoraleDelta": 0.75
       }
     }
   },
@@ -539,8 +539,8 @@
     "_note": "Shows are not pure cost (2026-10). Before: a show day's 8 blocks ran at half value, so a full show schedule finished ~8 points below attending only the automatic shows - the game paid you to skip shows. Now show-day blocks run at 3/4 value (rehearsal.showDayYieldMultiplier) and judgesTapes: after every scored show the judges' sheets point at the corps' `captions` weakest captions (lowest installed x clean) and it cleans them from the tapes - cleanGain / contentGain of the remaining headroom, at the caption's challenge install rate (engine.applyJudgesTapes). Result (podiumSim section J): a moderate schedule is a hair best, a maximal schedule costs ~1.5 points on nearby shows and ~3 on long hauls - routing and rest decide it. budget.medalPurse pays Corps Budget for a top-3 finish (same rule as the medal).",
     "judgesTapes": {
       "captions": 2,
-      "cleanGain": 0.08,
-      "contentGain": 0.03
+      "cleanGain": 0.1,
+      "contentGain": 0.04
     }
   },
   "fanFavorite": {

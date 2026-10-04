@@ -1898,6 +1898,23 @@ proven the machinery. Total: ~16–20 engineering weeks to beta.
     be cosmetic noise inside a 2.3-point night-to-night spread. Revisit only if caption
     differentiation between builds grows.
 
+46. **A/B against main — three corrections (2026-10).** `functions/src/scripts/podiumCompare.js`
+    plays the branch engine + balance against `origin/main` (same players, seeds and processor
+    order) across every decision axis, skill vs luck, a 192-strategy tournament, accessibility and
+    calibration. It confirmed decisions 38–44 (best challenge level now tracks commitment
+    8/7/7/5/2 vs main's always-8; identical-play spread 5.0 → 2.8; daily beats a 70%-play
+    director 66% → 92%; the 11-of-12 trick is gone; careless-vs-careful gap 2.8 → 8.3; staff and
+    clinician worth roughly double) and found three regressions, now fixed:
+    (1) **part-timers fell 1–2 points vs main** even at their best level — assistant director
+    0.85 → 0.88, decay 0.08 → 0.06/day, floor 0.35 → 0.40 (35%-play at best level now −0.6 vs
+    main, 70%-play −0.3; sim I3's bar set to 75%, still above main's 67%);
+    (2) **a heavy tour still cost ~1.5** — show-day blocks 0.75 → 0.8, tapes +0.10 clean / +0.04
+    content (moderate tour now equals auto-only, heavy −0.5, long-haul overload −3.4 vs main's
+    −7.2); (3) **the full kitchen backfired for grinders (−1.4)** — its extra stamina let a corps
+    skip rest into a morale collapse; now +1 stamina / +0.75 morale nightly, positive in every
+    setup (+0.3 to +1.8). `primaryGain` re-anchored 0.023 → 0.022. Accepted as designed: Day-10
+    scores at level 8 open near two-thirds of Finals (§4.3's stated target; main opened at 77%).
+
 **Still open:**
 
 1. **Point-cap semantics** — largely resolved by the class-capability registry

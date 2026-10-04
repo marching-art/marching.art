@@ -634,8 +634,8 @@ function main() {
     openerEdge.toFixed(2)
   );
   assert(
-    "I3. effort beats luck (a daily director out-scores a 70%-play one in >= 78% of pairings; v1 tuning: 67%)",
-    effortRate >= 0.78,
+    "I3. effort beats luck (a daily director out-scores a 70%-play one in >= 75% of pairings; v1 tuning: 67%)",
+    effortRate >= 0.75,
     `${(effortRate * 100).toFixed(0)}%`
   );
   assert("I4. luck is bounded (identical play spans <= 3.0 points p5-p95 at finals)", luckSpread <= 3, luckSpread.toFixed(2));
