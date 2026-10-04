@@ -1883,6 +1883,21 @@ proven the machinery. Total: ~16–20 engineering weeks to beta.
     level 8 85% of blocks finishes ≥ 0.75 behind (1.01); a daily level-5 book is fully learned by
     Finals (8.0 of 8).
 
+44. **The book rewrite (2026-10).** Once a season, through Day 35, a director may move up to three
+    captions to a new challenge level for a 100-Budget arranger fee (`bookRewrite`;
+    `engine.bookRewriteRefusal` / `applyBookRewrite`; callable `rewritePodiumBook`; the caption
+    panel's `BookRewriteCard`, with Music / Visual / GE presets and server-served terms). A raised
+    caption is new material — it keeps 75% of its installed content and 70% of its clean; a
+    simplified one keeps 95% / 90%. It is a timing bet, and the natural answer to the "whole book
+    learned" badge (decision 43): `podiumSim.js` section N — a daily level-5 director who raises
+    the music family to 8 on Day 10 gains +0.98 at Finals for −0.94 at the Day-38 show; the same
+    rewrite on Day 31 loses (−0.33). Rewriting all eight captions never beat one family.
+45. **Per-show judging panels: measured, not built (2026-10).** A caption-emphasis panel that is
+    total-neutral for a balanced corps moves even a strongly specialized build (music 8 / rest 5)
+    by under 0.2 points at 20% emphasis — builds converge as books get learned, so the panel would
+    be cosmetic noise inside a 2.3-point night-to-night spread. Revisit only if caption
+    differentiation between builds grows.
+
 **Still open:**
 
 1. **Point-cap semantics** — largely resolved by the class-capability registry

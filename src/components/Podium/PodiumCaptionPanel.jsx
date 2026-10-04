@@ -6,6 +6,7 @@
 import React from 'react';
 import { AlertTriangle, Film, CheckCircle2 } from 'lucide-react';
 import { PODIUM_CAPTIONS, CAPTION_LABELS, REP_TIER_NAMES } from './podiumConstants';
+import BookRewriteCard from './BookRewriteCard';
 
 /**
  * @param {{ content: number, clean: number }} props content/clean fractions (0..1)
@@ -33,7 +34,7 @@ function ProgressPair({ content, clean }) {
 }
 
 /**
- * @param {{ podium: { data: { competitionDay: number, state?: Record<string, any>, captionRealization?: Record<string, number> } } }} props
+ * @param {{ podium: { data: { competitionDay: number, state?: Record<string, any>, captionRealization?: Record<string, number>, bookRewriteTerms?: any }, rewriteBook?: (captions: string[], toLevel: number) => Promise<any> } }} props
  */
 export default function PodiumCaptionPanel({ podium }) {
   const state = podium.data?.state;
@@ -179,6 +180,8 @@ export default function PodiumCaptionPanel({ podium }) {
           </span>
         )}
       </div>
+
+      <BookRewriteCard podium={podium} />
     </div>
   );
 }

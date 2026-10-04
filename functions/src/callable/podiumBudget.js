@@ -159,3 +159,32 @@ exports.hirePodiumClinician = onCall({ cors: true }, async (request) => {
   });
   return { success: true, ...result };
 });
+
+// Book rewrite (2026-10): once a season, move up to `bookRewrite.maxCaptions`
+// captions to a new challenge level through `bookRewrite.lastDay`, for the
+// arranger/designer fee in Corps Budget. Raised captions lose part of what was
+// installed and clean (new material); see engine.applyBookRewrite.
+exports.rewritePodiumBook = onCall({ cors: true }, async (request) => {
+  const { uid, db, seasonData, competitionDay } = await podiumContext(request);
+  await assertWriteBudget(db, uid, "podium", { max: 120, windowMs: 10 * 60 * 1000 });
+  const { captions, toLevel } = request.data || {};
+  const sRef = store.stateRef(db, uid);
+  const result = await db.runTransaction(async (transaction) => {
+    const snapshot = await transaction.get(sRef);
+    if (!snapshot.exists || snapshot.data().seasonUid !== seasonData.seasonUid) {
+      throw new HttpsError("failed-precondition", "Register a Podium corps first.");
+    }
+    const state = snapshot.data();
+    const refusal = engine.bookRewriteRefusal(state, captions, toLevel, competitionDay, store.balance);
+    if (refusal) throw new HttpsError("failed-precondition", refusal);
+    const { fee } = store.balance.bookRewrite;
+    if (!store.debitBudget(state, fee, "bookRewrite", competitionDay)) {
+      throw new HttpsError("failed-precondition", `Not enough Corps Budget (need ${fee}).`);
+    }
+    const rewrite = engine.applyBookRewrite(state, captions, toLevel, competitionDay, store.balance);
+    state.updatedAt = new Date().toISOString();
+    transaction.set(sRef, state);
+    return { bookRewrite: rewrite, budget: state.budget };
+  });
+  return { success: true, ...result };
+});

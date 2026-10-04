@@ -668,3 +668,51 @@ describe("book learned — the safe-book cap made visible (decision 43)", () => 
     assert.deepEqual(state.bookLearnedDay, { B: 20, P: 24 });
   });
 });
+
+describe("book rewrite — once a season, a timing bet (decision 44)", () => {
+  const rule = cfg.bookRewrite;
+
+  test("refuses a second rewrite, a late one, too many captions, or a no-op", () => {
+    const state = corps(5, 4);
+    assert.equal(engine.bookRewriteRefusal(state, ["B", "MA", "P"], 8, 10, cfg), null);
+    assert.match(engine.bookRewriteRefusal(state, ["B"], 8, rule.lastDay + 1, cfg) || "", /close after/);
+    assert.match(engine.bookRewriteRefusal(state, ["B", "MA", "P", "VP"], 8, 10, cfg) || "", /at most/);
+    assert.match(engine.bookRewriteRefusal(state, ["B"], 5, 10, cfg) || "", /already at level 5/);
+    assert.match(engine.bookRewriteRefusal(state, ["XX"], 8, 10, cfg) || "", /Unknown caption/);
+    assert.match(engine.bookRewriteRefusal(state, ["B"], 9, 10, cfg) || "", /1 to 8/);
+    engine.applyBookRewrite(state, ["B"], 8, 10, cfg);
+    assert.match(engine.bookRewriteRefusal(state, ["P"], 8, 12, cfg) || "", /already used/);
+  });
+
+  test("raising costs more of the installed book than simplifying", () => {
+    const state = corps(5, 4);
+    for (const c of ["B", "P"]) {
+      state.captions[c].content = 0.8;
+      state.captions[c].clean = 0.6;
+    }
+    state.bookLearnedDay = { B: 9 };
+    engine.applyBookRewrite(state, ["B"], 8, 10, cfg);
+    assert.equal(state.captions.B.challenge, 8);
+    assert.ok(Math.abs(state.captions.B.content - 0.8 * rule.raise.keepContent) < 1e-9);
+    assert.ok(Math.abs(state.captions.B.clean - 0.6 * rule.raise.keepClean) < 1e-9);
+    assert.deepEqual(state.bookRewrite, { day: 10, toLevel: 8, from: { B: 5 } });
+    assert.equal(state.bookLearnedDay.B, undefined, "a rewritten caption has a new book to learn");
+
+    const simpler = corps(8, 4);
+    simpler.captions.P.content = 0.8;
+    simpler.captions.P.clean = 0.6;
+    engine.applyBookRewrite(simpler, ["P"], 5, 10, cfg);
+    assert.ok(simpler.captions.P.content > state.captions.B.content);
+  });
+
+  test("a rewritten caption scores on its new curve once hydrated", () => {
+    const store = require("./store");
+    const state = store.dehydrateState(corps(5, 4));
+    engine.applyBookRewrite(state, ["B"], 8, 10, cfg);
+    const hydrated = store.hydrateState(state);
+    assert.deepEqual(
+      hydrated.captions.B.curve,
+      engine.curveForChallenge("B", 8, curves, cfg, state.challengeModel)
+    );
+  });
+});

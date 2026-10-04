@@ -31,6 +31,8 @@
  *      kitchen and a clinician residency are real buys.
  *   M. Effort counts where it should — at level 8 effort pays to the last
  *      night; a daily director's level-5 book is fully learned by Finals.
+ *   N. The book rewrite is a timing bet — an early rewrite pays at Finals at
+ *      a regular-season cost; a late one loses.
  *   J. Shows pay their way — a moderate schedule breaks even against the
  *      automatic shows alone; an overloaded tour of long hauls still costs.
  *
@@ -233,12 +235,13 @@ const ASSISTANT_PLAN = [
  * @param {string} seed
  * @param {{dayPlan?: ((maxBlocks: number) => string[]) | null, showDays?: Set<number>,
  *   travelStamina?: number, restCall?: (state: any, day: number, showDays: Set<number>) => boolean,
- *   foodTier?: string, yieldBoost?: ((blockType: string, day: number) => number) | null}} [opts]
+ *   foodTier?: string, yieldBoost?: ((blockType: string, day: number) => number) | null,
+ *   rewrite?: {day: number, captions: string[], toLevel: number} | null}} [opts]
  *   `showDays` overrides the show schedule; `travelStamina` is charged on top
  *   of the show's own stamina each show night; `restCall` replaces the
  *   flawless director's rest decision (managedRest); `foodTier` sets the food
  *   plan; `yieldBoost(blockType, day)` multiplies a block's yield (staff,
- *   clinician)
+ *   clinician); `rewrite` applies a book rewrite on its day
  * @returns {{scores: Array<{day: number, total: number}>, state: any}}
  */
 function simulateCommitment(
@@ -253,6 +256,7 @@ function simulateCommitment(
     restCall = managedRest,
     foodTier = "standard",
     yieldBoost = null,
+    rewrite = null,
   } = {}
 ) {
   const challenge = {};
@@ -268,6 +272,14 @@ function simulateCommitment(
   const scores = [];
   let streak = 0;
   for (let day = 1; day <= 49; day++) {
+    // A book rewrite lands at the start of its day, as the callable applies it;
+    // the curve is re-derived from the new level (store.hydrateState does it).
+    if (rewrite && day === rewrite.day) {
+      engine.applyBookRewrite(state, rewrite.captions, rewrite.toLevel, day, cfg);
+      for (const caption of rewrite.captions) {
+        state.captions[caption].curve = engine.curveForChallenge(caption, rewrite.toLevel, curves, cfg, state.challengeModel);
+      }
+    }
     const isShowDay = showDays.has(day);
     const maxBlocks = engine.blocksAvailable(state, { isShowDay, isSpringTraining: false }, cfg);
     const plays = engine.seededUnit(`${seed}|play|${day}`) < playRate;
@@ -748,6 +760,32 @@ function main() {
     (fullEight - lightEight).toFixed(2)
   );
   assert("M2. a daily director's level-5 book is fully learned by Finals", safeLearned >= 7.5, safeLearned.toFixed(1));
+
+  // --- N. The book rewrite is a timing bet (decision 44, 2026-10) ---------
+  // Once a season a director may move up to three captions to a new level.
+  // Raised captions are new material (part of the installed book is lost), so
+  // an early rewrite trades regular-season scores for Finals and a late one
+  // costs more than it gains.
+  console.log("\nN. The book rewrite is a timing bet (tier 4, daily level-5 director, music family -> 8):");
+  const N_SEEDS = 24;
+  const MUSIC = ["B", "MA", "P"];
+  const rewriteRuns = (/** @type {any} */ rewrite) =>
+    Array.from({ length: N_SEEDS }, (_, s) => simulateCommitment(5, 1, 4, `rewrite|${s}`, { rewrite }));
+  const keptBook = rewriteRuns(null);
+  const earlyRewrite = rewriteRuns({ day: 10, captions: MUSIC, toLevel: 8 });
+  const lateRewrite = rewriteRuns({ day: 31, captions: MUSIC, toLevel: 8 });
+  const nFinals = (/** @type {any[]} */ runs) => mean(runs.map((r) => showTotal(r, 49)));
+  const nDay38 = (/** @type {any[]} */ runs) => mean(runs.map((r) => showTotal(r, 38)));
+  const earlyGain = nFinals(earlyRewrite) - nFinals(keptBook);
+  const earlyCost = nDay38(keptBook) - nDay38(earlyRewrite);
+  const lateGain = nFinals(lateRewrite) - nFinals(keptBook);
+  console.log(
+    `    Day-10 rewrite: Finals ${earlyGain >= 0 ? "+" : ""}${earlyGain.toFixed(2)}, Day-38 show -${earlyCost.toFixed(2)} · ` +
+      `Day-31 rewrite: Finals ${lateGain >= 0 ? "+" : ""}${lateGain.toFixed(2)}`
+  );
+  assert("N1. an early rewrite can pay at Finals (>= +0.4)", earlyGain >= 0.4, earlyGain.toFixed(2));
+  assert("N2. it is a bet, not free (costs >= 0.5 at the Day-38 show)", earlyCost >= 0.5, earlyCost.toFixed(2));
+  assert("N3. a late rewrite loses at Finals", lateGain < 0, lateGain.toFixed(2));
 
   // --- J. Shows pay their way (2026-10) -----------------------------------
   // Before: a show day's 8 blocks ran at half value and performing taught the

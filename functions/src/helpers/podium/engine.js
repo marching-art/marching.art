@@ -438,6 +438,65 @@ function applyJudgesTapes(state, day, cfg) {
 }
 
 /**
+ * Book rewrite (2026-10): once a season a director may rewrite part of the
+ * show — move up to `cfg.bookRewrite.maxCaptions` captions to a new challenge
+ * level before `lastDay`. Pure validation: returns the reason it is refused,
+ * or null when it may proceed. The Budget fee is checked by the caller.
+ * @param {any} state season state
+ * @param {string[]} captions captions to rewrite
+ * @param {number} toLevel the new challenge level (1-8)
+ * @param {number} day competition day
+ * @param {any} cfg balance config
+ * @returns {string | null}
+ */
+function bookRewriteRefusal(state, captions, toLevel, day, cfg) {
+  const rule = cfg.bookRewrite;
+  if (!rule) return "Book rewrites are not available.";
+  if (state.bookRewrite) return "This season's book rewrite is already used.";
+  if (day > rule.lastDay) return `Book rewrites close after Day ${rule.lastDay}.`;
+  if (!Number.isInteger(toLevel) || toLevel < 1 || toLevel > 8) return "Pick a challenge level from 1 to 8.";
+  if (!Array.isArray(captions) || captions.length === 0) return "Pick at least one caption to rewrite.";
+  if (captions.length > rule.maxCaptions) return `Rewrite at most ${rule.maxCaptions} captions.`;
+  if (new Set(captions).size !== captions.length) return "Each caption once.";
+  for (const caption of captions) {
+    if (!CAPTIONS.includes(caption)) return `Unknown caption ${caption}.`;
+    if (state.captions[caption].challenge === toLevel) return `${caption} is already at level ${toLevel}.`;
+  }
+  return null;
+}
+
+/**
+ * Apply a book rewrite (validated by bookRewriteRefusal). A raised caption is
+ * new material: it keeps `raise.keepContent` / `raise.keepClean` of what was
+ * installed and clean; a simplified one keeps more (`lower.*`). The caller
+ * re-derives the curve (store.hydrateState does it from `challenge`). Clears
+ * the rewritten captions' "book learned" day. Mutates state; returns the
+ * record stored at `state.bookRewrite`.
+ * @param {any} state season state
+ * @param {string[]} captions
+ * @param {number} toLevel
+ * @param {number} day competition day
+ * @param {any} cfg balance config
+ * @returns {{day: number, toLevel: number, from: Record<string, number>}}
+ */
+function applyBookRewrite(state, captions, toLevel, day, cfg) {
+  const rule = cfg.bookRewrite;
+  /** @type {Record<string, number>} */
+  const from = {};
+  for (const caption of captions) {
+    const cap = state.captions[caption];
+    from[caption] = cap.challenge;
+    const keep = toLevel > cap.challenge ? rule.raise : rule.lower;
+    cap.challenge = toLevel;
+    cap.content = cap.content * keep.keepContent;
+    cap.clean = cap.clean * keep.keepClean;
+    if (state.bookLearnedDay) delete state.bookLearnedDay[caption];
+  }
+  state.bookRewrite = { day, toLevel, from };
+  return state.bookRewrite;
+}
+
+/**
  * End-of-day processing: neglect decay, overnight recovery, grind fatigue.
  * Mutates state.
  * @param {object} opts { restDay, blocksUsedToday, maxBlocksToday, warmupUsed }
@@ -945,6 +1004,8 @@ module.exports = {
   allocateBlock,
   applyJudgesTapes,
   applyAttrition,
+  bookRewriteRefusal,
+  applyBookRewrite,
   endOfDay,
   blocksAvailable,
   sampleDelta,

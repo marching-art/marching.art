@@ -704,6 +704,16 @@ exports.getPodiumState = onCall({ cors: true }, async (request) => {
     captionRealization: engine.captionRealization(state, store.balance),
     // What a clinician residency costs and does — the panel renders these
     // instead of hard-coding them.
+    // Book rewrite terms (once a season) — the caption panel's rewrite card.
+    bookRewriteTerms: store.balance.bookRewrite
+      ? {
+          fee: store.balance.bookRewrite.fee,
+          lastDay: store.balance.bookRewrite.lastDay,
+          maxCaptions: store.balance.bookRewrite.maxCaptions,
+          raiseKeepContentPct: Math.round(store.balance.bookRewrite.raise.keepContent * 100),
+          raiseKeepCleanPct: Math.round(store.balance.bookRewrite.raise.keepClean * 100),
+        }
+      : null,
     clinicianTerms: {
       cost: store.balance.clinician.cost,
       durationDays: store.balance.clinician.durationDays,

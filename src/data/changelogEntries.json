@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-10-04-podium-book-rewrite",
+    "date": "2026-10-04",
+    "title": "Podium: rewrite your book mid-season",
+    "category": "feature",
+    "summary": "Once a season, through Day 35, you can move up to three captions to a new challenge level. It's how you answer a book you've outgrown, or one that's too much.",
+    "highlights": [
+      "Find it at the bottom of your caption panel. One-tap Music, Visual and General Effect picks are there, or choose captions yourself.",
+      "A harder book is new material: raised captions keep 75% of what's installed and 70% of what's clean. Simplifying keeps most of the work.",
+      "Timing is the bet. Rewrite early and it can pay off at Finals, at the cost of a few regular-season shows. Rewrite late and it usually costs more than it gains.",
+      "Costs 100 Corps Budget for the arranger."
+    ]
+  },
+  {
     "id": "2026-10-04-podium-book-learned",
     "date": "2026-10-04",
     "title": "Podium: see when a caption has learned its whole book",

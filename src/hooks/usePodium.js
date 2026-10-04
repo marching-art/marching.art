@@ -19,6 +19,7 @@ import {
   setPodiumPlanTemplate,
   commitPodiumBudget,
   hirePodiumClinician,
+  rewritePodiumBook,
   acknowledgePodiumStaffOutlook,
   correctPodiumHometown,
   retirePodiumCorps,
@@ -269,6 +270,16 @@ export function usePodium(enabled) {
     [reload]
   );
 
+  /** @type {(captions: string[], toLevel: number) => Promise<any>} */
+  const rewriteBook = useCallback(
+    async (captions, toLevel) => {
+      const result = await rewritePodiumBook({ captions, toLevel });
+      await reload();
+      return result.data;
+    },
+    [reload]
+  );
+
   /** @type {(location: string) => Promise<{ success: boolean, home: string, previous: string | null, touring: boolean }>} */
   const correctHometown = useCallback(
     async (location) => {
@@ -330,6 +341,7 @@ export function usePodium(enabled) {
     savePlanTemplate,
     commitBudget,
     hireClinician,
+    rewriteBook,
     acknowledgeStaffOutlook,
     correctHometown,
     retireCorps,

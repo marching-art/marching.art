@@ -457,6 +457,20 @@
     "durationDays": 5,
     "yieldBoost": 1.5
   },
+  "bookRewrite": {
+    "_note": "Book rewrite (2026-10): once a season, up to maxCaptions captions move to a new challenge level, through lastDay, for fee Corps Budget. Raised captions are new material (raise.keep*); simplified ones keep more (lower.keep*). A timing gamble, measured in podiumSim section N: a daily level-5 corps that raises its music family to 8 on Day 10 trades ~1 point at the Day-38 show for ~+0.9 at Finals; the same move on Day 31 loses.",
+    "lastDay": 35,
+    "maxCaptions": 3,
+    "fee": 100,
+    "raise": {
+      "keepContent": 0.75,
+      "keepClean": 0.7
+    },
+    "lower": {
+      "keepContent": 0.95,
+      "keepClean": 0.9
+    }
+  },
   "joint": {
     "ensembleBonus": 0.25,
     "repeatBonusMultipliers": [
