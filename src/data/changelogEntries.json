@@ -4,92 +4,49 @@
     "date": "2026-10-04",
     "title": "Podium: rewrite your book mid-season",
     "category": "feature",
-    "summary": "Once a season, through Day 35, you can move up to three captions to a new challenge level. It's how you answer a book you've outgrown, or one that's too much.",
-    "highlights": [
-      "Find it at the bottom of your caption panel. One-tap Music, Visual and General Effect picks are there, or choose captions yourself.",
-      "A harder book is new material: raised captions keep 75% of what's installed and 70% of what's clean. Simplifying keeps most of the work.",
-      "Timing is the bet. Rewrite early and it can pay off at Finals, at the cost of a few regular-season shows. Rewrite late and it usually costs more than it gains.",
-      "Costs 100 Corps Budget for the arranger."
-    ]
+    "summary": "Once a season you can now rewrite part of your show. Whether and when to do it is up to you."
   },
   {
     "id": "2026-10-04-podium-book-learned",
     "date": "2026-10-04",
-    "title": "Podium: see when a caption has learned its whole book",
+    "title": "Podium: your caption panel tells you more",
     "category": "improvement",
-    "summary": "A safe challenge level can be fully learned before Finals, and after that more rehearsal won't raise that caption. Your caption panel now shows when that happens, so you know where your effort still counts.",
-    "highlights": [
-      "Each caption that has learned its whole book gets a check mark on the caption panel.",
-      "If four or more captions max out before Championship Week, the panel suggests a harder challenge next season to give them room to grow.",
-      "Captions at challenge 8 keep improving with rehearsal right up to Finals."
-    ]
+    "summary": "The caption panel now marks captions that have gone as far as their book allows."
   },
   {
     "id": "2026-10-03-podium-money-choices",
     "date": "2026-10-03",
-    "title": "Podium: the full kitchen and clinicians are worth the Budget now",
+    "title": "Podium: Corps Budget choices rebalanced",
     "category": "balance",
-    "summary": "Two Corps Budget buys barely did anything. Now they're real alternatives to hiring staff, so how you spend a tight budget is an actual decision.",
-    "highlights": [
-      "The full kitchen food plan lifts your corps' morale a little every night, not only on rest days.",
-      "A clinician is now a 5-day residency at +50% on the block you choose (it was 3 days at +30%), still 120 Budget. Full Ensemble reaches the most captions.",
-      "The gas station plan is unchanged, so a broke corps isn't hit any harder."
-    ]
+    "summary": "Some Corps Budget purchases now matter more than they used to. Experiment to find where your money goes furthest."
   },
   {
     "id": "2026-10-03-podium-morale-matters",
     "date": "2026-10-03",
-    "title": "Podium morale now matters, and the planner shows you how to manage it",
+    "title": "Podium: morale matters more",
     "category": "balance",
-    "summary": "Morale used to barely touch your score. Now how hard you push the corps day to day shapes how it performs: grinding every block, every day wears it down, and resting too often costs you rehearsal. A steady rhythm wins.",
-    "highlights": [
-      "About two-thirds of each day's blocks is sustainable. Every block past that drains morale, and Stretch / PT softens the hit.",
-      "A rest day now restores twice as much morale as before.",
-      "A happy corps performs a little hotter on show nights, and a miserable one runs cold.",
-      "If morale drops below 30, members may quit overnight, and their part of the book has to be re-learned.",
-      "The planner shows today's sustainable load, what a full day or a rest day does to morale, and warns you before members start leaving.",
-      "These rules apply to every Podium corps right away, including the season now underway."
-    ]
+    "summary": "How hard you push your corps now shows up more in how it performs. The planner gives you a read on your corps' condition."
   },
   {
     "id": "2026-10-03-podium-shows-pay-their-way",
     "date": "2026-10-03",
-    "title": "Podium shows now help your corps grow",
+    "title": "Podium: shows are worth attending",
     "category": "balance",
-    "summary": "Going to shows used to slow your corps down, so the best plan was to skip as many as you could. Now performing teaches: a sensible tour keeps pace with staying home, and winning medals pays.",
-    "highlights": [
-      "After every show, your corps works the judges' tapes and cleans up the two captions the sheets flagged as weakest. Your caption panel shows which ones.",
-      "Show-day rehearsal blocks are worth three-quarters of a normal block, up from half.",
-      "A top-three finish in your class pays a Corps Budget purse on top of the show payout: gold 25, silver 15, bronze 10.",
-      "Long hauls and back-to-back shows with no rest still wear a corps down, so how you route the tour matters.",
-      "Rehearsal growth and the reputation climb were rebalanced around this, so season-end scores stay on the same ladder."
-    ]
+    "summary": "Performing is now part of how a corps improves, and strong finishes are rewarded. How you route your tour still matters."
   },
   {
     "id": "2026-10-03-podium-rehearsal-choices-matter",
     "date": "2026-10-03",
-    "title": "Podium rehearsals: how you plan the day now shows on the scoresheet",
+    "title": "Podium: how you rehearse matters more",
     "category": "balance",
-    "summary": "Tapping the same block all day used to score nearly as well as a thoughtful plan, and a hot or cold streak could outweigh weeks of rehearsal. Now a balanced, well-timed day pays off, and the corps that rehearses better wins more often.",
-    "highlights": [
-      "Full Ensemble and Visual Ensemble reach full value once the sections have learned their parts, so early in the season, sectionals come first.",
-      "Running the same block a third time in a day starts to lose value (the first two are still full value).",
-      "Each block now shows what your next tap is worth before you tap it, including how ready your sections are.",
-      "Night-to-night hot and cold streaks are smaller, so results follow your rehearsal more closely.",
-      "These rules apply to every Podium corps right away, including the season now underway."
-    ]
+    "summary": "Your daily rehearsal plan now has more effect on your scores, and the planner tells you more about each block before you tap it."
   },
   {
     "id": "2026-10-03-podium-challenge-levels-matter",
     "date": "2026-10-03",
-    "title": "Podium challenge levels are a real choice now",
+    "title": "Podium: challenge levels are a real choice",
     "category": "balance",
-    "summary": "Maxing every caption at challenge 8 used to be the best pick on every night of the season. Now each level is a bet: an easier book looks sharp from the first show but tops out lower, and a hard book starts slow and only wins in August if you keep rehearsing it clean.",
-    "highlights": [
-      "Low levels lead the opening weeks; the strongest choice moves up the ladder as the season goes on.",
-      "A hard book left unrehearsed now finishes below an easier one, so pick the level that matches how often you'll run rehearsals.",
-      "Applies to corps registered from this update on. Corps already on tour this season keep the rules they started with."
-    ]
+    "summary": "Every challenge level now has its own strengths and risks over the course of a season. Pick the one that fits how you play."
   },
   {
     "id": "2026-10-01-dashboard-endless-spinner",
