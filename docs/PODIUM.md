@@ -396,8 +396,8 @@ Notes:
   sections' parts, so they rehearse at full value only once those parts are installed —
   `blocks.<type>.readiness`: the mean `content` of the gating captions (Full Ensemble: B, P, CG, VP;
   Visual Ensemble: VP, CG) over `fullAt` (0.6), never below `floor` (0.35). Sectionals first,
-  ensembles once the book is in: the opening weeks have a right order. The planner shows each
-  block's next-tap value (repeat ladder × readiness) before the tap.
+  ensembles once the book is in: the opening weeks have a right order. Directors find it by
+  comparing what each tap adds — the planner never shows the multipliers (decision 47).
 - **Phase-dependent yield:** early season, blocks feed mostly `content`; late season, mostly
   `clean`. The engine surfaces this ("Full Ensemble today: +2.1% GE content, +0.4% clean") so the
   player learns the season's texture.
@@ -439,9 +439,8 @@ Two meters, both 0–100, both visible at all times:
   (`scoring.form.moraleDrift`, centered on `moralePivot` 80, so a well-run corps is neutral and a
   collapsing one trends cold), and below morale 30 members quit (`condition.attrition`: a seeded
   nightly chance, up to 3× at morale 0; a seeded caption loses 0.04 content / 0.03 clean —
-  `engine.applyAttrition`, `state.lastAttrition`). The planner states today's sustainable blocks,
-  the full-day and rest-day morale change, and warns near the attrition line
-  (`store.moraleOutlook`).
+  `engine.applyAttrition`, `state.lastAttrition`). The planner reports a departure after it
+  happens; the thresholds are never shown (decision 47).
 
 Effects are deliberately gentle but persistent: high condition adds up to +0.15/caption and +5%
 block yield; depleted condition subtracts the same and, below thresholds, costs a rehearsal block
@@ -1914,6 +1913,21 @@ proven the machinery. Total: ~16–20 engineering weeks to beta.
     skip rest into a morale collapse; now +1 stamina / +0.75 morale nightly, positive in every
     setup (+0.3 to +1.8). `primaryGain` re-anchored 0.023 → 0.022. Accepted as designed: Day-10
     scores at level 8 open near two-thirds of Finals (§4.3's stated target; main opened at 77%).
+
+47. **Discovery over disclosure (owner direction, 2026-10).** Directors learn the mechanics by
+    trial and error, so in-game copy reports outcomes and never discloses hidden multipliers,
+    thresholds, or strategy advice. Removed from the 2026-10 push: the planner's "Next tap ×" hint
+    and the action panel's "repeat yield ×" / "ensemble readiness ×" labels (the callable no longer
+    returns those multipliers — the per-caption gains are the feedback); the planner's morale
+    outlook (sustainable blocks, full-day/rest-day change, attrition-line warnings — a departure is
+    still reported after it happens); the caption panel's "whole book learned" badges and
+    raise-your-challenge nudge (and the `bookLearnedDay` record); the rewrite card's keep-percentages
+    and timing advice (terms only: captions, deadline, fee); the show-day banner's block values;
+    advice lines in registration, food and clinician copy; and the guide's numbers. Server fields
+    that only fed them (`repeatLadder`, `blockReadiness`, `showDayValuePct`, `moraleOutlook`,
+    `captionRealization`, the rewrite keep-percentages) are gone. Kept: outcome reports (gains per
+    caption, judges' tapes flagged, a member quit) and purchase terms (what a clinician or rewrite
+    costs and buys). Older hints that predate the push are listed in NEXT.md for the owner's call.
 
 **Still open:**
 

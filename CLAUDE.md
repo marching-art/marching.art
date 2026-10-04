@@ -71,3 +71,8 @@ no numbers, percentages, costs, durations, or how-it-works detail, and no
 `highlights` that spell out the effect. Players discover the effects through
 trial and error. One entry per shipped push, however many commits it spans.
 Bug fixes may still say what was broken.
+
+**In-game Podium copy follows the same rule (PODIUM.md decision 47).** Report
+outcomes (what a tap added, what the judges flagged, who quit) and purchase
+terms (what something costs and buys) — never hidden multipliers, thresholds,
+or strategy advice ("next tap ×0.8", "rest now", "raise your challenge").

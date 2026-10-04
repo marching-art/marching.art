@@ -596,8 +596,6 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
         // it pays at the next show; the caption panel reads `lastTapes`.
         const tapes = engine.applyJudgesTapes(state, competitionDay, store.balance);
         if (tapes) state.lastTapes = tapes;
-        // The night a caption first fields its whole book (decision 43).
-        state.bookLearnedDay = store.recordBookLearned(state, competitionDay);
         // Season trajectory for the shadows chart (idempotent per day).
         state.scoreHistory = [
           ...(state.scoreHistory || []).filter((entry) => entry.day !== competitionDay).slice(-59),

@@ -490,66 +490,6 @@ function planBlockCaps() {
 }
 
 /**
- * What today's workload does to morale (morale v2, `condition.moraleModel`),
- * for the planner: how many of today's blocks are sustainable (no fatigue),
- * the morale change of a full day (with Stretch / PT), the gain of a rest day
- * on the current food plan, and the morale below which members may quit.
- * Null when the graded model is not configured.
- * @param {any} state podium state (reads foodTier)
- * @param {number} maxBlocksToday today's block cap
- * @returns {{sustainableBlocks: number, fullDayChange: number, restDayGain: number, attritionBelow: number | null} | null}
- */
-function moraleOutlook(state, maxBlocksToday) {
-  const mm = balance.condition.moraleModel;
-  if (!mm) return null;
-  const food = balance.condition.foodTiers[(state && state.foodTier) || "standard"] || balance.condition.foodTiers.standard;
-  const mitigation = 1 - balance.blocks.warmup.conditionEffect.fatigueMitigationPct / 100;
-  const attrition = /** @type {any} */ (balance.condition).attrition;
-  return {
-    sustainableBlocks: Math.floor(mm.sustainableShare * Math.max(0, maxBlocksToday || 0) + 1e-9),
-    fullDayChange: Number((mm.dailyRecovery - mm.fatigueAtFullLoad * mitigation).toFixed(1)),
-    restDayGain: balance.condition.restDayMoraleRecovery + (food.moraleDelta || 0),
-    attritionBelow: attrition ? attrition.moraleBelow : null,
-  };
-}
-
-/**
- * The first competition day each caption fielded its whole book (realization
- * 1), carried forward: `{ B: 31, P: 34 }`. A caption that has never maxed is
- * absent. Recorded at show nights so the panel can say "Brass learned its
- * whole book on Day 31" — the cue that a harder book has room to grow.
- * @param {any} state podium state (reads captions, challengeModel, bookLearnedDay)
- * @param {number} day competition day
- * @returns {Record<string, number>}
- */
-function recordBookLearned(state, day) {
-  const learned = { ...(state.bookLearnedDay || {}) };
-  const realization = engine.captionRealization(state, balance);
-  for (const [caption, realized] of Object.entries(realization)) {
-    if (realized >= 1 && learned[caption] == null) learned[caption] = day;
-  }
-  return learned;
-}
-
-/**
- * Today's ensemble readiness per gated block ({ fullEnsemble: 0.72, ... },
- * 0..1, three decimals) — the multiplier the NEXT tap of that block rehearses
- * at before the repeat ladder (engine.ensembleReadiness). Only blocks with a
- * readiness rule appear, so an empty object means nothing is gated.
- * @param {any} state stored or hydrated podium state (reads caption content)
- * @returns {Record<string, number>}
- */
-function blockReadiness(state) {
-  /** @type {Record<string, number>} */
-  const out = {};
-  for (const [blockType, block] of Object.entries(balance.blocks)) {
-    if (!(/** @type {any} */ (block).readiness)) continue;
-    out[blockType] = Number(engine.ensembleReadiness(state, block).toFixed(3));
-  }
-  return out;
-}
-
-/**
  * The two facts the daily-challenge verifiers can't read off the profile,
  * because Podium keeps its show picks and (as a string, not a `{theme}` object)
  * its show concept in this server-only state doc. Returns null when the
@@ -925,9 +865,6 @@ module.exports = {
   showPickFor,
   computeTodayBlockBudget,
   planBlockCaps,
-  blockReadiness,
-  recordBookLearned,
-  moraleOutlook,
   loadPodiumChallengeFacts,
   profileRef,
   stateRef,

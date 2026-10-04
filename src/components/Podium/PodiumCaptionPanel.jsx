@@ -4,7 +4,7 @@
 // Scores-tab redesign (Phase 6); this is the daily working view.
 
 import React from 'react';
-import { AlertTriangle, Film, CheckCircle2 } from 'lucide-react';
+import { AlertTriangle, Film } from 'lucide-react';
 import { PODIUM_CAPTIONS, CAPTION_LABELS, REP_TIER_NAMES } from './podiumConstants';
 import BookRewriteCard from './BookRewriteCard';
 
@@ -34,7 +34,7 @@ function ProgressPair({ content, clean }) {
 }
 
 /**
- * @param {{ podium: { data: { competitionDay: number, state?: Record<string, any>, captionRealization?: Record<string, number>, bookRewriteTerms?: any }, rewriteBook?: (captions: string[], toLevel: number) => Promise<any> } }} props
+ * @param {{ podium: { data: { competitionDay: number, state?: Record<string, any>, bookRewriteTerms?: any }, rewriteBook?: (captions: string[], toLevel: number) => Promise<any> } }} props
  */
 export default function PodiumCaptionPanel({ podium }) {
   const state = podium.data?.state;
@@ -53,17 +53,6 @@ export default function PodiumCaptionPanel({ podium }) {
       ? state.lastTapes
       : null;
   const tapedCaptions = new Set(tapes ? tapes.captions : []);
-  // Book learned (decision 43): a caption fielding its whole book scores at its
-  // challenge's cap — more rehearsal no longer raises it, a harder book next
-  // season would. Server-computed realization; first-learned day from state.
-  /** @type {Record<string, number>} */
-  const realization = podium.data?.captionRealization || {};
-  /** @type {Record<string, number>} */
-  const learnedDay = state.bookLearnedDay || {};
-  const learned = PODIUM_CAPTIONS.filter((c) => (realization[c] ?? 0) >= 1);
-  // Nudge only when the cap arrives with real season left: most of the book
-  // maxed before Championship Week means the challenge was too safe.
-  const earlyCap = learned.length >= 4 && day < 45;
 
   return (
     <div className="bg-surface-card border border-line rounded-none p-4 space-y-3">
@@ -89,17 +78,6 @@ export default function PodiumCaptionPanel({ podium }) {
           Clean
         </span>
       </div>
-
-      {earlyCap && (
-        <p className="flex items-start gap-1.5 text-[10px] text-secondary">
-          <CheckCircle2 className="w-3 h-3 mt-px text-green-400 shrink-0" aria-hidden="true" />
-          <span>
-            {learned.length} of 8 captions have learned their whole book — more rehearsal won’t
-            raise them. Keep them clean, and consider a harder challenge next season to give them
-            room to grow.
-          </span>
-        </p>
-      )}
 
       {tapes && (
         <p className="flex items-start gap-1.5 text-[10px] text-secondary">
@@ -127,14 +105,6 @@ export default function PodiumCaptionPanel({ podium }) {
                   {neglected && (
                     <span title={`Unrehearsed ${idleDays} days — cleanliness is decaying`}>
                       <AlertTriangle className="w-3 h-3 text-warning" />
-                    </span>
-                  )}
-                  {(realization[caption] ?? 0) >= 1 && (
-                    <span
-                      title={`Whole book learned${learnedDay[caption] ? ` by Day ${learnedDay[caption]}` : ''} — more rehearsal won't raise this caption; a harder book would`}
-                    >
-                      <CheckCircle2 className="w-3 h-3 text-green-400" aria-hidden="true" />
-                      <span className="sr-only">Whole book learned</span>
                     </span>
                   )}
                   {tapedCaptions.has(caption) && (

@@ -503,15 +503,6 @@ describe("rehearsal depth — ensemble readiness and the repeat ladder", () => {
     for (let i = 2; i < ladder.length; i++) assert.ok(ladder[i] <= ladder[i - 1]);
     assert.ok(ladder[2] < 1, "a third rep of the same block already costs yield");
   });
-
-  test("store.blockReadiness lists only gated blocks", () => {
-    const store = require("./store");
-    const readiness = store.blockReadiness(corps(8, 4));
-    for (const [blockType, block] of Object.entries(cfg.blocks)) {
-      assert.equal(blockType in readiness, Boolean(block.readiness), blockType);
-    }
-    assert.ok(readiness.fullEnsemble > 0 && readiness.fullEnsemble <= 1);
-  });
 });
 
 describe("judges' tapes — performing teaches (2026-10)", () => {
@@ -613,16 +604,6 @@ describe("morale v2 — graded fatigue, morale-led form, attrition (2026-10)", (
       "deterministic per seed and day"
     );
   });
-
-  test("store.moraleOutlook reports today's sustainable load and the rest gain", () => {
-    const store = require("./store");
-    const outlook = store.moraleOutlook({ foodTier: "standard" }, 12);
-    assert.ok(outlook);
-    assert.equal(outlook.sustainableBlocks, Math.floor(cfg.condition.moraleModel.sustainableShare * 12 + 1e-9));
-    assert.ok(outlook.fullDayChange < 0);
-    assert.equal(outlook.restDayGain, cfg.condition.restDayMoraleRecovery);
-    assert.equal(outlook.attritionBelow, cfg.condition.attrition.moraleBelow);
-  });
 });
 
 describe("money buys real choices (2026-10)", () => {
@@ -654,19 +635,6 @@ describe("book learned — the safe-book cap made visible (decision 43)", () => 
     assert.ok(readout.P < 1);
     assert.equal(readout.P, Number(engine.realizedFor(state.captions.P, state.challengeModel, cfg).toFixed(3)));
   });
-
-  test("store.recordBookLearned keeps the FIRST day a caption maxed", () => {
-    const store = require("./store");
-    const state = corps(5, 4);
-    state.captions.B.content = 1;
-    state.captions.B.clean = 1;
-    state.bookLearnedDay = store.recordBookLearned(state, 20);
-    assert.deepEqual(state.bookLearnedDay, { B: 20 });
-    state.captions.P.content = 1;
-    state.captions.P.clean = 1;
-    state.bookLearnedDay = store.recordBookLearned(state, 24);
-    assert.deepEqual(state.bookLearnedDay, { B: 20, P: 24 });
-  });
 });
 
 describe("book rewrite — once a season, a timing bet (decision 44)", () => {
@@ -690,13 +658,11 @@ describe("book rewrite — once a season, a timing bet (decision 44)", () => {
       state.captions[c].content = 0.8;
       state.captions[c].clean = 0.6;
     }
-    state.bookLearnedDay = { B: 9 };
     engine.applyBookRewrite(state, ["B"], 8, 10, cfg);
     assert.equal(state.captions.B.challenge, 8);
     assert.ok(Math.abs(state.captions.B.content - 0.8 * rule.raise.keepContent) < 1e-9);
     assert.ok(Math.abs(state.captions.B.clean - 0.6 * rule.raise.keepClean) < 1e-9);
     assert.deepEqual(state.bookRewrite, { day: 10, toLevel: 8, from: { B: 5 } });
-    assert.equal(state.bookLearnedDay.B, undefined, "a rewritten caption has a new book to learn");
 
     const simpler = corps(8, 4);
     simpler.captions.P.content = 0.8;

@@ -1,5 +1,5 @@
-// The rehearsal grid shows what each block's NEXT tap is worth before the tap:
-// the server's repeat ladder for that block today x its ensemble readiness.
+// Discovery over disclosure (PODIUM.md decision 47): the planner reports what
+// each tap added, never the hidden repeat / readiness multipliers behind it.
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import type { ComponentType } from 'react';
@@ -16,8 +16,6 @@ const podiumWith = (overrides: Record<string, unknown> = {}) => ({
     blocksUsedToday: 2,
     blocksRemainingToday: 10,
     rehearsalOpensAt: null,
-    repeatLadder: [1, 1, 0.8, 0.65, 0.5],
-    blockReadiness: { fullEnsemble: 0.65, visualEnsemble: 1 },
     state: {
       today: {
         calendarDay: 12,
@@ -30,7 +28,7 @@ const podiumWith = (overrides: Record<string, unknown> = {}) => ({
     },
     ...overrides,
   },
-  lastPanel: null,
+  lastPanel: null as unknown,
   queueAllocate: vi.fn(),
   declareRestDay: vi.fn(),
   reload: vi.fn(),
@@ -44,58 +42,47 @@ const blockButton = (label: string) =>
     .map((el) => el.closest('button'))
     .find(Boolean) as HTMLButtonElement;
 
-describe('RehearsalPlanner next-tap hint', () => {
-  it('combines the repeat ladder with ensemble readiness', () => {
+describe('RehearsalPlanner keeps the mechanics hidden', () => {
+  it('shows no per-block value hints', () => {
     render(<Planner podium={podiumWith()} />);
-    // Third Full Ensemble today (ladder 0.8) at 65% readiness = 0.52.
-    expect(blockButton('Full Ensemble').textContent).toContain('Next tap ×0.52');
-    expect(blockButton('Full Ensemble').textContent).toContain('sections 65% ready');
-    expect(blockButton('Full Ensemble').textContent).toContain('repeat');
+    expect(blockButton('Full Ensemble').textContent).not.toMatch(/Next tap|ready|×0/);
   });
 
-  it('stays quiet for a block whose next tap is full value', () => {
-    render(<Planner podium={podiumWith()} />);
-    expect(blockButton('Brass Sectionals').textContent).not.toContain('Next tap');
-    expect(blockButton('Visual Ensemble').textContent).not.toContain('Next tap');
-  });
-
-  it('shows no hint when an older backend sends neither field', () => {
-    render(<Planner podium={podiumWith({ repeatLadder: undefined, blockReadiness: undefined })} />);
-    expect(blockButton('Full Ensemble').textContent).not.toContain('Next tap');
+  it('reports what a tap added, without repeat or readiness multipliers', () => {
+    const podium = podiumWith();
+    podium.lastPanel = {
+      blockType: 'fullEnsemble',
+      gains: { GE1: { content: 0.012, clean: 0.004 } },
+      repeatMult: 0.8,
+      readinessMult: 0.65,
+    };
+    render(<Planner podium={podium} />);
+    expect(screen.getByText(/Action complete/)).toBeTruthy();
+    expect(screen.getByText('+1.2%')).toBeTruthy();
+    expect(screen.queryByText(/repeat yield|ensemble readiness/)).toBeNull();
   });
 });
 
-describe('RehearsalPlanner morale outlook', () => {
-  const outlook = {
-    sustainableBlocks: 8,
-    fullDayChange: -3.2,
-    restDayGain: 20,
-    attritionBelow: 30,
-  };
+describe('RehearsalPlanner morale: outcomes, not thresholds', () => {
   const withMorale = (morale: number, extra: Record<string, unknown> = {}) => {
-    const podium = podiumWith({ moraleOutlook: outlook });
+    const podium = podiumWith();
     const data = podium.data as Record<string, unknown>;
     data.state = { ...(data.state as object), condition: { stamina: 80, morale }, ...extra };
     return podium;
   };
 
-  it('states the sustainable load and the rest-day gain', () => {
-    render(<Planner podium={withMorale(70)} />);
-    expect(screen.getByText(/first 8 blocks today are sustainable/)).toBeTruthy();
-    expect(screen.getByText('+20')).toBeTruthy();
-    expect(screen.queryByText(/members/)).toBeNull();
-  });
-
-  it('warns before and below the attrition line', () => {
-    const { unmount } = render(<Planner podium={withMorale(35)} />);
-    expect(screen.getByText(/near the line \(30\)/)).toBeTruthy();
-    unmount();
+  it('gives no sustainable-load or attrition-line warnings, even at low morale', () => {
     render(<Planner podium={withMorale(20)} />);
-    expect(screen.getByText(/members may quit overnight/)).toBeTruthy();
+    expect(screen.queryByText(/sustainable|near the line|may quit|Rest the corps/)).toBeNull();
   });
 
-  it('names a recent departure', () => {
+  it('reports a recent departure after it happens', () => {
     render(<Planner podium={withMorale(25, { lastAttrition: { day: 11, caption: 'B' } })} />);
     expect(screen.getByText(/member quit on Day 11/)).toBeTruthy();
+  });
+
+  it('keeps the show-day banner free of block values', () => {
+    render(<Planner podium={podiumWith({ isShowDay: true })} />);
+    expect(screen.getByText('Light run-through before the show')).toBeTruthy();
   });
 });

@@ -33,9 +33,6 @@ export interface PodiumBlockResult {
     day: number;
     gains: Record<string, { content: number; clean: number }>;
     staminaCost: number;
-    repeatMult: number;
-    // Ensemble readiness the block rehearsed at (1 = ungated or fully ready).
-    readinessMult?: number;
   };
   today: {
     calendarDay: number;
@@ -46,8 +43,6 @@ export interface PodiumBlockResult {
   };
   condition: { stamina: number; morale: number };
   blocksRemaining: number;
-  // Readiness of each gated ensemble block after this allocation (0..1).
-  blockReadiness?: Record<string, number>;
 }
 
 export interface PodiumRouteLeg {

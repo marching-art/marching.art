@@ -37,38 +37,3 @@ describe('PodiumCaptionPanel judges’ tapes', () => {
     expect(screen.queryByText(/Judges’ tapes/)).toBeNull();
   });
 });
-
-describe('PodiumCaptionPanel book learned', () => {
-  const realization = (learned: string[]) =>
-    Object.fromEntries(CAPS.map((c) => [c, learned.includes(c) ? 1 : 0.8]));
-
-  it('badges each fully learned caption', () => {
-    render(<Panel podium={podiumWith({}, { captionRealization: realization(['B', 'P']) })} />);
-    expect(screen.getAllByText('Whole book learned')).toHaveLength(2);
-    expect(screen.queryByText(/more rehearsal won’t/)).toBeNull();
-  });
-
-  it('nudges toward a harder book when most captions max out early', () => {
-    render(
-      <Panel
-        podium={podiumWith(
-          { bookLearnedDay: { B: 20 } },
-          { captionRealization: realization(['B', 'P', 'MA', 'GE1']) }
-        )}
-      />
-    );
-    expect(screen.getByText(/4 of 8 captions have learned their whole book/)).toBeTruthy();
-  });
-
-  it('stays quiet in Championship Week', () => {
-    render(
-      <Panel
-        podium={podiumWith(
-          {},
-          { competitionDay: 47, captionRealization: realization(['B', 'P', 'MA', 'GE1']) }
-        )}
-      />
-    );
-    expect(screen.queryByText(/captions have learned their whole book/)).toBeNull();
-  });
-});

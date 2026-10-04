@@ -39,11 +39,7 @@ import {
 const FOOD_TIERS = [
   { id: 'gasStation', label: 'Gas station', detail: 'Free · slower recovery, morale risk' },
   { id: 'standard', label: 'Standard', detail: '60 Budget/week · baseline recovery' },
-  {
-    id: 'fullKitchen',
-    label: 'Full kitchen',
-    detail: '150 Budget/week · best recovery + a nightly morale lift',
-  },
+  { id: 'fullKitchen', label: 'Full kitchen', detail: '150 Budget/week · best recovery + morale' },
 ];
 
 const TIER_LABELS = TRAVEL_TIER_LABELS;
@@ -276,7 +272,7 @@ export default function CorpsConditionPanel({ podium }) {
             <>
               <p className="text-[10px] text-muted">
                 Book a specialist residency: one block rehearses at +{clinician.boostPct}% for{' '}
-                {clinician.durationDays} days. Full Ensemble reaches the most captions.
+                {clinician.durationDays} days.
               </p>
               <div className="flex flex-wrap items-center gap-2">
                 <select

@@ -12,8 +12,6 @@ const terms = {
   fee: 100,
   lastDay: 35,
   maxCaptions: 3,
-  raiseKeepContentPct: 75,
-  raiseKeepCleanPct: 70,
 };
 
 const podiumWith = (dataOverrides: Record<string, unknown> = {}, stateOverrides = {}) => ({
@@ -41,7 +39,9 @@ describe('BookRewriteCard', () => {
     const podium = podiumWith();
     render(<Card podium={podium} />);
     fireEvent.click(screen.getByText(/Rewrite the book \(once a season/));
-    expect(screen.getByText(/keep 75% of what’s installed/)).toBeTruthy();
+    // Terms only — no keep-percentages or timing advice (decision 47).
+    expect(screen.getByText(/Once per season, through Day 35 · 100 Budget/)).toBeTruthy();
+    expect(screen.queryByText(/%|pay off|cost more/)).toBeNull();
     fireEvent.click(screen.getByText('Music'));
     fireEvent.click(screen.getByText('Rewrite · 100 Budget'));
     await waitFor(() => expect(podium.rewriteBook).toHaveBeenCalledWith(['B', 'MA', 'P'], 8));
