@@ -29,6 +29,8 @@
  *      rhythm, leaving one block unused is no exploit, over-resting loses.
  *   L. Money buys real choices — staff matter but stay bounded, the full
  *      kitchen and a clinician residency are real buys.
+ *   M. Effort counts where it should — at level 8 effort pays to the last
+ *      night; a daily director's level-5 book is fully learned by Finals.
  *   J. Shows pay their way — a moderate schedule breaks even against the
  *      automatic shows alone; an overloaded tour of long hauls still costs.
  *
@@ -237,7 +239,7 @@ const ASSISTANT_PLAN = [
  *   flawless director's rest decision (managedRest); `foodTier` sets the food
  *   plan; `yieldBoost(blockType, day)` multiplies a block's yield (staff,
  *   clinician)
- * @returns {{scores: Array<{day: number, total: number}>}}
+ * @returns {{scores: Array<{day: number, total: number}>, state: any}}
  */
 function simulateCommitment(
   level,
@@ -311,7 +313,7 @@ function simulateCommitment(
     // Members quit when morale collapses (morale v2), as the processor runs it.
     engine.applyAttrition(state, day, `attr|${seed}`, cfg);
   }
-  return { scores };
+  return { scores, state };
 }
 
 // ---------------------------------------------------------------------------
@@ -719,6 +721,33 @@ function main() {
     clinicianDay24 - unstaffedDay24 >= 0.3,
     (clinicianDay24 - unstaffedDay24).toFixed(2)
   );
+
+  // --- M. Effort counts where it should (decision 43, 2026-10) ------------
+  // A realization cap is the challenge model's design: a safe book gets
+  // fully learned and stops growing — the cue to raise the challenge (the
+  // caption panel says so). A soft knee past the cap was tried and rejected:
+  // it pinned even level-8 corps at full realization and shrank the effort
+  // gap. What must hold: at level 8 effort counts to the last night, and a
+  // daily director's level-5 book is fully learned by Finals.
+  console.log("\nM. Effort counts where it should (tier 4, daily director):");
+  const M_SEEDS = 24;
+  const effortRuns = (/** @type {number} */ level, /** @type {any} */ opts = {}) =>
+    Array.from({ length: M_SEEDS }, (_, s) => simulateCommitment(level, 1, 4, `effort|${s}`, opts));
+  const lighterDay = (/** @type {number} */ n) => balancedDay(Math.max(1, Math.round(n * 0.85)));
+  const fullEight = mean(effortRuns(8).map((r) => showTotal(r, 49)));
+  const lightEight = mean(effortRuns(8, { dayPlan: lighterDay }).map((r) => showTotal(r, 49)));
+  const safeBooks = effortRuns(5).map((r) => engine.captionRealization(r.state, cfg));
+  const safeLearned = mean(safeBooks.map((book) => Object.values(book).filter((v) => v >= 1).length));
+  console.log(
+    `    level 8: all blocks ${fullEight.toFixed(2)} vs 85% of blocks ${lightEight.toFixed(2)} · ` +
+      `level 5: ${safeLearned.toFixed(1)} of 8 captions fully learned by Finals`
+  );
+  assert(
+    "M1. at level 8 effort counts to the end (85% of blocks >= 0.75 point behind)",
+    fullEight - lightEight >= 0.75,
+    (fullEight - lightEight).toFixed(2)
+  );
+  assert("M2. a daily director's level-5 book is fully learned by Finals", safeLearned >= 7.5, safeLearned.toFixed(1));
 
   // --- J. Shows pay their way (2026-10) -----------------------------------
   // Before: a show day's 8 blocks ran at half value and performing taught the

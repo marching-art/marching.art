@@ -1867,6 +1867,22 @@ proven the machinery. Total: ~16–20 engineering weeks to beta.
     (bounded 0.5–2.5), full kitchen +0.90 (v1 +0.59), Full Ensemble clinician +0.64 by day 24
     (v1 +0.24) — staff, food and clinicians now trade at comparable value per coin.
 
+43. **The safe-book cap is by design — make it visible (2026-10).** The engine probe flagged
+    "effort saturates": daily directors reached full realization before Finals, so an even block
+    rotation matched any adaptive plan. Re-measured after decisions 38–42: at level 8 (what a
+    daily director should pick) a daily corps finishes at 0.98 realized and effort counts to the
+    last night (85% of blocks −1.0, playing 70% of days −1.8); at levels 5–6 and in mixed builds a
+    daily corps learns its whole book before Finals and stops growing — the challenge model
+    working as intended (a safe book is a capped book). A soft knee past the threshold was tried
+    and rejected: across four tunings it broke 7–8 sim checks, pinned even level-8 corps at full
+    realization, and shrank the level-8 effort gap from −1.5 to −0.2. Shipped instead: the cap is
+    shown — `engine.realizedFor` / `captionRealization`, `getPodiumState.captionRealization`, the
+    first night each caption maxes (`state.bookLearnedDay`, recorded at shows by
+    `store.recordBookLearned`), a "whole book learned" badge per caption, and a nudge toward a
+    harder challenge when 4+ captions max before Championship Week. `podiumSim.js` section M: at
+    level 8 85% of blocks finishes ≥ 0.75 behind (1.01); a daily level-5 book is fully learned by
+    Finals (8.0 of 8).
+
 **Still open:**
 
 1. **Point-cap semantics** — largely resolved by the class-capability registry

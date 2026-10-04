@@ -514,6 +514,24 @@ function moraleOutlook(state, maxBlocksToday) {
 }
 
 /**
+ * The first competition day each caption fielded its whole book (realization
+ * 1), carried forward: `{ B: 31, P: 34 }`. A caption that has never maxed is
+ * absent. Recorded at show nights so the panel can say "Brass learned its
+ * whole book on Day 31" — the cue that a harder book has room to grow.
+ * @param {any} state podium state (reads captions, challengeModel, bookLearnedDay)
+ * @param {number} day competition day
+ * @returns {Record<string, number>}
+ */
+function recordBookLearned(state, day) {
+  const learned = { ...(state.bookLearnedDay || {}) };
+  const realization = engine.captionRealization(state, balance);
+  for (const [caption, realized] of Object.entries(realization)) {
+    if (realized >= 1 && learned[caption] == null) learned[caption] = day;
+  }
+  return learned;
+}
+
+/**
  * Today's ensemble readiness per gated block ({ fullEnsemble: 0.72, ... },
  * 0..1, three decimals) — the multiplier the NEXT tap of that block rehearses
  * at before the repeat ladder (engine.ensembleReadiness). Only blocks with a
@@ -908,6 +926,7 @@ module.exports = {
   computeTodayBlockBudget,
   planBlockCaps,
   blockReadiness,
+  recordBookLearned,
   moraleOutlook,
   loadPodiumChallengeFacts,
   profileRef,

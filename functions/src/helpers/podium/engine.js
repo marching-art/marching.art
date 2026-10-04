@@ -675,6 +675,39 @@ function ceilFracForTier(repTier, cfg) {
 }
 
 /**
+ * How much of its book a caption fields (0..1): rehearsal attainment
+ * (installed x clean) over the challenge's full-realization threshold, capped
+ * at 1. At 1 the caption has learned its whole book — more rehearsal no longer
+ * raises its score; only a harder book (next season's challenge) adds room.
+ * That cap is by design (decision 43): a safe book is a capped book. Pure.
+ * @param {{content: number, clean: number, challenge: number}} cap caption state
+ * @param {number|undefined} challengeModel the state's model stamp
+ * @param {any} cfg balance config
+ * @returns {number}
+ */
+function realizedFor(cap, challengeModel, cfg) {
+  const sc = cfg.scoring;
+  const attainment = cap.content * (sc.cleanFloor + sc.cleanWeight * cap.clean);
+  return Math.min(1, attainment / fullRealizationFor(cap.challenge, challengeModel, cfg));
+}
+
+/**
+ * Every caption's realization ({ GE1: 0.93, ... }, three decimals) for the
+ * caption panel and the nightly "book learned" record.
+ * @param {any} state season state (stored or hydrated)
+ * @param {any} cfg balance config
+ * @returns {Record<string, number>}
+ */
+function captionRealization(state, cfg) {
+  /** @type {Record<string, number>} */
+  const out = {};
+  for (const caption of CAPTIONS) {
+    out[caption] = Number(realizedFor(state.captions[caption], state.challengeModel, cfg).toFixed(3));
+  }
+  return out;
+}
+
+/**
  * Score a corps for a show on `day` (§4.2, trajectory-anchored model). Pure;
  * does not mutate state.
  *
@@ -722,8 +755,7 @@ function scoreCorps(state, day, varianceSeed, curves, cfg) {
       potential *= 1 + (eb.maxPct / 100) * ramp;
     }
     // Rehearsal attainment: how much of the book is installed AND clean.
-    const attainment = cap.content * (sc.cleanFloor + sc.cleanWeight * cap.clean);
-    const realized = Math.min(1, attainment / fullRealizationFor(cap.challenge, state.challengeModel, cfg));
+    const realized = realizedFor(cap, state.challengeModel, cfg);
     // Position between the rep-independent floor and the rep-gated ceiling,
     // set ENTIRELY by this corps' own rehearsal. This is where effort becomes
     // score — and why two same-tier corps that rehearsed differently differ.
@@ -920,6 +952,8 @@ module.exports = {
   softCap,
   updateForm,
   ceilFracForTier,
+  realizedFor,
+  captionRealization,
   scoreCorps,
   maxPotentialTotal,
   tierPerformance,

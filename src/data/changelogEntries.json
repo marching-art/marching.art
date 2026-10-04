@@ -1,5 +1,17 @@
 [
   {
+    "id": "2026-10-04-podium-book-learned",
+    "date": "2026-10-04",
+    "title": "Podium: see when a caption has learned its whole book",
+    "category": "improvement",
+    "summary": "A safe challenge level can be fully learned before Finals, and after that more rehearsal won't raise that caption. Your caption panel now shows when that happens, so you know where your effort still counts.",
+    "highlights": [
+      "Each caption that has learned its whole book gets a check mark on the caption panel.",
+      "If four or more captions max out before Championship Week, the panel suggests a harder challenge next season to give them room to grow.",
+      "Captions at challenge 8 keep improving with rehearsal right up to Finals."
+    ]
+  },
+  {
     "id": "2026-10-03-podium-money-choices",
     "date": "2026-10-03",
     "title": "Podium: the full kitchen and clinicians are worth the Budget now",

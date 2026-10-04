@@ -699,6 +699,9 @@ exports.getPodiumState = onCall({ cors: true }, async (request) => {
     // How today's workload moves morale (sustainable blocks, full-day and
     // rest-day change, the attrition line) — null on the legacy rule.
     moraleOutlook: store.moraleOutlook(state, maxBlocksToday),
+    // How much of its book each caption fields (1 = fully learned; more
+    // rehearsal no longer raises it — decision 43).
+    captionRealization: engine.captionRealization(state, store.balance),
     // What a clinician residency costs and does — the panel renders these
     // instead of hard-coding them.
     clinicianTerms: {

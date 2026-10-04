@@ -643,3 +643,28 @@ describe("money buys real choices (2026-10)", () => {
     assert.ok(cfg.clinician.yieldBoost >= 1.5);
   });
 });
+
+describe("book learned — the safe-book cap made visible (decision 43)", () => {
+  test("realization caps at 1 and matches the per-caption readout", () => {
+    const state = corps(5, 4);
+    state.captions.B.content = 1;
+    state.captions.B.clean = 1;
+    const readout = engine.captionRealization(state, cfg);
+    assert.equal(readout.B, 1);
+    assert.ok(readout.P < 1);
+    assert.equal(readout.P, Number(engine.realizedFor(state.captions.P, state.challengeModel, cfg).toFixed(3)));
+  });
+
+  test("store.recordBookLearned keeps the FIRST day a caption maxed", () => {
+    const store = require("./store");
+    const state = corps(5, 4);
+    state.captions.B.content = 1;
+    state.captions.B.clean = 1;
+    state.bookLearnedDay = store.recordBookLearned(state, 20);
+    assert.deepEqual(state.bookLearnedDay, { B: 20 });
+    state.captions.P.content = 1;
+    state.captions.P.clean = 1;
+    state.bookLearnedDay = store.recordBookLearned(state, 24);
+    assert.deepEqual(state.bookLearnedDay, { B: 20, P: 24 });
+  });
+});
