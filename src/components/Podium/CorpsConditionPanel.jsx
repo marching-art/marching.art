@@ -39,7 +39,11 @@ import {
 const FOOD_TIERS = [
   { id: 'gasStation', label: 'Gas station', detail: 'Free · slower recovery, morale risk' },
   { id: 'standard', label: 'Standard', detail: '60 Budget/week · baseline recovery' },
-  { id: 'fullKitchen', label: 'Full kitchen', detail: '150 Budget/week · best recovery + morale' },
+  {
+    id: 'fullKitchen',
+    label: 'Full kitchen',
+    detail: '150 Budget/week · best recovery + a nightly morale lift',
+  },
 ];
 
 const TIER_LABELS = TRAVEL_TIER_LABELS;
@@ -111,6 +115,10 @@ export default function CorpsConditionPanel({ podium }) {
   const routePreview = podium.data?.routePreview || [];
   /** @type {PodiumCurrentLocation | null} */
   const currentLocation = podium.data?.currentLocation || null;
+  // Clinician terms come from the server (balance-tunable); older backends
+  // fall back to the pre-2026-10 residency.
+  /** @type {{cost: number, durationDays: number, boostPct: number}} */
+  const clinician = podium.data?.clinicianTerms || { cost: 120, durationDays: 3, boostPct: 30 };
   const [busy, setBusy] = useState(/** @type {string | null} */ (null));
   const [error, setError] = useState(/** @type {string | null} */ (null));
   const [editingTemplate, setEditingTemplate] = useState(false);
@@ -261,12 +269,14 @@ export default function CorpsConditionPanel({ podium }) {
               <span className="text-interactive font-bold">
                 {BLOCKS.find((b) => b.id === state.clinician.block)?.label || state.clinician.block}
               </span>{' '}
-              engagement active through day {state.clinician.expiresDay} (+30% yield).
+              residency active through day {state.clinician.expiresDay} (+{clinician.boostPct}%
+              yield).
             </p>
           ) : (
             <>
               <p className="text-[10px] text-muted">
-                Book a specialist to boost one block by +30% for 3 days.
+                Book a specialist residency: one block rehearses at +{clinician.boostPct}% for{' '}
+                {clinician.durationDays} days. Full Ensemble reaches the most captions.
               </p>
               <div className="flex flex-wrap items-center gap-2">
                 <select
@@ -288,7 +298,7 @@ export default function CorpsConditionPanel({ podium }) {
                   {busy === 'clinician' ? (
                     <Loader2 className="w-3 h-3 animate-spin" />
                   ) : (
-                    'Hire · 120 Budget / 3 days'
+                    `Hire · ${clinician.cost} Budget / ${clinician.durationDays} days`
                   )}
                 </button>
               </div>

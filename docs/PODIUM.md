@@ -335,6 +335,28 @@ authentic (it's the Blue-Devils-hard-book gambit), but the condition system (§5
 expensive to actually clean. The interesting builds mix: an 8 in brass and GE1, 5s elsewhere, is a
 "music corps" identity that the recap will reflect all season.
 
+**Challenge model v2 (2026-10, decision 38) — what the engine actually does.** The original
+implementation took each caption's curve shape from the mined archetype whose ceiling sat nearest the
+target, which handed level 8 the early-saturating shape: all-8 outscored every other build on every
+show day of the season, and mid levels (4–5) were the worst opening build of all — the knob had one
+right answer. v2 (`scoring.challengeModel` in `balanceConfig.json`, `engine.curveForChallenge` /
+`perfFloorFor` / `fullRealizationFor`) makes it a bet with three per-level tables:
+
+- **Shape** — `dayOneShareByChallenge`: the share of its finals ceiling a caption's potential stands
+  at on day 1 (0.80 at level 1 → 0.62 at level 8), with the caption's growth rate taken from its
+  mined archetypes. Easy books are mostly there in June; hard books surge in August.
+- **Floor** — `floorFractionByChallenge` (0.55 → 0.43): what an unrehearsed caption still fields. A
+  dirty hard book scores below a dirty easy one.
+- **Realization** — `fullRealizationByChallenge` (0.62 → 0.70 since decision 40; was 0.64 → 0.73): the installed × clean attainment at
+  which the book pays in full. A hard book asks for more cleaning.
+
+Result (tier 4, `podiumSim.js` section H): the best uniform level by show day climbs
+1 → 1 → 5 → 5 → 6 → 8 → 8 → 8 across days 4–49 for a director who rehearses daily; finals rise
+with every level for that director; a corps left to the assistant director peaks at level 5 and loses
+points at 8; a director who plays ~15% of days peaks at 6. Each state is stamped with the model it was
+created under (`state.challengeModel`); an unstamped state is v1 for life, so a balance change never
+reshapes a season in flight.
+
 ### 5.2 Rehearsal — the seven blocks
 
 The daily verb. Each rehearsal day grants a number of **blocks** (base 3; modified by day type and
@@ -365,9 +387,17 @@ Notes:
 - Color guard (`CG`) has its own sectional block (primary CG, secondary VA/GE2 — the guard _is_
   a visual-effect engine) and still gains secondarily from Visual Ensemble and Full Ensemble, so
   a guard-forward build is viable and an ensemble-only guard stays merely adequate.
-- **Diminishing returns within a day:** the 2nd consecutive block of the same type yields ~60%, the
-  3rd ~35%. Balance is mechanically rewarded, spam is not — this is the direct implementation of
-  "realistic variation in caption peaks and lows based on a balance of rehearsal."
+- **Diminishing returns within a day:** the first two blocks of a type each day run at full value,
+  then the ladder tapers (`repeatBlockMultipliers`: 1, 1, 0.8, 0.65, 0.5, 0.4, … 0.25 since 2026-10;
+  it was 4 full reps, then 0.6, then 0.35). Balance is mechanically rewarded, spam is not — this is
+  the direct implementation of "realistic variation in caption peaks and lows based on a balance of
+  rehearsal."
+- **Ensemble readiness (2026-10, decision 39):** Full Ensemble and Visual Ensemble assemble the
+  sections' parts, so they rehearse at full value only once those parts are installed —
+  `blocks.<type>.readiness`: the mean `content` of the gating captions (Full Ensemble: B, P, CG, VP;
+  Visual Ensemble: VP, CG) over `fullAt` (0.6), never below `floor` (0.35). Sectionals first,
+  ensembles once the book is in: the opening weeks have a right order. The planner shows each
+  block's next-tap value (repeat ladder × readiness) before the tap.
 - **Phase-dependent yield:** early season, blocks feed mostly `content`; late season, mostly
   `clean`. The engine surfaces this ("Full Ensemble today: +2.1% GE content, +0.4% clean") so the
   player learns the season's texture.
@@ -402,6 +432,16 @@ Two meters, both 0–100, both visible at all times:
   quality.
 - **Morale** — moved by results (beating a rival +, a slide −), rest cadence, food quality, and
   streaks of maxed-out rehearsal days (grind fatigue). Recovers on show days that go well.
+- **Morale v2 (2026-10, decision 41) — what the engine does.** Fatigue is graded by the day's
+  workload (`condition.moraleModel`): up to `sustainableShare` (70%) of the day's blocks the corps
+  recovers +1; past it morale falls linearly to `fatigueAtFullLoad` (−7, about −3.2 with Stretch /
+  PT) at a full day. A rest day adds +20 (was +10). Morale pulls the form walk
+  (`scoring.form.moraleDrift`, centered on `moralePivot` 80, so a well-run corps is neutral and a
+  collapsing one trends cold), and below morale 30 members quit (`condition.attrition`: a seeded
+  nightly chance, up to 3× at morale 0; a seeded caption loses 0.04 content / 0.03 clean —
+  `engine.applyAttrition`, `state.lastAttrition`). The planner states today's sustainable blocks,
+  the full-day and rest-day morale change, and warns near the attrition line
+  (`store.moraleOutlook`).
 
 Effects are deliberately gentle but persistent: high condition adds up to +0.15/caption and +5%
 block yield; depleted condition subtracts the same and, below thresholds, costs a rehearsal block
@@ -525,8 +565,19 @@ minute?_ — falls out of the mechanics with zero special-casing.
 ### 5.4 Show days and the nightly drop
 
 - Podium corps attend the **same shows on the same schedule** as everyone else (selected via the
-  existing `selectUserShows` flow). Show days grant 1 rehearsal block (morning run-through), charge
-  performance stamina, and are the only days a Podium corps receives an official score.
+  existing `selectUserShows` flow). Show days grant a lighter run-through (8 blocks at
+  `showDayYieldMultiplier` value — ¾ since 2026-10, was ½), charge performance stamina, and are the
+  only days a Podium corps receives an official score.
+- **Judges' tapes (2026-10, decision 40).** Performing teaches: after every scored show the sheets
+  point at the corps' two weakest captions (lowest installed × clean) and it cleans them from the
+  tapes overnight (`shows.judgesTapes`: +0.08 clean / +0.03 content of headroom, at the caption's
+  challenge install rate; counts as rehearsing them for neglect decay; `engine.applyJudgesTapes`,
+  stored as `state.lastTapes` and shown on the caption panel). Applied after the score, so it pays
+  at the next show.
+- **Medal purses (2026-10).** A top-three finish in the corps' class that night (the medal rule,
+  `showRanking.js`) pays Corps Budget on top of the flat show payout — `budget.medalPurse` gold 25 /
+  silver 15 / bronze 10, credited in the nightly rank pass (`purse:<medal>`, earnings line). Where
+  you perform now matters, not just whether.
 - Scores post in the existing nightly pipeline. The recap entry carries the full caption breakdown,
   placement _within Podium Class only_, and phase-appropriate color ("Brass +0.3 since
   Tuesday — 2nd in class").
@@ -1756,6 +1807,113 @@ proven the machinery. Total: ~16–20 engineering weeks to beta.
     correction built in) into `podium-config/curves`, which the engine swaps in at runtime with
     shape validation — committed curveData is the permanent fallback. All 11 gazetteer centroid
     placeholders hand-corrected (incl. wrong-state source typos).
+
+38. **Challenge levels are a bet (challenge model v2, 2026-10).** Measured through the real engine,
+    all-8 beat every other build on every show day and mid levels were a trap, so the registration
+    ritual had one right answer. v2 (§5.1) gives each level its own curve shape, floor, and
+    realization threshold: easy books lead the opening weeks, hard books win finals only when cleaned.
+    Asserted by `podiumSim.js` section H and the v2 block in `engine.test.js`. States are stamped with
+    the model at registration; legacy states keep v1.
+
+39. **Rehearsal choices matter (2026-10).** The engine probe found warmup + 11 Full Ensemble within
+    ~1 point of the best plan, Full Ensemble spam 5.6 points AHEAD of a sectionals-first opener on
+    day 10, and a ~4-point p5–p95 form swing for identical play — luck outweighed the plan. Shipped:
+    ensemble readiness (§5.2), a tapering repeat ladder (two full reps), the form walk halved
+    (`scoring.form` max 0.04 → 0.02, step 0.023 → 0.012), and `primaryGain` 0.025 → 0.027 so a
+    balanced director's finals sit where they did (tier-4 flawless 89.5; Champion still season 11).
+    The flawless policy in `podiumSim.js` / `podiumPacingHarness.js` is now an even mix of every
+    block (`balancedDay`) — weakest-caption targeting topped up with Full Ensemble is no longer
+    near-optimal. `podiumSim.js` section I: spam loses ≥ 3 (5.9), sectionals-first leads on day 10
+    (+1.45), a daily director beats a 70%-play one in 82% of pairings (v1 tuning: 67%), identical
+    play spans 2.3 points (v1: 4.2). These are field-wide rules: they apply to every corps from the
+    deploy on, including a season in flight.
+
+40. **Shows pay their way (2026-10).** The engine probe found shows were worse than pure cost: a
+    show day's 8 blocks at half value made a full 29-show tour finish ~8 points below attending
+    only the 6 automatic shows, and a moderate 14-show tour ~1.2 below — the game paid directors
+    to skip shows and starve the fields. Shipped: show-day blocks at ¾ value, judges' tapes, medal
+    purses (§5.4). Because show days now grow the corps, the growth anchor was re-set:
+    `primaryGain` 0.027 → 0.0235, challenge-model `fullRealizationByChallenge` 0.64–0.73 →
+    0.62–0.70 (so a daily grinder still fully realizes a level-8 book), and
+    `reputation.climbThreshold` 82 → 84 (a fully-cleaned level-5 book otherwise crossed into
+    Champion within 20 seasons). Tier ceilings now land at 77 / 84 / 89 / 92 / 95 / 97 / 97 — the
+    §4.3 ladder; flawless reaches Champion in season 10–11. `podiumSim.js` section J: moderate
+    tour ≥ auto-only − 0.25 (now +0.0; v1 −1.2), a maximal tour of long hauls costs ≥ 1.5 (3.2).
+    Sim F's upset band widened to 25–45% (29%): luck was cut on purpose (decision 39) and tapes
+    make an off-year Champion's lapses cheaper; the harness's own 15–60% check is unchanged.
+    Field-wide rules — they apply to the season in flight from the next show.
+
+41. **Morale is managed (2026-10).** The engine probe found morale vestigial: the grind rule
+    counted only days that used EVERY block, so leaving one unused kept morale at 100, and a
+    corps ground to morale 16 by Finals lost ~1 point. Shipped: graded workload fatigue, a +20
+    rest day, morale-led form, attrition below 30 (§5.3). `primaryGain` 0.0235 → 0.023 because
+    a managed corps now rehearses at higher morale (flawless tier-4 finals 91.8; ceilings
+    78 / 85 / 90 / 93 / 96 / 97 / 97.5; Champion in season 10). The flawless policy in
+    `podiumSim.js` / `podiumPacingHarness.js` now rests when stamina or morale sags and freshens
+    up before the majors (`managedRest`), and both harnesses apply attrition nightly. The pull is
+    deliberately gentle (0.002): at 0.004 a 6%-skip Champion fell 1.25 behind and lost to a
+    flawless Elite 73% of the time. `podiumSim.js` section K: grind −4.4 vs managed, 11-of-12
+    grind −2.6 (v1: +0.2, the exploit), twice-weekly rest −3.4; sim F upset 44%.
+
+42. **Money buys real choices (2026-10).** Re-measured after decisions 38–41 the item "money
+    barely moves score" was stale: a full journeyman staff (720 Budget) is worth +0.99 at Finals
+    for a daily director and more for a part-timer — bounded and diminishing per coin, which is
+    what the division-equal cap (§14.2.1) protects. The weak buys were the others: the full
+    kitchen (+0.59 for ~630 more Budget a season; its morale only applied on rest days) and the
+    clinician (+0.24 on Full Ensemble for 120). Shipped: `foodTiers.fullKitchen.nightlyMoraleDelta`
+    +0.5 (gas station unchanged — the free floor is not punished harder) and a clinician residency
+    of 5 days at +50% (was 3 days at +30%), with the terms served by `getPodiumState`
+    (`clinicianTerms`) instead of hard-coded in the panel. `podiumSim.js` section L: staff +0.99
+    (bounded 0.5–2.5), full kitchen +0.90 (v1 +0.59), Full Ensemble clinician +0.64 by day 24
+    (v1 +0.24) — staff, food and clinicians now trade at comparable value per coin.
+
+43. **The safe-book cap is by design — make it visible (2026-10).** The engine probe flagged
+    "effort saturates": daily directors reached full realization before Finals, so an even block
+    rotation matched any adaptive plan. Re-measured after decisions 38–42: at level 8 (what a
+    daily director should pick) a daily corps finishes at 0.98 realized and effort counts to the
+    last night (85% of blocks −1.0, playing 70% of days −1.8); at levels 5–6 and in mixed builds a
+    daily corps learns its whole book before Finals and stops growing — the challenge model
+    working as intended (a safe book is a capped book). A soft knee past the threshold was tried
+    and rejected: across four tunings it broke 7–8 sim checks, pinned even level-8 corps at full
+    realization, and shrank the level-8 effort gap from −1.5 to −0.2. Shipped instead: the cap is
+    shown — `engine.realizedFor` / `captionRealization`, `getPodiumState.captionRealization`, the
+    first night each caption maxes (`state.bookLearnedDay`, recorded at shows by
+    `store.recordBookLearned`), a "whole book learned" badge per caption, and a nudge toward a
+    harder challenge when 4+ captions max before Championship Week. `podiumSim.js` section M: at
+    level 8 85% of blocks finishes ≥ 0.75 behind (1.01); a daily level-5 book is fully learned by
+    Finals (8.0 of 8).
+
+44. **The book rewrite (2026-10).** Once a season, through Day 35, a director may move up to three
+    captions to a new challenge level for a 100-Budget arranger fee (`bookRewrite`;
+    `engine.bookRewriteRefusal` / `applyBookRewrite`; callable `rewritePodiumBook`; the caption
+    panel's `BookRewriteCard`, with Music / Visual / GE presets and server-served terms). A raised
+    caption is new material — it keeps 75% of its installed content and 70% of its clean; a
+    simplified one keeps 95% / 90%. It is a timing bet, and the natural answer to the "whole book
+    learned" badge (decision 43): `podiumSim.js` section N — a daily level-5 director who raises
+    the music family to 8 on Day 10 gains +0.98 at Finals for −0.94 at the Day-38 show; the same
+    rewrite on Day 31 loses (−0.33). Rewriting all eight captions never beat one family.
+45. **Per-show judging panels: measured, not built (2026-10).** A caption-emphasis panel that is
+    total-neutral for a balanced corps moves even a strongly specialized build (music 8 / rest 5)
+    by under 0.2 points at 20% emphasis — builds converge as books get learned, so the panel would
+    be cosmetic noise inside a 2.3-point night-to-night spread. Revisit only if caption
+    differentiation between builds grows.
+
+46. **A/B against main — three corrections (2026-10).** `functions/src/scripts/podiumCompare.js`
+    plays the branch engine + balance against `origin/main` (same players, seeds and processor
+    order) across every decision axis, skill vs luck, a 192-strategy tournament, accessibility and
+    calibration. It confirmed decisions 38–44 (best challenge level now tracks commitment
+    8/7/7/5/2 vs main's always-8; identical-play spread 5.0 → 2.8; daily beats a 70%-play
+    director 66% → 92%; the 11-of-12 trick is gone; careless-vs-careful gap 2.8 → 8.3; staff and
+    clinician worth roughly double) and found three regressions, now fixed:
+    (1) **part-timers fell 1–2 points vs main** even at their best level — assistant director
+    0.85 → 0.88, decay 0.08 → 0.06/day, floor 0.35 → 0.40 (35%-play at best level now −0.6 vs
+    main, 70%-play −0.3; sim I3's bar set to 75%, still above main's 67%);
+    (2) **a heavy tour still cost ~1.5** — show-day blocks 0.75 → 0.8, tapes +0.10 clean / +0.04
+    content (moderate tour now equals auto-only, heavy −0.5, long-haul overload −3.4 vs main's
+    −7.2); (3) **the full kitchen backfired for grinders (−1.4)** — its extra stamina let a corps
+    skip rest into a morale collapse; now +1 stamina / +0.75 morale nightly, positive in every
+    setup (+0.3 to +1.8). `primaryGain` re-anchored 0.023 → 0.022. Accepted as designed: Day-10
+    scores at level 8 open near two-thirds of Finals (§4.3's stated target; main opened at 77%).
 
 **Still open:**
 

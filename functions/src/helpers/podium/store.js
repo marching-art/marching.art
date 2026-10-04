@@ -490,6 +490,66 @@ function planBlockCaps() {
 }
 
 /**
+ * What today's workload does to morale (morale v2, `condition.moraleModel`),
+ * for the planner: how many of today's blocks are sustainable (no fatigue),
+ * the morale change of a full day (with Stretch / PT), the gain of a rest day
+ * on the current food plan, and the morale below which members may quit.
+ * Null when the graded model is not configured.
+ * @param {any} state podium state (reads foodTier)
+ * @param {number} maxBlocksToday today's block cap
+ * @returns {{sustainableBlocks: number, fullDayChange: number, restDayGain: number, attritionBelow: number | null} | null}
+ */
+function moraleOutlook(state, maxBlocksToday) {
+  const mm = balance.condition.moraleModel;
+  if (!mm) return null;
+  const food = balance.condition.foodTiers[(state && state.foodTier) || "standard"] || balance.condition.foodTiers.standard;
+  const mitigation = 1 - balance.blocks.warmup.conditionEffect.fatigueMitigationPct / 100;
+  const attrition = /** @type {any} */ (balance.condition).attrition;
+  return {
+    sustainableBlocks: Math.floor(mm.sustainableShare * Math.max(0, maxBlocksToday || 0) + 1e-9),
+    fullDayChange: Number((mm.dailyRecovery - mm.fatigueAtFullLoad * mitigation).toFixed(1)),
+    restDayGain: balance.condition.restDayMoraleRecovery + (food.moraleDelta || 0),
+    attritionBelow: attrition ? attrition.moraleBelow : null,
+  };
+}
+
+/**
+ * The first competition day each caption fielded its whole book (realization
+ * 1), carried forward: `{ B: 31, P: 34 }`. A caption that has never maxed is
+ * absent. Recorded at show nights so the panel can say "Brass learned its
+ * whole book on Day 31" — the cue that a harder book has room to grow.
+ * @param {any} state podium state (reads captions, challengeModel, bookLearnedDay)
+ * @param {number} day competition day
+ * @returns {Record<string, number>}
+ */
+function recordBookLearned(state, day) {
+  const learned = { ...(state.bookLearnedDay || {}) };
+  const realization = engine.captionRealization(state, balance);
+  for (const [caption, realized] of Object.entries(realization)) {
+    if (realized >= 1 && learned[caption] == null) learned[caption] = day;
+  }
+  return learned;
+}
+
+/**
+ * Today's ensemble readiness per gated block ({ fullEnsemble: 0.72, ... },
+ * 0..1, three decimals) — the multiplier the NEXT tap of that block rehearses
+ * at before the repeat ladder (engine.ensembleReadiness). Only blocks with a
+ * readiness rule appear, so an empty object means nothing is gated.
+ * @param {any} state stored or hydrated podium state (reads caption content)
+ * @returns {Record<string, number>}
+ */
+function blockReadiness(state) {
+  /** @type {Record<string, number>} */
+  const out = {};
+  for (const [blockType, block] of Object.entries(balance.blocks)) {
+    if (!(/** @type {any} */ (block).readiness)) continue;
+    out[blockType] = Number(engine.ensembleReadiness(state, block).toFixed(3));
+  }
+  return out;
+}
+
+/**
  * The two facts the daily-challenge verifiers can't read off the profile,
  * because Podium keeps its show picks and (as a string, not a `{theme}` object)
  * its show concept in this server-only state doc. Returns null when the
@@ -661,7 +721,7 @@ function budgetCategoryOf(reason) {
   if (key === "camp") return "camp"; // spring-training housing/food
   if (key === "clinician") return "clinician";
   if (key === "commitment") return "commitment"; // CC dedicated from the wallet
-  if (key === "showPayout" || key === "fundraiser") return "earnings"; // in-class income
+  if (key === "showPayout" || key === "fundraiser" || key.startsWith("purse")) return "earnings"; // in-class income (purse:gold|silver|bronze)
   return "other";
 }
 
@@ -680,6 +740,18 @@ function accrueCategory(budget, reason, amount) {
   if (!budget.byCategory) budget.byCategory = {};
   const category = budgetCategoryOf(reason);
   budget.byCategory[category] = (budget.byCategory[category] || 0) + amount;
+}
+
+/**
+ * Corps Budget a medal pays (`balance.budget.medalPurse`, §5.4); 0 when unset.
+ * @param {string} medal "gold" | "silver" | "bronze"
+ * @param {any} [cfg] balance config (defaults to the live balance)
+ * @returns {number}
+ */
+function medalPurseFor(medal, cfg = balance) {
+  const purses = (cfg.budget && /** @type {any} */ (cfg.budget).medalPurse) || {};
+  const amount = Number(purses[medal]);
+  return Number.isFinite(amount) && amount > 0 ? amount : 0;
 }
 
 /** Credit the ledger (earnings/commitments). Mutates state. */
@@ -804,7 +876,14 @@ function hydrateState(stored) {
     const cap = stored.captions[caption];
     state.captions[caption] = {
       ...cap,
-      curve: engine.curveForChallenge(caption, cap.challenge, curves, balance),
+      // A state predating the challenge-model stamp is legacy (v1) for life.
+      curve: engine.curveForChallenge(
+        caption,
+        cap.challenge,
+        curves,
+        balance,
+        stored.challengeModel ?? engine.LEGACY_CHALLENGE_MODEL
+      ),
     };
   }
   return state;
@@ -846,6 +925,9 @@ module.exports = {
   showPickFor,
   computeTodayBlockBudget,
   planBlockCaps,
+  blockReadiness,
+  recordBookLearned,
+  moraleOutlook,
   loadPodiumChallengeFacts,
   profileRef,
   stateRef,
@@ -859,6 +941,7 @@ module.exports = {
   creditBudget,
   debitBudget,
   budgetCategoryOf,
+  medalPurseFor,
   spendByCategory,
   buildSeasonFinancialReport,
   SPEND_CATEGORIES,

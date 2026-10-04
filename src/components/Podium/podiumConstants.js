@@ -17,7 +17,7 @@ export const BLOCKS = [
   {
     id: 'visualEnsemble',
     label: 'Visual Ensemble',
-    detail: 'GE2 + VA focus · VP, CG',
+    detail: 'GE2 + VA focus · VP, CG · full value once VP + CG parts are learned',
     captions: ['GE2', 'VA'],
   },
   {
@@ -41,7 +41,7 @@ export const BLOCKS = [
   {
     id: 'fullEnsemble',
     label: 'Full Ensemble',
-    detail: 'GE1 + GE2 + MA focus · everything else',
+    detail: 'GE1 + GE2 + MA focus · everything else · full value once the sections are learned',
     captions: ['GE1', 'GE2', 'MA'],
   },
 ];

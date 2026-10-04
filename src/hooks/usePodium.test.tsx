@@ -19,6 +19,7 @@ vi.mock('../api/podium', () => ({
   setPodiumPlanTemplate: vi.fn(),
   commitPodiumBudget: vi.fn(),
   hirePodiumClinician: vi.fn(),
+  rewritePodiumBook: vi.fn(),
   acknowledgePodiumStaffOutlook: vi.fn(),
 }));
 

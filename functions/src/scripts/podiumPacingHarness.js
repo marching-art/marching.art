@@ -38,12 +38,25 @@ const ROTATION = [
   "fullEnsemble",
 ];
 
+/** Majors and Championship Week nights a flawless director freshens up for. */
+const BIG_NIGHTS = [28, 35, 41, 47, 48, 49];
+
+/** A flawless director's day after warmup: every rehearsal block in turn. */
+const BALANCED_ORDER = [
+  "fullEnsemble",
+  "visualBasics",
+  "brassSectionals",
+  "percussionSectionals",
+  "guardSectionals",
+  "visualEnsemble",
+];
+
 /**
  * The ordered block plan for one day.
  * @param {object} state season state
  * @param {number} maxBlocks blocks available today
- * @param {boolean} optimal true = a flawless director (warmup + weakest-caption
- *   targeting); false = a diligent-but-simple rotation
+ * @param {boolean} optimal true = a flawless director (warmup + an even mix of
+ *   every block, BALANCED_ORDER); false = a diligent-but-simple rotation
  * @param {{index:number}} rot rotation cursor (mutated) for the simple policy
  */
 function planDay(state, maxBlocks, optimal, rot) {
@@ -52,25 +65,11 @@ function planDay(state, maxBlocks, optimal, rot) {
     for (let i = 0; i < maxBlocks; i++) blocks.push(ROTATION[rot.index++ % ROTATION.length]);
     return blocks;
   }
-  // Flawless: warmup first, then hit the weakest captions with the block whose
-  // primary caption they are — the policy podiumSim.js proves reaches Champion.
-  const weakest = Object.entries(state.captions)
-    .map(([caption, cap]) => ({ caption, value: cap.content * (0.72 + 0.28 * cap.clean) }))
-    .sort((a, b) => a.value - b.value)
-    .map((e) => e.caption);
-  const picks = ["warmup"];
-  for (const caption of weakest) {
-    for (const [blockType, block] of Object.entries(balance.blocks)) {
-      if (blockType === "warmup") continue;
-      if ((block.captions[caption] || 0) >= 1 && !picks.includes(blockType)) {
-        picks.push(blockType);
-        break;
-      }
-    }
-    if (picks.length >= maxBlocks) break;
-  }
-  while (picks.length < maxBlocks) picks.push("fullEnsemble");
-  return picks.slice(0, maxBlocks);
+  // Flawless: warmup first, then every rehearsal block in turn, Full Ensemble
+  // first. Under the repeat ladder and ensemble readiness (sections must be
+  // installed before Full / Visual Ensemble pay in full) an even mix beats
+  // weakest-caption targeting that tops the day up with Full Ensemble.
+  return ["warmup", ...Array.from({ length: maxBlocks - 1 }, (_, i) => BALANCED_ORDER[i % BALANCED_ORDER.length])];
 }
 
 /**
@@ -90,8 +89,13 @@ function playSeason(repTier, challengeLevel, seed, { skipRate = 0, optimal = fal
     const isShowDay = SHOW_DAYS.includes(day);
     const maxBlocks = engine.blocksAvailable(state, { isShowDay, isSpringTraining: false }, balance);
     const skippedDay = skipRate > 0 && engine.seededUnit(`${seed}|skip|${day}`) < skipRate;
-    const restFloor = optimal ? 45 : 25;
-    const rest = !isShowDay && !skippedDay && state.condition.stamina < restFloor;
+    // Flawless: rest when stamina or morale sags and freshen up before the
+    // majors (morale v2); the simple director rests only when spent.
+    const { stamina, morale } = state.condition;
+    const wantsRest = optimal
+      ? stamina < 45 || morale < 50 || (BIG_NIGHTS.includes(day + 1) && morale < 80)
+      : stamina < 25;
+    const rest = !isShowDay && !skippedDay && wantsRest;
     let used = 0;
     const blocksSoFar = {};
     if (!rest) {
@@ -117,6 +121,8 @@ function playSeason(repTier, challengeLevel, seed, { skipRate = 0, optimal = fal
       { restDay: rest, blocksUsedToday: used, maxBlocksToday: maxBlocks, warmupUsed: (blocksSoFar.warmup || 0) > 0 },
       balance
     );
+    // Members quit when morale collapses (morale v2), as the processor runs it.
+    engine.applyAttrition(state, day, `attr|${seed}`, balance);
     // Independent per-corps form evolves every day (seeded only by this corps).
     if (useForm) engine.updateForm(state, day, `form|${seed}`, curves, balance);
     if (isShowDay) {
@@ -124,6 +130,9 @@ function playSeason(repTier, challengeLevel, seed, { skipRate = 0, optimal = fal
         0,
         state.condition.stamina - balance.condition.showStaminaCost
       );
+      // The night's judges' tapes clean the weakest captions (§5.4), exactly
+      // as the processor applies them after every scored show.
+      if (day < 49) engine.applyJudgesTapes(state, day, balance);
     }
   }
   return engine.scoreCorps(state, 49, `harness|${seed}`, curves, balance);

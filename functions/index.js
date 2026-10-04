@@ -85,6 +85,7 @@ const {
   setPodiumPlanTemplate,
   commitPodiumBudget,
   hirePodiumClinician,
+  rewritePodiumBook,
 } = require("./src/callable/podiumBudget");
 const { hostEvent, getHostingHistory } = require("./src/callable/podiumHost");
 const { correctPodiumHometown } = require("./src/callable/podiumHometown");
@@ -449,6 +450,7 @@ module.exports = {
   setPodiumPlanTemplate,
   commitPodiumBudget,
   hirePodiumClinician,
+  rewritePodiumBook,
   getPodiumStaffMarket,
   hirePodiumStaff,
   releasePodiumStaff,

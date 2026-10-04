@@ -77,6 +77,7 @@ export const FUNNEL_EVENTS: Readonly<Record<string, string>> = Object.freeze({
   hostEvent: 'event_hosted',
   commitPodiumBudget: 'podium_budget_committed',
   hirePodiumClinician: 'podium_staff_hired',
+  rewritePodiumBook: 'podium_book_rewritten',
 
   // --- Community ---
   addArticleComment: 'article_comment_posted',

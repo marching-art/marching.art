@@ -30,6 +30,7 @@ const staffMarket = require("./staffMarket");
 const assessment = require("./assessment");
 const joint = require("./joint");
 const { runScrimmagePass } = require("./scrimmagePass");
+const { runRankPass } = require("./rankPass");
 const { rankShowResults } = require("./showRanking");
 const { isWorldChampionshipRound } = require("../worldChampionship");
 const { processCoinAwardsBatch } = require("../scoringAwards");
@@ -558,6 +559,13 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
         },
         store.balance
       );
+      // Attrition (morale v2): a corps whose morale has collapsed loses members
+      // overnight — a caption's spots must be re-learned. Seeded per corps.
+      const departure = engine.applyAttrition(state, competitionDay, `${seasonUid}|${uid}`, store.balance);
+      if (departure) {
+        state.lastAttrition = departure;
+        state.attritionCount = (state.attritionCount || 0) + 1;
+      }
 
       // Evolve this corps' INDEPENDENT performance form for the night. Seeded
       // only by (seasonUid, uid), so no two corps share a shock — the field
@@ -584,6 +592,12 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
         state.lastGe = score.geScore;
         state.lastVis = score.visualScore;
         state.lastMus = score.musicScore;
+        // Judges' tapes (§5.4): clean the weakest captions after the score, so
+        // it pays at the next show; the caption panel reads `lastTapes`.
+        const tapes = engine.applyJudgesTapes(state, competitionDay, store.balance);
+        if (tapes) state.lastTapes = tapes;
+        // The night a caption first fields its whole book (decision 43).
+        state.bookLearnedDay = store.recordBookLearned(state, competitionDay);
         // Season trajectory for the shadows chart (idempotent per day).
         state.scoreHistory = [
           ...(state.scoreHistory || []).filter((entry) => entry.day !== competitionDay).slice(-59),
@@ -701,6 +715,7 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
     // The World Championship rounds (47-49) are the one exception: ONE field,
     // every division ranked together, and the round's podium is the medal
     // (helpers/worldChampionship.js).
+    /** @type {Record<string, string>} */
     const medalByUid = {};
     const recapShows = [];
     for (const group of showGroups.values()) {
@@ -872,37 +887,8 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
         logger.error(`[podium] Eastern snake publication failed: ${error.message}`);
       }
     }
-    // Rank/medal display copies land in chunked batches (previously two
-    // sequential writes per corps).
-    const rankWriter = new ChunkedWriter(db);
-    for (let i = 0; i < standings.length; i++) {
-      const { uid, lastTotal, medals, division } = standings[i];
-      const medalWon = medalByUid[uid];
-      const updatedMedals = medalWon
-        ? { ...(medals || {}), [medalWon]: ((medals || {})[medalWon] || 0) + 1 }
-        : medals || {};
-      rankWriter.set(
-        store.stateRef(db, uid),
-        { seasonRank: i + 1, seasonRankOf: standings.length, medals: updatedMedals },
-        { merge: true }
-      );
-      rankWriter.set(
-        store.profileRef(db, uid),
-        {
-          corps: {
-            podiumClass: {
-              totalSeasonScore: lastTotal,
-              seasonRank: i + 1,
-              seasonRankOf: standings.length,
-              division,
-              medals: updatedMedals,
-            },
-          },
-        },
-        { merge: true }
-      );
-    }
-    await rankWriter.commit();
+    // Season rank, medals and medal purses (§5.4) — see rankPass.js.
+    await runRankPass(db, { standings, medalByUid, stateDataByUid, competitionDay });
 
     // --- 4a2. Funnel metrics doc (Phase 8.2) ----------------------------------
     // One doc per calendar day; the Admin panel charts the last weeks.

@@ -34,6 +34,8 @@ export interface PodiumBlockResult {
     gains: Record<string, { content: number; clean: number }>;
     staminaCost: number;
     repeatMult: number;
+    // Ensemble readiness the block rehearsed at (1 = ungated or fully ready).
+    readinessMult?: number;
   };
   today: {
     calendarDay: number;
@@ -44,6 +46,8 @@ export interface PodiumBlockResult {
   };
   condition: { stamina: number; morale: number };
   blocksRemaining: number;
+  // Readiness of each gated ensemble block after this allocation (0..1).
+  blockReadiness?: Record<string, number>;
 }
 
 export interface PodiumRouteLeg {
@@ -563,6 +567,17 @@ export const hirePodiumClinician = createCallable<
   { block: string },
   { success: boolean; clinician: Record<string, unknown>; budget: Record<string, unknown> }
 >('hirePodiumClinician');
+
+// Book rewrite (once a season, through bookRewrite.lastDay): move up to three
+// captions to a new challenge level for the arranger fee in Corps Budget.
+export const rewritePodiumBook = createCallable<
+  { captions: string[]; toLevel: number },
+  {
+    success: boolean;
+    bookRewrite: { day: number; toLevel: number; from: Record<string, number> };
+    budget: Record<string, unknown>;
+  }
+>('rewritePodiumBook');
 
 // Hosting is ALL-class (design §5.10): any director with a fielded corps can
 // rent a venue and put a show on the season schedule. CorpsCoin economy only.

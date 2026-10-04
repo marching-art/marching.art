@@ -688,6 +688,37 @@ exports.getPodiumState = onCall({ cors: true }, async (request) => {
     rehearsalOpensAt:
       overnight.locked && overnight.opensAt ? overnight.opensAt.toISOString() : null,
     blockCaps,
+    // What the next tap of each block is worth before staff/condition: the
+    // repeat ladder (index = blocks of that type already run today) and each
+    // ensemble block's readiness (sections' installed content).
+    repeatLadder: store.balance.rehearsal.repeatBlockMultipliers,
+    // A show day's lighter run-through: each block's value as a percent of a
+    // rehearsal-day block (the judges' tapes after the show make up the rest).
+    showDayValuePct: Math.round(store.balance.rehearsal.showDayYieldMultiplier * 100),
+    blockReadiness: store.blockReadiness(state),
+    // How today's workload moves morale (sustainable blocks, full-day and
+    // rest-day change, the attrition line) — null on the legacy rule.
+    moraleOutlook: store.moraleOutlook(state, maxBlocksToday),
+    // How much of its book each caption fields (1 = fully learned; more
+    // rehearsal no longer raises it — decision 43).
+    captionRealization: engine.captionRealization(state, store.balance),
+    // What a clinician residency costs and does — the panel renders these
+    // instead of hard-coding them.
+    // Book rewrite terms (once a season) — the caption panel's rewrite card.
+    bookRewriteTerms: store.balance.bookRewrite
+      ? {
+          fee: store.balance.bookRewrite.fee,
+          lastDay: store.balance.bookRewrite.lastDay,
+          maxCaptions: store.balance.bookRewrite.maxCaptions,
+          raiseKeepContentPct: Math.round(store.balance.bookRewrite.raise.keepContent * 100),
+          raiseKeepCleanPct: Math.round(store.balance.bookRewrite.raise.keepClean * 100),
+        }
+      : null,
+    clinicianTerms: {
+      cost: store.balance.clinician.cost,
+      durationDays: store.balance.clinician.durationDays,
+      boostPct: Math.round((store.balance.clinician.yieldBoost - 1) * 100),
+    },
     assistant,
     division,
     divisionLabel: divisions.DIVISION_LABELS[division],

@@ -89,26 +89,137 @@ function bandValueAtPercentile(band, pct) {
 }
 
 /**
- * Derive a caption's growth-curve parameters from its challenge level:
- * the ceiling L targets the challenge-mapped percentile of the day-49 band,
- * and (k, d0) come from the archetype whose fitted L is nearest that target
- * (higher challenge -> later, slower-certain curves by construction of the
- * archetype set).
+ * Challenge-model versions. A season state is stamped with the model it was
+ * created under (createSeasonState) and keeps it for life, so a balance change
+ * never re-shapes a season already in flight.
+ *   1 — legacy: curve shape from the archetype with the nearest ceiling, one
+ *       rep-independent performance floor for every challenge level. Left
+ *       challenge 8 dominant on every day of the season (its nearest archetype
+ *       is the early-saturating one), and mid levels a trap.
+ *   2 — the challenge knob is a real bet: low levels reach more of their
+ *       (lower) ceiling early and hold a higher floor; high levels start
+ *       further back and only pay off if the book gets cleaned
+ *       (scoring.challengeModel).
+ */
+const LEGACY_CHALLENGE_MODEL = 1;
+
+/** The challenge-model version a fresh season state is stamped with. */
+function currentChallengeModel(cfg) {
+  const version = cfg.scoring.challengeModel && cfg.scoring.challengeModel.version;
+  return Number.isFinite(version) ? version : LEGACY_CHALLENGE_MODEL;
+}
+
+/** The challenge-model block when `model` opts into it, else null (legacy). */
+function challengeModelConfig(model, cfg) {
+  const cm = cfg.scoring.challengeModel;
+  return model >= 2 && cm && cm.dayOneShareByChallenge ? cm : null;
+}
+
+/**
+ * A caption's growth rate: the population-weighted mean `k` of its mined
+ * archetypes — how fast real corps-seasons actually climbed. Falls back to
+ * `challengeModel.growthRate` when the curve set carries no archetypes.
+ * @returns {number}
+ */
+function growthRateFor(caption, curves, cm) {
+  const archetypes = (curves.archetypes && curves.archetypes[caption]) || [];
+  let weight = 0;
+  let sum = 0;
+  for (const archetype of archetypes) {
+    const share = Number.isFinite(archetype.share) ? archetype.share : 0;
+    if (!(archetype.k > 0) || !(share > 0)) continue;
+    weight += share;
+    sum += archetype.k * share;
+  }
+  return weight > 0 ? sum / weight : cm.growthRate;
+}
+
+/**
+ * The inflection day `d0` at which a logistic of rate `k` reaches exactly
+ * `dayOneShare` of its day-49 value on day 1. That ratio falls monotonically
+ * as d0 moves later, so a bisection converges.
+ * @param {number} k growth rate (>0)
+ * @param {number} dayOneShare 0..1 (exclusive)
+ * @returns {number}
+ */
+function onsetDayForShare(k, dayOneShare) {
+  const share = (d0) => (1 + Math.exp(-k * (49 - d0))) / (1 + Math.exp(-k * (1 - d0)));
+  let lo = -500;
+  let hi = 549;
+  for (let i = 0; i < 80; i++) {
+    const mid = (lo + hi) / 2;
+    if (share(mid) > dayOneShare) lo = mid;
+    else hi = mid;
+  }
+  return (lo + hi) / 2;
+}
+
+/**
+ * Derive a caption's growth-curve parameters from its challenge level. The
+ * ceiling L targets the challenge-mapped percentile of the day-49 band under
+ * every model. The SHAPE depends on the model:
+ *   v1 — (k, d0) from the archetype whose fitted L is nearest that target.
+ *   v2 — the caption's mined growth rate, with the inflection placed so the
+ *        curve stands at `dayOneShareByChallenge[challenge]` of its finals
+ *        ceiling on day 1: an easy book is mostly there in June, a hard one
+ *        surges in August.
+ * @param {number} [model] challenge-model version (default: legacy)
  * @returns {{L: number, k: number, d0: number, norm: number}}
  */
-function curveForChallenge(caption, challenge, curves, cfg) {
+function curveForChallenge(caption, challenge, curves, cfg, model = LEGACY_CHALLENGE_MODEL) {
   const day49 = curves.bands[caption][48];
   const pct = cfg.scoring.challengeCeilingPercentile[String(challenge)];
   const L = bandValueAtPercentile(day49, pct);
-  const archetypes = curves.archetypes[caption];
-  let best = archetypes[0];
-  for (const archetype of archetypes) {
-    if (Math.abs(archetype.L - L) < Math.abs(best.L - L)) best = archetype;
+  let k;
+  let d0;
+  const cm = challengeModelConfig(model, cfg);
+  if (cm) {
+    k = growthRateFor(caption, curves, cm);
+    d0 = onsetDayForShare(k, cm.dayOneShareByChallenge[String(challenge)]);
+  } else {
+    const archetypes = curves.archetypes[caption];
+    let best = archetypes[0];
+    for (const archetype of archetypes) {
+      if (Math.abs(archetype.L - L) < Math.abs(best.L - L)) best = archetype;
+    }
+    k = best.k;
+    d0 = best.d0;
   }
   // Normalize so a fully-realized curve reaches its ceiling exactly at
-  // finals (the raw logistic is still ~6% shy of L at day 49).
-  const norm = 1 / (1 + Math.exp(-best.k * (49 - best.d0)));
-  return { L, k: best.k, d0: best.d0, norm };
+  // finals (the raw logistic is still shy of L at day 49).
+  const norm = 1 / (1 + Math.exp(-k * (49 - d0)));
+  return { L, k, d0, norm };
+}
+
+/**
+ * The fraction of potential an UNREHEARSED caption still fields (the
+ * reputation-independent performance floor). Legacy states share one floor;
+ * under v2 an easy book holds a higher floor than a hard one, so a hard book
+ * left dirty scores BELOW an easy book left dirty — the risk side of the bet.
+ * @param {number} challenge 1-8
+ * @param {number|undefined} model challenge-model version (undefined = legacy)
+ * @returns {number}
+ */
+function perfFloorFor(challenge, model, cfg) {
+  const cm = challengeModelConfig(model, cfg);
+  const table = cm && cm.floorFractionByChallenge;
+  if (table && table[String(challenge)] != null) return Number(table[String(challenge)]);
+  return cfg.scoring.perfFloorFraction;
+}
+
+/**
+ * The rehearsal attainment (installed x clean) at which a caption fields its
+ * whole book. Legacy states share one threshold; under v2 a hard book asks for
+ * more of it to be clean before it pays in full.
+ * @param {number} challenge 1-8
+ * @param {number|undefined} model challenge-model version (undefined = legacy)
+ * @returns {number}
+ */
+function fullRealizationFor(challenge, model, cfg) {
+  const cm = challengeModelConfig(model, cfg);
+  const table = cm && cm.fullRealizationByChallenge;
+  if (table && table[String(challenge)] != null) return Number(table[String(challenge)]);
+  return cfg.scoring.attainmentFullRealization;
 }
 
 /**
@@ -135,9 +246,12 @@ function veteranStartFraction(activityPercentile, cfg) {
  * @param {object} params { challenge: {caption: 1-8}, repTier: 1-7,
  *   auditions: {caption: 0-1 share of audition pool} (optional),
  *   activityPercentile: 0-100 last-season engagement (optional; drives the
- *     veteran head-start — see veteranStartFraction) }
+ *     veteran head-start — see veteranStartFraction),
+ *   challengeModel: model version to stamp (optional; defaults to the
+ *     configured current model — see currentChallengeModel) }
  */
 function createSeasonState(params, curves, cfg) {
+  const challengeModel = params.challengeModel ?? currentChallengeModel(cfg);
   // Veteran head-start: a returning grinder starts with more of the book
   // installed and clean. Washes out by finals (rehearsal caps both), so it
   // shapes ONLY the early season — never a finals total or promotion.
@@ -155,7 +269,7 @@ function createSeasonState(params, curves, cfg) {
     const auditionShift = Math.max(-0.1, Math.min(0.1, (share - 1 / 8) * 1.6));
     captions[caption] = {
       challenge,
-      curve: curveForChallenge(caption, challenge, curves, cfg),
+      curve: curveForChallenge(caption, challenge, curves, cfg, challengeModel),
       content: Math.min(1, 0.28 + auditionShift + contentBonus),
       clean: Math.min(1, 0.2 + cleanBonus),
       lastRehearsedDay: 0,
@@ -167,11 +281,35 @@ function createSeasonState(params, curves, cfg) {
     foodTier: params.foodTier || "standard",
     consecutiveMaxDays: 0,
     repTier: params.repTier || 1,
+    // Locked for the season: how challenge level shapes the curve and floor.
+    challengeModel,
     // Per-corps performance momentum (§4.2 trajectory model): an independent
     // random-walk in score-fraction units, evolved nightly by updateForm. Two
     // corps never share a form draw, so the field fluctuates individually.
     form: 0,
   };
+}
+
+/**
+ * Ensemble readiness (0..1 yield multiplier): an ensemble block assembles the
+ * sections' parts, so it only rehearses at full value once enough of those
+ * parts are installed. `block.readiness` lists the section captions whose mean
+ * CONTENT gates the block; the multiplier rises linearly to 1 at `fullAt` and
+ * never drops below `floor`. A block without a readiness rule returns 1, so a
+ * config without one rehearses exactly as before. Pure.
+ * @param {any} state season state
+ * @param {any} block a cfg.blocks entry
+ * @returns {number}
+ */
+function ensembleReadiness(state, block) {
+  const rule = block && block.readiness;
+  if (!rule || !Array.isArray(rule.captions) || rule.captions.length === 0 || !(rule.fullAt > 0)) {
+    return 1;
+  }
+  let sum = 0;
+  for (const caption of rule.captions) sum += (state.captions[caption] && state.captions[caption].content) || 0;
+  const mean = sum / rule.captions.length;
+  return Math.max(rule.floor || 0, Math.min(1, mean / rule.fullAt));
 }
 
 /**
@@ -200,6 +338,9 @@ function allocateBlock(state, blockType, day, blockIndexToday, blocksSoFarToday,
     cfg.rehearsal.repeatBlockMultipliers[
       Math.min(repeats, cfg.rehearsal.repeatBlockMultipliers.length - 1)
     ];
+  // Judged BEFORE this block's own gains land: the parts as they stood when
+  // the ensemble walked onto the field.
+  const readinessMult = ensembleReadiness(state, block);
   const [contentShare, cleanShare] = contentSplitForDay(Math.max(1, day), cfg);
   // Spring training installs: force content-heavy split regardless of date.
   const [cShare, clShare] = day < 1 ? [0.85, 0.15] : [contentShare, cleanShare];
@@ -224,7 +365,14 @@ function allocateBlock(state, blockType, day, blockIndexToday, blocksSoFarToday,
     // Higher challenge installs slower (harder book).
     const challengeMult = Math.pow(4 / cap.challenge, cfg.rehearsal.challengeGainExponent);
     const gain =
-      cfg.rehearsal.primaryGain * weight * repeatMult * challengeMult * conditionMult * yieldMultiplier * showDayMult;
+      cfg.rehearsal.primaryGain *
+      weight *
+      repeatMult *
+      readinessMult *
+      challengeMult *
+      conditionMult *
+      yieldMultiplier *
+      showDayMult;
     const contentGain = gain * cShare * (1 - cap.content);
     const cleanGain = gain * clShare * (1 - cap.clean);
     cap.content = Math.min(1, cap.content + contentGain);
@@ -239,7 +387,113 @@ function allocateBlock(state, blockType, day, blockIndexToday, blocksSoFarToday,
   const staminaCost = block.staminaCost * (1 - costReduction) * showDayMult;
   state.condition.stamina = Math.max(0, state.condition.stamina - staminaCost);
 
-  return { blockType, day, gains, staminaCost, repeatMult };
+  return {
+    blockType,
+    day,
+    gains,
+    staminaCost,
+    repeatMult,
+    readinessMult: Number(readinessMult.toFixed(3)),
+  };
+}
+
+/**
+ * Judges' tapes (§5.4): performing teaches. After a scored show the judges'
+ * commentary points at the corps' weakest captions — the `captions` lowest by
+ * attainment (installed x clean) — and the corps cleans them from the tapes:
+ * `cleanGain` / `contentGain` of the remaining headroom, scaled by the same
+ * challenge install rate a rehearsal block uses (a harder book cleans
+ * slower). It also counts as rehearsing those captions for neglect decay.
+ * Applied AFTER the night's score, so it pays at the next show. Returns null
+ * (and changes nothing) when `cfg.shows.judgesTapes` is absent. Mutates state.
+ * @param {any} state season state
+ * @param {number} day competition day of the show
+ * @param {any} cfg balance config
+ * @returns {{day: number, captions: string[], gains: Record<string, {content: number, clean: number}>} | null}
+ */
+function applyJudgesTapes(state, day, cfg) {
+  const tapes = cfg.shows && cfg.shows.judgesTapes;
+  if (!tapes || !(tapes.captions > 0)) return null;
+  const sc = cfg.scoring;
+  const weakest = CAPTIONS.map((caption) => {
+    const cap = state.captions[caption];
+    return { caption, attainment: cap.content * (sc.cleanFloor + sc.cleanWeight * cap.clean) };
+  })
+    .sort((a, b) => a.attainment - b.attainment || CAPTIONS.indexOf(a.caption) - CAPTIONS.indexOf(b.caption))
+    .slice(0, tapes.captions)
+    .map((entry) => entry.caption);
+  /** @type {Record<string, {content: number, clean: number}>} */
+  const gains = {};
+  for (const caption of weakest) {
+    const cap = state.captions[caption];
+    const challengeMult = Math.pow(4 / cap.challenge, cfg.rehearsal.challengeGainExponent);
+    const contentGain = (tapes.contentGain || 0) * challengeMult * (1 - cap.content);
+    const cleanGain = (tapes.cleanGain || 0) * challengeMult * (1 - cap.clean);
+    cap.content = Math.min(1, cap.content + contentGain);
+    cap.clean = Math.min(1, cap.clean + cleanGain);
+    cap.lastRehearsedDay = Math.max(cap.lastRehearsedDay || 0, day);
+    gains[caption] = { content: Number(contentGain.toFixed(5)), clean: Number(cleanGain.toFixed(5)) };
+  }
+  return { day, captions: weakest, gains };
+}
+
+/**
+ * Book rewrite (2026-10): once a season a director may rewrite part of the
+ * show — move up to `cfg.bookRewrite.maxCaptions` captions to a new challenge
+ * level before `lastDay`. Pure validation: returns the reason it is refused,
+ * or null when it may proceed. The Budget fee is checked by the caller.
+ * @param {any} state season state
+ * @param {string[]} captions captions to rewrite
+ * @param {number} toLevel the new challenge level (1-8)
+ * @param {number} day competition day
+ * @param {any} cfg balance config
+ * @returns {string | null}
+ */
+function bookRewriteRefusal(state, captions, toLevel, day, cfg) {
+  const rule = cfg.bookRewrite;
+  if (!rule) return "Book rewrites are not available.";
+  if (state.bookRewrite) return "This season's book rewrite is already used.";
+  if (day > rule.lastDay) return `Book rewrites close after Day ${rule.lastDay}.`;
+  if (!Number.isInteger(toLevel) || toLevel < 1 || toLevel > 8) return "Pick a challenge level from 1 to 8.";
+  if (!Array.isArray(captions) || captions.length === 0) return "Pick at least one caption to rewrite.";
+  if (captions.length > rule.maxCaptions) return `Rewrite at most ${rule.maxCaptions} captions.`;
+  if (new Set(captions).size !== captions.length) return "Each caption once.";
+  for (const caption of captions) {
+    if (!CAPTIONS.includes(caption)) return `Unknown caption ${caption}.`;
+    if (state.captions[caption].challenge === toLevel) return `${caption} is already at level ${toLevel}.`;
+  }
+  return null;
+}
+
+/**
+ * Apply a book rewrite (validated by bookRewriteRefusal). A raised caption is
+ * new material: it keeps `raise.keepContent` / `raise.keepClean` of what was
+ * installed and clean; a simplified one keeps more (`lower.*`). The caller
+ * re-derives the curve (store.hydrateState does it from `challenge`). Clears
+ * the rewritten captions' "book learned" day. Mutates state; returns the
+ * record stored at `state.bookRewrite`.
+ * @param {any} state season state
+ * @param {string[]} captions
+ * @param {number} toLevel
+ * @param {number} day competition day
+ * @param {any} cfg balance config
+ * @returns {{day: number, toLevel: number, from: Record<string, number>}}
+ */
+function applyBookRewrite(state, captions, toLevel, day, cfg) {
+  const rule = cfg.bookRewrite;
+  /** @type {Record<string, number>} */
+  const from = {};
+  for (const caption of captions) {
+    const cap = state.captions[caption];
+    from[caption] = cap.challenge;
+    const keep = toLevel > cap.challenge ? rule.raise : rule.lower;
+    cap.challenge = toLevel;
+    cap.content = cap.content * keep.keepContent;
+    cap.clean = cap.clean * keep.keepClean;
+    if (state.bookLearnedDay) delete state.bookLearnedDay[caption];
+  }
+  state.bookRewrite = { day, toLevel, from };
+  return state.bookRewrite;
 }
 
 /**
@@ -259,8 +513,29 @@ function endOfDay(state, day, opts, cfg) {
     }
   }
 
-  // Grind fatigue: consecutive max-block days sap morale (warmup mitigates).
-  if (!opts.restDay && opts.blocksUsedToday >= opts.maxBlocksToday) {
+  // Grind fatigue. With a `moraleModel` (2026-10) fatigue is GRADED by the
+  // day's workload: past `sustainableShare` of the day's blocks every extra
+  // block drains morale (warmup mitigates), below it the corps recovers a
+  // little — so volume and morale trade off smoothly, and leaving one block
+  // unused no longer resets a hidden streak. Rest days are handled below.
+  // Without it: the legacy rule — consecutive max-block days past a grace
+  // window drain morale, any other day recovers +1.
+  const mm = cfg.condition.moraleModel;
+  if (mm && !opts.restDay) {
+    const maxBlocks = Math.max(1, opts.maxBlocksToday || 1);
+    const load = Math.min(1, (opts.blocksUsedToday || 0) / maxBlocks);
+    const over = Math.max(0, load - mm.sustainableShare) / Math.max(1e-6, 1 - mm.sustainableShare);
+    const mitigation = opts.warmupUsed ? 1 - cfg.blocks.warmup.conditionEffect.fatigueMitigationPct / 100 : 1;
+    // The food plan feeds morale every night (`nightlyMoraleDelta`): a full
+    // kitchen is a real weekly buy, not just a rest-day garnish.
+    const foodTier = cfg.condition.foodTiers[state.foodTier] || cfg.condition.foodTiers.standard;
+    const delta =
+      mm.dailyRecovery - over * mm.fatigueAtFullLoad * mitigation + (foodTier.nightlyMoraleDelta || 0);
+    state.condition.morale = Math.max(0, Math.min(cfg.condition.moraleMax, state.condition.morale + delta));
+    state.consecutiveMaxDays = load >= 1 ? (state.consecutiveMaxDays || 0) + 1 : 0;
+  } else if (mm) {
+    state.consecutiveMaxDays = 0;
+  } else if (!opts.restDay && opts.blocksUsedToday >= opts.maxBlocksToday) {
     state.consecutiveMaxDays += 1;
     if (state.consecutiveMaxDays > cfg.condition.moraleGrindThresholdDays) {
       const mitigation = opts.warmupUsed
@@ -291,6 +566,44 @@ function endOfDay(state, day, opts, cfg) {
       state.condition.morale + cfg.condition.restDayMoraleRecovery + food.moraleDelta
     );
   }
+}
+
+/**
+ * Attrition (2026-10): a corps whose morale has collapsed loses members. Each
+ * night morale sits below `condition.attrition.moraleBelow`, a seeded draw
+ * (`chance`, scaled up the lower morale sits) decides whether someone quits;
+ * if so a seeded caption loses `contentLoss` of its installed content (the
+ * replacement has to learn the spots) and `cleanLoss` of its clean. Pure in
+ * its inputs (seeded, no clock). Returns the event, or null when nobody left
+ * or the rule is unconfigured. Mutates state.
+ * @param {any} state season state
+ * @param {number} day competition day
+ * @param {string} seed per-corps seed, e.g. `${seasonUid}|${uid}`
+ * @param {any} cfg balance config
+ * @returns {{day: number, caption: string, contentLoss: number, cleanLoss: number} | null}
+ */
+function applyAttrition(state, day, seed, cfg) {
+  const rule = cfg.condition && cfg.condition.attrition;
+  if (!rule || !(rule.moraleBelow > 0)) return null;
+  const morale = state.condition.morale;
+  if (!(morale < rule.moraleBelow)) return null;
+  // Deeper misery, likelier departures: chance at the threshold, rising
+  // linearly to `chance * maxScale` at morale 0.
+  const depth = 1 - morale / rule.moraleBelow;
+  const chance = rule.chance * (1 + depth * ((rule.maxScale || 1) - 1));
+  if (seededUnit(`${seed}|attrition|${day}`) >= chance) return null;
+  const caption = CAPTIONS[Math.floor(seededUnit(`${seed}|attrition-caption|${day}`) * CAPTIONS.length)];
+  const cap = state.captions[caption];
+  const contentLoss = Math.min(cap.content, rule.contentLoss || 0);
+  const cleanLoss = Math.min(cap.clean, rule.cleanLoss || 0);
+  cap.content -= contentLoss;
+  cap.clean -= cleanLoss;
+  return {
+    day,
+    caption,
+    contentLoss: Number(contentLoss.toFixed(4)),
+    cleanLoss: Number(cleanLoss.toFixed(4)),
+  };
 }
 
 /**
@@ -390,7 +703,13 @@ function updateForm(state, day, seed, curves, cfg) {
   // magnitude is set by fc.step (not by the raw point scale of the era's data).
   const spread = Math.max(1e-6, (dist.p95 - dist.p5) / 2);
   const shock = (sampleDelta(dist, u) - dist.p50) / spread;
-  let form = (state.form || 0) * (1 - fc.reversion) + shock * fc.step;
+  // Morale pulls the walk (2026-10, `form.moraleDrift`): centered on
+  // `form.moralePivot` (a well-run corps' morale), so good management is
+  // roughly neutral and a collapsing corps trends cold. Zero when unconfigured.
+  const pivot = fc.moralePivot ?? 60;
+  const morale = (state.condition && state.condition.morale) ?? pivot;
+  const moraleDrift = fc.moraleDrift ? ((morale - pivot) / Math.max(1, 100 - pivot)) * fc.moraleDrift : 0;
+  let form = (state.form || 0) * (1 - fc.reversion) + shock * fc.step + moraleDrift;
   form = Math.max(-fc.max, Math.min(fc.max, form));
   state.form = Number(form.toFixed(5));
   return state.form;
@@ -412,6 +731,39 @@ function ceilFracForTier(repTier, cfg) {
   const span = (sc.maxRepTier || 7) - 1;
   const progress = span > 0 ? (tier - 1) / span : 0;
   return sc.repCeilingFloor + (1 - sc.repCeilingFloor) * progress;
+}
+
+/**
+ * How much of its book a caption fields (0..1): rehearsal attainment
+ * (installed x clean) over the challenge's full-realization threshold, capped
+ * at 1. At 1 the caption has learned its whole book — more rehearsal no longer
+ * raises its score; only a harder book (next season's challenge) adds room.
+ * That cap is by design (decision 43): a safe book is a capped book. Pure.
+ * @param {{content: number, clean: number, challenge: number}} cap caption state
+ * @param {number|undefined} challengeModel the state's model stamp
+ * @param {any} cfg balance config
+ * @returns {number}
+ */
+function realizedFor(cap, challengeModel, cfg) {
+  const sc = cfg.scoring;
+  const attainment = cap.content * (sc.cleanFloor + sc.cleanWeight * cap.clean);
+  return Math.min(1, attainment / fullRealizationFor(cap.challenge, challengeModel, cfg));
+}
+
+/**
+ * Every caption's realization ({ GE1: 0.93, ... }, three decimals) for the
+ * caption panel and the nightly "book learned" record.
+ * @param {any} state season state (stored or hydrated)
+ * @param {any} cfg balance config
+ * @returns {Record<string, number>}
+ */
+function captionRealization(state, cfg) {
+  /** @type {Record<string, number>} */
+  const out = {};
+  for (const caption of CAPTIONS) {
+    out[caption] = Number(realizedFor(state.captions[caption], state.challengeModel, cfg).toFixed(3));
+  }
+  return out;
 }
 
 /**
@@ -448,8 +800,8 @@ function scoreCorps(state, day, varianceSeed, curves, cfg) {
     const cap = state.captions[caption];
     const band = curves.bands[caption][Math.min(48, Math.max(0, day - 1))];
     const { L, k, d0, norm } = cap.curve;
-    // This corps' OWN potential trajectory: its challenge-selected archetype
-    // shape (fit from real corps-seasons), normalized to reach its ceiling at
+    // This corps' OWN potential trajectory: its challenge-selected shape
+    // (see curveForChallenge), normalized to reach its ceiling at
     // finals. Smooth by construction — no shared per-day national floor.
     let potential = (L * (1 / (1 + Math.exp(-k * (day - d0))))) / norm;
     // Early-season lift: raises opening-show scores so the newcomer arc matches
@@ -462,12 +814,14 @@ function scoreCorps(state, day, varianceSeed, curves, cfg) {
       potential *= 1 + (eb.maxPct / 100) * ramp;
     }
     // Rehearsal attainment: how much of the book is installed AND clean.
-    const attainment = cap.content * (sc.cleanFloor + sc.cleanWeight * cap.clean);
-    const realized = Math.min(1, attainment / sc.attainmentFullRealization);
+    const realized = realizedFor(cap, state.challengeModel, cfg);
     // Position between the rep-independent floor and the rep-gated ceiling,
     // set ENTIRELY by this corps' own rehearsal. This is where effort becomes
     // score — and why two same-tier corps that rehearsed differently differ.
-    const frac = sc.perfFloorFraction + (ceilFrac - sc.perfFloorFraction) * realized;
+    // Under the v2 challenge model the floor falls as challenge rises, so a
+    // hard book only beats an easy one once enough of it is clean.
+    const floorFrac = perfFloorFor(cap.challenge, state.challengeModel, cfg);
+    const frac = floorFrac + (ceilFrac - floorFrac) * realized;
     // One-night judge wiggle, shaped by the caption's real day-over-day
     // movement (zero-median), seeded independently per corps + caption.
     const dist = deltaDistFor(caption, day, curves, cfg);
@@ -633,6 +987,11 @@ function assistantStreakAfter(previous, { playedSelf, restDay, assistant }) {
 module.exports = {
   assistantYieldFor,
   assistantStreakAfter,
+  LEGACY_CHALLENGE_MODEL,
+  currentChallengeModel,
+  onsetDayForShare,
+  perfFloorFor,
+  fullRealizationFor,
   CAPTIONS,
   BLOCK_TYPES,
   seededUnit,
@@ -641,7 +1000,12 @@ module.exports = {
   curveForChallenge,
   veteranStartFraction,
   createSeasonState,
+  ensembleReadiness,
   allocateBlock,
+  applyJudgesTapes,
+  applyAttrition,
+  bookRewriteRefusal,
+  applyBookRewrite,
   endOfDay,
   blocksAvailable,
   sampleDelta,
@@ -649,6 +1013,8 @@ module.exports = {
   softCap,
   updateForm,
   ceilFracForTier,
+  realizedFor,
+  captionRealization,
   scoreCorps,
   maxPotentialTotal,
   tierPerformance,

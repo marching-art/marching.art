@@ -1,5 +1,12 @@
 [
   {
+    "id": "2026-10-04-podium-gameplay-update",
+    "date": "2026-10-04",
+    "title": "A deeper Podium season",
+    "category": "feature",
+    "summary": "The Podium Division got a big gameplay update: the choices you make as a director, from your book to your rehearsals, tour, corps condition and Corps Budget, now carry more weight, and there's something new to try mid-season. Experiment and see what works."
+  },
+  {
     "id": "2026-10-01-dashboard-endless-spinner",
     "date": "2026-10-01",
     "title": "Dashboard no longer gets stuck on a spinning circle",

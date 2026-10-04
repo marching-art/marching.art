@@ -4,8 +4,9 @@
 // Scores-tab redesign (Phase 6); this is the daily working view.
 
 import React from 'react';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Film, CheckCircle2 } from 'lucide-react';
 import { PODIUM_CAPTIONS, CAPTION_LABELS, REP_TIER_NAMES } from './podiumConstants';
+import BookRewriteCard from './BookRewriteCard';
 
 /**
  * @param {{ content: number, clean: number }} props content/clean fractions (0..1)
@@ -33,7 +34,7 @@ function ProgressPair({ content, clean }) {
 }
 
 /**
- * @param {{ podium: { data: { competitionDay: number, state?: Record<string, any> } } }} props
+ * @param {{ podium: { data: { competitionDay: number, state?: Record<string, any>, captionRealization?: Record<string, number>, bookRewriteTerms?: any }, rewriteBook?: (captions: string[], toLevel: number) => Promise<any> } }} props
  */
 export default function PodiumCaptionPanel({ podium }) {
   const state = podium.data?.state;
@@ -41,6 +42,28 @@ export default function PodiumCaptionPanel({ podium }) {
 
   const day = podium.data.competitionDay;
   const repTier = state.repTier || 1;
+  // Judges' tapes from the latest show (§5.4): the two weakest captions the
+  // sheets pointed at, cleaned from the tapes overnight. Shown until the next
+  // show replaces them.
+  /** @type {{ day: number, captions: string[] } | null} */
+  const tapes =
+    state.lastTapes &&
+    Array.isArray(state.lastTapes.captions) &&
+    state.lastTapes.captions.length > 0
+      ? state.lastTapes
+      : null;
+  const tapedCaptions = new Set(tapes ? tapes.captions : []);
+  // Book learned (decision 43): a caption fielding its whole book scores at its
+  // challenge's cap — more rehearsal no longer raises it, a harder book next
+  // season would. Server-computed realization; first-learned day from state.
+  /** @type {Record<string, number>} */
+  const realization = podium.data?.captionRealization || {};
+  /** @type {Record<string, number>} */
+  const learnedDay = state.bookLearnedDay || {};
+  const learned = PODIUM_CAPTIONS.filter((c) => (realization[c] ?? 0) >= 1);
+  // Nudge only when the cap arrives with real season left: most of the book
+  // maxed before Championship Week means the challenge was too safe.
+  const earlyCap = learned.length >= 4 && day < 45;
 
   return (
     <div className="bg-surface-card border border-line rounded-none p-4 space-y-3">
@@ -67,6 +90,30 @@ export default function PodiumCaptionPanel({ podium }) {
         </span>
       </div>
 
+      {earlyCap && (
+        <p className="flex items-start gap-1.5 text-[10px] text-secondary">
+          <CheckCircle2 className="w-3 h-3 mt-px text-green-400 shrink-0" aria-hidden="true" />
+          <span>
+            {learned.length} of 8 captions have learned their whole book — more rehearsal won’t
+            raise them. Keep them clean, and consider a harder challenge next season to give them
+            room to grow.
+          </span>
+        </p>
+      )}
+
+      {tapes && (
+        <p className="flex items-start gap-1.5 text-[10px] text-secondary">
+          <Film className="w-3 h-3 mt-px text-interactive shrink-0" aria-hidden="true" />
+          <span>
+            Judges’ tapes, Day {tapes.day}: the sheets flagged{' '}
+            {tapes.captions
+              .map((c) => /** @type {Record<string, string>} */ (CAPTION_LABELS)[c] || c)
+              .join(' and ')}{' '}
+            — cleaned from the tapes overnight.
+          </span>
+        </p>
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
         {PODIUM_CAPTIONS.map((caption) => {
           const cap = state.captions[caption] || {};
@@ -80,6 +127,20 @@ export default function PodiumCaptionPanel({ podium }) {
                   {neglected && (
                     <span title={`Unrehearsed ${idleDays} days — cleanliness is decaying`}>
                       <AlertTriangle className="w-3 h-3 text-warning" />
+                    </span>
+                  )}
+                  {(realization[caption] ?? 0) >= 1 && (
+                    <span
+                      title={`Whole book learned${learnedDay[caption] ? ` by Day ${learnedDay[caption]}` : ''} — more rehearsal won't raise this caption; a harder book would`}
+                    >
+                      <CheckCircle2 className="w-3 h-3 text-green-400" aria-hidden="true" />
+                      <span className="sr-only">Whole book learned</span>
+                    </span>
+                  )}
+                  {tapedCaptions.has(caption) && (
+                    <span title={`Worked from the Day ${tapes?.day} judges’ tapes`}>
+                      <Film className="w-3 h-3 text-interactive" aria-hidden="true" />
+                      <span className="sr-only">Worked from the judges’ tapes</span>
                     </span>
                   )}
                 </div>
@@ -119,6 +180,8 @@ export default function PodiumCaptionPanel({ podium }) {
           </span>
         )}
       </div>
+
+      <BookRewriteCard podium={podium} />
     </div>
   );
 }
