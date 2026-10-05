@@ -579,7 +579,8 @@ ARTICLE-ACCURATE DETAILS — THESE DEPICT THE SPECIFIC STORY AND TAKE PRECEDENCE
 ═══════════════════════════════════════════════════════════════
 This image illustrates one specific article. Depict exactly what it describes.
 Where these details conflict with any generic uniform or scene above, THESE WIN:
-${lines.join("\n")}`;
+${lines.join("\n")}
+The CAST block above still decides who the performers are unless the article itself describes a specific performer.`;
     }
   }
 
