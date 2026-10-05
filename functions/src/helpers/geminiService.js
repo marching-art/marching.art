@@ -216,6 +216,12 @@ WHAT MODERN DCI PERFORMERS LOOK LIKE:
   Drums often have colorful wraps matching corps colors. They hold drumsticks, NOT brass.
 - COLOR GUARD: Athletic costumes (not uniforms), 6-foot silk flags, rifles, sabres.
 
+WHO PERFORMS:
+- Modern drum corps are mixed-gender and multiracial in EVERY section. Women play
+  brass and percussion and conduct as drum major; men perform in color guard.
+- When the prompt includes a CAST block, render those performers exactly as listed.
+  Never default featured performers to white men, and never cast every woman in guard.
+
 PHOTOGRAPHY STYLE:
 - Intimate, close-up photojournalism shot from field level or low angle
 - 2-8 performers in tight framing, filling the entire frame
@@ -322,6 +328,7 @@ CRITICAL RULES FOR THIS IMAGE:
 - CLOSE-UP ONLY: Show 2-6 performers maximum, filling the frame. Do NOT show the full corps or wide formation.
 - FIELD-LEVEL CAMERA: Shoot from eye level on the field, NOT from elevated, aerial, or press box positions.
 - SHALLOW DEPTH OF FIELD: Performers in sharp focus, background (stadium, crowd, field) as soft bokeh.
+- CASTING: Follow the CAST block above — the featured performers' gender and background as listed, in whatever role the scene gives them.
 ${referenceRule}
 ${IMAGE_NEGATIVE_PROMPT}`;
 

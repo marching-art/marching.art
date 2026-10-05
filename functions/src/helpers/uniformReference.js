@@ -21,10 +21,10 @@ const MAX_REFERENCE_BYTES = 2 * 1024 * 1024;
 const FETCH_TIMEOUT_MS = 8000;
 
 const CORPS_CAPTION =
-  "the director's OWN rendered illustration of the corps uniform — a flat, front-facing schematic drawn by the marching.art Uniform Studio (the sides of the drawing are the viewer's left and right). It is the ground truth for the garment cut, every color and exactly where it sits, the chest treatment (sash/baldric/braid/panel/buttons/swash), the neck, shoulders, waist, each sleeve, gauntlet and glove, each trouser leg and stripe, the shoes, and the headwear and plume. Dress every brass, percussion, and drum-major performer in EXACTLY this design, rendered as real tailored fabric, sequins, and metal under stadium light. Do NOT copy the drawing's flat illustration style, proportions, or face — only the uniform it depicts.";
+  "the director's OWN rendered illustration of the corps uniform — a flat, front-facing schematic drawn by the marching.art Uniform Studio (the sides of the drawing are the viewer's left and right). It is the ground truth for the garment cut, every color and exactly where it sits, the chest treatment (sash/baldric/braid/panel/buttons/swash), the neck, shoulders, waist, each sleeve, gauntlet and glove, each trouser leg and stripe, the shoes, and the headwear and plume. Dress every brass, percussion, and drum-major performer in EXACTLY this design, rendered as real tailored fabric, sequins, and metal under stadium light. Do NOT copy the drawing's flat illustration style, proportions, face, skin tone, or build — only the uniform it depicts; who wears it comes from the prompt's CAST block.";
 
 const GUARD_CAPTION =
-  "the director's OWN rendered illustration of the COLOR GUARD's show costume (same flat Studio schematic). Only guard members wear this design; reproduce it exactly, as real fabric, on any guard performer in frame, and never blend it with the corps uniform.";
+  "the director's OWN rendered illustration of the COLOR GUARD's show costume (same flat Studio schematic). Only guard members wear this design; reproduce it exactly, as real fabric, on any guard performer in frame, and never blend it with the corps uniform. Copy only the costume — never the drawing's face, skin tone, or build.";
 
 /**
  * Fetch an https image into the `{ data, mimeType }` shape the image models

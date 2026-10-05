@@ -13,6 +13,9 @@ const {
 // image generations — promptSafe() strips newlines/control chars, truncates,
 // and wraps them in «...» so they read as display data, never instructions.
 const { promptSafe, UNTRUSTED_FIELD_RULE } = require("./promptSafety");
+// Who the featured performers are — drawn fresh for each image so the art
+// isn't one white man playing every instrument (see helpers/imageCasting).
+const { buildCastingBlock } = require("./imageCasting");
 
 /**
  * The exhaustive, part-by-part uniform block for a director-designed corps —
@@ -223,6 +226,8 @@ SUBJECT:
 - Details: ${sectionInfo.details}
 - Integrate marching arts identity into the silhouette (not floating icons)
 
+${buildCastingBlock({ size: 1 })}
+
 UNIFORM & COLORS:
 - Primary: ${promptSafe(primaryColor)}
 - Secondary: ${promptSafe(secondaryColor)}${accentColor ? `\n- Accent: ${promptSafe(accentColor)}` : ""}
@@ -355,8 +360,11 @@ AVOID: Cluttered compositions, wide shots, distant views`,
   };
 
   const basePrompt = categoryPrompts[category] || categoryPrompts.dci;
+  const cast = buildCastingBlock({ size: 3 });
 
   return `${basePrompt}
+
+${cast}
 
 ${UNTRUSTED_FIELD_RULE}
 
@@ -374,6 +382,8 @@ Generate an image that would work as a professional news article header at 1200x
  * Complete scene archetypes - each defines a fundamentally different image concept.
  * Every archetype is a self-contained visual vision: subject, camera, lighting, and mood
  * designed as a cohesive whole rather than random combinations of similar elements.
+ * `castSize` is how many performers the frame features sharply (1 = solo); it
+ * sizes the CAST block (helpers/imageCasting) the prompt builders append.
  */
 const SCENE_ARCHETYPES = [
   {
@@ -381,90 +391,112 @@ const SCENE_ARCHETYPES = [
     scene: "performers backlit by stadium floods, dramatic rim light outlining their forms against glowing background. 2-3 performers in partial silhouette with bright edges, lens flare streaking across frame. Shot from field level, 85mm lens. Faces partially visible through the glow. Instruments catching brilliant edge light.",
     mood: "cinematic, dramatic, mysterious",
     sectionBias: null, // works for any section
+    castSize: 3,
   },
   {
     id: "guard_toss_freeze",
     scene: "color guard member frozen mid-equipment toss, rifle or sabre spinning 10 feet above, performer's eyes locked upward tracking it. Body in full athletic extension, costume fabric flowing with momentum. Shot from low angle looking up, guard member and spinning equipment both in frame against dark sky or stadium lights. 35mm lens, dramatic perspective.",
     mood: "athletic, breathtaking, suspended moment",
     sectionBias: "guard",
+    castSize: 1,
   },
   {
     id: "drummer_hands_macro",
     scene: "extreme close-up on a snare drummer's hands and sticks mid-stroke, frozen at the moment of impact on the drum head. Knuckles white with grip, wrist tape visible, stick blur trails showing speed. The drummer's face partially visible above, jaw clenched in concentration. Shot with 135mm macro-style framing, f/2 aperture, drum harness and uniform visible but secondary to the hands.",
     mood: "visceral, precise, raw power",
     sectionBias: "percussion",
+    castSize: 1,
   },
   {
     id: "head_on_approach",
     scene: "3-5 performers marching directly toward the camera in a company front, shot from field level at eye height. The center performer is sharpest, flanking performers fall to progressive bokeh. Instruments up, faces showing fierce determination, feet mid-stride on grass. 135mm lens compressing the depth between performers. The approaching wall of sound and color.",
     mood: "powerful, confrontational, unstoppable",
     sectionBias: null,
+    castSize: 3,
   },
   {
     id: "emotional_ballad_face",
     scene: "tight portrait close-up of a single performer during an emotional ballad moment. Instrument lowered or held gently, face showing raw vulnerability - eyes glistening, mouth slightly open, completely lost in the music. Shot at eye level with 200mm telephoto creating painterly background blur. Stadium lights as soft golden bokeh orbs behind. Every pore and bead of sweat visible.",
     mood: "intimate, vulnerable, deeply human",
     sectionBias: null,
+    castSize: 1,
   },
   {
     id: "low_hero_contra",
     scene: "shot from grass level looking up at a contra or tuba player, massive silver instrument dominating the upper frame, performer's face visible past the bell. Dramatic perspective distortion making the performer and instrument look monumental. 24mm wide angle very close. Stadium lights starburst behind. Other performers visible as blurred shapes at the edges.",
     mood: "monumental, powerful, larger than life",
     sectionBias: "brass",
+    castSize: 1,
   },
   {
     id: "behind_performer_pov",
     scene: "shot from directly behind 2-3 performers, looking past their shoulders and instruments toward the blurred field and stadium ahead. Uniform back details, harness straps, neck muscles, and sweat visible in sharp focus. The audience and far sideline rendered as a wash of color and light ahead of them. 50mm lens, immersive first-person perspective.",
     mood: "immersive, intimate, you-are-there",
     sectionBias: null,
+    castSize: 2,
   },
   {
     id: "guard_silk_motion",
     scene: "color guard performer with a 6-foot silk flag in full extension, fabric creating sweeping arc of color across the frame. Performer's body in dance pose, face showing artistic expression. The flowing silk dominates the composition with vibrant color. Shot from field level, 85mm lens, slight motion blur on silk edges while performer's face is sharp. Other performers as soft shapes behind.",
     mood: "artistic, flowing, vibrant color",
     sectionBias: "guard",
+    castSize: 1,
   },
   {
     id: "brass_bells_skyward",
     scene: "2-3 brass players from below, horns raised high for a big hit, bells catching stadium light and gleaming. Shot from low kneeling position looking up, 85mm lens. Performers' chins and open mouths visible past the instrument bells. The moment of maximum volume and effort. Dark sky or stadium structure behind with lights as starburst points.",
     mood: "triumphant, explosive, climactic",
     sectionBias: "brass",
+    castSize: 3,
   },
   {
     id: "section_mates_bond",
     scene: "two performers side by side in an intimate moment of connection - could be matching breath before an entrance, a shared glance, or synchronized playing. Both in profile or three-quarter view, nearly touching, instruments at matching angles. The pair fills the frame. Shot at eye level, 135mm lens, everything beyond them dissolved to creamy bokeh. The human bond within the ensemble.",
     mood: "connection, trust, shared purpose",
     sectionBias: null,
+    castSize: 2,
   },
   {
     id: "drumline_depth_row",
     scene: "the drumline in a tight row shot from the end, closest snare drum and player's hands tack-sharp in the left/right third of frame, the rest of the battery stretching away into progressive bokeh - tenors, then basses becoming soft shapes. Sticks frozen mid-air. Shot from field level kneeling position, 200mm telephoto compressing the line. Harness details and drum wraps vivid on the closest player.",
     mood: "precision, depth, focused intensity",
     sectionBias: "percussion",
+    castSize: 1,
   },
   {
     id: "golden_hour_profile",
     scene: "a performer in crisp profile, warm golden sunlight raking across their face and instrument from the side. Every detail of the uniform lit in warm amber - buttons, fabric texture, metallic accents glowing. Long shadow stretching across the grass. Shot at eye level, 135mm lens. The magic hour light turning a performer into a painting. Stadium lights not yet needed, natural warmth.",
     mood: "warm, golden, timeless",
     sectionBias: null,
+    castSize: 1,
   },
   {
     id: "drum_major_command",
     scene: "drum major in dramatic conducting pose on the podium or field, arms extended wide, backlit by stadium floods creating strong rim light. Shot from slightly below looking up, their figure commanding the frame. Uniform details sharp - gauntlets, sash, or insignia visible. The corps is implied but unseen - this is about the leader in their moment of total control.",
     mood: "authority, drama, leadership",
     sectionBias: null,
+    castSize: 1,
   },
   {
     id: "mixed_convergence",
     scene: "the rare moment when brass, guard, and percussion converge in the same tight frame during a drill transition. A trumpet player, a guard member with flag, and a tenor drummer visible together in close quarters, each holding their equipment. Shot from field level, 50mm lens capturing the diversity of the ensemble in one intimate frame. Their different uniforms and equipment creating visual contrast.",
     mood: "diverse, dynamic, ensemble unity",
     sectionBias: null,
+    castSize: 3,
   },
   {
     id: "sweat_and_grit",
     scene: "extreme close-up of a performer in peak physical effort. Sweat drops visible on forehead, veins on neck or arms, jaw clenched, eyes burning with competitive fire. Uniform soaked with exertion. The athletic reality of marching 8-12 minutes under stadium lights. Shot with 200mm telephoto at eye level, f/2, isolating the raw physicality. Only one performer, all emotion and effort.",
     mood: "raw, athletic, unfiltered reality",
     sectionBias: null,
+    castSize: 1,
+  },
+  {
+    id: "gate_huddle",
+    scene: "three performers from the same section in a tight huddle at the field gate moments before step-off, foreheads nearly touching, one gripping another's shoulder and speaking quietly while the third nods, instruments or equipment held close. Uniforms immaculate, nerves and resolve on every face. Shot at eye level from just outside the huddle, 85mm lens, the gate, tunnel, and waiting corps dissolved into warm bokeh behind them.",
+    mood: "camaraderie, nerves, quiet resolve",
+    sectionBias: null,
+    castSize: 3,
   },
 ];
 
@@ -483,6 +515,18 @@ function selectSceneArchetype(reportDay = 0, articleIndex = 0) {
   const dayOffset = ((reportDay || 0) * 7) % SCENE_ARCHETYPES.length; // multiply by prime for better spread
   const index = (dayOffset + (articleIndex || 0)) % SCENE_ARCHETYPES.length;
   return SCENE_ARCHETYPES[index];
+}
+
+/**
+ * The CAST block for a scene-driven news image: who the scene's featured
+ * performers are, sized by the archetype and drawn fresh for every image.
+ *
+ * @param {{ castSize?: number }} scene - the selected archetype.
+ * @param {string} [historicalCorps] - a real corps (all-male-era caveat).
+ * @returns {string}
+ */
+function sceneCast(scene, historicalCorps) {
+  return buildCastingBlock({ size: scene?.castSize ?? 2, historicalCorps });
 }
 
 /**
@@ -520,6 +564,8 @@ The uniform MUST match ${topCorps}'s distinctive colors and style.
 ${themeContext}
 SCENE CONCEPT: ${scene.scene}
 Mood: ${scene.mood}
+
+${sceneCast(scene, topCorps)}
 
 Adapt this scene concept to feature ${topCorps} performers wearing the exact uniform described above.
 
@@ -584,6 +630,8 @@ ${themeContext}
 SCENE CONCEPT: ${scene.scene}
 Mood: ${scene.mood}
 
+${sceneCast(scene, featuredCorps)}
+
 Adapt this scene concept to feature ${featuredCorps} performers (${sectionFocus} section) wearing the exact uniform described above.
 
 TECHNICAL: Editorial photojournalism with shallow depth of field, field-level camera. Capturing the human detail and technical mastery of ${captionType} performance in close-up. NOT a wide shot, NOT showing full corps.
@@ -622,6 +670,8 @@ ${uniformSpecSection(details)}
 
 SCENE CONCEPT: ${scene.scene}
 Mood: ${scene.mood}
+
+${sceneCast(scene)}
 
 Adapt this scene concept to feature ${promptSafe(topCorpsName)} performers wearing the exact uniform described above.
 Context: ${theme ? promptSafe(theme, { maxLength: 300 }) : "Championship competition performance moment"}
@@ -666,6 +716,8 @@ Guard: ${details.guard}
 SCENE CONCEPT: ${scene.scene}
 Mood: ${scene.mood}
 
+${sceneCast(scene, featuredCorps)}
+
 Adapt this scene concept to feature ${featuredCorps} performers wearing the exact uniform described above.
 ${captionFocus ? `Section emphasis: ${captionFocus} performers.` : ""}
 
@@ -679,6 +731,8 @@ This intimate photograph captures ${featuredCorps} performers in the intensity o
 
 SCENE CONCEPT: ${scene.scene}
 Mood: ${scene.mood}
+
+${sceneCast(scene)}
 
 Show performers in modern athletic marching uniforms with this scene concept.
 
@@ -712,6 +766,8 @@ UNIFORM ACCURACY:
 ${themeContext}
 SCENE CONCEPT: ${scene.scene}
 Mood: ${scene.mood}
+
+${sceneCast(scene, featuredCorps)}
 
 Adapt this scene concept to feature ${featuredCorps} performers wearing the exact uniform described above. Emphasize the technical precision and craft visible in close-up.
 
@@ -748,6 +804,8 @@ ${themeContext}
 SCENE CONCEPT: ${scene.scene}
 Mood: ${scene.mood}
 
+${sceneCast(scene, corps)}
+
 Adapt this scene concept to feature ${corps} performers wearing the exact uniform described above. Infuse the scene with the raw emotion of an underdog rising to the occasion - tears, gritted teeth, fierce determination, or pure joy of exceeding expectations.
 
 TECHNICAL: Inspirational editorial photojournalism, shallow depth of field, field-level. The kind of iconic close-up photo that tells the story of a breakthrough. NOT a wide shot, NOT showing full corps.
@@ -781,6 +839,8 @@ UNIFORM IDENTITY (CRITICAL):
 ${themeContext}
 SCENE CONCEPT: ${scene.scene}
 Mood: ${scene.mood}
+
+${sceneCast(scene, corps)}
 
 Adapt this scene concept to feature ${corps} performers wearing the exact uniform described above. Emphasize the distinctive visual identity of ${corps} - what makes them recognizable and unique as a corps, shown through individual performer detail.
 
