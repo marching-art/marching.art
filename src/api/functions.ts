@@ -150,9 +150,11 @@ export interface RetireCorpsData {
 export const retireCorps = createCallable<RetireCorpsData, { success: boolean; message?: string }>(
   'retireCorps'
 );
+// Bring a retired corps back to its class. If the class holds an active corps
+// it is retired in its place (`replaced` names it), record intact.
 export const unretireCorps = createCallable<
   { corpsClass: string; retiredIndex: number },
-  { success: boolean; message?: string }
+  { success: boolean; message?: string; replaced?: string | null }
 >('unretireCorps');
 
 export interface TransferCorpsData {

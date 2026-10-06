@@ -13,7 +13,13 @@ const { test, describe, beforeEach, after } = require("node:test");
 const assert = require("node:assert/strict");
 
 const { setDbForTesting } = require("../config");
-const { processCorpsDecisions, sanitizeDecisionShowConcept } = require("./corps");
+const {
+  processCorpsDecisions,
+  sanitizeDecisionShowConcept,
+  unretireCorps,
+  renameCorps,
+} = require("./corps");
+const { rolloverInProgress } = require("../helpers/rolloverGate");
 
 const NS = process.env.DATA_NAMESPACE;
 const profilePath = (uid) => `artifacts/${NS}/users/${uid}/profile/data`;
@@ -297,5 +303,101 @@ describe("sanitizeDecisionShowConcept", () => {
       drillStyle: "geometric",
     });
     assert.equal(untitled.showName, null);
+  });
+});
+
+// History follows the corps (owner direction, 2026-10): a corps keeps its name
+// for life, reviving a corps retires the class's active one, and nothing
+// changes hands while a season rollover is archiving.
+describe("unretireCorps — reviving a corps retires the active one", () => {
+  beforeEach(() => setDbForTesting(null));
+
+  const retiredRecord = {
+    corpsClass: "openClass",
+    corpsName: "Phoenix",
+    location: "Reno, NV",
+    seasonHistory: [{ seasonId: "s0", totalSeasonScore: 80 }],
+    avatarUrl: "phoenix.png",
+  };
+
+  test("swaps in the retired corps with its own record and banks the active one", async () => {
+    const active = { corpsName: "Upstart", location: "Elko, NV", seasonHistory: [] };
+    const { db, writes } = makeFakeDb(
+      makeDocs({ corps: { openClass: active }, retiredCorps: [retiredRecord] })
+    );
+    setDbForTesting(db);
+
+    const res = await unretireCorps.run(authedRequest("u1", { corpsClass: "openClass", retiredIndex: 0 }));
+    assert.equal(res.replaced, "Upstart");
+    const update = writes.find((w) => w.path === profilePath("u1")).data;
+    assert.equal(update.corps.openClass.corpsName, "Phoenix");
+    assert.deepEqual(update.corps.openClass.seasonHistory, retiredRecord.seasonHistory);
+    assert.equal(update.corps.openClass.avatarUrl, "phoenix.png");
+    assert.equal(update.corps.openClass.seasonUid, "season-1");
+    assert.equal(update.retiredCorps.length, 1);
+    assert.equal(update.retiredCorps[0].corpsName, "Upstart");
+  });
+
+  test("waits for the season to end when the active corps has competed", async () => {
+    const active = { corpsName: "Upstart", totalSeasonScore: 70.5, seasonHistory: [] };
+    const { db, writes } = makeFakeDb(
+      makeDocs({ corps: { openClass: active }, retiredCorps: [retiredRecord] })
+    );
+    setDbForTesting(db);
+
+    await assert.rejects(
+      unretireCorps.run(authedRequest("u1", { corpsClass: "openClass", retiredIndex: 0 })),
+      /already competed/
+    );
+    assert.equal(writes.length, 0);
+  });
+
+  test("an empty class simply welcomes the corps back", async () => {
+    const { db, writes } = makeFakeDb(makeDocs({ corps: {}, retiredCorps: [retiredRecord] }));
+    setDbForTesting(db);
+
+    const res = await unretireCorps.run(authedRequest("u1", { corpsClass: "openClass", retiredIndex: 0 }));
+    assert.equal(res.replaced, null);
+    const update = writes.find((w) => w.path === profilePath("u1")).data;
+    assert.equal(update.retiredCorps.length, 0);
+  });
+});
+
+describe("renameCorps — a corps keeps its name for life", () => {
+  beforeEach(() => setDbForTesting(null));
+
+  test("refuses to rebrand a corps that has no name conflict", async () => {
+    const { db, writes } = makeFakeDb(
+      makeDocs({ corps: { aClass: { corpsName: "Cascade", seasonHistory: [] } } })
+    );
+    setDbForTesting(db);
+
+    await assert.rejects(
+      renameCorps.run(authedRequest("u1", { corpsClass: "aClass", newName: "Rebrand" })),
+      /keeps its name for life/
+    );
+    assert.equal(writes.length, 0);
+  });
+
+  test("still resolves a duplicate-name conflict the director didn't choose", async () => {
+    const { db, writes } = makeFakeDb(
+      makeDocs({ corps: { aClass: { corpsName: "Cascade", mustRename: true, seasonHistory: [] } } })
+    );
+    setDbForTesting(db);
+
+    const res = await renameCorps.run(authedRequest("u1", { corpsClass: "aClass", newName: "Cascade Lakes" }));
+    assert.equal(res.newName, "Cascade Lakes");
+    assert.ok(writes.some((w) => w.path === profilePath("u1")));
+  });
+});
+
+describe("rolloverInProgress", () => {
+  const now = new Date("2026-10-06T12:00:00Z");
+  test("a fresh running lease blocks; completed, failed and stale ones don't", () => {
+    assert.equal(rolloverInProgress({ status: "running", startedAt: new Date("2026-10-06T11:55:00Z") }, now), true);
+    assert.equal(rolloverInProgress({ status: "running", startedAt: new Date("2026-10-06T10:00:00Z") }, now), false);
+    assert.equal(rolloverInProgress({ status: "completed" }, now), false);
+    assert.equal(rolloverInProgress({ status: "failed" }, now), false);
+    assert.equal(rolloverInProgress(null, now), false);
   });
 });
