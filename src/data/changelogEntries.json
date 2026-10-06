@@ -1,5 +1,17 @@
 [
   {
+    "id": "2026-10-06-podium-corps-lineage",
+    "date": "2026-10-06",
+    "title": "Podium: every corps keeps its own history",
+    "category": "fix",
+    "summary": "A new Podium corps could start in the class its retired predecessor had earned, and sometimes with some of its record. A new corps now always starts fresh in A Class, and a corps you bring back from retirement returns with its own record and class, with time away taken into account.",
+    "highlights": [
+      "A corps keeps its name for life. To compete under a new name, start a new corps; your current one retires with its history intact.",
+      "Bringing a corps back from retirement retires your active corps automatically, and shows where the returning corps will compete before you confirm.",
+      "Retired corps keep their logo and uniforms, and get them back when they return."
+    ]
+  },
+  {
     "id": "2026-10-05-news-art-casting",
     "date": "2026-10-05",
     "title": "News art that looks like the activity",

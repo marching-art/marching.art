@@ -407,8 +407,10 @@ exports.buildShowTravel = buildShowTravel;
  * after the fact.
  *
  * Read-only: it never advances the season index (that write belongs to
- * registration), so the division is approximated from the career's current
- * seat — validateCommitment stays authoritative on submit.
+ * registration); the division is the live corps' projected seat for this
+ * season (career.projectReturn) — validateCommitment stays authoritative on
+ * submit. History follows the corps: staff, home, and last season's report
+ * appear only when the leftover state is the live corps' own.
  */
 exports.getPodiumRegistrationPreview = onCall({ cors: true }, async (request) => {
   const { uid, db, seasonData } = await podiumContext(request);
@@ -419,23 +421,49 @@ exports.getPodiumRegistrationPreview = onCall({ cors: true }, async (request) =>
   ]);
 
   const careerData = careerSnapshot.exists ? careerSnapshot.data() : null;
-  const division = divisions.normalizeDivision(careerData && careerData.division);
+  // The leftover prior-season state carries forward (staff, home, budget
+  // report) only when it is the live corps' own: after a retire or a revival
+  // it belongs to a banked corps, and its history stays with that corps.
+  const staleState =
+    staleSnapshot.exists && staleSnapshot.data().seasonUid !== seasonData.seasonUid
+      ? staleSnapshot.data()
+      : null;
+  const staleOwner = staleState
+    ? career.seasonOwner(careerData || career.initCareer(), staleState.seasonUid)
+    : null;
+  const staleIsOwnCorps =
+    staleOwner === "active" ||
+    (staleOwner === "unarchived" &&
+      career.lineageForUnsweptSeason(careerData || career.initCareer(), staleState) === "active");
+  // A live corps: the career holds one, or its own season is still waiting to
+  // be swept onto a career that registration will bank it into.
+  const activeCorps = career.hasActiveCorps(careerData) || (Boolean(staleState) && staleIsOwnCorps);
+  // Where the live corps competes if it takes the field this season — its time
+  // away charged under the published re-entry rule. A director with no live
+  // corps founds one in A Class.
+  const currentIndex = await career.peekSeasonIndex(db, seasonData.seasonUid);
+  const projection = activeCorps
+    ? career.projectReturn(careerData || career.initCareer(), currentIndex, store.balance)
+    : null;
+  const division = projection ? projection.division : divisions.normalizeDivision(null);
   const commitmentCap =
     (store.balance.budget.commitmentCapByDivision || {})[division] ||
     store.balance.budget.commitmentCap;
+  // A newly founded corps always starts in A Class — the cap "start new" uses.
+  const foundingCommitmentCap =
+    (store.balance.budget.commitmentCapByDivision || {}).aClass || store.balance.budget.commitmentCap;
   const corpsCoin = profileSnapshot.exists ? profileSnapshot.data().corpsCoin || 0 : 0;
 
   // Carried staff exist only when last season's corps hasn't been re-founded
   // yet (a different seasonUid). A fresh corps or a current-season doc has no
   // payroll to preview.
-  const hasCarried =
-    staleSnapshot.exists && staleSnapshot.data().seasonUid !== seasonData.seasonUid;
-  const roster = hasCarried ? staleSnapshot.data().staff || {} : {};
+  const hasCarried = Boolean(staleState) && staleIsOwnCorps;
+  const roster = hasCarried ? staleState.staff || {} : {};
   // Project against the most a director could possibly commit (min of the cap
   // and their wallet), so `affordable` answers "can I keep everyone even at
   // max funding?" — the actual keep/drop math re-runs client-side as they
   // dial the commitment.
-  const projection = staffMarket.projectRetention(
+  const retention = staffMarket.projectRetention(
     roster,
     Math.min(commitmentCap, corpsCoin),
     store.balance
@@ -447,12 +475,12 @@ exports.getPodiumRegistrationPreview = onCall({ cors: true }, async (request) =>
   // will refund on submit. Either way the director sees the settlement — and
   // the refund it frees up — BEFORE committing next season's CC.
   const bankedReport =
-    careerData && careerData.lastSeasonReport ? careerData.lastSeasonReport : null;
+    activeCorps && careerData && careerData.lastSeasonReport ? careerData.lastSeasonReport : null;
   const lastSeasonReport =
     bankedReport ||
     (hasCarried
-      ? store.buildSeasonFinancialReport(staleSnapshot.data(), {
-          seasonUid: staleSnapshot.data().seasonUid,
+      ? store.buildSeasonFinancialReport(staleState, {
+          seasonUid: staleState.seasonUid,
         })
       : null);
   // Estimated budget for a comparable next season: last season's operating
@@ -464,25 +492,26 @@ exports.getPodiumRegistrationPreview = onCall({ cors: true }, async (request) =>
   const estimatedSeasonBudget = lastSeasonReport
     ? Math.min(
         commitmentCap,
-        roundUpToStep((lastSeasonReport.operatingSpend || 0) + projection.payroll)
+        roundUpToStep((lastSeasonReport.operatingSpend || 0) + retention.payroll)
       )
     : null;
 
   return {
     success: true,
-    hasCarriedStaff: projection.staff.length > 0,
+    hasCarriedStaff: retention.staff.length > 0,
     division,
     divisionLabel: divisions.DIVISION_LABELS[division],
     commitmentCap,
+    foundingCommitmentCap,
     corpsCoin,
-    payroll: projection.payroll,
-    affordable: projection.affordable,
+    payroll: retention.payroll,
+    affordable: retention.affordable,
     // Between-seasons financial settlement (design §14.2.1): the just-ended
     // season's line-item report, the refund swept back to the wallet, and a
     // data-driven estimate to fund the next one.
     lastSeasonReport,
     estimatedSeasonBudget,
-    staff: projection.staff.map((s) => ({
+    staff: retention.staff.map((s) => ({
       specialty: s.specialty,
       id: s.id,
       name: s.name,
@@ -512,7 +541,7 @@ exports.getPodiumRegistrationPreview = onCall({ cors: true }, async (request) =>
     // for a first-time director (no prior season to assess). `assessment.decisions`
     // gains "unretire" here when banked lineages exist.
     assessment:
-      careerData && careerData.pendingAssessment
+      activeCorps && careerData && careerData.pendingAssessment
         ? {
             ...careerData.pendingAssessment,
             decisions: [
@@ -527,45 +556,73 @@ exports.getPodiumRegistrationPreview = onCall({ cors: true }, async (request) =>
     homeRelocationMilesPerCoin: (store.balance.home && store.balance.home.milesPerCoin) || 2,
     // The carried-over corps identity, so the screen greets "continue <Name>"
     // instead of a blank founding form.
-    carryover: hasCarried
-      ? {
-          corpsName: staleSnapshot.data().corpsName || null,
-          location: staleSnapshot.data().location || null,
-          // The current official home, resolved to a venue (tour-map city or any
-          // real town) so the client can preselect it AND measure the distance to
-          // any new pick (the move fee). Legacy corps with only a free-text
-          // `location` resolve here too.
-          ...(() => {
-            const home =
-              staleSnapshot.data().home || venues.venueFor(staleSnapshot.data().location) || null;
-            return home
-              ? {
-                  homeVenueId: home.venueId,
-                  homeCity: `${home.city}, ${home.region}`,
-                  homeLat: home.lat,
-                  homeLng: home.lng,
-                }
-              : {};
-          })(),
-          // A home the old show-city-only rule forced moves free this once.
-          homeMoveFree: hometown.homeWasForced(staleSnapshot.data()),
-          showConcept: staleSnapshot.data().showConcept || null,
-          reputation: careerData ? careerData.reputation || 0 : 0,
-          tier: engineTierLabel(careerData),
-        }
-      : null,
+    carryover: activeCorps ? carryoverFor(careerData || career.initCareer(), hasCarried ? staleState : null, projection) : null,
     // Banked lineages a director can un-retire (each re-assessed on selection).
     retiredLineages: (careerData && careerData.retiredCareers ? careerData.retiredCareers : []).map(
-      (lineage, index) => ({
-        index,
-        corpsName: lineage.corpsName || null,
-        seasonsPlayed: lineage.seasonsPlayed || 0,
-        reputation: Math.round((lineage.reputation || 0) * 10) / 10,
-        tierLabel: assessment.tierLabel(engineTierForCareer(lineage)),
-      })
+      (lineage, index) => {
+        // Where it would compete if brought back now (its time away charged).
+        const comeback = career.projectReturn(lineage, currentIndex, store.balance);
+        return {
+          index,
+          corpsName: lineage.corpsName || null,
+          seasonsPlayed: lineage.seasonsPlayed || 0,
+          reputation: Math.round((lineage.reputation || 0) * 10) / 10,
+          tierLabel: assessment.tierLabel(engineTierForCareer(lineage)),
+          missedSeasons: comeback.missedSeasons,
+          returnDivisionLabel: divisions.DIVISION_LABELS[comeback.division],
+          returnTierLabel: assessment.tierLabel(
+            engineTierForCareer({ reputation: comeback.reputationAfter })
+          ),
+        };
+      }
     ),
   };
 });
+
+/**
+ * The live corps' identity for the "continue <Name>" greeting. Its last
+ * season's state is the source when that state is its own; a revived corps
+ * (whose last state is long gone) greets with the home and show concept it
+ * was banked with. `projection` is where it competes this season.
+ */
+function carryoverFor(careerData, ownState, projection) {
+  const identity = careerData.identity || {};
+  const source = ownState || identity;
+  const home =
+    (ownState && ownState.home) ||
+    identity.home ||
+    (source.location ? venues.venueFor(source.location) : null) ||
+    null;
+  return {
+    corpsName: careerData.corpsName || (ownState && ownState.corpsName) || null,
+    location: source.location || null,
+    // The current official home, resolved to a venue (tour-map city or any
+    // real town) so the client can preselect it AND measure the distance to
+    // any new pick (the move fee). Legacy corps with only a free-text
+    // `location` resolve here too.
+    ...(home
+      ? {
+          homeVenueId: home.venueId,
+          homeCity: `${home.city}, ${home.region}`,
+          homeLat: home.lat,
+          homeLng: home.lng,
+        }
+      : {}),
+    // A home the old show-city-only rule forced moves free this once; a
+    // revived corps re-picks its home for free (there is no move to price).
+    homeMoveFree: ownState ? hometown.homeWasForced(ownState) : true,
+    showConcept: source.showConcept || null,
+    reputation: careerData.reputation || 0,
+    tier: engineTierLabel(careerData),
+    // Where it competes this season and the time away behind that.
+    revived: !ownState && (careerData.seasonsPlayed || 0) > 0,
+    missedSeasons: projection ? projection.missedSeasons : 0,
+    divisionLabel: divisions.DIVISION_LABELS[projection ? projection.division : "aClass"],
+    tierAfter: assessment.tierLabel(
+      engineTierForCareer({ reputation: projection ? projection.reputationAfter : careerData.reputation })
+    ),
+  };
+}
 
 /** Named tier label for a career's current reputation (helper for the preview). */
 function engineTierForCareer(careerData) {

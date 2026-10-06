@@ -1081,9 +1081,13 @@ dormant, and every dormant season applies a minimum decay:
   between-seasons pressure is the same one every returning corps faces — the fresh commitment
   must cover the aged payroll, or the director picks who stays (§5.6). The earlier "loyalty
   grace / poaching" idea was dropped with the v1.9 labor-market design.
-- **Division re-entry, published rule.** After one dormant season a corps seeds normally from its
-  decayed seeding score. After two or more it re-enters the bottom active division and climbs —
-  the real return-through-Open-Class path — with the §5.7 petition-up always available.
+- **Division re-entry, published rule.** Time away is every season since the corps last competed
+  — dormant or retired, the same clock (`lineage.missedSeasonsFor`), charged once when it takes
+  the field. One season away keeps its class outright. A longer absence re-enters at the class its
+  dormancy-decayed reputation supports, never above the seat it last held
+  (`divisions.divisionForRegistration`) — the real return-through-Open-Class path, with the §5.7
+  petition-up always available. The un-retire preview shows exactly this landing spot before the
+  director confirms.
 - **Heritage credit — the comeback arc.** Returning below your corps' historical peak, reputation
   gains run at +50% until one tier below that peak; the final tier back is earned at full price.
   Alumni networks and name recognition make the re-climb faster than the first climb — but the
@@ -1098,8 +1102,8 @@ dormant, and every dormant season applies a minimum decay:
 - **Attached to the corps, not the director.** Retiring a corps banks its legacy (Hall, prestige
   plaques, trophy case preserved) and a new corps starts the climb at tier 1. This makes a
   15-season-old corps genuinely precious — FMA's identity-permanence hook, now load-bearing.
-  Directors may retire or found corps freely at registration; renaming a corps keeps its
-  reputation (a rebrand is still the same organization).
+  Directors may retire, revive, or found corps freely at registration — **but never rename
+  (decision 48)**: a corps is its name, and history always follows the corps.
 
 **How the Blue Devils lose (beatability by design).** A Champion-Status corps run well is the
 favorite, never a lock. The deterministic upset paths, all skill-expressed:
@@ -1446,7 +1450,7 @@ corps broke-but-playable.
 5.1 Reputation state + tier ceilings wired into the engine's clamp (already stubbed in 2.2).
 5.2 Season archival: rep gains (placement/awards, per-season cap), decay, dormancy detection,
 heritage credit; staff-contract lapse rules (§5.13).
-5.3 Corps lifecycle: retire/found/rename flows with rep attachment rules.
+5.3 Corps lifecycle: retire/found/revive flows with rep attachment rules (no rename — decision 48).
 5.4 Division seeding: single division below population threshold; seeding-score formula
 published on the standings page; promotion/relegation + petition-up (§5.7).
 5.5 Exit gate: multi-season harness green (pacing, upsets, dormancy invariant).
@@ -1936,6 +1940,19 @@ proven the machinery. Total: ~16–20 engineering weeks to beta.
     early, 8 = a monster book…" (presets renamed Conservative / Ambitious). **Kept by owner
     decision:** travel and heat stamina numbers on the route, Schedule, airfare and joint-rehearsal
     cards — tour planning information, not a hidden mechanic.
+
+48. **History follows the corps; there is no rename (owner direction, 2026-10).** A corps is its
+    name. The between-seasons choices are continue (same name — locked in the form and enforced
+    by `registerPodiumCorps`), start a new corps, retire, or bring a retired corps back; a new
+    name is a new corps that starts blank (A Class, Community Corps, no record, no staff, no logo
+    or uniforms). Reviving a corps automatically retires the active one. Everything a season
+    produces — reputation, class seat, staff, home, budget report, and the corps' look — belongs
+    to the corps that played it (`helpers/podium/lineage.js` `seasonOwner`): the boundary sweep,
+    the re-seat, the assessment, and registration's lazy archival all write to that corps'
+    record, banked or live, never to whichever corps is live now; and retire/un-retire wait for
+    the boundary to settle so a season is never stranded between records. Fixes the case of a new
+    corps placed in its predecessor's Open Class seat. Existing data:
+    `scripts/correctPodiumLineages.js` (Actions → "Correct Podium lineages", dry run first).
 
 **Still open:**
 

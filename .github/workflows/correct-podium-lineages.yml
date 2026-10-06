@@ -1,0 +1,75 @@
+name: Correct Podium lineages
+
+# One-off (re-runnable) data migration that puts every corps fielded this
+# Podium season back on its OWN record.
+#
+# WHY: history follows the corps (docs/PODIUM.md §5.13, owner direction
+# 2026-10) — a corps is its name, and a newly founded corps starts fresh in
+# A Class. Before that was enforced, a renamed corps kept its old record, a
+# corps founded right after a retire could inherit the retired corps' last
+# season, and a corps founded while the season boundary was still settling
+# could be seated in its predecessor's class (a new corps in Open Class).
+# Registration, retire, and un-retire now prevent all three; this repairs the
+# corps already affected. See functions/src/scripts/correctPodiumLineages.js.
+#
+# HOW TO RUN (no console needed — all from the Actions tab):
+#   1. Actions → "Correct Podium lineages" → Run workflow.
+#   2. Leave "commit" UNCHECKED for a dry run: the log lists every corps it
+#      would correct and how, with a final total.
+#   3. Review the dry-run log, then Run workflow again with "commit" CHECKED to
+#      apply the writes. Idempotent — a second commit run is a safe no-op.
+#
+# Only `podium/career`, the live `podium/state` division/reputation/repTier, and
+# the profile's `corps.podiumClass` division/repTier are touched. This job
+# writes to Firestore only — it makes no repo commits.
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: 'Apply the writes (leave unchecked for a dry run)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: correct-podium-lineages
+  cancel-in-progress: false
+
+jobs:
+  correct:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Install function dependencies
+        run: cd functions && npm ci
+
+      - name: Run correction (${{ inputs.commit && 'COMMIT' || 'dry run' }})
+        env:
+          # Same Firestore credentials the deploy workflow uses.
+          GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          # Production data namespace; matches functions/.env.marching-art.
+          DATA_NAMESPACE: marching-art
+        run: |
+          echo "$GOOGLE_APPLICATION_CREDENTIALS_JSON" > /tmp/sa-key.json
+          export GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa-key.json
+          trap 'rm -f /tmp/sa-key.json' EXIT
+
+          cd functions
+          if [ "${{ inputs.commit }}" = "true" ]; then
+            echo "Running WITH --commit: changes will be written to Firestore."
+            node src/scripts/correctPodiumLineages.js --commit
+          else
+            echo "Dry run: no writes. Check 'commit' to apply."
+            node src/scripts/correctPodiumLineages.js --dry-run
+          fi

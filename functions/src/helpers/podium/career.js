@@ -12,9 +12,10 @@
  *     (near-ceiling window, heritage credit vs historicalPeak).
  *   - Dormancy: graduated decay per missed season; a corps NEVER returns
  *     stronger than it left (engine invariant).
- *   - Renaming keeps reputation (the career persists); founding fresh
- *     (freshStart) banks the old career into retiredCareers and restarts at
- *     tier 1.
+ *   - A corps is its name — there is no rename (PODIUM.md decision 48).
+ *     Founding fresh (freshStart) or retiring banks the live corps into
+ *     retiredCareers and restarts at tier 1; history, class seat, and look
+ *     stay with the corps that earned them (./lineage.js).
  *   - Staff never enter a pool: each staffer is an instance owned by the
  *     corps and carries over at re-registration (staffMarket.ageStaff). A
  *     contract locks the salary, not the employment — when it lapses the
@@ -29,6 +30,15 @@ const store = require("./store");
 const divisions = require("./divisions");
 const assessment = require("./assessment");
 const hallOfChampions = require("../hallOfChampions");
+const lineageLib = require("./lineage");
+const {
+  seasonOwner,
+  retiredLineageIndexFor,
+  lineageForUnsweptSeason,
+  patchSeasonLineage,
+  seasonRefunded,
+  lineageThatPlayed,
+} = lineageLib;
 
 const SEASONS_DOC = "podium-config/podiumSeasons";
 
@@ -113,6 +123,19 @@ async function seasonIndexFor(db, seasonUid) {
 }
 
 /**
+ * The global index the given (active) season has or will get — read-only, for
+ * previews that must not advance the ledger. When the ledger has not yet rolled
+ * to `seasonUid`, it is the next index.
+ */
+async function peekSeasonIndex(db, seasonUid) {
+  const snapshot = await db.doc(SEASONS_DOC).get();
+  if (!snapshot.exists) return 1;
+  const current = snapshot.data().current || {};
+  if (current.seasonUid === seasonUid) return current.index;
+  return (current.index || 0) + 1;
+}
+
+/**
  * Tier-relative season performance (0-100) — how close to this corps' own tier
  * ceiling it finished. Scoring is reputation-gated, so the reputation ladder
  * climbs on performance AT YOUR ALTITUDE, not absolute field position (§5.13).
@@ -178,54 +201,21 @@ function applySeasonResult(career, { seasonUid, seasonIndex, state }, cfg) {
 }
 
 /**
- * Apply dormancy decay for missed seasons (pure). The engine guarantees the
- * return-weaker invariant.
+ * Archive one finished season into the lineage that played it (pure). Returns
+ * { career, target, lineageBefore, lineageAfter } — `career` is the whole
+ * career doc with that lineage updated, `target` "active" or a retired index.
  */
-function applyDormancy(career, missedSeasons, cfg) {
-  if (!missedSeasons || missedSeasons <= 0) return career;
-  return {
-    ...career,
-    reputation: engine.updateReputation(career.reputation, 0, { dormantSeasons: missedSeasons }, cfg),
-  };
-}
-
-/**
- * Bank a live career lineage for retirement (pure, §5.13 "attached to the corps,
- * not the director"). Retiring preserves the whole lineage — reputation,
- * historical peak, trophy history, division — so it can be un-retired later; it
- * just steps off the active roster. Staff are per-season employment (§5.6) and
- * simply lapse, so they are not banked. `retiredAtIndex` timestamps the lineage
- * against the global season ledger so a future un-retire can charge the dormancy
- * decay of the seasons it sat out.
- */
-function bankLineage(careerData, retiredAtIndex) {
-  const banked = { ...careerData };
-  delete banked.retiredCareers;
-  delete banked.pendingAssessment;
-  banked.retiredAtIndex = retiredAtIndex;
-  banked.retiredAt = new Date().toISOString();
-  return banked;
-}
-
-/**
- * Restore a retired lineage as an active career (pure, §5.13 comeback arc). The
- * seasons it sat retired are charged as dormancy against its reputation — the
- * governing invariant is that a corps NEVER returns stronger than it left — but
- * its historical peak is preserved, so heritage credit still accelerates the
- * re-climb toward it. Returns { career, missedSeasons, reputationBefore,
- * reputationAfter } so the caller can show the resulting status BEFORE the
- * director confirms.
- */
-function restoreLineage(banked, currentIndex, cfg) {
-  const retiredAtIndex = banked.retiredAtIndex ?? banked.lastPlayedIndex ?? currentIndex;
-  const missedSeasons = Math.max(0, currentIndex - retiredAtIndex);
-  const before = banked.reputation || 0;
-  const after = applyDormancy({ reputation: before, historicalPeak: banked.historicalPeak || 0 }, missedSeasons, cfg)
-    .reputation;
-  const restored = { ...banked, reputation: after };
-  delete restored.retiredAtIndex;
-  delete restored.retiredAt;
-  return { career: restored, missedSeasons, reputationBefore: before, reputationAfter: after };
+function archiveSeasonIntoCareer(careerData, season, cfg) {
+  const target = lineageForUnsweptSeason(careerData, season.state);
+  if (target === "active") {
+    const lineageAfter = applySeasonResult(careerData, season, cfg);
+    return { career: lineageAfter, target, lineageBefore: careerData, lineageAfter };
+  }
+  const retired = [...careerData.retiredCareers];
+  const lineageBefore = retired[target];
+  const lineageAfter = applySeasonResult(lineageBefore, season, cfg);
+  retired[target] = lineageAfter;
+  return { career: { ...careerData, retiredCareers: retired }, target, lineageBefore, lineageAfter };
 }
 
 // The archived-standings doc keeps every realistic field size well under the
@@ -447,20 +437,24 @@ async function archivePodiumSeason(db, previousSeason) {
             ? stateSnapshot.data()
             : null;
         const txnCareer = careerSnapshot.exists ? careerSnapshot.data() : initCareer();
-        if (txnState && txnCareer.lastSeasonUid !== previousSeason.seasonUid) {
-          const updated = applySeasonResult(
+        const owner = seasonOwner(txnCareer, previousSeason.seasonUid);
+        if (txnState && owner === "unarchived") {
+          // Archive into the corps that PLAYED the season — the live career, or
+          // the banked lineage of a corps retired/replaced before this sweep
+          // reached it. Never onto a newly founded corps.
+          const archival = archiveSeasonIntoCareer(
             txnCareer,
             { seasonUid: previousSeason.seasonUid, seasonIndex: previousSeason.index, state: txnState },
             store.balance
           );
-          updated.updatedAt = new Date().toISOString();
+          let updated = archival.career;
           // End-of-season financial settlement: bank the line-item report and
           // sweep any unspent budget back to the wallet. The lastRefundedSeasonUid
           // marker moves in lock-step with lastSeasonUid, so a re-sweep (or a
           // director who re-registered first and already refunded) never
           // double-pays — the archival branch itself is once-only.
           let budgetRefund = 0;
-          if (txnCareer.lastRefundedSeasonUid !== previousSeason.seasonUid) {
+          if (!seasonRefunded(txnCareer, previousSeason.seasonUid)) {
             const report = store.buildSeasonFinancialReport(txnState, {
               seasonUid: previousSeason.seasonUid,
               seasonIndex: previousSeason.index,
@@ -468,35 +462,44 @@ async function archivePodiumSeason(db, previousSeason) {
             budgetRefund = applyBudgetRefund(
               transaction, db, uid, profileSnapshot, report, previousSeason.seasonUid
             );
-            updated.lastRefundedSeasonUid = previousSeason.seasonUid;
-            updated.lastSeasonReport = report;
+            updated = patchSeasonLineage(updated, previousSeason.seasonUid, {
+              lastRefundedSeasonUid: previousSeason.seasonUid,
+              lastSeasonReport: report,
+            });
           }
+          updated.updatedAt = new Date().toISOString();
           transaction.set(careerRef(db, uid), updated);
           return {
             state: txnState,
-            career: txnCareer,
+            career: updated,
+            lineage: archival.lineageBefore,
+            active: archival.target === "active",
             didArchive: true,
             // Refund credited this season — carried out to the once-only
             // post-commit recap write (the payday figure the director sees).
             budgetRefund,
             // Assessment inputs (§5.7/§5.13): the reputation move this season
             // produced, and the tier-relative performance it was earned on.
-            reputationBefore: txnCareer.reputation || 0,
-            reputationAfter: updated.reputation || 0,
-            historicalPeakBefore: txnCareer.historicalPeak || 0,
+            reputationBefore: archival.lineageBefore.reputation || 0,
+            reputationAfter: archival.lineageAfter.reputation || 0,
+            historicalPeakBefore: archival.lineageBefore.historicalPeak || 0,
             tierPerformance: finalsPercentile(txnState),
           };
         }
         // Already archived (re-sweep, or the director re-registered and lazily
-        // self-archived): the reputation move lives on the frozen history entry.
+        // self-archived): the reputation move lives on the frozen history entry,
+        // on whichever lineage played it.
+        const lineage = lineageThatPlayed(txnCareer, previousSeason.seasonUid) || txnCareer;
         const prior = archivedSeasonEntry(txnCareer, previousSeason.seasonUid);
         return {
           state: txnState,
           career: txnCareer,
+          lineage,
+          active: owner !== "retired",
           didArchive: false,
-          reputationBefore: prior?.reputationBefore ?? txnCareer.reputation ?? 0,
-          reputationAfter: prior?.reputationAfter ?? txnCareer.reputation ?? 0,
-          historicalPeakBefore: txnCareer.historicalPeak || 0,
+          reputationBefore: prior?.reputationBefore ?? lineage.reputation ?? 0,
+          reputationAfter: prior?.reputationAfter ?? lineage.reputation ?? 0,
+          historicalPeakBefore: lineage.historicalPeak || 0,
           tierPerformance: prior?.percentile ?? (txnState ? finalsPercentile(txnState) : null),
         };
       }).then(async (result) => {
@@ -507,7 +510,9 @@ async function archivePodiumSeason(db, previousSeason) {
         }
         return result;
       });
-      const { state, career } = result;
+      // `lineage` is the corps that played the season (its record before this
+      // archival, when this pass archived it) — live or banked.
+      const { state, career, lineage } = result;
       // What the corps did this season. The live state is the source while it
       // still holds the finished season; once the director has re-registered
       // (lazy self-archival, or simply a night later) the career's archived
@@ -542,11 +547,12 @@ async function archivePodiumSeason(db, previousSeason) {
           seasonRankOf: state.seasonRankOf ?? null,
           medals: state.medals || {},
           division: divisions.normalizeDivision(state.division || (entry && entry.division)),
-          underCutoffSeasons: career.underCutoffSeasons || 0,
+          underCutoffSeasons: lineage.underCutoffSeasons || 0,
           activity: state.activity || (entry && entry.activity) || null,
           seasonsPlayed: result.didArchive
-            ? (career.seasonsPlayed || 0) + 1
-            : career.seasonsPlayed || 0,
+            ? (lineage.seasonsPlayed || 0) + 1
+            : lineage.seasonsPlayed || 0,
+          active: result.active,
           ...assessmentFields,
         });
       } else if (entry) {
@@ -557,13 +563,14 @@ async function archivePodiumSeason(db, previousSeason) {
           lastScoredDay: entry.finalsDay ?? null,
           seasonRank: entry.seasonRank ?? null,
           seasonRankOf: entry.seasonRankOf ?? null,
-          // Pre-migration entries carry neither field; `career.division` is
+          // Pre-migration entries carry neither field; `lineage.division` is
           // the best remaining guess for a season archived before they landed.
           medals: entry.medals || {},
-          division: divisions.normalizeDivision(entry.division || career.division),
-          underCutoffSeasons: career.underCutoffSeasons || 0,
+          division: divisions.normalizeDivision(entry.division || lineage.division),
+          underCutoffSeasons: lineage.underCutoffSeasons || 0,
           activity: entry.activity || null,
-          seasonsPlayed: career.seasonsPlayed || 0,
+          seasonsPlayed: lineage.seasonsPlayed || 0,
+          active: result.active,
           ...assessmentFields,
         });
       }
@@ -614,14 +621,37 @@ async function archivePodiumSeason(db, previousSeason) {
   } else {
     for (const [uid, seat] of Object.entries(divisionAssessment.next)) {
       try {
-        await careerRef(db, uid).set(
-          {
-            division: seat.division,
-            underCutoffSeasons: seat.underCutoffSeasons,
-            updatedAt: new Date().toISOString(),
-          },
-          { merge: true }
-        );
+        // The seat belongs to the corps that EARNED it. If the director has
+        // since retired that corps or founded a new one (registration can race
+        // this sweep on rollover night), the seat goes onto the banked lineage
+        // — where an un-retire will find it — and never onto the new corps,
+        // which starts in A Class with no history.
+        const seatedActive = await db.runTransaction(async (transaction) => {
+          const ref = careerRef(db, uid);
+          const snapshot = await transaction.get(ref);
+          const data = snapshot.exists ? snapshot.data() : initCareer();
+          const updatedAt = new Date().toISOString();
+          const owner = seasonOwner(data, previousSeason.seasonUid);
+          if (owner === "retired") {
+            const index = retiredLineageIndexFor(data, previousSeason.seasonUid);
+            const retired = [...data.retiredCareers];
+            retired[index] = {
+              ...retired[index],
+              division: seat.division,
+              underCutoffSeasons: seat.underCutoffSeasons,
+            };
+            transaction.set(ref, { retiredCareers: retired, updatedAt }, { merge: true });
+            return false;
+          }
+          if (owner !== "active") return false;
+          transaction.set(
+            ref,
+            { division: seat.division, underCutoffSeasons: seat.underCutoffSeasons, updatedAt },
+            { merge: true }
+          );
+          return true;
+        });
+        if (!seatedActive) continue;
         const liveState = await store.stateRef(db, uid).get();
         if (liveState.exists && liveState.data().seasonUid !== previousSeason.seasonUid) {
           await store.stateRef(db, uid).set({ division: seat.division }, { merge: true });
@@ -654,6 +684,9 @@ async function archivePodiumSeason(db, previousSeason) {
       store.balance
     );
     for (const e of swept) {
+      // A retired or replaced corps has no "what next" decision pending — and
+      // its evaluation must never greet the corps that replaced it.
+      if (!e.active) continue;
       const seat = divisionAssessment.next[e.uid];
       const built = assessment.buildAssessment(
         {
@@ -684,7 +717,13 @@ async function archivePodiumSeason(db, previousSeason) {
         store.balance
       );
       try {
-        await careerRef(db, e.uid).set({ pendingAssessment: built }, { merge: true });
+        await db.runTransaction(async (transaction) => {
+          const ref = careerRef(db, e.uid);
+          const snapshot = await transaction.get(ref);
+          if (!snapshot.exists) return;
+          if (seasonOwner(snapshot.data(), previousSeason.seasonUid) !== "active") return;
+          transaction.set(ref, { pendingAssessment: built }, { merge: true });
+        });
       } catch (error) {
         logger.error(`[podium] pending assessment write failed for ${e.uid}: ${error.message}`);
       }
@@ -959,9 +998,9 @@ module.exports = {
   latestPreviousSeason,
   finalsPercentile,
   applySeasonResult,
-  applyDormancy,
-  bankLineage,
-  restoreLineage,
+  ...lineageLib,
+  archiveSeasonIntoCareer,
+  peekSeasonIndex,
   buildFinalStandings,
   appendProfileSeasonHistory,
   writePendingPodiumRecap,

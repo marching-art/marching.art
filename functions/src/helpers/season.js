@@ -645,6 +645,32 @@ async function settlePodiumSeasonBoundary(db) {
 }
 
 /**
+ * Make sure the just-ended Podium season has been swept and seated before a
+ * director changes which corps they field (retire, un-retire, register). Every
+ * corps' last season must be banked onto its own record — and its earned class
+ * seated there — BEFORE that corps steps off the roster, or the boundary would
+ * write them onto whichever corps is live afterwards. Runs the (idempotent,
+ * lease-guarded) settlement when needed. Resolves true once seated; false while
+ * another run still holds the lease. Call after career.ensureSeasonIndex.
+ * @param {FirebaseFirestore.Firestore} db
+ * @param {string} seasonUid the active season
+ * @returns {Promise<boolean>}
+ */
+async function ensurePodiumBoundarySettled(db, seasonUid) {
+  const career = require("./podium/career");
+  const prior = await career.latestPreviousSeason(db);
+  if (!prior || prior.seasonUid === seasonUid) return true;
+  const archiveRef = db.doc(`podium-recaps/${prior.seasonUid}`);
+  const seated = async () => {
+    const snapshot = await archiveRef.get();
+    return Boolean(snapshot.exists && snapshot.data().divisionsSeatedAt);
+  };
+  if (await seated()) return true;
+  await settlePodiumSeasonBoundary(db);
+  return seated();
+}
+
+/**
  * Refuse to re-mint a season that is already the active one. The scheduler
  * only starts a season once the current one has ended, but the admin override
  * can be pressed at any moment — and both generators name the season from the
@@ -890,6 +916,7 @@ module.exports = {
   resetLeaguesForNewSeason,
   rolloverFromOldSeason,
   settlePodiumSeasonBoundary,
+  ensurePodiumBoundarySettled,
   assertNotReminting,
   corpsParticipatedThisSeason,
   refreshLiveSeasonSchedule,
