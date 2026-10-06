@@ -89,12 +89,16 @@ export default function PodiumRegistration({ podium }) {
     refreshPreview();
   }, [refreshPreview]);
 
-  // Returning directors see the Season Assessment first; a first-time corps (no
-  // assessment, no carried identity) drops straight into the setup wizard.
-  const hasAssessment = Boolean(preview && (preview.assessment || preview.carryover));
+  // Returning directors see the Season Assessment first — including a director
+  // between corps (just retired one) with banked corps they could bring back; a
+  // first-time director drops straight into the setup wizard.
+  const hasAssessment = Boolean(
+    preview &&
+    (preview.assessment || preview.carryover || (preview.retiredLineages || []).length > 0)
+  );
 
-  // Continue the carried-over corps: prefill its identity (renaming still
-  // allowed) and enter the wizard. The current official home is preselected, so
+  // Continue the carried-over corps: prefill its identity and enter the wizard.
+  // The name is locked — a corps is its name; a new name is a new corps. The current official home is preselected, so
   // leaving it as-is is free — moving it costs the relocation fee (design §5.3).
   const chooseContinue = () => {
     const carry = preview?.carryover;
@@ -127,6 +131,9 @@ export default function PodiumRegistration({ podium }) {
   // Start a brand-new corps: clear the carried identity and found fresh. A fresh
   // start picks a home for free — there is no prior home to relocate from.
   const chooseStartNew = () => {
+    // A new corps starts in A Class, so its commitment is held to that cap.
+    const foundingCap = preview?.foundingCommitmentCap ?? preview?.commitmentCap;
+    if (foundingCap != null) setBudgetCommitment((c) => Math.min(c, foundingCap));
     setCorpsName('');
     setSelectedHome(null);
     setHomeQuery('');
@@ -161,7 +168,15 @@ export default function PodiumRegistration({ podium }) {
     return relocationFeeBetween(from, selectedHome, milesPerCoin);
   }, [decision, carriedHomeId, carry, selectedHome, milesPerCoin]);
 
-  const hasCarried = Boolean(preview?.hasCarriedStaff);
+  // Staff stay with the corps that employed them: a newly founded corps hires
+  // fresh, so nothing carries on a fresh start.
+  const hasCarried = Boolean(preview?.hasCarriedStaff) && decision !== 'startNew';
+  // A continuing corps commits up to its class's cap; a newly founded one
+  // starts in A Class.
+  const commitmentCap =
+    decision === 'continue'
+      ? preview?.commitmentCap
+      : (preview?.foundingCommitmentCap ?? preview?.commitmentCap);
   const activeStaff = useMemo(() => (preview?.staff || []).filter((s) => !s.retiring), [preview]);
   const retiringStaff = useMemo(() => (preview?.staff || []).filter((s) => s.retiring), [preview]);
   // Prior season's financial settlement — shown at the funding step so the
@@ -171,11 +186,11 @@ export default function PodiumRegistration({ podium }) {
   const estimatedBudget = preview?.estimatedSeasonBudget || 0;
   /** @param {number | null | undefined} n */
   const fmt = (n) => (n ?? 0).toLocaleString();
-  const maxCommit = preview ? Math.min(preview.commitmentCap || 0, preview.corpsCoin || 0) : 2500;
+  const maxCommit = preview ? Math.min(commitmentCap || 0, preview.corpsCoin || 0) : 2500;
   // A carried-staff director can commit at most what they hold; a first-time
   // corps is bounded only by the division cap (the wallet debit is enforced
   // server-side either way).
-  const commitmentMax = hasCarried ? maxCommit : (preview?.commitmentCap ?? 2500);
+  const commitmentMax = hasCarried ? maxCommit : (commitmentCap ?? 2500);
   // Payroll of the staff the director has chosen to keep — the number that
   // must fit inside the commitment before the corps can be founded.
   const keptPayroll = useMemo(() => {
@@ -342,10 +357,20 @@ export default function PodiumRegistration({ podium }) {
           <input
             value={corpsName}
             onChange={(e) => setCorpsName(e.target.value)}
+            readOnly={decision === 'continue'}
+            aria-readonly={decision === 'continue'}
             maxLength={40}
             placeholder="Corps name"
-            className="w-full bg-surface-sunken border border-line rounded-none px-3 py-2 text-sm text-white placeholder-muted focus:border-interactive outline-none"
+            className={`w-full bg-surface-sunken border border-line rounded-none px-3 py-2 text-sm text-white placeholder-muted focus:border-interactive outline-none ${
+              decision === 'continue' ? 'opacity-70 cursor-not-allowed' : ''
+            }`}
           />
+          {decision === 'continue' && (
+            <p className="text-[10px] text-muted -mt-1">
+              A corps keeps its name for life. To march under a new name, go back and start a new
+              corps — this one is retired with its history intact.
+            </p>
+          )}
 
           {/* Official home (design §5.3): any real US/Canadian town, geocoded
               from the place index — every tour starts here and every travel leg
@@ -614,7 +639,7 @@ export default function PodiumRegistration({ podium }) {
                     CorpsCoin into this season&apos;s Corps Budget. You hold{' '}
                     <span className="text-secondary tabular-nums">{preview?.corpsCoin}</span> CC;{' '}
                     {preview?.divisionLabel} caps a commitment at{' '}
-                    <span className="text-secondary tabular-nums">{preview?.commitmentCap}</span>.
+                    <span className="text-secondary tabular-nums">{commitmentCap}</span>.
                   </>
                 ) : (
                   <>

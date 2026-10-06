@@ -320,6 +320,13 @@ export interface PodiumCarryover {
   showConcept: string | null;
   reputation: number;
   tier: string;
+  // True for a corps just brought back from retirement (it greets with the
+  // home and show concept it retired with).
+  revived?: boolean;
+  // Where the corps competes this season, after any time away.
+  missedSeasons?: number;
+  divisionLabel?: string;
+  tierAfter?: string;
 }
 
 export interface PodiumRetiredLineage {
@@ -328,6 +335,10 @@ export interface PodiumRetiredLineage {
   seasonsPlayed: number;
   reputation: number;
   tierLabel: string;
+  // Where it would compete if brought back this season (time away charged).
+  missedSeasons?: number;
+  returnDivisionLabel?: string;
+  returnTierLabel?: string;
 }
 
 // The named class + status a reputation resolves to — shared by the retire /
@@ -405,6 +416,8 @@ export const getPodiumRegistrationPreview = createCallable<
     division: string;
     divisionLabel: string;
     commitmentCap: number;
+    // The cap a newly founded corps (always A Class) commits against.
+    foundingCommitmentCap?: number;
     corpsCoin: number;
     payroll: number;
     affordable: boolean;
@@ -452,6 +465,8 @@ export const unretirePodiumCorps = createCallable<
       missedSeasons: number;
       statusBefore: PodiumStatus;
       statusAfter: PodiumStatus;
+      // The active corps that is retired automatically when this one returns.
+      replacing: { corpsName: string | null; seasonsPlayed: number } | null;
     };
   }
 >('unretirePodiumCorps');

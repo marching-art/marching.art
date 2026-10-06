@@ -6,7 +6,9 @@
 // they earned, and their SEPARATE activity rating. Only THEN do they choose the
 // corps' fate — continue it, start a new one, retire it, or un-retire a banked
 // lineage. Every status change is confirmed, and un-retire shows where the
-// restored corps will land before the director agrees.
+// restored corps will land (and which active corps steps aside) before the
+// director agrees. A director between corps (just retired one) sees the same
+// screen without a live corps: found a new one, or bring a retired one back.
 
 import React, { useState } from 'react';
 import { ArrowUp, ArrowDown, Minus, Trophy, Flame, Loader2, AlertTriangle } from 'lucide-react';
@@ -109,10 +111,11 @@ export default function PodiumSeasonAssessment({
   const [error, setError] = useState(/** @type {string|null} */ (null));
 
   const a = assessment;
+  // A live corps to decide about — absent right after a retire.
+  const hasCorps = Boolean(a || carryover);
   const corpsName = (a && a.corpsName) || (carryover && carryover.corpsName) || 'Your corps';
   const perf = a?.performance;
-  const decisions = a?.decisions || ['continue', 'retire', 'startNew'];
-  const canUnretire = decisions.includes('unretire') && retiredLineages.length > 0;
+  const canUnretire = retiredLineages.length > 0;
 
   /** @param {PodiumRetiredLineage} lineage */
   const openUnretire = async (lineage) => {
@@ -161,14 +164,42 @@ export default function PodiumSeasonAssessment({
     <div className="bg-surface-card border border-line rounded-none p-4 md:p-6 space-y-5 max-w-2xl">
       <div className="space-y-1">
         <div className="text-[10px] font-bold uppercase tracking-wider text-interactive">
-          Season Assessment
+          {hasCorps ? 'Season Assessment' : 'Between corps'}
         </div>
-        <h2 className="text-base font-bold text-white">{corpsName}</h2>
+        <h2 className="text-base font-bold text-white">
+          {hasCorps ? corpsName : 'Found your next corps'}
+        </h2>
         <p className="text-xs text-muted">
-          Here&apos;s how you finished — and where the corps stands going into the new season. Your
-          class and status are earned against last season&apos;s field. Choose what comes next.
+          {hasCorps
+            ? "Here's how you finished — and where the corps stands going into the new season. Your class and status are earned against last season's field. Choose what comes next."
+            : 'A new corps starts fresh in A Class with no history. A retired corps comes back with its own record, class, and look.'}
         </p>
       </div>
+
+      {!a && carryover && carryover.divisionLabel && (
+        <div className="bg-surface-sunken border border-line rounded-none p-3 text-xs text-secondary space-y-1">
+          <div>
+            Competes in{' '}
+            <span className="text-white font-bold">Podium · {carryover.divisionLabel}</span>
+            {carryover.tierAfter && (
+              <>
+                {' '}
+                as <span className="text-white font-bold">{carryover.tierAfter}</span>
+              </>
+            )}
+            .
+          </div>
+          {carryover.revived && (
+            <div className="text-[11px] text-muted">
+              Back from retirement
+              {carryover.missedSeasons
+                ? ` after ${carryover.missedSeasons} season${carryover.missedSeasons === 1 ? '' : 's'} away`
+                : ''}
+              .
+            </div>
+          )}
+        </div>
+      )}
 
       {a && a.competed && perf && (
         <div className="bg-surface-sunken border border-line rounded-none p-3 text-xs text-secondary space-y-1">
@@ -263,29 +294,42 @@ export default function PodiumSeasonAssessment({
         <div className="text-[10px] font-bold uppercase tracking-wider text-muted">
           Your decision
         </div>
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={onContinue}
-            className="flex-1 min-w-[8rem] bg-interactive text-black font-bold text-sm py-2 px-3 rounded-none hover:opacity-90"
-          >
-            Continue {corpsName}
-          </button>
-          <button
-            type="button"
-            onClick={() => setConfirming({ kind: 'startNew' })}
-            className="flex-1 min-w-[8rem] bg-surface-sunken border border-line text-white text-sm py-2 px-3 rounded-none hover:border-interactive"
-          >
-            Start a new corps
-          </button>
-          <button
-            type="button"
-            onClick={() => setConfirming({ kind: 'retire' })}
-            className="flex-1 min-w-[8rem] bg-surface-sunken border border-line text-muted text-sm py-2 px-3 rounded-none hover:border-warning hover:text-warning"
-          >
-            Retire this corps
-          </button>
-        </div>
+        {!hasCorps && (
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={onStartNew}
+              className="flex-1 min-w-[8rem] bg-interactive text-black font-bold text-sm py-2 px-3 rounded-none hover:opacity-90"
+            >
+              Found a new corps
+            </button>
+          </div>
+        )}
+        {hasCorps && (
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={onContinue}
+              className="flex-1 min-w-[8rem] bg-interactive text-black font-bold text-sm py-2 px-3 rounded-none hover:opacity-90"
+            >
+              Continue {corpsName}
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirming({ kind: 'startNew' })}
+              className="flex-1 min-w-[8rem] bg-surface-sunken border border-line text-white text-sm py-2 px-3 rounded-none hover:border-interactive"
+            >
+              Start a new corps
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirming({ kind: 'retire' })}
+              className="flex-1 min-w-[8rem] bg-surface-sunken border border-line text-muted text-sm py-2 px-3 rounded-none hover:border-warning hover:text-warning"
+            >
+              Retire this corps
+            </button>
+          </div>
+        )}
         {canUnretire && (
           <div className="pt-2 space-y-1">
             <div className="text-[10px] font-bold uppercase tracking-wider text-muted">
@@ -301,7 +345,10 @@ export default function PodiumSeasonAssessment({
               >
                 <span className="text-white font-bold">{lineage.corpsName || 'Retired corps'}</span>
                 <span className="text-muted">
-                  {lineage.tierLabel} · {lineage.seasonsPlayed} seasons
+                  {lineage.returnDivisionLabel
+                    ? `Returns to ${lineage.returnDivisionLabel} · `
+                    : `${lineage.tierLabel} · `}
+                  {lineage.seasonsPlayed} season{lineage.seasonsPlayed === 1 ? '' : 's'}
                 </span>
               </button>
             ))}
@@ -343,12 +390,11 @@ function ConfirmDialog({ confirming, corpsName, busy, onCancel, onConfirm }) {
   if (kind === 'retire') {
     title = `Retire ${corpsName}?`;
     body =
-      'The lineage — reputation, trophy case, and history — is preserved and can be brought back later. It just steps off the active roster this season.';
+      'The lineage — reputation, class, trophy case, history, and its look — is preserved and can be brought back later. It just steps off the active roster, and your next corps starts fresh.';
     confirmWord = 'Retire corps';
   } else if (kind === 'startNew') {
     title = 'Start a brand-new corps?';
-    body =
-      "Your current corps is banked and a NEW corps begins at square one — Community Corps, A Class. You'll build its reputation from scratch.";
+    body = `${corpsName} is retired with its history intact, and a NEW corps begins at square one — Community Corps, A Class, no record. You'll build it from scratch.`;
     confirmWord = 'Start new corps';
   } else {
     // unretire
@@ -362,7 +408,12 @@ function ConfirmDialog({ confirming, corpsName, busy, onCancel, onConfirm }) {
         {p.statusBefore.tierLabel !== p.statusAfter.tierLabel && (
           <span className="text-muted"> (was {p.statusBefore.tierLabel})</span>
         )}
-        . Dormancy has been charged — a corps never returns stronger than it left.
+        . Its time away is charged — a corps never returns stronger than it left.
+        {p.replacing && (
+          <span className="block mt-2 text-warning">
+            {p.replacing.corpsName || 'Your active corps'} will be retired, with its history intact.
+          </span>
+        )}
       </span>
     );
     confirmWord = 'Bring it back';

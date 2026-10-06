@@ -9,6 +9,7 @@
  */
 
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const { FieldValue } = require("firebase-admin/firestore");
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
 const economy = require("../helpers/economy");
@@ -223,37 +224,106 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
   // them. Guarantee the just-ended season is seated before we read the seat.
   // Idempotent + lease-guarded, and a no-op once seated (the common path), so
   // only the first registrant in a rare unsettled window pays for the sweep.
-  const priorSeason = await career.latestPreviousSeason(db);
-  if (priorSeason && priorSeason.seasonUid !== seasonUid) {
-    const priorArchive = await db.doc(`podium-recaps/${priorSeason.seasonUid}`).get();
-    if (!priorArchive.exists || !priorArchive.data().divisionsSeatedAt) {
-      const { settlePodiumSeasonBoundary } = require("../helpers/season");
-      await settlePodiumSeasonBoundary(db);
-    }
-  }
+  await require("../helpers/season").ensurePodiumBoundarySettled(db, seasonUid);
   const careerSnapshot = await career.careerRef(db, uid).get();
   let careerData = careerSnapshot.exists ? careerSnapshot.data() : career.initCareer();
-  // Lazy self-archival: if this director's previous season hasn't been swept
-  // into the career yet (registering before the nightly rollover sweep),
-  // apply it now — idempotent with the sweep via lastSeasonUid.
+  const trimmedName = corpsName.trim();
   const staleStateSnapshot = await store.stateRef(db, uid).get();
   const hasStalePriorSeason =
     staleStateSnapshot.exists && staleStateSnapshot.data().seasonUid !== seasonUid;
+  const staleState = hasStalePriorSeason ? staleStateSnapshot.data() : null;
+  // Whose season is the leftover state? History follows the corps that made
+  // it: when the director retired that corps (or brought another back) its
+  // season already sits on its own banked record, and none of it — reputation,
+  // staff, home, budget — may carry into whatever corps registers now.
+  //
+  // Lazy self-archival: if the season hasn't been swept yet (registering before
+  // the nightly rollover sweep), bank it now onto the lineage that played it —
+  // idempotent with the sweep, which sees it already owned.
+  // Resolved for both the lazy archival and the end-of-season financial report.
+  // willLazyArchive scopes the budget refund to the season THIS registration is
+  // banking, so a season the nightly sweep already settled is never re-refunded.
+  let staleSeasonIndex = null;
+  let willLazyArchive = false;
+  let staleIsOwnCorps = false;
+  if (staleState) {
+    const owner = career.seasonOwner(careerData, staleState.seasonUid);
+    if (owner === "unarchived") {
+      staleSeasonIndex =
+        (await career.seasonIndexFor(db, staleState.seasonUid)) ?? seasonIndex.index - 1;
+      willLazyArchive = true;
+      const archival = career.archiveSeasonIntoCareer(
+        careerData,
+        { seasonUid: staleState.seasonUid, seasonIndex: staleSeasonIndex, state: staleState },
+        store.balance
+      );
+      careerData = archival.career;
+      staleIsOwnCorps = archival.target === "active";
+      // Profile résumé row for the finished season (idempotent with the sweep).
+      await career.appendProfileSeasonHistory(db, uid, staleState.seasonUid, staleState);
+    } else {
+      staleIsOwnCorps = owner === "active";
+    }
+  }
+
+  // Continue or found (design §5.13, owner direction 2026-10). A corps is its
+  // name: continuing keeps it, and there is no rename — a director who wants a
+  // new name founds a new corps (freshStart), which banks the current one and
+  // starts from a blank slate. A director with no live corps (first season, or
+  // just retired one) is always founding.
+  const continuing = !freshStart && career.hasActiveCorps(careerData);
+  if (continuing && careerData.corpsName && !career.isSameCorps(careerData, trimmedName)) {
+    throw new HttpsError(
+      "failed-precondition",
+      `${careerData.corpsName} keeps its name. To compete under a new name, start a new corps.`
+    );
+  }
+  // Last season's state carries forward (staff, home) only when it is THIS
+  // corps' own last season.
+  const carriesOwnSeason = continuing && staleIsOwnCorps;
+  let missedSeasons = 0;
+  if (!continuing) {
+    const retiredCareers = careerData.retiredCareers || [];
+    if (career.hasActiveCorps(careerData)) {
+      // The corps being replaced is banked whole — record, class seat, and its
+      // look — exactly as a retire would, so it can be brought back later.
+      const profileBefore = await store.profileRef(db, uid).get();
+      const identity = career.captureIdentity(
+        profileBefore.exists ? (profileBefore.data().corps || {}).podiumClass : null,
+        staleIsOwnCorps ? staleState : null
+      );
+      const banked = career.bankLineage(careerData, seasonIndex.index, identity);
+      careerData = { ...career.initCareer(), retiredCareers: [...retiredCareers.slice(-9), banked] };
+    } else {
+      careerData = { ...career.initCareer(), retiredCareers };
+    }
+  } else {
+    // Dormancy for every season this corps sat out — dormant OR retired —
+    // charged once, here, from its last season played (career.missedSeasonsFor).
+    missedSeasons = career.missedSeasonsFor(careerData, seasonIndex.index);
+    careerData = career.applyDormancy({ ...careerData }, missedSeasons, store.balance);
+  }
+  // A revived corps' banked look was restored to the profile at un-retire; it
+  // has no further use on the live career.
+  if (careerData.identity) {
+    careerData = { ...careerData };
+    delete careerData.identity;
+  }
   // Home relocation fee (design §5.3): a director continuing a corps may move its
   // official home at the season boundary for 1 CC per 2 miles from the OLD home
   // to the new one. The old home is read authoritatively from last season's
   // state (its structured `home`, or the resolved legacy `location` string) —
-  // never trusted from the client. A brand-new corps, a fresh start, or an
+  // never trusted from the client. A brand-new corps, a revived one, or an
   // unchanged home moves for free; an unmappable old home can't be priced, so
   // that relocation is free too (the same forgiving rule travel uses).
-  const priorHomeVenue = hasStalePriorSeason
-    ? staleStateSnapshot.data().home || venues.venueFor(staleStateSnapshot.data().location) || null
+  const priorHomeVenue = carriesOwnSeason
+    ? staleState.home || venues.venueFor(staleState.location) || null
     : null;
   // A home the old show-city-only rule forced on the director (and never
   // corrected) moves for free: they never chose it (helpers/podium/hometown.js).
-  const priorHomeForced = hasStalePriorSeason && hometown.homeWasForced(staleStateSnapshot.data());
+  const priorHomeForced = carriesOwnSeason && hometown.homeWasForced(staleState);
   const relocation =
-    hasStalePriorSeason && !freshStart && !priorHomeForced
+    carriesOwnSeason && !priorHomeForced
       ? venues.relocationFee(priorHomeVenue, homeRecord, store.balance)
       : { miles: 0, fee: 0 };
   const movingFee = relocation.fee;
@@ -264,45 +334,13 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
     movingFee > 0 && priorHomeLabel
       ? `Home relocation — ${priorHomeLabel} → ${homeLabel} (${relocation.miles} mi)`
       : "";
-  // Resolved for both the lazy archival and the end-of-season financial report,
-  // and captured before applySeasonResult mutates the career. willLazyArchive
-  // scopes the budget refund to the season THIS registration is banking, so a
-  // season the nightly sweep already settled is never re-refunded here.
-  let staleSeasonIndex = null;
-  let willLazyArchive = false;
-  if (hasStalePriorSeason) {
-    const staleState = staleStateSnapshot.data();
-    staleSeasonIndex =
-      (await career.seasonIndexFor(db, staleState.seasonUid)) ?? seasonIndex.index - 1;
-    willLazyArchive = careerData.lastSeasonUid !== staleState.seasonUid;
-    if (willLazyArchive) {
-      careerData = career.applySeasonResult(
-        careerData,
-        { seasonUid: staleState.seasonUid, seasonIndex: staleSeasonIndex, state: staleState },
-        store.balance
-      );
-      // Profile résumé row for the finished season (idempotent with the sweep).
-      await career.appendProfileSeasonHistory(db, uid, staleState.seasonUid, staleState);
-    }
-  }
-  let missedSeasons = 0;
-  if (freshStart && careerData.seasonsPlayed > 0) {
-    const banked = { ...careerData };
-    delete banked.retiredCareers;
-    careerData = {
-      ...career.initCareer(),
-      retiredCareers: [...(careerData.retiredCareers || []).slice(-9), banked],
-    };
-  } else if (careerData.lastPlayedIndex != null) {
-    missedSeasons = Math.max(0, seasonIndex.index - careerData.lastPlayedIndex - 1);
-    careerData = career.applyDormancy(careerData, missedSeasons, store.balance);
-  }
   const startingReputation = careerData.reputation || 0;
   const startingTier = engine.tierForReputation(startingReputation, store.balance);
   // Division seat (§5.7): carried from the career's assessed seat; beyond the
   // grace window a returning corps re-enters at the division its now-decayed
-  // reputation supports (gradual erosion by time away, not a hard reset). The
-  // commitment cap is division-equal, so validate it once the seat is known.
+  // reputation supports (gradual erosion by time away, not a hard reset). A
+  // newly founded corps has no seat and starts in A Class. The commitment cap
+  // is division-equal, so validate it once the seat is known.
   const division = divisions.divisionForRegistration(
     careerData,
     missedSeasons,
@@ -314,7 +352,8 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
   // year (tenure raises their tier, the salary lock floats once it lapses)
   // and is paid from the NEW budget below — an unaffordable season lapses the
   // contract, never a debt, and a 30-season career retires. The just-finished
-  // season is banked on each staffer's resume as they carry over.
+  // season is banked on each staffer's resume as they carry over. Only the
+  // corps that employed them keeps them: a new or revived corps hires fresh.
   const retainedStaff = [];
   // The retention plan: which carried staff the fresh budget keeps, in the
   // director's chosen keep-priority (design §5.6). projectRetention makes the
@@ -322,12 +361,8 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
   // who saw "you'll lose your guard tech" loses exactly that one — never an
   // arbitrary staffer the loop happened to reach last.
   let staffPlan = null;
-  if (
-    !freshStart &&
-    staleStateSnapshot.exists &&
-    staleStateSnapshot.data().seasonUid !== seasonUid
-  ) {
-    const stale = staleStateSnapshot.data();
+  if (carriesOwnSeason) {
+    const stale = staleState;
     const completed = {
       seasonUid: stale.seasonUid,
       corpsName: stale.corpsName || null,
@@ -357,7 +392,6 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
       );
     }
   }
-  const trimmedName = corpsName.trim();
   const normalizedName = trimmedName.toLowerCase();
   // Same reservation namespace as fantasy registration: one corps name per
   // season across the whole game.
@@ -402,7 +436,7 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
     const alreadyRefunded =
       staleForRefund &&
       careerTxnSnapshot.exists &&
-      careerTxnSnapshot.data().lastRefundedSeasonUid === staleForRefund.seasonUid;
+      career.seasonRefunded(careerTxnSnapshot.data(), staleForRefund.seasonUid);
     const seasonReport =
       staleForRefund && !alreadyRefunded
         ? store.buildSeasonFinancialReport(staleForRefund, {
@@ -526,21 +560,27 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
       updatedAt: new Date().toISOString(),
     });
     transaction.set(nameRef, { uid, corpsClass: "podiumClass", seasonUid });
-    transaction.set(career.careerRef(db, uid), {
+    const careerWrite = {
       ...careerData,
       corpsName: trimmedName,
       division,
       // The season-start decision is now made (continue/start-new), so consume
       // the pending assessment — it must not linger and re-surface next season.
       pendingAssessment: null,
-      // Bank the refund marker + report alongside the archived career so the
-      // between-seasons preview can show last season's settlement and the sweep
-      // never re-refunds this season.
-      ...(seasonReport
-        ? { lastRefundedSeasonUid: staleForRefund.seasonUid, lastSeasonReport: seasonReport }
-        : {}),
       updatedAt: new Date().toISOString(),
-    });
+    };
+    // Bank the refund marker + report on the lineage that played the refunded
+    // season (live, or banked by this very founding) so the between-seasons
+    // preview can show last season's settlement and the sweep never re-refunds.
+    transaction.set(
+      career.careerRef(db, uid),
+      seasonReport
+        ? career.patchSeasonLineage(careerWrite, staleForRefund.seasonUid, {
+          lastRefundedSeasonUid: staleForRefund.seasonUid,
+          lastSeasonReport: seasonReport,
+        })
+        : careerWrite
+    );
     transaction.set(store.rosterRef(db, seasonUid, uid), {
       uid,
       corpsName: trimmedName,
@@ -562,6 +602,12 @@ exports.registerPodiumCorps = onCall({ cors: true }, async (request) => {
             class: "podiumClass",
             repTier: startingTier,
             division,
+            retired: false,
+            // A newly founded corps has no look yet — the old corps' logo and
+            // uniforms went with it into retirement (career.captureIdentity).
+            ...(continuing
+              ? {}
+              : Object.fromEntries(career.IDENTITY_FIELDS.map((field) => [field, FieldValue.delete()]))),
             totalSeasonScore: null,
             seasonRank: null,
             seasonRankOf: null,
