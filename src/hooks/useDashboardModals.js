@@ -423,9 +423,11 @@ export function useDashboardModals(user, dashboardData, podiumContext = {}) {
         const result = await unretireCorps({ corpsClass, retiredIndex });
         if (result.data.success) {
           toast.success(
-            retiredRecord?.corpsName
-              ? `${retiredRecord.corpsName} is back in action!`
-              : 'Corps brought out of retirement!'
+            result.data.replaced && result.data.message
+              ? result.data.message
+              : retiredRecord?.corpsName
+                ? `${retiredRecord.corpsName} is back in action!`
+                : 'Corps brought out of retirement!'
           );
           setSlotPickerClass(null);
           refreshProfile?.();

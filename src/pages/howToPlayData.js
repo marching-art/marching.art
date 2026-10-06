@@ -86,15 +86,15 @@ export const REGISTRATION_WINDOWS = CLASSES.map((c) => ({
 export const SEASON_START_OPTIONS = [
   {
     action: 'Continue',
-    desc: 'Bring the same corps back. Season stats reset; its name, location, and history carry over.',
+    desc: 'Bring the same corps back. Season stats reset; its name, location, and history carry over. A corps keeps its name for life — to march under a new name, start a new corps.',
   },
   {
     action: 'Start new',
-    desc: 'Found a fresh corps in the class. Any corps already there retires to your alumni list, and the new name must be unique for the season.',
+    desc: 'Found a fresh corps in the class, with a blank record. Any corps already there retires to your alumni list with its history intact, and the new name must be unique for the season.',
   },
   {
     action: 'Unretire',
-    desc: 'Bring a corps back from your retired list with its identity and history intact.',
+    desc: 'Bring a corps back from your retired list with its identity and history intact. Any corps already in its class retires in its place.',
   },
   {
     action: 'Move',
@@ -111,7 +111,8 @@ export const SEASON_START_OPTIONS = [
 ];
 
 // What is (and is not) allowed once the season is underway — mirrors the
-// server rules in registerCorps, transferCorps, and retireCorps.
+// server rules in registerCorps, transferCorps, retireCorps, unretireCorps and
+// renameCorps.
 export const MIDSEASON_CORPS_RULES = [
   {
     title: 'Founding a new corps',
@@ -124,6 +125,14 @@ export const MIDSEASON_CORPS_RULES = [
   {
     title: 'Retiring',
     desc: 'Same cutoff: a corps that has competed this season cannot retire until the season ends.',
+  },
+  {
+    title: 'Bringing a corps back',
+    desc: "Allowed while the class is still open. If the class already has an active corps, it retires in the returning corps' place — so if it has already competed, the swap waits until the season ends.",
+  },
+  {
+    title: 'Names',
+    desc: 'A corps keeps its name for life, and its history goes wherever it goes. To compete under a new name, start a new corps; the only rename is the one we ask for when a name clashes with another director’s corps.',
   },
 ];
 

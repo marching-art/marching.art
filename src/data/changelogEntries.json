@@ -1,5 +1,17 @@
 [
   {
+    "id": "2026-10-06-fantasy-corps-lineage",
+    "date": "2026-10-06",
+    "title": "Fantasy corps keep their own history too",
+    "category": "improvement",
+    "summary": "The Fantasy Division now follows the same rules as the Podium: every corps keeps its own name and history for life, and a new corps starts with a blank record.",
+    "highlights": [
+      "Bringing a corps back from retirement retires the corps currently in its class, history intact. No more retiring it by hand first.",
+      "To compete under a new name, start a new corps. The only rename is the one we ask for when a name clashes with another director's corps.",
+      "While last season is being archived, corps changes wait a few minutes so nothing lands on the wrong corps."
+    ]
+  },
+  {
     "id": "2026-10-06-podium-corps-lineage",
     "date": "2026-10-06",
     "title": "Podium: every corps keeps its own history",

@@ -9,6 +9,8 @@ const { FANTASY_CLASSES } = require("../helpers/classRegistry");
 const { getRegistrationLock, registrationLockMessage } = require("../helpers/registrationLock");
 const { homeGeoFor } = require("../helpers/corpsGeo");
 const { refreshLeaguesForUser } = require("../helpers/leagueActivity");
+const { assertRolloverSettled } = require("../helpers/rolloverGate");
+const { planUnretire } = require("../helpers/corpsUnretire");
 const {
   VALID_CLASSES,
   CORPS_NAME_CLASSES,
@@ -143,6 +145,9 @@ exports.processCorpsDecisions = onCall({ cors: true }, async (request) => {
   const db = getDb();
   const userProfileRef = db.doc(paths.userProfile(uid));
   const seasonSettingsRef = db.doc("game-settings/season");
+  // Every finished season must be archived onto the corps that played it
+  // before any corps changes hands (helpers/rolloverGate.js).
+  await assertRolloverSettled(db);
 
   try {
     const result = await db.runTransaction(async (transaction) => {
@@ -463,6 +468,7 @@ exports.retireCorps = onCall({ cors: true }, async (request) => {
 
   const db = getDb();
   const userProfileRef = db.doc(paths.userProfile(uid));
+  await assertRolloverSettled(db);
 
   try {
     // First, check the corps exists
@@ -568,6 +574,7 @@ exports.transferCorps = onCall({ cors: true }, async (request) => {
   const db = getDb();
   const userProfileRef = db.doc(paths.userProfile(uid));
   const seasonSettingsRef = db.doc("game-settings/season");
+  await assertRolloverSettled(db);
 
   try {
     const result = await db.runTransaction(async (transaction) => {
@@ -718,7 +725,11 @@ exports.transferCorps = onCall({ cors: true }, async (request) => {
 });
 
 /**
- * Unretire a corps - restore it from retired list to active corps
+ * Unretire a corps — restore it from the retired list to its class. History
+ * follows the corps: it returns with its own name, record, and look. If the
+ * class already holds an active corps, that corps is retired automatically
+ * (banked with its record intact) — unless it has already competed this
+ * season, in which case the swap waits for the season to end.
  */
 exports.unretireCorps = onCall({ cors: true }, async (request) => {
   const uid = assertAuth(request);
@@ -739,15 +750,21 @@ exports.unretireCorps = onCall({ cors: true }, async (request) => {
 
   const db = getDb();
   const userProfileRef = db.doc(paths.userProfile(uid));
+  const seasonSettingsRef = db.doc("game-settings/season");
+  await assertRolloverSettled(db);
 
   try {
-    await db.runTransaction(async (transaction) => {
-      const profileDoc = await transaction.get(userProfileRef);
+    const result = await db.runTransaction(async (transaction) => {
+      const [profileDoc, seasonDoc] = await Promise.all([
+        transaction.get(userProfileRef),
+        transaction.get(seasonSettingsRef),
+      ]);
       if (!profileDoc.exists) {
         throw new HttpsError("not-found", "User profile does not exist.");
       }
 
       const profileData = profileDoc.data();
+      const seasonData = seasonDoc.exists ? seasonDoc.data() : null;
       const retiredCorps = profileData.retiredCorps || [];
 
       if (!retiredCorps[retiredIndex]) {
@@ -761,40 +778,49 @@ exports.unretireCorps = onCall({ cors: true }, async (request) => {
         throw new HttpsError("invalid-argument", "Corps class mismatch.");
       }
 
-      // Check if user already has an active corps in this class
-      if (profileData.corps?.[corpsClass]?.corpsName) {
-        throw new HttpsError("already-exists",
-          `You already have an active ${corpsClass} corps. Retire it first before unretiring another.`);
+      // Returning to the field newly occupies the class this season — the
+      // same late-season registration lock "new" and season-setup unretire use.
+      if (seasonData) {
+        const { locked, lockWeeks, weeksRemaining } = getRegistrationLock(seasonData, corpsClass);
+        if (locked) {
+          throw new HttpsError(
+            "failed-precondition",
+            registrationLockMessage(corpsClass, lockWeeks, weeksRemaining)
+          );
+        }
       }
 
-      // Restore the corps, including the director's branding and ensemble
-      // identity so it comes back exactly as it was retired.
-      const updatedCorps = { ...profileData.corps };
-      updatedCorps[corpsClass] = {
-        corpsName: retiredRecord.corpsName,
-        location: retiredRecord.location,
-        seasonHistory: retiredRecord.seasonHistory || [],
-        weeklyTrades: retiredRecord.weeklyTrades || null,
-        ...pickPersistentIdentity(retiredRecord),
-        // Reset season-specific data
-        lineup: null,
-        lineupKey: null,
-        selectedShows: {},
-        weeklyScores: {},
-        totalSeasonScore: 0
-      };
-
-      // Remove from retired list
-      const updatedRetiredCorps = retiredCorps.filter((_, index) => index !== retiredIndex);
+      const { updatedCorps, updatedRetiredCorps, replaced } = planUnretire({
+        profileData,
+        corpsClass,
+        retiredIndex,
+        seasonUid: seasonData?.seasonUid,
+      });
 
       transaction.update(userProfileRef, {
         corps: updatedCorps,
         retiredCorps: updatedRetiredCorps
       });
+      return {
+        corpsName: retiredRecord.corpsName,
+        replaced,
+        seasonUid: seasonData?.seasonUid || null,
+      };
     });
 
-    logger.info(`User ${uid} unretired their ${corpsClass} corps`);
-    return { success: true, message: "Corps brought out of retirement!" };
+    await refreshLeaguesForUser(db, uid, result.seasonUid);
+
+    logger.info(
+      `User ${uid} unretired their ${corpsClass} corps "${result.corpsName}"` +
+        (result.replaced ? ` (retired "${result.replaced}")` : "")
+    );
+    return {
+      success: true,
+      replaced: result.replaced,
+      message: result.replaced
+        ? `${result.corpsName} is back! ${result.replaced} has been retired with its history intact.`
+        : "Corps brought out of retirement!",
+    };
   } catch (error) {
     logger.error(`Failed to unretire corps for user ${uid}:`, error);
     if (error instanceof HttpsError) throw error;
@@ -804,8 +830,12 @@ exports.unretireCorps = onCall({ cors: true }, async (request) => {
 
 
 /**
- * Rename one of the caller's active corps. Used to resolve a duplicate-name
- * conflict surfaced by detectMyDuplicateCorps, but accepts any rename. Reuses
+ * Rename one of the caller's active corps — ONLY to resolve a duplicate-name
+ * conflict surfaced by detectMyDuplicateCorps (the corps carries `mustRename`).
+ * Otherwise a corps keeps its name for life: a corps is its name, and a new
+ * name is a new corps that starts with no history (owner direction, 2026-10 —
+ * docs/GAMEPLAY.md). A forced conflict fix is the one exception, because the
+ * director didn't choose it, so the corps keeps its record through it. Reuses
  * the same uniqueness checks as registerCorps:
  *   - profanity / length
  *   - cannot match another of this director's active corps
@@ -861,6 +891,12 @@ exports.renameCorps = onCall({ cors: true }, async (request) => {
       const targetCorps = profileData.corps?.[corpsClass];
       if (!targetCorps?.corpsName) {
         throw new HttpsError("not-found", `No active corps found in ${corpsClass}.`);
+      }
+
+      if (!targetCorps.mustRename) {
+        throw new HttpsError("failed-precondition",
+          `${targetCorps.corpsName} keeps its name for life. To compete under a new name, ` +
+            "start a new corps — this one retires with its history intact.");
       }
 
       const oldName = targetCorps.corpsName;

@@ -557,6 +557,15 @@ const RetiredCorpsGallery = () => {
                       <strong>Note:</strong> This corps will become your active{' '}
                       {getClassConfig(selectedCorps.corpsClass).name} corps. All season history will
                       be preserved, but you'll start fresh for the current season.
+                      {profile?.corps?.[selectedCorps.corpsClass]?.corpsName && (
+                        <>
+                          {' '}
+                          <strong>
+                            {profile?.corps?.[selectedCorps.corpsClass]?.corpsName}
+                          </strong>{' '}
+                          will be retired in its place, with its history intact.
+                        </>
+                      )}
                     </p>
                   </div>
 

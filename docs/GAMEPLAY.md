@@ -84,6 +84,30 @@ participation class.
 
 Unlocks are additive and never revoked.
 
+## Your corps — history follows the corps
+
+Owner direction (2026-10), the same rule as the Podium Division
+([`PODIUM.md`](PODIUM.md) decision 48):
+
+- **A corps is its name.** It keeps it for life, and its season history, look
+  (logo, uniforms) and ensemble identity go wherever it goes — continued, moved
+  to another class, retired, or brought back. There is no rebrand: to compete
+  under a new name, start a new corps (the current one retires with its record
+  intact). The single exception is the forced rename for a name that clashes
+  with another director's corps (`mustRename`, `renameCorps`), which keeps the
+  record because the director didn't choose it.
+- **A new corps starts blank** — no season history, no look.
+- **Bringing a corps back retires the class's active corps** in its place
+  (season setup's unretire and `unretireCorps` alike). Mid-season the swap
+  follows the usual cutoffs: the returning corps needs the class open, and the
+  active corps must not have competed yet.
+- **Nothing changes hands during the rollover.** The rollover's profile pass
+  archives each class slot's finished season onto the corps in that slot, so
+  register / new / retire / unretire / move / transfer wait (`unavailable`, a few
+  minutes) while a `season_rollovers` lease is running
+  (`helpers/rolloverGate.js`). Otherwise a corps founded mid-pass would inherit
+  its predecessor's season, or the pass's snapshot would overwrite the decision.
+
 ## Drafting a lineup — the 8 captions
 
 A corps lineup is **8 captions**, each drafted from a different real historical

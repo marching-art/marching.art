@@ -7,6 +7,7 @@ const { assertAuth, assertWriteBudget } = require("../helpers/callableGuards");
 const { getRegistrationLock, registrationLockMessage } = require("../helpers/registrationLock");
 const { homeGeoFor } = require("../helpers/corpsGeo");
 const { refreshLeaguesForUser } = require("../helpers/leagueActivity");
+const { assertRolloverSettled } = require("../helpers/rolloverGate");
 
 const isProfane = (text) => /fuck|shit|damn/.test(text.toLowerCase());
 
@@ -30,6 +31,9 @@ exports.registerCorps = onCall({ cors: true }, async (request) => {
 
   const db = getDb();
   const profileDocRef = db.doc(paths.userProfile(uid));
+  // A new corps never lands in a slot the season rollover is still archiving
+  // (helpers/rolloverGate.js) — its predecessor's season stays with it.
+  await assertRolloverSettled(db);
 
   try {
     const profileDoc = await profileDocRef.get();
