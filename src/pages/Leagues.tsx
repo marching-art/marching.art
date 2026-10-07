@@ -37,6 +37,7 @@ import {
   DiscoverIdentityFilters,
   LeagueCardAbout,
   LeagueIdentityBadges,
+  LeagueCrest,
 } from '../components/Leagues/LeagueIdentity';
 import {
   matchesGameFilter,
@@ -181,10 +182,8 @@ const MyLeagueCard = ({
       onClick={onClick}
       className="flex items-center gap-3 p-3 bg-surface-card border border-line hover:border-line-strong cursor-pointer transition-colors active:bg-surface-raised press-feedback"
     >
-      {/* League Avatar */}
-      <div className="w-12 h-12 bg-line border border-line-strong rounded-none flex-shrink-0 flex items-center justify-center">
-        <Trophy className="w-5 h-5 text-secondary" />
-      </div>
+      {/* League crest — its tag when the commissioner set one */}
+      <LeagueCrest league={league} size="md" />
 
       {/* League Info - Middle */}
       <div className="flex-1 min-w-0">
@@ -270,9 +269,7 @@ const DiscoverLeagueCard = ({
       <div className="px-3 py-2.5 border-b border-line">
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-9 h-9 bg-line border border-line-strong rounded-none flex-shrink-0 flex items-center justify-center">
-              <Trophy className="w-4 h-4 text-secondary" />
-            </div>
+            <LeagueCrest league={league} size="sm" />
             <div className="min-w-0">
               <h3 className="text-sm font-bold text-white truncate">{league.name}</h3>
               <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
@@ -449,6 +446,7 @@ const Leagues = () => {
       filtered = filtered.filter(
         (league) =>
           league.name.toLowerCase().includes(term) ||
+          (league.abbreviation || '').toLowerCase().startsWith(term) ||
           (league.description || '').toLowerCase().includes(term) ||
           (league.lore || '').toLowerCase().includes(term)
       );

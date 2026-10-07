@@ -13,10 +13,18 @@
 import React, { useMemo, useState } from 'react';
 import { Settings, Loader2, Save, Globe, Lock } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useQueryClient } from '@tanstack/react-query';
 import { updateLeagueSettings } from '../../../api/functions';
 import type { League, LeagueGameMode } from '../../../types';
-import { getLeagueGameMode, getLeagueRoleplayLevel } from '../../../utils/leagueIdentity';
-import LeagueIdentityFields, { type LeagueIdentityValue } from '../LeagueIdentityFields';
+import {
+  getLeagueGameMode,
+  getLeagueRoleplayLevel,
+  isValidLeagueTag,
+} from '../../../utils/leagueIdentity';
+import LeagueIdentityFields, {
+  LeagueTagField,
+  type LeagueIdentityValue,
+} from '../LeagueIdentityFields';
 
 interface LeagueSettingsFormProps {
   league?: {
@@ -28,6 +36,7 @@ interface LeagueSettingsFormProps {
     tag?: string | null;
     roleplay?: League['roleplay'];
     lore?: string;
+    abbreviation?: string;
     settings?: { finalsSize?: number; entryFee?: number; gameMode?: LeagueGameMode };
     announcement?: { text?: string } | null;
   } | null;
@@ -37,6 +46,7 @@ interface LeagueSettingsFormProps {
 
 interface FormState extends LeagueIdentityValue {
   name: string;
+  abbreviation: string;
   description: string;
   isPublic: boolean;
   maxMembers: number;
@@ -63,6 +73,7 @@ const LeagueSettingsForm = ({ league, memberCount, onSaved }: LeagueSettingsForm
   const initial = useMemo<FormState>(
     () => ({
       name: league?.name || '',
+      abbreviation: league?.abbreviation || '',
       description: league?.description || '',
       isPublic: league?.isPublic !== false,
       maxMembers: league?.maxMembers || 20,
@@ -77,6 +88,7 @@ const LeagueSettingsForm = ({ league, memberCount, onSaved }: LeagueSettingsForm
     [league]
   );
 
+  const queryClient = useQueryClient();
   const [form, setForm] = useState(initial);
   const [saving, setSaving] = useState(false);
 
@@ -93,7 +105,8 @@ const LeagueSettingsForm = ({ league, memberCount, onSaved }: LeagueSettingsForm
   // trip rather than after it.
   const capTooLow = form.maxMembers < memberCount;
   const nameTooShort = form.name.trim().length < 3;
-  const canSave = dirty && !saving && !capTooLow && !nameTooShort;
+  const tagIncomplete = !isValidLeagueTag(form.abbreviation);
+  const canSave = dirty && !saving && !capTooLow && !nameTooShort && !tagIncomplete;
 
   const handleSave = async () => {
     if (!canSave || !league?.id) return;
@@ -103,6 +116,7 @@ const LeagueSettingsForm = ({ league, memberCount, onSaved }: LeagueSettingsForm
         leagueId: league.id,
         settings: {
           name: form.name.trim(),
+          abbreviation: form.abbreviation || null,
           description: form.description.trim(),
           isPublic: form.isPublic,
           maxMembers: form.maxMembers,
@@ -119,6 +133,11 @@ const LeagueSettingsForm = ({ league, memberCount, onSaved }: LeagueSettingsForm
           announcement: form.announcement.trim() || null,
         },
       });
+      // Every member's profile wears the tag; drop cached tag lists so the
+      // change shows on the next profile visit, not ten minutes later.
+      if (form.abbreviation !== initial.abbreviation || form.name.trim() !== initial.name) {
+        queryClient.invalidateQueries({ queryKey: ['directorLeagueTags'] });
+      }
       toast.success(result.data?.message || 'League settings updated.');
       onSaved?.();
     } catch (error) {
@@ -161,6 +180,13 @@ const LeagueSettingsForm = ({ league, memberCount, onSaved }: LeagueSettingsForm
             </p>
           )}
         </div>
+
+        <LeagueTagField
+          idPrefix="league-settings"
+          value={form.abbreviation}
+          onChange={(abbreviation) => set({ abbreviation })}
+          leagueName={form.name.trim()}
+        />
 
         <div>
           <label

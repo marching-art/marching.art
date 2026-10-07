@@ -108,6 +108,8 @@ export const queryKeys = {
 
   // League queries
   myLeagues: (uid: string) => ['myLeagues', uid] as const,
+  // A director's tagged leagues, as their profile wears them.
+  directorLeagueTags: (uid: string) => ['directorLeagueTags', uid] as const,
   publicLeagues: () => ['publicLeagues'] as const,
   league: (leagueId: string) => ['league', leagueId] as const,
   leagueStandings: (leagueId: string) => ['leagueStandings', leagueId] as const,

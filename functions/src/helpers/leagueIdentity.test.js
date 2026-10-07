@@ -10,9 +10,11 @@ const assert = require("node:assert/strict");
 const { MATCHUP_CLASSES } = require("./classRegistry");
 const {
   gameModeOfClass,
+  leagueAbbreviation,
   leagueGameMode,
   leagueMatchupClasses,
   leagueRoleplayLevel,
+  parseLeagueAbbreviation,
   parseLeagueIdentity,
 } = require("./leagueIdentity");
 
@@ -68,5 +70,40 @@ describe("parseLeagueIdentity", () => {
     assert.throws(() => parseLeagueIdentity({ roleplay: "yes" }), /object/);
     assert.throws(() => parseLeagueIdentity({ roleplay: ["optional"] }), /object/);
     assert.throws(() => parseLeagueIdentity({ lore: 5 }), /lore/);
+  });
+});
+
+describe("league tag", () => {
+  test("normalizes to trimmed uppercase", () => {
+    assert.equal(parseLeagueAbbreviation("  dcfl "), "DCFL");
+    assert.equal(parseLeagueAbbreviation("Ab12"), "AB12");
+  });
+
+  test("blank or null clears it", () => {
+    assert.equal(parseLeagueAbbreviation(""), null);
+    assert.equal(parseLeagueAbbreviation("   "), null);
+    assert.equal(parseLeagueAbbreviation(null), null);
+  });
+
+  test("rejects the wrong length, symbols, non-text and profanity", () => {
+    assert.throws(() => parseLeagueAbbreviation("A"), /2-5 letters or numbers/);
+    assert.throws(() => parseLeagueAbbreviation("TOOLONG"), /2-5/);
+    assert.throws(() => parseLeagueAbbreviation("D-C"), /letters or numbers/);
+    assert.throws(() => parseLeagueAbbreviation("D C"), /letters or numbers/);
+    assert.throws(() => parseLeagueAbbreviation(42), /text/);
+    assert.throws(() => parseLeagueAbbreviation("SHIT"), /different/);
+  });
+
+  test("rides through parseLeagueIdentity only when sent", () => {
+    assert.equal("abbreviation" in parseLeagueIdentity({}), false);
+    assert.equal(parseLeagueIdentity({ abbreviation: "xyz" }).abbreviation, "XYZ");
+    assert.equal(parseLeagueIdentity({ abbreviation: null }).abbreviation, null);
+  });
+
+  test("reads a stored tag, ignoring one that no longer validates", () => {
+    assert.equal(leagueAbbreviation({ abbreviation: "DCFL" }), "DCFL");
+    assert.equal(leagueAbbreviation({}), null);
+    assert.equal(leagueAbbreviation({ abbreviation: "<b>" }), null);
+    assert.equal(leagueAbbreviation(undefined), null);
   });
 });

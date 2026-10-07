@@ -21,6 +21,19 @@ export function useMyLeagues(uid: string | undefined) {
 }
 
 /**
+ * The tagged leagues a director belongs to (profile header + ensemble cards).
+ * Tags change rarely, so a long stale time keeps profile hops cheap.
+ */
+export function useDirectorLeagueTags(uid: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.directorLeagueTags(uid || ''),
+    queryFn: () => leaguesApi.getDirectorLeagueTags(uid!),
+    enabled: !!uid,
+    staleTime: 10 * 60 * 1000,
+  });
+}
+
+/**
  * Hook to fetch public leagues with pagination
  */
 export function usePublicLeagues(pageSize = 12) {
@@ -112,6 +125,7 @@ export function useCreateLeague(uid: string | undefined) {
     onSuccess: () => {
       if (uid) {
         queryClient.invalidateQueries({ queryKey: queryKeys.myLeagues(uid) });
+        queryClient.invalidateQueries({ queryKey: queryKeys.directorLeagueTags(uid) });
       }
       queryClient.invalidateQueries({ queryKey: queryKeys.publicLeagues() });
     },
@@ -135,6 +149,7 @@ export function useJoinLeague(uid: string | undefined) {
     onSuccess: () => {
       if (uid) {
         queryClient.invalidateQueries({ queryKey: queryKeys.myLeagues(uid) });
+        queryClient.invalidateQueries({ queryKey: queryKeys.directorLeagueTags(uid) });
       }
       queryClient.invalidateQueries({ queryKey: queryKeys.publicLeagues() });
     },
@@ -156,6 +171,7 @@ export function useJoinLeagueByCode(uid: string | undefined) {
     onSuccess: () => {
       if (uid) {
         queryClient.invalidateQueries({ queryKey: queryKeys.myLeagues(uid) });
+        queryClient.invalidateQueries({ queryKey: queryKeys.directorLeagueTags(uid) });
       }
       queryClient.invalidateQueries({ queryKey: queryKeys.publicLeagues() });
     },
@@ -178,6 +194,7 @@ export function useLeaveLeague(uid: string | undefined) {
     onSuccess: () => {
       if (uid) {
         queryClient.invalidateQueries({ queryKey: queryKeys.myLeagues(uid) });
+        queryClient.invalidateQueries({ queryKey: queryKeys.directorLeagueTags(uid) });
       }
     },
   });

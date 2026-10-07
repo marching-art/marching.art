@@ -238,6 +238,10 @@ export const LEAGUE_BASICS = [
     desc: "Commissioners set a roleplay style — none, welcome, encouraged, or immersive — and can spell out in their own words what taking part means, so a storytelling league never has to mean mandatory participation. Open a league's card to read its style and lore before you join; members find the full lore on the League tab.",
   },
   {
+    title: 'League tags',
+    desc: "A commissioner can give the league a short bold tag — two to five letters or numbers, like DCFL. It's the league's crest, and every member wears it beside their name on their profile and on the ensembles that compete in that league. A crown marks the director who runs it. Leagues without a tag never appear on member profiles.",
+  },
+  {
     title: 'Membership is permanent, participation is per season',
     desc: "You stay on the roster between seasons. Each new season you're counted as active once you register a corps, so a league goes quiet at rollover and lights back up as its members return.",
   },
@@ -349,7 +353,7 @@ export const LEAGUE_CLUBHOUSE = [
 export const LEAGUE_COMMISSIONER_TOOLS = [
   {
     title: 'Settings',
-    desc: 'Name, description, public or private, roster cap, the size of the Finals field, which game the league plays (a change applies from the next undrawn week), its roleplay style, and its lore. The entry fee is the one thing fixed at creation, because members escrowed real CorpsCoin against it.',
+    desc: 'Name, description, public or private, roster cap, the size of the Finals field, which game the league plays (a change applies from the next undrawn week), its roleplay style, its lore, and its tag. The entry fee is the one thing fixed at creation, because members escrowed real CorpsCoin against it.',
   },
   {
     title: 'Co-commissioners',

@@ -1,5 +1,6 @@
 // LeagueIdentityFields — the pickers for which game a league plays, how
-// roleplay fits in, and (in Settings) its lore. Shared by CreateLeagueModal and
+// roleplay fits in, and (in Settings) its lore; plus LeagueTagField, the
+// league's bold acronym. Shared by CreateLeagueModal and
 // the commissioner's LeagueSettingsForm so both doors ask the same questions in
 // the same words (utils/leagueIdentity).
 
@@ -7,10 +8,16 @@ import React from 'react';
 import type { LeagueGameMode, RoleplayLevel } from '../../types';
 import {
   GAME_MODE_OPTIONS,
+  MAX_LEAGUE_TAG,
   MAX_LORE,
   MAX_ROLEPLAY_EXPECTATIONS,
+  MIN_LEAGUE_TAG,
   ROLEPLAY_LEVEL_OPTIONS,
+  isValidLeagueTag,
+  normalizeLeagueTagInput,
+  suggestLeagueTag,
 } from '../../utils/leagueIdentity';
+import { LeagueTag } from './LeagueIdentity';
 
 export interface LeagueIdentityValue {
   gameMode: LeagueGameMode;
@@ -37,6 +44,72 @@ const optionClass = (active: boolean) =>
   `px-3 py-2 min-h-touch text-left border transition-colors ${
     active ? 'border-interactive bg-interactive/10' : 'border-line hover:border-line-strong'
   }`;
+
+/**
+ * The league tag: a 2–5 character acronym the league wears as its crest and
+ * every member wears on their profile and ensembles. Optional — leaving it
+ * blank keeps the league off member profiles entirely.
+ */
+export const LeagueTagField = ({
+  value,
+  onChange,
+  leagueName,
+  idPrefix,
+}: {
+  value: string;
+  onChange: (next: string) => void;
+  /** Seeds the one-tap suggestion. */
+  leagueName: string;
+  idPrefix: string;
+}) => {
+  const suggestion = suggestLeagueTag(leagueName);
+  const incomplete = !isValidLeagueTag(value);
+  return (
+    <div>
+      <label htmlFor={`${idPrefix}-tag`} className={labelClass}>
+        League Tag
+      </label>
+      <div className="flex items-center gap-2">
+        <input
+          id={`${idPrefix}-tag`}
+          type="text"
+          value={value}
+          maxLength={MAX_LEAGUE_TAG}
+          autoCapitalize="characters"
+          autoComplete="off"
+          spellCheck={false}
+          onChange={(e) => onChange(normalizeLeagueTagInput(e.target.value))}
+          placeholder={suggestion || 'DCFL'}
+          aria-describedby={`${idPrefix}-tag-hint`}
+          aria-invalid={incomplete}
+          className="w-28 h-10 px-3 bg-background border border-line-strong text-base font-black tracking-wider text-white uppercase font-data focus:outline-none focus:border-interactive placeholder:text-muted placeholder:font-normal"
+        />
+        {value && isValidLeagueTag(value) ? (
+          <LeagueTag abbreviation={value} name={leagueName || undefined} size="md" />
+        ) : (
+          suggestion &&
+          !value && (
+            <button
+              type="button"
+              onClick={() => onChange(suggestion)}
+              className="min-h-touch px-2 text-[10px] font-bold uppercase tracking-wider text-interactive hover:text-white"
+            >
+              Use {suggestion}
+            </button>
+          )
+        )}
+      </div>
+      <p
+        id={`${idPrefix}-tag-hint`}
+        className={`text-[10px] mt-1 ${incomplete ? 'text-red-400' : 'text-muted'}`}
+      >
+        {incomplete
+          ? `Tags are ${MIN_LEAGUE_TAG}–${MAX_LEAGUE_TAG} letters or numbers.`
+          : `Optional. ${MIN_LEAGUE_TAG}–${MAX_LEAGUE_TAG} letters or numbers — your league's crest, and the badge every member wears on their profile and ensembles. Leave blank to keep the league off profiles.`}
+      </p>
+    </div>
+  );
+};
 
 const LeagueIdentityFields = ({
   value,

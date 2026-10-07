@@ -700,3 +700,10 @@ function getLegacySyntheticTrophies(profile: UserProfile): TrophyData[] {
 
   return trophies;
 }
+
+/** "Mar 2025" from a profile's createdAt (a Firestore Timestamp or a string). */
+export function getMemberSince(createdAt: UserProfile['createdAt'] | undefined): string {
+  if (!createdAt) return 'Unknown';
+  const date = createdAt.toDate ? createdAt.toDate() : new Date(createdAt as unknown as string);
+  return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+}

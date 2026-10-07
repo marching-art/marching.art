@@ -22,6 +22,11 @@
  *     "roleplay happens here" and nothing about how much.
  *   lore              — the league's setting / storyline bible, shown on the
  *     League tab to members and on the discovery card to prospects.
+ *   abbreviation      — the league's tag: a short bold acronym ("DCFL") the
+ *     league wears as its crest and every member wears on their profile and
+ *     ensembles (callable/leagueTags.js). Setting one is the commissioner's
+ *     opt-in to that display, so a league without one is never named on a
+ *     member's profile — private leagues stay private by default.
  *
  * League docs are listable by any signed-in user (firestore.rules), which is
  * the point here: all three exist to be read before joining.
@@ -29,11 +34,16 @@
 
 const { HttpsError } = require("firebase-functions/v2/https");
 const { registry, MATCHUP_CLASSES } = require("./classRegistry");
+const { isProfaneCorpsName } = require("./corpsHelpers");
 
 const GAME_MODES = Object.freeze(["fantasy", "podium", "both"]);
 const ROLEPLAY_LEVELS = Object.freeze(["none", "optional", "encouraged", "immersive"]);
 const MAX_ROLEPLAY_EXPECTATIONS_LENGTH = 500;
 const MAX_LORE_LENGTH = 2000;
+const MIN_ABBREVIATION_LENGTH = 2;
+const MAX_ABBREVIATION_LENGTH = 5;
+/** Letters and digits only, stored uppercase — a tag reads as one bold mark. */
+const ABBREVIATION_PATTERN = /^[A-Z0-9]+$/;
 
 /**
  * Which game a matchup class belongs to. Podium is the class that fields no
@@ -76,14 +86,64 @@ function leagueMatchupClasses(league, classes = MATCHUP_CLASSES) {
 }
 
 /**
+ * Normalize and validate a league tag. Blank or null clears it.
+ *
+ * @param {*} value
+ * @returns {string | null}
+ */
+function parseLeagueAbbreviation(value) {
+  if (value === null) return null;
+  if (typeof value !== "string") {
+    throw new HttpsError("invalid-argument", "League tag must be text.");
+  }
+  const tag = value.trim().toUpperCase();
+  if (!tag) return null;
+  if (
+    tag.length < MIN_ABBREVIATION_LENGTH ||
+    tag.length > MAX_ABBREVIATION_LENGTH ||
+    !ABBREVIATION_PATTERN.test(tag)
+  ) {
+    throw new HttpsError(
+      "invalid-argument",
+      `League tag must be ${MIN_ABBREVIATION_LENGTH}-${MAX_ABBREVIATION_LENGTH} letters or numbers.`
+    );
+  }
+  if (isProfaneCorpsName(tag)) {
+    throw new HttpsError("invalid-argument", "Please choose a different league tag.");
+  }
+  return tag;
+}
+
+/**
+ * The league's tag, or null when its commissioner never set one (or a stored
+ * value no longer validates — never render a tag the callable would refuse).
+ *
+ * @param {Object} [league]
+ * @returns {string | null}
+ */
+function leagueAbbreviation(league) {
+  const tag = league && league.abbreviation;
+  if (typeof tag !== "string") return null;
+  try {
+    return parseLeagueAbbreviation(tag);
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Validate the identity keys of a client patch. Returns the whitelisted
  * values keyed by storage path, skipping keys the patch did not send.
  *
- * @param {{gameMode?: *, roleplay?: *, lore?: *}} patch
- * @returns {{gameMode?: string, roleplay?: {level: string, expectations: string} | null, lore?: string}}
+ * @param {{gameMode?: *, roleplay?: *, lore?: *, abbreviation?: *}} patch
+ * @returns {{gameMode?: string, roleplay?: {level: string, expectations: string} | null, lore?: string, abbreviation?: string | null}}
  */
 function parseLeagueIdentity(patch) {
   const out = {};
+
+  if (patch.abbreviation !== undefined) {
+    out.abbreviation = parseLeagueAbbreviation(patch.abbreviation);
+  }
 
   if (patch.gameMode !== undefined) {
     if (!GAME_MODES.includes(patch.gameMode)) {
@@ -149,9 +209,13 @@ module.exports = {
   ROLEPLAY_LEVELS,
   MAX_ROLEPLAY_EXPECTATIONS_LENGTH,
   MAX_LORE_LENGTH,
+  MIN_ABBREVIATION_LENGTH,
+  MAX_ABBREVIATION_LENGTH,
   gameModeOfClass,
+  leagueAbbreviation,
   leagueGameMode,
   leagueMatchupClasses,
   leagueRoleplayLevel,
+  parseLeagueAbbreviation,
   parseLeagueIdentity,
 };

@@ -202,6 +202,25 @@ describe("buildDirectorPageHtml", () => {
   });
 });
 
+describe("buildDirectorPageHtml — league tags", () => {
+  test("names public tagged leagues and keeps private ones off the crawlable page", () => {
+    const html = buildDirectorPageHtml({
+      username: "Rohn",
+      profile: { displayName: "Chris" },
+      leagueTags: [
+        { abbreviation: "DCFL", name: "Drum Corps <Fantasy>", isPublic: true },
+        { abbreviation: "SECRT", name: "Secret League", isPublic: false },
+        { abbreviation: "<b>", name: "Bad", isPublic: true },
+      ],
+    });
+    assert.ok(html.includes(">DCFL</span>"));
+    assert.ok(html.includes('title="Drum Corps &lt;Fantasy&gt;"'));
+    assert.equal(html.includes("SECRT"), false);
+    assert.equal(html.includes("Secret League"), false);
+    assert.equal(html.includes("<b>"), false);
+  });
+});
+
 describe("buildPrivateDirectorPageHtml", () => {
   test("renders a noindex stub that leaks no profile data", () => {
     const html = buildPrivateDirectorPageHtml({ username: "Rohn" });
