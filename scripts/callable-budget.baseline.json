@@ -4,6 +4,7 @@
     "functions/src/callable/articleComments.js#getArticleEngagement": "Read-only: batch engagement counts, capped at 50 article ids per call.",
     "functions/src/callable/articleComments.js#getArticleReactions": "Read-only: fetches aggregate reaction counts and the caller's own reaction.",
     "functions/src/callable/corpsDuplicates.js#detectMyDuplicateCorps": "Read-only: reports the caller's own duplicate corps; the repair mutation is a separate guarded callable.",
+    "functions/src/callable/leagueTags.js#getDirectorLeagueTags": "Read-only: one members array-contains query (capped at 100) returning the director's tagged leagues.",
     "functions/src/callable/lineups.js#getActiveLineupKeys": "Read-only: lists active lineup keys.",
     "functions/src/callable/lineups.js#getHotCorps": "Read-only endpoint; only write is a best-effort shared cache doc materialization (hotCorpsCacheRef).",
     "functions/src/callable/lineups.js#validateLineup": "Validation endpoint; only write is a self-heal flag update on the CALLER'S OWN profile when a stale lineup is detected.",
