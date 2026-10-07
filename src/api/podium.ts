@@ -564,8 +564,10 @@ export const commitPodiumBudget = createCallable<
   { success: boolean; budget: Record<string, unknown> }
 >('commitPodiumBudget');
 
+// Flexible bookings (2026-10): `days` picks a length from
+// getPodiumState.clinicianTerms.bookings; omitted, it books the longest stay.
 export const hirePodiumClinician = createCallable<
-  { block: string },
+  { block: string; days?: number },
   { success: boolean; clinician: Record<string, unknown>; budget: Record<string, unknown> }
 >('hirePodiumClinician');
 

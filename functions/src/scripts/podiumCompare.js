@@ -47,6 +47,15 @@ const load = (dir, name) => {
 };
 const ENGINES = [load(refDir, "ref"), load(PODIUM, "now")];
 
+/**
+ * The full clinician residency length for either config shape: pre-2026-10
+ * refs carry `clinician.durationDays`, later ones `clinician.costByDays`.
+ * @param {any} cfg balance config
+ */
+const clinicianResidencyDays = (cfg) =>
+  cfg.clinician.durationDays ||
+  Math.max(...Object.keys(cfg.clinician.costByDays || {}).map(Number));
+
 const ORDER = [
   "fullEnsemble",
   "visualBasics",
@@ -217,7 +226,7 @@ function season(E, opts, seed) {
         o.clinician &&
         bt === o.clinician.block &&
         d >= o.clinician.from &&
-        d < o.clinician.from + cfg.clinician.durationDays
+        d < o.clinician.from + clinicianResidencyDays(cfg)
       )
         mult *= cfg.clinician.yieldBoost;
       engine.allocateBlock(s, bt, d, u, so, curves, cfg, {

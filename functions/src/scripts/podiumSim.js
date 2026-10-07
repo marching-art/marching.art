@@ -704,10 +704,11 @@ function main() {
       staffMarket.staffYieldMultiplier({ staff: journeymanRoster }, blockType, cfg),
   });
   const kitchen = moneyFinals({ foodTier: "fullKitchen" });
+  const residency = engine.clinicianBookings(cfg).slice(-1)[0];
   const clinicianDay24 = moneyFinals(
     {
       yieldBoost: (/** @type {string} */ blockType, /** @type {number} */ day) =>
-        blockType === "fullEnsemble" && day >= 20 && day < 20 + cfg.clinician.durationDays
+        blockType === "fullEnsemble" && day >= 20 && day < 20 + residency.days
           ? cfg.clinician.yieldBoost
           : 1,
     },
@@ -732,6 +733,16 @@ function main() {
     "L3. a clinician residency pays (Full Ensemble >= +0.3 by day 24)",
     clinicianDay24 - unstaffedDay24 >= 0.3,
     (clinicianDay24 - unstaffedDay24).toFixed(2)
+  );
+  // Flexible bookings (2026-10): every length buys the same daily boost, so
+  // value per coin is decided by price alone — shorter visits must cost more
+  // per day, or chained 1-day visits would match a residency for less.
+  const bookings = engine.clinicianBookings(cfg);
+  const perDay = bookings.map((b) => b.cost / b.days);
+  assert(
+    "L4. shorter clinician bookings cost more per day (the residency is the best value)",
+    bookings.length >= 2 && perDay.every((rate, i) => i === 0 || rate < perDay[i - 1]),
+    bookings.map((b, i) => `${b.days}d ${b.cost} (${perDay[i].toFixed(0)}/day)`).join(" · ")
   );
 
   // --- M. Effort counts where it should (decision 43, 2026-10) ------------

@@ -104,6 +104,34 @@ function CurrentLocationRow({ location, hasRoute }) {
 // the day / show / travel / heat / stamina columns line up across the width.
 const ROUTE_COLS = 'grid grid-cols-[2.25rem_minmax(0,1fr)_auto_auto_auto] gap-x-3 items-center';
 
+/** @typedef {{days: number, cost: number}} ClinicianBooking */
+
+/**
+ * Normalise the server's clinician terms. Pre-2026-10 backends sent a single
+ * residency as `{cost, durationDays}`; later ones send every booking length.
+ * @param {any} terms getPodiumState.clinicianTerms
+ * @returns {{bookings: ClinicianBooking[], boostPct: number}}
+ */
+function clinicianTermsOf(terms) {
+  if (!terms) return { bookings: [{ days: 5, cost: 120 }], boostPct: 50 };
+  const bookings = Array.isArray(terms.bookings)
+    ? terms.bookings
+    : terms.cost && terms.durationDays
+      ? [{ days: terms.durationDays, cost: terms.cost }]
+      : [];
+  return { bookings, boostPct: terms.boostPct ?? 50 };
+}
+
+/**
+ * What a booking of `days` is called in the active-clinician line.
+ * @param {number} days
+ */
+function bookingLabel(days) {
+  if (days === 1) return 'one-day visit';
+  if (days >= 5) return `${days}-day residency`;
+  return `${days}-day session`;
+}
+
 /** @param {{podium: PodiumHook}} props */
 export default function CorpsConditionPanel({ podium }) {
   const state = podium.data?.state;
@@ -111,10 +139,9 @@ export default function CorpsConditionPanel({ podium }) {
   const routePreview = podium.data?.routePreview || [];
   /** @type {PodiumCurrentLocation | null} */
   const currentLocation = podium.data?.currentLocation || null;
-  // Clinician terms come from the server (balance-tunable); older backends
-  // fall back to the pre-2026-10 residency.
-  /** @type {{cost: number, durationDays: number, boostPct: number}} */
-  const clinician = podium.data?.clinicianTerms || { cost: 120, durationDays: 3, boostPct: 30 };
+  // Clinician terms come from the server (balance-tunable): each booking
+  // length with its total cost, shortest first.
+  const clinician = clinicianTermsOf(podium.data?.clinicianTerms);
   const [busy, setBusy] = useState(/** @type {string | null} */ (null));
   const [error, setError] = useState(/** @type {string | null} */ (null));
   const [editingTemplate, setEditingTemplate] = useState(false);
@@ -126,6 +153,8 @@ export default function CorpsConditionPanel({ podium }) {
   );
   const [topUp, setTopUp] = useState(100);
   const [clinicianBlock, setClinicianBlock] = useState('brassSectionals');
+  // The booking length picked in the clinician card; null = the longest stay.
+  const [clinicianDays, setClinicianDays] = useState(/** @type {number | null} */ (null));
 
   if (!state) return null;
 
@@ -193,6 +222,10 @@ export default function CorpsConditionPanel({ podium }) {
   // tail blocks would silently never run.
   const maxTemplateBlocks = activePlanType.maxBlocks;
   const budget = state.budget || { balance: 0, committed: 0, earned: 0, spent: 0 };
+  // The picked booking, defaulting to the longest stay (also the fallback if a
+  // retune drops the picked length).
+  const booking = clinician.bookings.find((b) => b.days === clinicianDays) ||
+    clinician.bookings[clinician.bookings.length - 1] || { days: 0, cost: 0 };
   const commitmentCap = podium.data?.commitmentCap || 2500;
 
   /** @param {string} id */
@@ -264,15 +297,50 @@ export default function CorpsConditionPanel({ podium }) {
               <span className="text-interactive font-bold">
                 {BLOCKS.find((b) => b.id === state.clinician.block)?.label || state.clinician.block}
               </span>{' '}
-              residency active through day {state.clinician.expiresDay} (+{clinician.boostPct}%
-              yield).
+              {bookingLabel(
+                state.clinician.days || state.clinician.expiresDay - state.clinician.hiredDay + 1
+              )}{' '}
+              active through day {state.clinician.expiresDay} (+{clinician.boostPct}% yield).
             </p>
+          ) : clinician.bookings.length === 0 ? (
+            <p className="text-[10px] text-muted">No clinicians are taking bookings right now.</p>
           ) : (
             <>
               <p className="text-[10px] text-muted">
-                Book a specialist residency: one block rehearses at +{clinician.boostPct}% for{' '}
-                {clinician.durationDays} days.
+                Book a specialist: one block rehearses at +{clinician.boostPct}% for as many days as
+                you book.
               </p>
+              <div
+                role="group"
+                aria-label="Booking length"
+                className="grid gap-1"
+                style={{
+                  gridTemplateColumns: `repeat(${clinician.bookings.length}, minmax(0, 1fr))`,
+                }}
+              >
+                {clinician.bookings.map((option) => {
+                  const selected = option.days === booking.days;
+                  return (
+                    <button
+                      key={option.days}
+                      type="button"
+                      aria-pressed={selected}
+                      disabled={busy !== null}
+                      onClick={() => setClinicianDays(option.days)}
+                      className={`flex flex-col items-center px-1.5 py-1 rounded-none border transition-colors press-feedback disabled:opacity-50 ${
+                        selected
+                          ? 'border-interactive bg-interactive/15 text-white'
+                          : 'border-line text-muted hover:text-white hover:border-interactive'
+                      }`}
+                    >
+                      <span className="text-[10px] font-bold uppercase tracking-wider">
+                        {option.days} {option.days === 1 ? 'day' : 'days'}
+                      </span>
+                      <span className="text-[9px] tabular-nums">{option.cost} Budget</span>
+                    </button>
+                  );
+                })}
+              </div>
               <div className="flex flex-wrap items-center gap-2">
                 <select
                   value={clinicianBlock}
@@ -287,13 +355,15 @@ export default function CorpsConditionPanel({ podium }) {
                 </select>
                 <button
                   disabled={busy !== null}
-                  onClick={() => act('clinician', () => podium.hireClinician(clinicianBlock))}
+                  onClick={() =>
+                    act('clinician', () => podium.hireClinician(clinicianBlock, booking.days))
+                  }
                   className="text-[10px] font-bold uppercase px-2.5 py-1 rounded-none border border-line text-muted hover:text-white hover:border-interactive disabled:opacity-50 press-feedback"
                 >
                   {busy === 'clinician' ? (
                     <Loader2 className="w-3 h-3 animate-spin" />
                   ) : (
-                    `Hire · ${clinician.cost} Budget / ${clinician.durationDays} days`
+                    `Hire · ${booking.cost} Budget / ${booking.days} ${booking.days === 1 ? 'day' : 'days'}`
                   )}
                 </button>
               </div>

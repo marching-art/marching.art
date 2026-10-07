@@ -453,8 +453,12 @@
     "springTrainingDayCost": 25
   },
   "clinician": {
-    "cost": 120,
-    "durationDays": 5,
+    "_note": "Flexible bookings (2026-10, Discord feature request): costByDays maps a booking length in days to its total Corps Budget cost. Shorter visits carry a per-day premium (40 / 30 / 24 per day), so the 5-day residency stays the best value and back-to-back 1-day visits cost far more than one longer stay for the same boost. Keyed by days (not an array) so a podium-config/balance override can retune one length without restating the others.",
+    "costByDays": {
+      "1": 40,
+      "3": 90,
+      "5": 120
+    },
     "yieldBoost": 1.5
   },
   "bookRewrite": {
