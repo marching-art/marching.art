@@ -30,7 +30,7 @@ import {
   Settings,
   Link as LinkIcon,
 } from 'lucide-react';
-import type { UserProfile, CorpsClass, Achievement } from '../../types';
+import type { UserProfile, CorpsClass, Achievement, LeagueTagEntry } from '../../types';
 import {
   PROFILE_CORPS_CLASS_ORDER,
   resolveCorpsForClass,
@@ -67,6 +67,7 @@ import {
   getCorpsJourneys,
   getSeasonHistory,
   getShowTitle,
+  getMemberSince,
 } from './directorProfileHelpers';
 import { getEquippedCosmetic } from '../../utils/cosmetics';
 import { getXPProgress } from '../../utils/captionPricing';
@@ -79,6 +80,7 @@ import {
   uniqueStoredAchievements,
 } from '../../data/achievementsCatalog';
 import { Heading } from '../ui';
+import { DirectorLeagueTags } from '../Leagues/LeagueIdentity';
 
 // =============================================================================
 // TYPES
@@ -86,6 +88,9 @@ import { Heading } from '../ui';
 
 interface DirectorProfileProps {
   profile: UserProfile;
+  /** The director's tagged leagues (useDirectorLeagueTags), worn beside their
+   *  name and on the ensembles each league pairs. */
+  leagueTags?: LeagueTagEntry[];
   isOwnProfile?: boolean;
   onEditProfile?: () => void;
   onDesignUniform?: () => void;
@@ -104,6 +109,7 @@ interface DirectorProfileProps {
 
 export const DirectorProfile: React.FC<DirectorProfileProps> = ({
   profile,
+  leagueTags = [],
   isOwnProfile = false,
   onEditProfile,
   onDesignUniform,
@@ -224,13 +230,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
   // Corps that have competed in more than one class get their climb celebrated
   const corpsJourneys = useMemo(() => getCorpsJourneys(profile), [profile]);
 
-  const memberSince = useMemo(() => {
-    if (!profile.createdAt) return 'Unknown';
-    const date = profile.createdAt.toDate
-      ? profile.createdAt.toDate()
-      : new Date(profile.createdAt as unknown as string);
-    return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-  }, [profile.createdAt]);
+  const memberSince = useMemo(() => getMemberSince(profile.createdAt), [profile.createdAt]);
 
   // Check if stats are empty
   // Reads the fields the season pipeline maintains (lifetimeStats.*, trophies.*),
@@ -309,6 +309,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                 <Heading level="title" as="h1" className="truncate">
                   {profile.displayName || 'Anonymous Director'}
                 </Heading>
+                <DirectorLeagueTags tags={leagueTags} size="sm" max={3} />
                 <StatusIndicator status={status} />
                 <WriterBadge contribution={profile.articleStats} />
 
@@ -585,6 +586,7 @@ export const DirectorProfile: React.FC<DirectorProfileProps> = ({
                       avatarUrl={corps.avatarUrl}
                       info={getEnsembleInfo(corps)}
                       showTitle={getShowTitle(corps)}
+                      leagueTags={leagueTags}
                     />
                   ) : (
                     <UnregisteredEnsembleCard key={classKey} classKey={classKey} />

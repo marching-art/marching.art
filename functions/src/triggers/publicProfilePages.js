@@ -15,6 +15,7 @@ const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
 const { paths } = require("../helpers/paths");
 const { buildErrorPageHtml } = require("../helpers/resultsPages");
+const { fetchDirectorLeagueTags } = require("../callable/leagueTags");
 const {
   parseDirectorPath,
   isProfilePrivate,
@@ -142,6 +143,11 @@ exports.getPublicProfilePageHttp = onRequest(
         : buildDirectorPageHtml({
             username: resolved.data.username,
             profile: resolved.data,
+            // A failed lookup costs the page its league tags, never the page.
+            leagueTags: await fetchDirectorLeagueTags(db, resolved.uid).catch((error) => {
+              logger.warn("League tags unavailable for public profile:", error);
+              return [];
+            }),
           });
 
       if (!html) {

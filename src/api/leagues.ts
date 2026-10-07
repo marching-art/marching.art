@@ -20,9 +20,10 @@ import { db, paths, withErrorHandling } from './client';
 import { getActiveMemberCount, isLeagueDormant } from '../utils/leagueActivity';
 // League actions report funnel events; callFunctionTracked is the
 // instrumented transport (see the note in src/api/callable.ts).
-import { callFunctionTracked } from './callable';
+import { callFunctionTracked, createCallable } from './callable';
 import type {
   League,
+  LeagueTagEntry,
   LeagueStanding,
   LeagueCreationData,
   PaginatedResponse,
@@ -53,6 +54,22 @@ export async function getMyLeagues(uid: string): Promise<League[]> {
       ...doc.data(),
     })) as League[];
   }, 'Failed to fetch your leagues');
+}
+
+const getDirectorLeagueTagsCallable = createCallable<{ uid: string }, { tags: LeagueTagEntry[] }>(
+  'getDirectorLeagueTags'
+);
+
+/**
+ * The tagged leagues a director belongs to — what their profile and ensembles
+ * wear. Server-side because one director can't list another's leagues; only
+ * leagues whose commissioner set a tag come back.
+ */
+export async function getDirectorLeagueTags(uid: string): Promise<LeagueTagEntry[]> {
+  return withErrorHandling(async () => {
+    const result = await getDirectorLeagueTagsCallable({ uid });
+    return Array.isArray(result.data?.tags) ? result.data.tags : [];
+  }, 'Failed to load league tags');
 }
 
 /**

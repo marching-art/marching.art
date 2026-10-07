@@ -251,6 +251,7 @@ const LeagueDetailView = ({
       {/* FIXED HEADER - League Banner (Director Card Pattern) */}
       <LeagueDetailHeader
         leagueName={league.name}
+        leagueAbbreviation={league.abbreviation}
         memberCount={league.members?.length || 0}
         currentWeek={currentWeek}
         isCommissioner={isCommissioner}

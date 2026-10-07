@@ -1,5 +1,17 @@
 [
   {
+    "id": "2026-10-07-league-tags",
+    "date": "2026-10-07",
+    "title": "League tags on your profile",
+    "category": "feature",
+    "summary": "Commissioners can give their league a short bold tag, like DCFL. It becomes the league's crest, and every member wears it next to their name on their profile and on the ensembles that compete in that league.",
+    "highlights": [
+      "Set it when you create a league, or any time from Commissioner Settings. Leave it blank to keep the league off member profiles.",
+      "Tap a tag on another director's profile to jump to a league you share, and search the league browser by tag.",
+      "A crown on a tag marks the director who runs that league."
+    ]
+  },
+  {
     "id": "2026-10-06-fantasy-corps-lineage",
     "date": "2026-10-06",
     "title": "Fantasy corps keep their own history too",

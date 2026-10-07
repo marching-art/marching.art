@@ -10,7 +10,11 @@ import { useEscapeKey } from '../../hooks/useEscapeKey';
 import type { LeagueCreationData } from '../../types';
 import type { CreateLeagueResult } from '../../api/leagues';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
-import LeagueIdentityFields, { type LeagueIdentityValue } from './LeagueIdentityFields';
+import LeagueIdentityFields, {
+  LeagueTagField,
+  type LeagueIdentityValue,
+} from './LeagueIdentityFields';
+import { isValidLeagueTag } from '../../utils/leagueIdentity';
 import { LeagueIdentityBadges } from './LeagueIdentity';
 
 /** Exactly what createLeague accepts — no prizePool, which is server escrow. */
@@ -61,6 +65,9 @@ const CreateLeagueModal = ({ onClose, onCreate, onOpenLeague }: CreateLeagueModa
     expectations: '',
     lore: '',
   });
+  // The league's tag (optional) — its crest and what members wear on their
+  // profiles. Offered up front so a league is recognizable from day one.
+  const [abbreviation, setAbbreviation] = useState('');
   const [processing, setProcessing] = useState(false);
   const [createdLeague, setCreatedLeague] = useState<CreatedLeague | null>(null);
   const [copied, setCopied] = useState(false);
@@ -73,6 +80,7 @@ const CreateLeagueModal = ({ onClose, onCreate, onOpenLeague }: CreateLeagueModa
       const submitted: LeagueFormData = {
         ...formData,
         settings: { ...formData.settings, gameMode: identity.gameMode },
+        ...(abbreviation ? { abbreviation } : {}),
         ...(identity.roleplayLevel
           ? {
               roleplay: {
@@ -191,6 +199,13 @@ const CreateLeagueModal = ({ onClose, onCreate, onOpenLeague }: CreateLeagueModa
                     />
                   </div>
 
+                  <LeagueTagField
+                    idPrefix="create-league"
+                    value={abbreviation}
+                    onChange={setAbbreviation}
+                    leagueName={formData.name.trim()}
+                  />
+
                   <LeagueIdentityFields
                     idPrefix="create-league"
                     value={identity}
@@ -305,7 +320,9 @@ const CreateLeagueModal = ({ onClose, onCreate, onOpenLeague }: CreateLeagueModa
                   </button>
                   <button
                     type="submit"
-                    disabled={processing || !formData.name.trim()}
+                    disabled={
+                      processing || !formData.name.trim() || !isValidLeagueTag(abbreviation)
+                    }
                     className="h-9 px-4 bg-interactive text-white text-sm font-bold uppercase tracking-wider hover:bg-interactive-hover disabled:opacity-50"
                   >
                     {processing ? 'Creating...' : 'Create'}
@@ -359,7 +376,7 @@ const CreateLeagueModal = ({ onClose, onCreate, onOpenLeague }: CreateLeagueModa
                   </div>
                   {createdLeague && (
                     <div className="flex items-center justify-center gap-1.5 mt-2">
-                      <LeagueIdentityBadges league={createdLeague} />
+                      <LeagueIdentityBadges league={createdLeague} withTag />
                     </div>
                   )}
                 </div>

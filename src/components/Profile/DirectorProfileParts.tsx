@@ -27,7 +27,10 @@ import type {
   CorpsClass,
   EnsembleProfileInfo,
   DirectorSocialLinks,
+  LeagueTagEntry,
 } from '../../types';
+import { DirectorLeagueTags } from '../Leagues/LeagueIdentity';
+import { gameModeCoversClass } from '../../utils/leagueIdentity';
 import { formatSeasonName } from '../../utils/season';
 import { describeConceptStyle, getConceptTitle } from '../../utils/showConcept';
 import { toCanonicalClassKey } from '../../utils/classUnlocks';
@@ -382,9 +385,12 @@ const EnsembleCard = memo(
     avatarUrl,
     location,
     showTitle,
+    leagueTags = [],
   }: {
     corpsName: string;
     classKey: CorpsClass;
+    /** The director's tagged leagues; only those that pair this class show. */
+    leagueTags?: LeagueTagEntry[];
     info: EnsembleProfileInfo;
     avatarUrl?: string;
     location?: string;
@@ -415,7 +421,14 @@ const EnsembleCard = memo(
             />
           )}
           <div className="flex-1 min-w-0">
-            <div className="text-xs font-bold text-white truncate">{corpsName}</div>
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className="text-xs font-bold text-white truncate">{corpsName}</span>
+              <DirectorLeagueTags
+                tags={leagueTags.filter((t) => gameModeCoversClass(t.gameMode, classKey))}
+                size="xs"
+                max={3}
+              />
+            </div>
             <div className="flex items-center gap-2 text-[9px] text-muted">
               <span className={`font-bold ${classConfig.color}`}>{classConfig.name}</span>
               {showTitle && (

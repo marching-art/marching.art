@@ -89,6 +89,7 @@ exports.createLeague = onCall({ cors: true }, async (request) => {
     gameMode: settings.gameMode,
     roleplay: request.data.roleplay,
     lore: request.data.lore,
+    abbreviation: request.data.abbreviation,
   });
 
   const db = getDb();
@@ -154,6 +155,7 @@ exports.createLeague = onCall({ cors: true }, async (request) => {
       seasonActivity,
       ...(identity.roleplay ? { roleplay: identity.roleplay } : {}),
       ...(identity.lore ? { lore: identity.lore } : {}),
+      ...(identity.abbreviation ? { abbreviation: identity.abbreviation } : {}),
       settings: {
         // Whitelisted keys only — never spread arbitrary client-supplied
         // settings into the stored doc.

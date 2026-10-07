@@ -43,6 +43,8 @@ export interface LeagueCreationData {
   settings: Omit<LeagueSettings, 'prizePool'>;
   roleplay?: LeagueRoleplay | null;
   lore?: string;
+  /** The league's 2–5 character tag, shown on every member's profile. */
+  abbreviation?: string;
 }
 
 // =============================================================================

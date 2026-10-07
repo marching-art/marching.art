@@ -9,13 +9,14 @@
  * league the same way.
  */
 
-import type { League, LeagueGameMode, RoleplayLevel } from '../types';
+import type { CorpsClass, League, LeagueGameMode, RoleplayLevel } from '../types';
 
 /** The identity fields of any league-shaped object (a doc, a form, a card). */
 export type IdentityLike = {
   tag?: string | null;
   roleplay?: League['roleplay'];
   lore?: string;
+  abbreviation?: string;
   description?: string;
   settings?: { gameMode?: LeagueGameMode };
 } | null;
@@ -81,6 +82,61 @@ export const ROLEPLAY_LEVEL_OPTIONS: IdentityOption<RoleplayLevel>[] = [
 /** Matches MAX_ROLEPLAY_EXPECTATIONS_LENGTH / MAX_LORE_LENGTH server-side. */
 export const MAX_ROLEPLAY_EXPECTATIONS = 500;
 export const MAX_LORE = 2000;
+
+// -----------------------------------------------------------------------------
+// League tag — the bold acronym members wear on their profiles
+// -----------------------------------------------------------------------------
+
+/** Matches MIN/MAX_ABBREVIATION_LENGTH server-side. */
+export const MIN_LEAGUE_TAG = 2;
+export const MAX_LEAGUE_TAG = 5;
+
+/**
+ * What the tag input keeps as a director types: letters and digits only,
+ * uppercase, capped. The server applies the same rules and rejects the rest.
+ */
+export function normalizeLeagueTagInput(raw: string): string {
+  return raw
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '')
+    .slice(0, MAX_LEAGUE_TAG);
+}
+
+/** A complete tag (or blank, which clears it). */
+export function isValidLeagueTag(tag: string): boolean {
+  return tag === '' || (tag.length >= MIN_LEAGUE_TAG && /^[A-Z0-9]+$/.test(tag));
+}
+
+/** The league's tag, or null when its commissioner hasn't set one. */
+export function getLeagueAbbreviation(league: IdentityLike): string | null {
+  const tag = league?.abbreviation;
+  return typeof tag === 'string' && tag.length >= MIN_LEAGUE_TAG ? tag : null;
+}
+
+/**
+ * A starting suggestion from the league name: the initials of a multi-word
+ * name ("Drum Corps Fantasy League" → "DCFL"), or the head of a one-word name.
+ */
+export function suggestLeagueTag(name: string): string {
+  const words = name
+    .toUpperCase()
+    .split(/[^A-Z0-9]+/)
+    .filter(Boolean);
+  if (words.length === 0) return '';
+  const candidate = words.length === 1 ? words[0].slice(0, 4) : words.map((w) => w[0]).join('');
+  const tag = candidate.slice(0, MAX_LEAGUE_TAG);
+  return tag.length >= MIN_LEAGUE_TAG ? tag : '';
+}
+
+/**
+ * Whether a league of this game mode pairs a corps of this class — Podium is
+ * its own game; every other class is Fantasy. Mirrors gameModeOfClass in
+ * functions/src/helpers/leagueIdentity.js.
+ */
+export function gameModeCoversClass(mode: LeagueGameMode, classKey: CorpsClass): boolean {
+  if (mode === 'both') return true;
+  return (classKey === 'podiumClass' ? 'podium' : 'fantasy') === mode;
+}
 
 /** Absent or unknown reads as `both` — every league before the field existed. */
 export function getLeagueGameMode(league: IdentityLike): LeagueGameMode {

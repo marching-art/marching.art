@@ -25,6 +25,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '../lib/queryClient';
 import { resolveUsername, updateProfile } from '../api/profile';
 import { getLeaguesByCreator } from '../api/leagues';
+import { useDirectorLeagueTags } from '../hooks/useLeagues';
 import toast from 'react-hot-toast';
 import { DirectorProfile } from '../components/Profile/DirectorProfile';
 import ProfileNewsroom from '../components/Profile/ProfileNewsroom';
@@ -151,6 +152,10 @@ const Profile = () => {
   } = useProfile(profileUserId, {
     publicView: !isOwnProfile,
   });
+
+  // Tagged leagues this director plays in (functions/src/callable/leagueTags.js).
+  // A Podium-only league never tags a fantasy corps — EnsembleCard filters by class.
+  const { data: leagueTags } = useDirectorLeagueTags(profileUserId);
 
   // When viewing someone else's profile, check whether the current user
   // commissions any league so we know whether to show the Invite button.
@@ -444,6 +449,7 @@ const Profile = () => {
         {/* DIRECTOR PROFILE - New Career Portfolio Layout */}
         <DirectorProfile
           profile={profile}
+          leagueTags={leagueTags}
           isOwnProfile={isOwnProfile}
           onEditProfile={handleStartEdit}
           onDesignUniform={() => navigate('/studio')}

@@ -514,6 +514,8 @@ export const updateLeagueSettings = createCallable<
       gameMode?: LeagueGameMode;
       /** How roleplay fits in, or null to clear it. */
       roleplay?: LeagueRoleplay | null;
+      /** The league's 2–5 character tag, or null to clear it. */
+      abbreviation?: string | null;
       /** The league's setting / storyline bible; empty text clears it. */
       lore?: string;
       finalsSize?: number;

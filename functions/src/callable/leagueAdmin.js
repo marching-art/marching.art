@@ -57,6 +57,7 @@ const SETTING_LABELS = {
   gameMode: "game mode",
   roleplay: "roleplay style",
   lore: "league lore",
+  abbreviation: "league tag",
   finalsSize: "Finals spots",
   announcement: "pinned announcement",
 };
@@ -196,6 +197,13 @@ function buildLeagueSettingsUpdate(patch, league) {
     if (next && league.tag === "roleplay" && updates.tag === undefined) {
       updates.tag = null;
       note("tag", "roleplay", null);
+    }
+  }
+  if (identity.abbreviation !== undefined) {
+    const current = league.abbreviation || null;
+    if (identity.abbreviation !== current) {
+      updates.abbreviation = identity.abbreviation;
+      note("abbreviation", current, identity.abbreviation);
     }
   }
   if (identity.lore !== undefined) {

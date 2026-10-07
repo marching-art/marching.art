@@ -196,3 +196,31 @@ describe("buildLeagueSettingsUpdate — announcements", () => {
     assert.throws(() => buildLeagueSettingsUpdate({ lore: "x".repeat(2001) }, league()), /2000/);
   });
 });
+
+describe("buildLeagueSettingsUpdate — league tag", () => {
+  test("sets, normalizes and logs a new tag", () => {
+    const { updates, changes } = buildLeagueSettingsUpdate({ abbreviation: "dcfl" }, league());
+    assert.deepEqual(updates, { abbreviation: "DCFL" });
+    assert.deepEqual(changes, [{ field: "abbreviation", from: null, to: "DCFL" }]);
+  });
+
+  test("an unchanged tag is not a change", () => {
+    const { changes } = buildLeagueSettingsUpdate(
+      { abbreviation: "DCFL" },
+      league({ abbreviation: "DCFL" })
+    );
+    assert.deepEqual(changes, []);
+  });
+
+  test("clearing the tag stores null", () => {
+    const { updates } = buildLeagueSettingsUpdate(
+      { abbreviation: null },
+      league({ abbreviation: "DCFL" })
+    );
+    assert.deepEqual(updates, { abbreviation: null });
+  });
+
+  test("rejects an invalid tag", () => {
+    assert.throws(() => buildLeagueSettingsUpdate({ abbreviation: "X" }, league()), /2-5/);
+  });
+});

@@ -1,9 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import {
+  gameModeCoversClass,
+  getLeagueAbbreviation,
   getLeagueGameMode,
   getLeagueRoleplayLevel,
   matchesGameFilter,
   matchesRoleplayFilter,
+  isValidLeagueTag,
+  normalizeLeagueTagInput,
+  suggestLeagueTag,
 } from './leagueIdentity';
 
 describe('getLeagueGameMode', () => {
@@ -36,5 +41,41 @@ describe('discovery filters', () => {
     expect(matchesRoleplayFilter({ roleplay: { level: 'encouraged' } }, 'light')).toBe(false);
     expect(matchesRoleplayFilter({}, 'none')).toBe(false);
     expect(matchesRoleplayFilter({}, null)).toBe(true);
+  });
+});
+
+describe('league tag', () => {
+  it('keeps only uppercase letters and digits, capped at five', () => {
+    expect(normalizeLeagueTagInput('dc-fl')).toBe('DCFL');
+    expect(normalizeLeagueTagInput('a b c 1 2 3')).toBe('ABC12');
+  });
+
+  it('accepts blank (clears) or 2–5 characters', () => {
+    expect(isValidLeagueTag('')).toBe(true);
+    expect(isValidLeagueTag('A')).toBe(false);
+    expect(isValidLeagueTag('AB')).toBe(true);
+    expect(isValidLeagueTag('ABCDE')).toBe(true);
+  });
+
+  it('suggests initials, or the head of a one-word name', () => {
+    expect(suggestLeagueTag('Drum Corps Fantasy League')).toBe('DCFL');
+    expect(suggestLeagueTag('Legends')).toBe('LEGE');
+    expect(suggestLeagueTag('The Big Six Brass Line Society')).toBe('TBSBL');
+    expect(suggestLeagueTag('X')).toBe('');
+    expect(suggestLeagueTag('')).toBe('');
+  });
+
+  it('reads a stored tag, or null', () => {
+    expect(getLeagueAbbreviation({ abbreviation: 'DCFL' })).toBe('DCFL');
+    expect(getLeagueAbbreviation({})).toBeNull();
+    expect(getLeagueAbbreviation(null)).toBeNull();
+  });
+
+  it('pairs a class with the leagues whose game covers it', () => {
+    expect(gameModeCoversClass('both', 'podiumClass')).toBe(true);
+    expect(gameModeCoversClass('podium', 'podiumClass')).toBe(true);
+    expect(gameModeCoversClass('podium', 'worldClass')).toBe(false);
+    expect(gameModeCoversClass('fantasy', 'soundSport')).toBe(true);
+    expect(gameModeCoversClass('fantasy', 'podiumClass')).toBe(false);
   });
 });

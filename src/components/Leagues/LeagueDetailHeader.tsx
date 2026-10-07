@@ -8,7 +8,6 @@
 
 import React from 'react';
 import {
-  Trophy,
   Crown,
   ChevronLeft,
   Settings,
@@ -21,6 +20,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { Heading } from '../ui';
+import { LeagueCrest } from './LeagueIdentity';
 import type { LeagueMemberStanding } from '../../utils/leagueStats';
 
 export interface LeagueDetailTab {
@@ -35,6 +35,8 @@ export interface LeagueDetailTab {
 
 export interface LeagueDetailHeaderProps {
   leagueName?: string;
+  /** The league's tag, worn as its crest. */
+  leagueAbbreviation?: string;
   memberCount: number;
   currentWeek: number;
   isCommissioner: boolean;
@@ -55,6 +57,7 @@ export interface LeagueDetailHeaderProps {
 
 const LeagueDetailHeader = ({
   leagueName,
+  leagueAbbreviation,
   memberCount,
   currentWeek,
   isCommissioner,
@@ -103,10 +106,8 @@ const LeagueDetailHeader = ({
     {/* League Banner Content */}
     <div className="px-4 py-3">
       <div className="flex items-center gap-3">
-        {/* League Avatar */}
-        <div className="w-12 h-12 bg-line border border-line-strong flex-shrink-0 flex items-center justify-center">
-          <Trophy className="w-6 h-6 text-secondary" />
-        </div>
+        {/* League crest — its tag when the commissioner set one */}
+        <LeagueCrest league={{ abbreviation: leagueAbbreviation }} size="lg" />
 
         {/* Name + Meta */}
         <div className="flex-1 min-w-0">

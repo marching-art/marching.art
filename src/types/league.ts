@@ -31,6 +31,13 @@ export interface League {
   roleplay?: LeagueRoleplay | null;
   /** The league's setting / storyline bible, written by its commissioners. */
   lore?: string;
+  /**
+   * The league's tag — a 2–5 character bold acronym ("DCFL") set by a
+   * commissioner. It is the league's crest and the mark every member wears on
+   * their profile and ensembles (functions/src/callable/leagueTags.js).
+   * Absent = no tag, and the league is never named on member profiles.
+   */
+  abbreviation?: string;
   /** Auto-provisioned beginner league (callable/rookieLeague.js). */
   isRookieCircuit?: boolean;
   /** Commissioner's pinned note, shown above every tab. */
@@ -77,6 +84,22 @@ export interface LeagueSeasonActivity {
   /** Full roster size, so the UI can show "2 of 12" rather than hiding members. */
   totalMemberCount: number;
   updatedAt: Timestamp;
+}
+
+/**
+ * One tagged league a director belongs to, as getDirectorLeagueTags returns
+ * it. Only leagues whose commissioner set a tag are listed.
+ */
+export interface LeagueTagEntry {
+  leagueId: string;
+  name: string;
+  abbreviation: string;
+  gameMode: LeagueGameMode;
+  isPublic: boolean;
+  /** The director runs this league (owner or co-commissioner). */
+  isCommissioner: boolean;
+  /** The viewer is a member too, so the league page will open for them. */
+  viewerIsMember: boolean;
 }
 
 /** How much in-character play a league runs, least to most. */

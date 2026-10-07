@@ -191,6 +191,12 @@ const BADGE_STYLE =
   "padding:4px 10px;margin:0 8px 8px 0;font-size:12px;letter-spacing:1px;" +
   "text-transform:uppercase;";
 
+/** A league tag: the same badge, set bold in the accent so it reads as a mark. */
+const LEAGUE_TAG_STYLE = `${BADGE_STYLE}font-weight:900;color:#EAB308;border-color:#EAB308;`;
+
+/** Tag text is server-validated A–Z/0–9, but never trust a stored value raw. */
+const LEAGUE_TAG_RE = /^[A-Z0-9]{2,5}$/;
+
 /**
  * Minimal stub for directors who set profileVisibility to 'members'.
  * Noindexed — an opt-out page must never rank for the director's name.
@@ -220,9 +226,12 @@ function buildPrivateDirectorPageHtml({ username }) {
  * @param {Object} params
  * @param {string} params.username   Canonical username (as stored on the profile).
  * @param {Object} params.profile    RAW profile doc data — allowlisted in here.
+ * @param {Array<{abbreviation: string, name: string, isPublic: boolean}>} [params.leagueTags]
+ *   The director's tagged leagues (callable/leagueTags.js). Only PUBLIC
+ *   leagues are named on this crawlable page; private ones stay in-app.
  * @returns {string}
  */
-function buildDirectorPageHtml({ username, profile }) {
+function buildDirectorPageHtml({ username, profile, leagueTags = [] }) {
   const view = pickPublicProfile(profile);
   const corpsEntries = listPublicCorps(view.corps);
   const sinceYear = memberSinceYear(view.createdAt);
@@ -239,6 +248,14 @@ function buildDirectorPageHtml({ username, profile }) {
     ...corpsEntries.map((entry) => entry.classLabel),
   ]
     .map((label) => `<span style="${BADGE_STYLE}">${escapeHtml(label)}</span>`)
+    .concat(
+      (Array.isArray(leagueTags) ? leagueTags : [])
+        .filter((t) => t && t.isPublic && LEAGUE_TAG_RE.test(t.abbreviation))
+        .map(
+          (t) =>
+            `<span style="${LEAGUE_TAG_STYLE}" title="${escapeHtml(clamp(t.name || "", 60))}">${escapeHtml(t.abbreviation)}</span>`
+        )
+    )
     .join("\n");
 
   const sections = [];
