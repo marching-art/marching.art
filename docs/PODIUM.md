@@ -635,13 +635,13 @@ Hard requirement, clean solution — the SoundSport precedent, extended:
 
 All existing currency; new recurring sinks (the FMA community's "nothing to spend money on" fix):
 
-| Sink                                                             | Cost shape                                                               | Effect                                                                                    |
-| ---------------------------------------------------------------- | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
-| ~~Class unlock~~                                                 | **None — Podium is always open, always playable (the SoundSport model)** | Available from account creation; no level gate, no CorpsCoin cost, no registration cutoff |
-| **Caption staff** (8 slots + Tour Manager + Program Coordinator) | Per-season salaries from Corps Budget — see _The staff economy_ below    | +yield% on mapped rehearsal blocks (capped); ops staff reduce travel/condition costs      |
-| **Clinicians** (Rework request)                                  | One-off, 3-day engagement                                                | Temporary large yield boost on one block type; the "my brass is drowning" panic button    |
-| **Travel**                                                       | Per-mile per show                                                        | The routing cost (§5.3)                                                                   |
-| **Food plan**                                                    | Weekly tier                                                              | Recovery/morale (§5.3)                                                                    |
+| Sink                                                             | Cost shape                                                                 | Effect                                                                                    |
+| ---------------------------------------------------------------- | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| ~~Class unlock~~                                                 | **None — Podium is always open, always playable (the SoundSport model)**   | Available from account creation; no level gate, no CorpsCoin cost, no registration cutoff |
+| **Caption staff** (8 slots + Tour Manager + Program Coordinator) | Per-season salaries from Corps Budget — see _The staff economy_ below      | +yield% on mapped rehearsal blocks (capped); ops staff reduce travel/condition costs      |
+| **Clinicians** (Rework request)                                  | One-off 1-, 3- or 5-day booking; shorter stays cost more per day (dec. 49) | Temporary large yield boost on one block type; the "my brass is drowning" panic button    |
+| **Travel**                                                       | Per-mile per show                                                          | The routing cost (§5.3)                                                                   |
+| **Food plan**                                                    | Weekly tier                                                                | Recovery/morale (§5.3)                                                                    |
 
 Earn side reuses existing hooks: show participation (Podium tier ≈ 175, between Open and World),
 league wins, season-finish bonuses. Staff persistence between seasons is the long-game attachment
@@ -1190,7 +1190,7 @@ Podium populates identically).
     condition:  { stamina: 71, morale: 84 },
     foodPlan:   'standard',                     // per-week tier, current week
     staff:      { B: { name, tier, hiredSeason }, ... },
-    clinician:  { block: 'brassSectionals', expiresDay: 24 } | null,
+    clinician:  { block: 'brassSectionals', days: 3, hiredDay: 22, expiresDay: 24 } | null,
     today:      { day: 22, blocksUsed: 2, blocks: ['visualBasics','fullEnsemble'],
                   restDay: false },             // written by the callable, read by the processor
     travelLog:  [{ day, fromShow, toShow, miles, coinCost, staminaCost }],
@@ -1953,6 +1953,18 @@ proven the machinery. Total: ~16–20 engineering weeks to beta.
     the boundary to settle so a season is never stranded between records. Fixes the case of a new
     corps placed in its predecessor's Open Class seat. Existing data:
     `scripts/correctPodiumLineages.js` (Actions → "Correct Podium lineages", dry run first).
+
+49. **Flexible clinician bookings — 1, 3 or 5 days (Discord feature request, 2026-10).** A
+    clinician can be booked for a one-day visit, a three-day session or the five-day residency,
+    one at a time as before. Owner direction: short stays carry a per-day premium, longer stays
+    get cheaper per day, and the residency keeps its price. Balance `clinician.costByDays`
+    `{1: 40, 3: 90, 5: 120}` (40 / 30 / 24 per day) replaces `cost` / `durationDays`; it is keyed
+    by length so a `podium-config/balance` override can retune one stay. Every length buys the
+    same daily boost, so value is set by price alone: five back-to-back visits cost 200 for what
+    the residency gives for 120 (and take five hires). `hirePodiumClinician` takes `days`
+    (omitted = the longest stay, for older clients) and records it on `state.clinician.days`;
+    `getPodiumState.clinicianTerms` is `{ bookings: [{days, cost}], boostPct }`. Sim check L4
+    and the engine tests hold the per-day ladder strictly falling.
 
 **Still open:**
 

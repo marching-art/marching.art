@@ -7,6 +7,7 @@
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const { assertWriteBudget } = require('../helpers/callableGuards');
 const store = require('../helpers/podium/store');
+const engine = require('../helpers/podium/engine');
 const venues = require('../helpers/podium/venues');
 const jointHelper = require('../helpers/podium/joint');
 const career = require('../helpers/podium/career');
@@ -626,7 +627,6 @@ function carryoverFor(careerData, ownState, projection) {
 
 /** Named tier label for a career's current reputation (helper for the preview). */
 function engineTierForCareer(careerData) {
-  const engine = require('../helpers/podium/engine');
   return engine.tierForReputation((careerData && careerData.reputation) || 0, store.balance);
 }
 function engineTierLabel(careerData) {
@@ -743,11 +743,11 @@ exports.getPodiumState = onCall({ cors: true }, async (request) => {
           maxCaptions: store.balance.bookRewrite.maxCaptions,
         }
       : null,
-    // What a clinician residency costs and does — the panel renders these
-    // instead of hard-coding them.
+    // What a clinician booking costs and does — the panel renders these
+    // instead of hard-coding them. `bookings` lists each offered length
+    // (1 / 3 / 5 days) with its total cost, shortest first.
     clinicianTerms: {
-      cost: store.balance.clinician.cost,
-      durationDays: store.balance.clinician.durationDays,
+      bookings: engine.clinicianBookings(store.balance),
       boostPct: Math.round((store.balance.clinician.yieldBoost - 1) * 100),
     },
     assistant,

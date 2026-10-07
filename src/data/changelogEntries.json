@@ -1,5 +1,16 @@
 [
   {
+    "id": "2026-10-07-flexible-clinicians",
+    "date": "2026-10-07",
+    "title": "Podium: book a clinician for 1, 3 or 5 days",
+    "category": "feature",
+    "summary": "Clinicians no longer have to stay the whole week. Book a one-day visit, a three-day session or the full five-day residency, whatever this week's budget allows.",
+    "highlights": [
+      "Pick the length on the Clinician card, then the block you want coached.",
+      "Still one clinician at a time."
+    ]
+  },
+  {
     "id": "2026-10-07-league-tags",
     "date": "2026-10-07",
     "title": "League tags on your profile",

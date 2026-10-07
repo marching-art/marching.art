@@ -256,10 +256,10 @@ export function usePodium(enabled) {
     [reload]
   );
 
-  /** @type {(block: any) => Promise<any>} */
+  /** @type {(block: string, days?: number) => Promise<any>} */
   const hireClinician = useCallback(
-    async (block) => {
-      const result = await hirePodiumClinician({ block });
+    async (block, days) => {
+      const result = await hirePodiumClinician(days ? { block, days } : { block });
       await reload();
       return result.data;
     },

@@ -438,6 +438,37 @@ function applyJudgesTapes(state, day, cfg) {
 }
 
 /**
+ * Clinician bookings (2026-10): the lengths a director may book a clinician
+ * for and what each costs, shortest first. Read from `cfg.clinician.costByDays`
+ * ({ [days]: cost }); entries that are not a positive whole number of days
+ * with a positive cost are dropped, so a malformed balance override can never
+ * offer a free or fractional booking.
+ * @param {any} cfg balance config
+ * @returns {{days: number, cost: number}[]}
+ */
+function clinicianBookings(cfg) {
+  const costByDays = (cfg.clinician && cfg.clinician.costByDays) || {};
+  return Object.entries(costByDays)
+    .map(([days, cost]) => ({ days: Number(days), cost: Number(cost) }))
+    .filter(({ days, cost }) => Number.isInteger(days) && days > 0 && Number.isFinite(cost) && cost > 0)
+    .sort((a, b) => a.days - b.days);
+}
+
+/**
+ * The booking a hire request names, or null when that length is not offered.
+ * A request without a length (pre-2026-10 clients) books the longest stay —
+ * the residency those clients were offering.
+ * @param {any} cfg balance config
+ * @param {unknown} days requested booking length
+ * @returns {{days: number, cost: number} | null}
+ */
+function clinicianBookingFor(cfg, days) {
+  const bookings = clinicianBookings(cfg);
+  if (days === undefined || days === null) return bookings[bookings.length - 1] || null;
+  return bookings.find((booking) => booking.days === days) || null;
+}
+
+/**
  * Book rewrite (2026-10): once a season a director may rewrite part of the
  * show — move up to `cfg.bookRewrite.maxCaptions` captions to a new challenge
  * level before `lastDay`. Pure validation: returns the reason it is refused,
@@ -985,6 +1016,8 @@ function assistantStreakAfter(previous, { playedSelf, restDay, assistant }) {
 }
 
 module.exports = {
+  clinicianBookings,
+  clinicianBookingFor,
   assistantYieldFor,
   assistantStreakAfter,
   LEGACY_CHALLENGE_MODEL,

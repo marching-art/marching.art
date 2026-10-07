@@ -134,9 +134,16 @@ exports.hirePodiumClinician = onCall({ cors: true }, async (request) => {
   // Abuse throttle (shared podium bucket) — rehearsal/staff actions are the
   // Podium core loop, so the budget is generous (still far above human rate).
   await assertWriteBudget(db, uid, "podium", { max: 120, windowMs: 10 * 60 * 1000 });
-  const { block } = request.data || {};
+  const { block, days } = request.data || {};
   if (!engine.BLOCK_TYPES.includes(block) || block === "warmup") {
     throw new HttpsError("invalid-argument", "Clinicians coach a rehearsal block (not warmup).");
+  }
+  // Flexible bookings (2026-10): 1, 3 or 5 days, priced per length in
+  // balance `clinician.costByDays`; omitted `days` books the longest stay.
+  const booking = engine.clinicianBookingFor(store.balance, days);
+  if (!booking) {
+    const offered = engine.clinicianBookings(store.balance).map((b) => b.days);
+    throw new HttpsError("invalid-argument", `Clinicians book for ${offered.join(", ")} days.`);
   }
   const sRef = store.stateRef(db, uid);
   const result = await db.runTransaction(async (transaction) => {
@@ -148,11 +155,16 @@ exports.hirePodiumClinician = onCall({ cors: true }, async (request) => {
     if (state.clinician && state.clinician.expiresDay >= competitionDay) {
       throw new HttpsError("failed-precondition", "A clinician engagement is already active.");
     }
-    const { cost, durationDays } = store.balance.clinician;
+    const { cost, days: bookedDays } = booking;
     if (!store.debitBudget(state, cost, "clinician", competitionDay)) {
       throw new HttpsError("failed-precondition", `Not enough Corps Budget (need ${cost}).`);
     }
-    state.clinician = { block, hiredDay: competitionDay, expiresDay: competitionDay + durationDays - 1 };
+    state.clinician = {
+      block,
+      days: bookedDays,
+      hiredDay: competitionDay,
+      expiresDay: competitionDay + bookedDays - 1,
+    };
     state.updatedAt = new Date().toISOString();
     transaction.set(sRef, state);
     return { clinician: state.clinician, budget: state.budget };

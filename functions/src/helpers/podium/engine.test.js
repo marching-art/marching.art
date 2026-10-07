@@ -620,8 +620,42 @@ describe("money buys real choices (2026-10)", () => {
   });
 
   test("a clinician residency outvalues a few days of +30%", () => {
-    assert.ok(cfg.clinician.durationDays >= 5);
+    const bookings = engine.clinicianBookings(cfg);
+    assert.ok(bookings[bookings.length - 1].days >= 5);
     assert.ok(cfg.clinician.yieldBoost >= 1.5);
+  });
+});
+
+describe("clinician bookings — 1, 3 or 5 days (2026-10)", () => {
+  test("offers 1, 3 and 5 days, shortest first", () => {
+    assert.deepEqual(
+      engine.clinicianBookings(cfg).map((b) => b.days),
+      [1, 3, 5]
+    );
+  });
+
+  test("shorter bookings carry a per-day premium; the residency is the best value", () => {
+    const perDay = engine.clinicianBookings(cfg).map((b) => b.cost / b.days);
+    for (let i = 1; i < perDay.length; i++) assert.ok(perDay[i] < perDay[i - 1]);
+  });
+
+  test("chaining 1-day visits never undercuts a longer stay", () => {
+    const [visit, ...longer] = engine.clinicianBookings(cfg);
+    for (const booking of longer) assert.ok(visit.cost * booking.days > booking.cost);
+  });
+
+  test("a hire names a length, or books the residency when it doesn't", () => {
+    assert.deepEqual(engine.clinicianBookingFor(cfg, 3), { days: 3, cost: cfg.clinician.costByDays["3"] });
+    assert.equal(engine.clinicianBookingFor(cfg, undefined).days, 5);
+    assert.equal(engine.clinicianBookingFor(cfg, 2), null);
+    assert.equal(engine.clinicianBookingFor(cfg, "3"), null, "lengths are numbers, not strings");
+  });
+
+  test("a malformed override never offers a free or fractional booking", () => {
+    const bad = { clinician: { costByDays: { 1: 0, 2.5: 50, x: 10, 4: -5, 3: 90 } } };
+    assert.deepEqual(engine.clinicianBookings(bad), [{ days: 3, cost: 90 }]);
+    assert.deepEqual(engine.clinicianBookings({}), []);
+    assert.equal(engine.clinicianBookingFor({}, undefined), null);
   });
 });
 
