@@ -499,7 +499,7 @@ export default function JointRehearsalPanel() {
                 <select
                   value={toUid}
                   onChange={(e) => setToUid(e.target.value)}
-                  className="flex-1 bg-surface-sunken border border-line rounded-none px-2 py-1.5 text-xs text-white focus:border-interactive focus:outline-none"
+                  className="flex-1 min-w-0 w-full truncate bg-surface-sunken border border-line rounded-none px-2 py-1.5 text-xs text-white focus:border-interactive focus:outline-none"
                 >
                   <option value="">Choose a corps…</option>
                   {(data.roster || []).map((corps) => (
