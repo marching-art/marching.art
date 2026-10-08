@@ -1,5 +1,12 @@
 [
   {
+    "id": "2026-10-08-joint-scout-button",
+    "date": "2026-10-08",
+    "title": "Podium: Find overlaps button fits on phones",
+    "category": "fix",
+    "summary": "On narrow screens, a long corps name in the Joint Rehearsals scout picker pushed the Find overlaps button off the edge of the card. The picker now shrinks to fit, so the button stays in view."
+  },
+  {
     "id": "2026-10-07-flexible-clinicians",
     "date": "2026-10-07",
     "title": "Podium: book a clinician for 1, 3 or 5 days",
