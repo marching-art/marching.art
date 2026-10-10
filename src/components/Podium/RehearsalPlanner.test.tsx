@@ -61,6 +61,19 @@ describe('RehearsalPlanner keeps the mechanics hidden', () => {
     expect(screen.getByText('+1.2%')).toBeTruthy();
     expect(screen.queryByText(/repeat yield|ensemble readiness/)).toBeNull();
   });
+
+  it('names the joint rehearsal partner on a sharpened Full Ensemble, without the bonus size', () => {
+    const podium = podiumWith();
+    podium.lastPanel = {
+      blockType: 'fullEnsemble',
+      gains: { GE1: { content: 0.015, clean: 0.005 } },
+      jointBoost: 0.25,
+      jointPartner: 'Blue Stars',
+    };
+    render(<Planner podium={podium} />);
+    expect(screen.getByText(/Joint rehearsal with Blue Stars/)).toBeTruthy();
+    expect(screen.queryByText(/25%|×1\.25/)).toBeNull();
+  });
 });
 
 describe('RehearsalPlanner morale: outcomes, not thresholds', () => {

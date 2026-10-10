@@ -508,7 +508,7 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
       // is the lower of the booked one and tonight's real gap
       // (joint.jointTravelCharge). Stale entries (partner vanished, missed
       // day) are cleared quietly.
-      const todayJoint = joint.pendingJoints(state).find((j) => j.day === competitionDay);
+      const todayJoint = joint.jointOnDay(state, competitionDay);
       if (todayJoint) {
         state.condition.morale = Math.min(
           store.balance.condition.moraleMax,

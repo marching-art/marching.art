@@ -33,6 +33,9 @@ export interface PodiumBlockResult {
     day: number;
     gains: Record<string, { content: number; clean: number }>;
     staminaCost: number;
+    // Present when today's joint rehearsal sharpened this Full Ensemble block.
+    jointBoost?: number;
+    jointPartner?: string | null;
   };
   today: {
     calendarDay: number;

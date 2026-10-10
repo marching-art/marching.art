@@ -20,7 +20,7 @@
  *
  * Proposals live in `podium-joint/{seasonUid}/proposals/{id}` (backend-only;
  * the callables are the API). Accepted joints are denormalized onto BOTH
- * corps' states as `state.jointRehearsal` (upcoming, one at a time) plus a
+ * corps' states as `state.jointRehearsals` (upcoming, one per week) plus a
  * `state.jointHistory` append that drives the weekly cap and pair decay.
  */
 
@@ -59,6 +59,19 @@ function pendingJoints(state) {
   if (Array.isArray(state.jointRehearsals)) return state.jointRehearsals;
   if (state.jointRehearsal && state.jointRehearsal.day) return [state.jointRehearsal];
   return [];
+}
+
+/**
+ * The joint rehearsal booked for a given competition day, or null. The one
+ * lookup the block callable (Full Ensemble bonus) and the nightly processor
+ * (morale, travel, scrimmage) share, so the day's joint can never apply on
+ * one side and not the other.
+ * @param {object} state
+ * @param {number} competitionDay
+ * @returns {object|null}
+ */
+function jointOnDay(state, competitionDay) {
+  return pendingJoints(state).find((j) => j && j.day === competitionDay) || null;
 }
 
 /**
@@ -349,6 +362,7 @@ module.exports = {
   jointsUsedInWeek,
   pairCountWith,
   pendingJoints,
+  jointOnDay,
   ensembleBonusFor,
   corpsVenueOnDay,
   proposalPreview,

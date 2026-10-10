@@ -427,6 +427,13 @@ src/scripts/buildClientVenues.js` → re-run `buildPlaceIndex.js` (see its
 
 ## Recently shipped (context, newest first — prune when stale)
 
+- 2026-10-10: **Joint Full Ensemble bonus restored** (Discord bug report) —
+  `allocateRehearsalBlock` still read the legacy single `state.jointRehearsal`
+  slot, which acceptance has nulled since the multi-week `jointRehearsals`
+  list landed, so the frozen `bonusMult` never applied (morale + scrimmage,
+  read by the processor via `pendingJoints`, were fine). Both now share
+  `joint.jointOnDay`; the Action Complete panel names the partner (no number).
+
 - 2026-10-07: **Flexible clinician bookings** (Discord feature request) — a
   Podium clinician books for 1, 3 or 5 days (`clinician.costByDays`
   40 / 90 / 120, i.e. 40 / 30 / 24 per day); one active at a time; the
