@@ -1,5 +1,12 @@
 [
   {
+    "id": "2026-10-10-joint-full-ensemble",
+    "date": "2026-10-10",
+    "title": "Podium: joint rehearsals sharpen Full Ensemble again",
+    "category": "fix",
+    "summary": "On a joint rehearsal day, Full Ensemble blocks weren't getting the extra lift the shared rehearsal is meant to give (the morale boost and scrimmage report were unaffected). That's fixed, and the rehearsal result now names your joint partner when the shared run sharpens a block."
+  },
+  {
     "id": "2026-10-08-joint-scout-button",
     "date": "2026-10-08",
     "title": "Podium: Find overlaps button fits on phones",

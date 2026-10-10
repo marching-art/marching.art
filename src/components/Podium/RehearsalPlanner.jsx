@@ -410,6 +410,14 @@ export default function RehearsalPlanner({ podium }) {
               </span>
             ))}
           </div>
+          {/* The day's joint rehearsal sharpened this block — named as an
+              outcome, never with the bonus size (decision 47). */}
+          {(lastPanel.jointBoost ?? 0) > 0 && (
+            <div className="mt-1 text-[11px] text-purple-300">
+              Joint rehearsal{lastPanel.jointPartner ? ` with ${lastPanel.jointPartner}` : ''} — the
+              shared run sharpened this block
+            </div>
+          )}
         </div>
       )}
 

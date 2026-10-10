@@ -24,6 +24,7 @@ const engine = require("../helpers/podium/engine");
 const store = require("../helpers/podium/store");
 const venues = require("../helpers/podium/venues");
 const staffMarket = require("../helpers/podium/staffMarket");
+const joint = require("../helpers/podium/joint");
 const staffNames = require("../helpers/podium/staffNames");
 const career = require("../helpers/podium/career");
 const divisions = require("../helpers/podium/divisions");
@@ -768,11 +769,13 @@ exports.allocateRehearsalBlock = onCall({ cors: true }, async (request) => {
         state.clinician.expiresDay >= competitionDay;
       const staffMult = staffMarket.staffYieldMultiplier(state, blockType, store.balance);
       const clinicianMult = clinicianActive ? store.balance.clinician.yieldBoost : 1;
-      const jointActive =
-        blockType === "fullEnsemble" &&
-        state.jointRehearsal &&
-        state.jointRehearsal.day === competitionDay;
-      const jointMult = jointActive ? state.jointRehearsal.bonusMult || 1 : 1;
+      // Read through joint.jointOnDay (the same lookup the nightly processor
+      // uses): accepted joints live on the `jointRehearsals` list, and the
+      // legacy single `jointRehearsal` slot is nulled at acceptance — reading
+      // it directly meant the bonus never applied.
+      const todayJoint = blockType === "fullEnsemble" ? joint.jointOnDay(state, competitionDay) : null;
+      const jointActive = Boolean(todayJoint);
+      const jointMult = jointActive ? todayJoint.bonusMult || 1 : 1;
       panel = engine.allocateBlock(
         state,
         blockType,
@@ -792,7 +795,7 @@ exports.allocateRehearsalBlock = onCall({ cors: true }, async (request) => {
       if (staffMult > 1) panel.staffBoost = Number((staffMult - 1).toFixed(3));
       if (jointActive && jointMult > 1) {
         panel.jointBoost = Number((jointMult - 1).toFixed(3));
-        panel.jointPartner = state.jointRehearsal.partnerCorpsName || null;
+        panel.jointPartner = todayJoint.partnerCorpsName || null;
       }
     }
 

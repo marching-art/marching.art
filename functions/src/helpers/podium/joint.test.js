@@ -46,6 +46,22 @@ describe("joint caps and decay", () => {
     assert.deepEqual(joint.pendingJoints({ jointRehearsal: { day: 3 }, jointRehearsals: [] }), []);
   });
 
+  test("jointOnDay finds the day's joint on the multi-week list (and the legacy slot)", () => {
+    const state = {
+      jointRehearsals: [
+        { day: 12, bonusMult: 1.25, partnerCorpsName: "A" },
+        { day: 20, bonusMult: 1.125, partnerCorpsName: "B" },
+      ],
+      // Post-acceptance writes null the legacy slot; it must not hide the list.
+      jointRehearsal: null,
+    };
+    assert.equal(joint.jointOnDay(state, 12).bonusMult, 1.25);
+    assert.equal(joint.jointOnDay(state, 20).partnerCorpsName, "B");
+    assert.equal(joint.jointOnDay(state, 13), null);
+    assert.equal(joint.jointOnDay({}, 12), null);
+    assert.equal(joint.jointOnDay({ jointRehearsal: { day: 5, bonusMult: 1.25 } }, 5).bonusMult, 1.25);
+  });
+
   test("repeat pairings decay: full bonus, half, then none", () => {
     assert.equal(joint.ensembleBonusFor(0, balance), 1.25);
     assert.equal(joint.ensembleBonusFor(1, balance), 1.125);

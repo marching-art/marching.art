@@ -41,6 +41,8 @@ export function usePodium(enabled) {
    *   blockType?: string;
    *   budgetEarned?: number;
    *   gains?: Record<string, { content: number; clean: number }>;
+   *   jointBoost?: number;
+   *   jointPartner?: string | null;
    * }} PodiumActionPanel
    */
   const [lastPanel, setLastPanel] = useState(/** @type {PodiumActionPanel | null} */ (null));
