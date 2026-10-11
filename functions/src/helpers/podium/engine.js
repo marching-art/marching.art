@@ -469,6 +469,24 @@ function clinicianBookingFor(cfg, days) {
 }
 
 /**
+ * The yield multiplier a booked clinician puts on one block: the balance boost
+ * while the engagement is active (through `expiresDay`) and coaching this block
+ * type, else 1. The one rule the block callable and the nightly assistant
+ * autoplay share — the clinician is on site whether the director or the
+ * assistant runs the day.
+ * @param {any} state corps state
+ * @param {string} blockType
+ * @param {number} competitionDay
+ * @param {any} cfg balance config
+ * @returns {number}
+ */
+function clinicianYieldFor(state, blockType, competitionDay, cfg) {
+  const clinician = state && state.clinician;
+  const active = Boolean(clinician) && clinician.block === blockType && clinician.expiresDay >= competitionDay;
+  return active ? cfg.clinician.yieldBoost : 1;
+}
+
+/**
  * Book rewrite (2026-10): once a season a director may rewrite part of the
  * show — move up to `cfg.bookRewrite.maxCaptions` captions to a new challenge
  * level before `lastDay`. Pure validation: returns the reason it is refused,
@@ -1018,6 +1036,7 @@ function assistantStreakAfter(previous, { playedSelf, restDay, assistant }) {
 module.exports = {
   clinicianBookings,
   clinicianBookingFor,
+  clinicianYieldFor,
   assistantYieldFor,
   assistantStreakAfter,
   LEGACY_CHALLENGE_MODEL,

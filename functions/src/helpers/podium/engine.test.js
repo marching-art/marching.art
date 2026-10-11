@@ -716,3 +716,19 @@ describe("book rewrite — once a season, a timing bet (decision 44)", () => {
     );
   });
 });
+
+describe("clinicianYieldFor (shared by the block callable and assistant autoplay)", () => {
+  const cfg = { clinician: { yieldBoost: 1.3 } };
+  const state = { clinician: { block: "brassSectionals", hiredDay: 20, expiresDay: 22 } };
+
+  test("boosts the coached block through the engagement's last day", () => {
+    assert.equal(engine.clinicianYieldFor(state, "brassSectionals", 20, cfg), 1.3);
+    assert.equal(engine.clinicianYieldFor(state, "brassSectionals", 22, cfg), 1.3);
+  });
+
+  test("leaves other blocks, expired engagements and no booking at 1", () => {
+    assert.equal(engine.clinicianYieldFor(state, "fullEnsemble", 21, cfg), 1);
+    assert.equal(engine.clinicianYieldFor(state, "brassSectionals", 23, cfg), 1);
+    assert.equal(engine.clinicianYieldFor({}, "brassSectionals", 21, cfg), 1);
+  });
+});

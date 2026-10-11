@@ -338,11 +338,10 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
           if (!engine.BLOCK_TYPES.includes(blockType)) continue;
           // An accepted joint rehearsal boosts Full Ensemble even on an
           // assistant-run day — the handshake happened, the partner showed
-          // up (§5.12; only ACCEPTING is human-gated).
-          const jointToday_ =
-            blockType === "fullEnsemble"
-              ? joint.pendingJoints(state).find((j) => j.day === competitionDay)
-              : null;
+          // up (§5.12; only ACCEPTING is human-gated). A booked clinician is
+          // on site too, so the assistant's blocks get the same boost a
+          // director's tap would (engine.clinicianYieldFor).
+          const jointToday_ = blockType === "fullEnsemble" ? joint.jointOnDay(state, competitionDay) : null;
           const jointMult = jointToday_ ? jointToday_.bonusMult || 1 : 1;
           engine.allocateBlock(
             state,
@@ -356,6 +355,7 @@ async function processPodiumDay(db, seasonData, { calendarDay, competitionDay })
               yieldMultiplier:
                 engine.assistantYieldFor(assistantStreakToday, store.balance) *
                 staffMarket.staffYieldMultiplier(state, blockType, store.balance) *
+                engine.clinicianYieldFor(state, blockType, competitionDay, store.balance) *
                 jointMult,
               isShowDay,
             }

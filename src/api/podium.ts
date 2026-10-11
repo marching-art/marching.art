@@ -45,6 +45,13 @@ export interface PodiumBlockResult {
     warmupUsed: boolean;
   };
   condition: { stamina: number; morale: number };
+  // Post-block caption progress and Corps Budget (same shapes as
+  // getPodiumState's `state.captions` / `state.budget`).
+  captions?: Record<
+    string,
+    { content: number; clean: number; lastRehearsedDay?: number; challenge?: number }
+  >;
+  budget?: Record<string, unknown> | null;
   blocksRemaining: number;
 }
 
