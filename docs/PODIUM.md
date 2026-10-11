@@ -413,7 +413,8 @@ Notes:
   blocks), show days are a lighter pre-performance routine (~8 blocks, the corps competes that
   night), and rehearsal days are the full grind (~12 blocks). On any day the director doesn't log
   in, the assistant executes that day type's plan at **~85% yield** and cannot declare rest days or
-  accept joint rehearsals. A day type with no plan of its own falls back to the rehearsal plan, so a
+  accept joint rehearsals (staff, a booked clinician and an already-accepted joint still boost its
+  blocks — decision 50). A day type with no plan of its own falls back to the rehearsal plan, so a
   single-plan corps is unaffected. Active play strictly dominates, but a vacation doesn't wreck a
   season. The yield **fades with consecutive days away** (`rehearsal.assistantDecay`: full yield
   through a 3-day grace window, then −8 points per further day down to a 35% floor;
@@ -1965,6 +1966,13 @@ proven the machinery. Total: ~16–20 engineering weeks to beta.
     (omitted = the longest stay, for older clients) and records it on `state.clinician.days`;
     `getPodiumState.clinicianTerms` is `{ bookings: [{days, cost}], boostPct }`. Sim check L4
     and the engine tests hold the per-day ladder strictly falling.
+
+50. **A booked clinician coaches assistant-run days too (Discord question, 2026-10).** The
+    nightly assistant autoplay applied staff and joint-rehearsal boosts but skipped the
+    clinician, so a paid booking was wasted on any day the director didn't log in. The clinician
+    is on site either way: the block callable and the autoplay now share
+    `engine.clinicianYieldFor`. Active play still dominates — the assistant's own yield (and its
+    fade over consecutive days away) still applies on top.
 
 **Still open:**
 

@@ -1,5 +1,12 @@
 [
   {
+    "id": "2026-10-11-podium-live-captions",
+    "date": "2026-10-11",
+    "title": "Podium: caption bars update after every block",
+    "category": "fix",
+    "summary": "Caption Progress bars and percentages (and your Corps Budget after a fundraiser) now update the moment a block finishes, no refresh needed. And a clinician you've booked now coaches on days your assistant director runs rehearsal, not only on days you run it yourself."
+  },
+  {
     "id": "2026-10-10-joint-full-ensemble",
     "date": "2026-10-10",
     "title": "Podium: joint rehearsals sharpen Full Ensemble again",

@@ -427,6 +427,13 @@ src/scripts/buildClientVenues.js` → re-run `buildPlaceIndex.js` (see its
 
 ## Recently shipped (context, newest first — prune when stale)
 
+- 2026-10-11: **Live caption bars + clinician on assistant days** (Discord) —
+  `allocateRehearsalBlock` now returns the post-block `captions` and `budget`
+  and `usePodium.applyAllocation` merges them, so Caption Progress redraws per
+  tap instead of on reload. The nightly assistant autoplay now applies the
+  booked clinician via the shared `engine.clinicianYieldFor` (it already took
+  staff + joint). PODIUM.md decision 50.
+
 - 2026-10-10: **Joint Full Ensemble bonus restored** (Discord bug report) —
   `allocateRehearsalBlock` still read the legacy single `state.jointRehearsal`
   slot, which acceptance has nulled since the multi-week `jointRehearsals`

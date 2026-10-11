@@ -763,12 +763,9 @@ exports.allocateRehearsalBlock = onCall({ cors: true }, async (request) => {
       // the staff share is capped inside staffYieldMultiplier. A joint
       // rehearsal (§5.12) sharpens Full Ensemble only, at the multiplier
       // frozen when the handshake was accepted.
-      const clinicianActive =
-        state.clinician &&
-        state.clinician.block === blockType &&
-        state.clinician.expiresDay >= competitionDay;
       const staffMult = staffMarket.staffYieldMultiplier(state, blockType, store.balance);
-      const clinicianMult = clinicianActive ? store.balance.clinician.yieldBoost : 1;
+      const clinicianMult = engine.clinicianYieldFor(state, blockType, competitionDay, store.balance);
+      const clinicianActive = clinicianMult !== 1;
       // Read through joint.jointOnDay (the same lookup the nightly processor
       // uses): accepted joints live on the `jointRehearsals` list, and the
       // legacy single `jointRehearsal` slot is nulled at acceptance — reading
@@ -804,11 +801,17 @@ exports.allocateRehearsalBlock = onCall({ cors: true }, async (request) => {
     if (blockType === "warmup") state.today.warmupUsed = true;
     state.updatedAt = new Date().toISOString();
 
-    transaction.set(sRef, store.dehydrateState(state));
+    const stored = store.dehydrateState(state);
+    transaction.set(sRef, stored);
     return {
       panel,
       today: state.today,
       condition: state.condition,
+      // The caption bars and the Corps Budget move with every block, so the
+      // planner redraws them from the confirmed result instead of waiting
+      // for a reload (stored shape: the same fields getPodiumState returns).
+      captions: stored.captions,
+      budget: state.budget || null,
       blocksRemaining: maxBlocks - state.today.blocksUsed,
       // The cap the block was accepted against, so the planner's "n / cap"
       // keeps its denominator through a run of taps.

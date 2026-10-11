@@ -93,6 +93,10 @@ export function usePodium(enabled) {
               ...previous.state,
               today: payload.today,
               condition: payload.condition,
+              // Caption bars and the Corps Budget redraw from each confirmed
+              // block (older servers omit them — keep what we have).
+              ...(payload.captions ? { captions: payload.captions } : {}),
+              ...(payload.budget ? { budget: payload.budget } : {}),
             },
             // Server-authoritative budget moves with each confirmed block.
             blocksUsedToday: payload.today?.blocksUsed ?? previous.blocksUsedToday,

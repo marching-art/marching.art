@@ -71,6 +71,25 @@ describe('usePodium — optimistic block queue', () => {
     expect(result.current.data.blocksUsedToday).toBe(1);
   });
 
+  it('redraws captions and the Corps Budget from each confirmed block (no reload)', async () => {
+    allocateRehearsalBlock.mockResolvedValue({
+      data: {
+        panel: {},
+        today: { calendarDay: 10, blocksUsed: 1, blocks: ['brass'] },
+        condition: { stamina: 79 },
+        captions: { B: { content: 0.31, clean: 0.12, challenge: 6 } },
+        budget: { balance: 140 },
+        blocksRemaining: 11,
+      },
+    });
+    const { result } = await mountLoaded();
+
+    act(() => result.current.queueAllocate('brass'));
+    await waitFor(() => expect(result.current.data.state.captions?.B?.content).toBe(0.31));
+    expect(result.current.data.state.budget).toEqual({ balance: 140 });
+    expect(getPodiumState).toHaveBeenCalledTimes(1);
+  });
+
   it('drains rapid taps strictly one at a time, in order', async () => {
     // Record the order allocations are SENT, and the concurrency.
     let inFlight = 0;
