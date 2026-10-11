@@ -19,8 +19,8 @@
   },
   "dependencies": {
     "@getbrevo/brevo": "^6.0.3",
-    "@google-cloud/pubsub": "^6.1.0",
-    "@google/genai": "^2.25.0",
+    "@google-cloud/pubsub": "^6.2.0",
+    "@google/genai": "^2.28.0",
     "axios": "^1.20.0",
     "cheerio": "^1.2.0",
     "cloudinary": "^2.11.0",
