@@ -43,6 +43,14 @@ updates:
       interval: weekly
     open-pull-requests-limit: 3
     groups:
+      # @firebase/rules-unit-testing peer-pins one firebase major (5.x ->
+      # firebase 12, 6.x -> firebase 13), so a bump of either alone fails
+      # `npm ci` with ERESOLVE. Group them at every level, majors included,
+      # so they always land in one PR. Listed first: a dependency joins the
+      # first group it matches.
+      firebase-sdk:
+        patterns: [firebase, '@firebase/*']
+        update-types: [major, minor, patch]
       all-dependencies:
         update-types: [minor, patch]
 

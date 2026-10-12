@@ -427,6 +427,13 @@ src/scripts/buildClientVenues.js` → re-run `buildPlaceIndex.js` (see its
 
 ## Recently shipped (context, newest first — prune when stale)
 
+- 2026-10-12: **firestore-tests on firebase 13** — Dependabot opened
+  `firebase` 13 and `@firebase/rules-unit-testing` 6 as separate PRs, and each
+  failed `npm ci` (ERESOLVE: the testing lib peer-pins one firebase major).
+  Bumped together (227/227 rules tests pass) and grouped as `firebase-sdk` in
+  `.github/dependabot.yml` at every update level so the pair always lands in
+  one PR. The two split Dependabot PRs are superseded.
+
 - 2026-10-11: **Live caption bars + clinician on assistant days** (Discord) —
   `allocateRehearsalBlock` now returns the post-block `captions` and `budget`
   and `usePodium.applyAllocation` merges them, so Caption Progress redraws per
