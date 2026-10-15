@@ -1,5 +1,12 @@
 [
   {
+    "id": "2026-10-15-joint-one-per-day",
+    "date": "2026-10-15",
+    "title": "Podium: one joint rehearsal per day",
+    "category": "fix",
+    "summary": "If you had invited another corps to a joint rehearsal and then accepted a different invitation for the same day, your original invitation stayed open in both inboxes even though it could no longer happen. Accepting a joint rehearsal now withdraws any other open invitations it clashes with, on both sides, and a corps can never hold two joint rehearsals on the same day."
+  },
+  {
     "id": "2026-10-11-podium-live-captions",
     "date": "2026-10-11",
     "title": "Podium: caption bars update after every block",

@@ -427,6 +427,13 @@ src/scripts/buildClientVenues.js` → re-run `buildPlaceIndex.js` (see its
 
 ## Recently shipped (context, newest first — prune when stale)
 
+- 2026-10-15: **One joint rehearsal per day** (owner direction) — accepting a
+  joint now revokes (`status: "revoked"`, `supersededBy`) every other pending
+  proposal touching either corps on that day or in the week it filled, inside
+  the accept transaction (`joint.supersededProposals`); a second same-day
+  joint is refused outright and stale leftovers are hidden from the inbox
+  (PODIUM.md decision 51).
+
 - 2026-10-11: **Live caption bars + clinician on assistant days** (Discord) —
   `allocateRehearsalBlock` now returns the post-block `captions` and `budget`
   and `usePodium.applyAllocation` merges them, so Caption Progress redraws per

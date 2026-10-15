@@ -981,7 +981,9 @@ turned into the class's social mechanic. Fully mutual, capped, and deterministic
   invisible to leaderboards and recaps. It's scouting: the only way, outside a shared show or a
   regional anchor, to see exactly where you stand against a specific corps. Choosing _whom_ to
   scrimmage (the rival you'll meet Saturday? the class leader, to calibrate?) is itself strategy.
-- **Caps and anti-collusion.** One joint rehearsal per corps per week, consumed by both parties.
+- **Caps and anti-collusion.** One joint rehearsal per corps per week (and never two on the same
+  day), consumed by both parties. A director may propose the same day to several partners, but
+  accepting one withdraws every other open proposal it clashes with (decision 51).
   Repeat pairings decay: the second joint with the same partner in a season yields half the
   ensemble bonus, the third none (the scrimmage report always works) — so the mechanic pushes the
   social graph outward instead of letting two friends farm each other. Because Podium scores are
@@ -1973,6 +1975,15 @@ proven the machinery. Total: ~16–20 engineering weeks to beta.
     is on site either way: the block callable and the autoplay now share
     `engine.clinicianYieldFor`. Active play still dominates — the assistant's own yield (and its
     fade over consecutive days away) still applies on top.
+
+51. **One joint rehearsal per corps per day; acceptance clears the clashes (owner direction,
+    2026-10).** A director may hedge by proposing the same day to several partners, but the
+    moment any joint lands on a day, every other pending proposal touching either booked corps
+    that day — or in the week the booking just filled — is marked `revoked` (`supersededBy` the
+    accepted id) in the same transaction (`joint.supersededProposals`), so it leaves both
+    inboxes instead of bouncing at acceptance. `assertJointCapacity` also refuses a second joint
+    on an already-booked day regardless of `maxPerWeek`, and `getJointRehearsals` hides any
+    pre-existing pending proposal for a day either side has booked.
 
 **Still open:**
 

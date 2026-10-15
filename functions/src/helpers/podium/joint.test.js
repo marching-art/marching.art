@@ -70,6 +70,76 @@ describe("joint caps and decay", () => {
   });
 });
 
+describe("supersededProposals (one joint per corps per day)", () => {
+  // B accepts A's day-10 proposal; B had already sent C a day-10 proposal.
+  const cfg = { joint: { maxPerWeek: 1 } };
+  const booked = {
+    a: { jointHistory: [{ day: 10, partnerUid: "b", week: 2 }] },
+    b: { jointHistory: [{ day: 10, partnerUid: "a", week: 2 }] },
+  };
+  const p = (id, fromUid, toUid, day, status = "pending") => ({ id, fromUid, toUid, day, status });
+
+  test("revokes the accepting director's own same-day proposal to another corps", () => {
+    const ids = joint.supersededProposals(
+      [p("accepted", "a", "b", 10), p("b-to-c", "b", "c", 10)],
+      "accepted",
+      booked,
+      10,
+      cfg
+    );
+    assert.deepEqual(ids, ["b-to-c"]);
+  });
+
+  test("revokes any same-day proposal touching either booked corps, in either direction", () => {
+    const ids = joint.supersededProposals(
+      [p("d-to-a", "d", "a", 10), p("a-to-e", "a", "e", 10), p("f-to-b", "f", "b", 10)],
+      "accepted",
+      booked,
+      10,
+      cfg
+    );
+    assert.deepEqual(ids.sort(), ["a-to-e", "d-to-a", "f-to-b"]);
+  });
+
+  test("revokes proposals in the week the booking filled, keeps other weeks", () => {
+    const ids = joint.supersededProposals(
+      [p("same-week", "b", "c", 12), p("next-week", "b", "c", 16)],
+      "accepted",
+      booked,
+      10,
+      cfg
+    );
+    assert.deepEqual(ids, ["same-week"]);
+  });
+
+  test("a roomier weekly cap still revokes the same day but not the rest of the week", () => {
+    const ids = joint.supersededProposals(
+      [p("same-day", "b", "c", 10), p("same-week", "b", "c", 12)],
+      "accepted",
+      booked,
+      10,
+      { joint: { maxPerWeek: 2 } }
+    );
+    assert.deepEqual(ids, ["same-day"]);
+  });
+
+  test("never touches unrelated pairs, the accepted proposal, or settled proposals", () => {
+    const ids = joint.supersededProposals(
+      [
+        p("accepted", "a", "b", 10),
+        p("unrelated", "c", "d", 10),
+        p("declined", "b", "c", 10, "declined"),
+        null,
+      ],
+      "accepted",
+      booked,
+      10,
+      cfg
+    );
+    assert.deepEqual(ids, []);
+  });
+});
+
 describe("geography gate", () => {
   const venueOf = (city) => require("./venues").venueFor(city);
 
