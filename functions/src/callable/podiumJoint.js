@@ -33,10 +33,16 @@ function validateJointDay(day, competitionDay) {
   }
 }
 
-// Throws unless this corps can still take a joint on `day`. The only limit is
-// the weekly cap — a corps can hold several upcoming joints across DIFFERENT
-// weeks; a booked week is unavailable, the rest of the season is not.
+// Throws unless this corps can still take a joint on `day`: one joint per day,
+// and the weekly cap — a corps can hold several upcoming joints across
+// DIFFERENT weeks; a booked week is unavailable, the rest of the season is not.
 function assertJointCapacity(state, day, label) {
+  if (joint.jointOnDay(state, day)) {
+    throw new HttpsError(
+      "failed-precondition",
+      `${label} already has a joint rehearsal booked on Day ${day}.`
+    );
+  }
   const week = joint.weekOf(day);
   if (joint.jointsUsedInWeek(state, week) >= store.balance.joint.maxPerWeek) {
     throw new HttpsError(
@@ -185,6 +191,12 @@ exports.respondJointRehearsal = onCall({ cors: true }, async (request) => {
   if (proposal.toUid !== uid) {
     throw new HttpsError("permission-denied", "Only the invited director can respond.");
   }
+  if (proposal.status === "revoked") {
+    throw new HttpsError(
+      "failed-precondition",
+      "That proposal was withdrawn — one of the corps has since booked another joint rehearsal that week."
+    );
+  }
   if (proposal.status !== "pending") {
     throw new HttpsError("failed-precondition", `Proposal already ${proposal.status}.`);
   }
@@ -213,11 +225,24 @@ exports.respondJointRehearsal = onCall({ cors: true }, async (request) => {
 
   const fromRef = store.stateRef(db, proposal.fromUid);
   const toRef = store.stateRef(db, uid);
+  // Every live proposal touching either corps — read inside the transaction so
+  // the ones this booking makes unbookable are revoked atomically with it.
+  const proposals = joint.proposalsCollection(db, seasonData.seasonUid);
+  const touching = [proposal.fromUid, uid].flatMap((party) => [
+    proposals.where("fromUid", "==", party).where("status", "==", "pending"),
+    proposals.where("toUid", "==", party).where("status", "==", "pending"),
+  ]);
   const result = await db.runTransaction(async (transaction) => {
-    const [fromSnapshot, toSnapshot] = await Promise.all([
+    const [liveProposal, fromSnapshot, toSnapshot, ...touchingSnapshots] = await Promise.all([
+      transaction.get(proposalRef),
       transaction.get(fromRef),
       transaction.get(toRef),
+      ...touching.map((query) => transaction.get(query)),
     ]);
+    // A concurrent accept may have revoked this proposal since the pre-check.
+    if (!liveProposal.exists || liveProposal.data().status !== "pending") {
+      throw new HttpsError("failed-precondition", "That proposal is no longer open.");
+    }
     if (!fromSnapshot.exists || fromSnapshot.data().seasonUid !== seasonData.seasonUid) {
       throw new HttpsError("failed-precondition", "The proposing corps is no longer active.");
     }
@@ -251,6 +276,14 @@ exports.respondJointRehearsal = onCall({ cors: true }, async (request) => {
       stadium: preview.stadium,
       proposalId,
     };
+    const fromHistory = [
+      ...(fromState.jointHistory || []).slice(-19),
+      { day: proposal.day, partnerUid: uid, week },
+    ];
+    const toHistory = [
+      ...(toState.jointHistory || []).slice(-19),
+      { day: proposal.day, partnerUid: proposal.fromUid, week },
+    ];
     transaction.set(
       fromRef,
       {
@@ -267,10 +300,7 @@ exports.respondJointRehearsal = onCall({ cors: true }, async (request) => {
           },
         ],
         jointRehearsal: null,
-        jointHistory: [
-          ...(fromState.jointHistory || []).slice(-19),
-          { day: proposal.day, partnerUid: uid, week },
-        ],
+        jointHistory: fromHistory,
       },
       { merge: true }
     );
@@ -287,10 +317,7 @@ exports.respondJointRehearsal = onCall({ cors: true }, async (request) => {
           },
         ],
         jointRehearsal: null,
-        jointHistory: [
-          ...(toState.jointHistory || []).slice(-19),
-          { day: proposal.day, partnerUid: proposal.fromUid, week },
-        ],
+        jointHistory: toHistory,
       },
       { merge: true }
     );
@@ -306,7 +333,38 @@ exports.respondJointRehearsal = onCall({ cors: true }, async (request) => {
       },
       { merge: true }
     );
-    return { day: proposal.day, bonusMult, travelTier: gate.travelTier, city: hostCity };
+
+    // A corps holds one joint per day: every other live proposal touching
+    // either corps on this day (e.g. one this director had sent elsewhere for
+    // the same day) — or in the week this booking just filled — is revoked,
+    // so it leaves both inboxes instead of bouncing at acceptance.
+    const revokedIds = joint.supersededProposals(
+      touchingSnapshots.flatMap((snapshot) =>
+        snapshot.docs.map((d) => ({ id: d.id, ...d.data() }))
+      ),
+      proposalId,
+      {
+        [proposal.fromUid]: { ...fromState, jointHistory: fromHistory },
+        [uid]: { ...toState, jointHistory: toHistory },
+      },
+      proposal.day,
+      store.balance
+    );
+    const revokedAt = new Date().toISOString();
+    for (const revokedId of revokedIds) {
+      transaction.set(
+        proposals.doc(revokedId),
+        { status: "revoked", revokedAt, supersededBy: proposalId },
+        { merge: true }
+      );
+    }
+    return {
+      day: proposal.day,
+      bonusMult,
+      travelTier: gate.travelTier,
+      city: hostCity,
+      revokedCount: revokedIds.length,
+    };
   });
 
   logger.info(`Joint rehearsal accepted: ${proposal.fromUid} x ${uid} day ${result.day}`);
@@ -334,8 +392,8 @@ exports.getJointRehearsals = onCall({ cors: true }, async (request) => {
     stateSnapshot.exists && stateSnapshot.data().seasonUid === seasonUid
       ? stateSnapshot.data()
       : null;
-  const incoming = live(incomingSnapshot.docs);
-  const outgoing = live(outgoingSnapshot.docs);
+  let incoming = live(incomingSnapshot.docs);
+  let outgoing = live(outgoingSnapshot.docs);
 
   // Re-derive each pending proposal's host city and travel burden from BOTH
   // tours as they stand now. The stored city is a propose-time snapshot; a
@@ -360,6 +418,16 @@ exports.getJointRehearsals = onCall({ cors: true }, async (request) => {
         statesByUid.set(otherUids[i], snapshot.data());
       }
     });
+    // One joint per corps per day: a proposal for a day either side has since
+    // booked can never be accepted (acceptance revokes these; this hides any
+    // left over from before it did).
+    const bookable = (p) =>
+      ![p.fromUid, p.toUid].some((party) => {
+        const partyState = statesByUid.get(party);
+        return partyState && joint.jointOnDay(partyState, p.day);
+      });
+    incoming = incoming.filter(bookable);
+    outgoing = outgoing.filter(bookable);
     const ctx = { scheduleLocations, easternAssignments, storeModule: store, cfg: store.balance };
     for (const proposal of [...incoming, ...outgoing]) {
       const fromState = statesByUid.get(proposal.fromUid);

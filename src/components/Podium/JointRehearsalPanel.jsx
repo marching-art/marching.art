@@ -332,16 +332,19 @@ export default function JointRehearsalPanel() {
   }, [data, reload]);
 
   /**
-   * @param {() => Promise<unknown>} fn
-   * @param {string} [successMessage]
+   * @param {() => Promise<any>} fn
+   * @param {string | ((result: any) => string)} [successMessage] a fixed notice,
+   *   or one built from the callable's result
    */
   const act = async (fn, successMessage) => {
     setBusy(true);
     setError(null);
     setNotice(null);
     try {
-      await fn();
-      if (successMessage) setNotice(successMessage);
+      const result = await fn();
+      const message =
+        typeof successMessage === 'function' ? successMessage(result) : successMessage;
+      if (message) setNotice(message);
       await reload();
       return true;
     } catch (err) {
@@ -458,7 +461,10 @@ export default function JointRehearsalPanel() {
           onAccept={() =>
             act(
               () => respondJointRehearsal({ proposalId: proposal.id, accept: true }),
-              'Joint rehearsal booked — it is on your route now.'
+              (result) =>
+                result?.data?.revokedCount
+                  ? 'Joint rehearsal booked — it is on your route now. Proposals that clashed with it were withdrawn.'
+                  : 'Joint rehearsal booked — it is on your route now.'
             )
           }
           onDecline={() =>

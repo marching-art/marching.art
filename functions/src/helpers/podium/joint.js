@@ -75,6 +75,39 @@ function jointOnDay(state, competitionDay) {
 }
 
 /**
+ * The live proposals an acceptance just made unbookable (pure). A corps holds
+ * at most ONE joint rehearsal per day, so once a booking lands on `day`, every
+ * other pending proposal touching either booked corps on that day is dead —
+ * including one the accepting director had sent elsewhere for the same day as
+ * a hedge. Any proposal in a week the booking just filled (the weekly cap) is
+ * dead too: it could only ever bounce at acceptance. Proposals not touching
+ * either booked corps are untouched.
+ *
+ * @param {Array<{id: string, fromUid: string, toUid: string, day: number,
+ *   status?: string}>} proposals candidate proposals (any status)
+ * @param {string} acceptedId the proposal being accepted (never revoked)
+ * @param {Record<string, object>} bookedStates uid -> state AFTER the booking
+ *   (its jointHistory already carries the new joint)
+ * @param {number} day the booked competition day
+ * @param {{joint: {maxPerWeek: number}}} cfg balance config
+ * @returns {string[]} ids of the proposals to revoke, deduped
+ */
+function supersededProposals(proposals, acceptedId, bookedStates, day, cfg) {
+  const ids = new Set();
+  for (const proposal of proposals) {
+    if (!proposal || proposal.id === acceptedId || proposal.status !== "pending") continue;
+    const dead = [proposal.fromUid, proposal.toUid].some((uid) => {
+      const state = bookedStates[uid];
+      if (!state) return false;
+      if (proposal.day === day) return true;
+      return jointsUsedInWeek(state, weekOf(proposal.day)) >= cfg.joint.maxPerWeek;
+    });
+    if (dead) ids.add(proposal.id);
+  }
+  return [...ids];
+}
+
+/**
  * The Full Ensemble bonus multiplier for the Nth pairing (0-indexed prior
  * count). 1st: full bonus; 2nd: half; 3rd+: none (the scrimmage report
  * always works).
@@ -363,6 +396,7 @@ module.exports = {
   pairCountWith,
   pendingJoints,
   jointOnDay,
+  supersededProposals,
   ensembleBonusFor,
   corpsVenueOnDay,
   proposalPreview,

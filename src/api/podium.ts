@@ -825,7 +825,14 @@ export const proposeJointRehearsal = createCallable<
 
 export const respondJointRehearsal = createCallable<
   { proposalId: string; accept: boolean },
-  { success: boolean; status: string; day?: number; travelTier?: string | null }
+  {
+    success: boolean;
+    status: string;
+    day?: number;
+    travelTier?: string | null;
+    /** Other pending proposals this acceptance withdrew (same day / filled week). */
+    revokedCount?: number;
+  }
 >('respondJointRehearsal');
 
 export const getJointRehearsals = createCallable<void, JointRehearsalsResponse>(
