@@ -214,7 +214,18 @@ describe("submitPrediction", () => {
           corpsClass: "worldClass",
         })
       ),
-      /out of date/i
+      (/** @type {any} */ err) => {
+        assert.equal(err.code, "failed-precondition");
+        assert.match(err.message, /line just moved/i);
+        // The canonical line comes back so the board can show it and the
+        // director can pick again (never the forged one).
+        assert.deepEqual(err.details, {
+          reason: "stale-line",
+          questionId: "over-under",
+          threshold: 72.5,
+        });
+        return true;
+      }
     );
     assert.equal(writes.length, 0);
   });

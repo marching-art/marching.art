@@ -1,5 +1,12 @@
 [
   {
+    "id": "2026-10-17-over-under-picks",
+    "date": "2026-10-17",
+    "title": "Over/Under predictions register again",
+    "category": "fix",
+    "summary": "For some directors, tapping Over or Under on the daily \"next score over or under\" prediction did nothing, so the Director's Report could never reach a full set. Those picks now save. If the line ever changes between loading the page and tapping, you'll see the updated number and can pick again on the spot, and any prediction that can't be saved now tells you why instead of failing silently."
+  },
+  {
     "id": "2026-10-15-joint-one-per-day",
     "date": "2026-10-15",
     "title": "Podium: one joint rehearsal per day",

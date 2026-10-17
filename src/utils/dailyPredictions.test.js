@@ -6,8 +6,11 @@ import { describe, it, expect } from 'vitest';
 import { buildQuestions, PREDICTION_QUESTION_IDS } from './dailyPredictions';
 import {
   PREDICTION_QUESTION_IDS as SERVER_IDS,
+  PREDICTION_RECAP_DAYS as SERVER_RECAP_DAYS,
   SCORE_FREE_QUESTION_IDS,
 } from '../../functions/src/helpers/dailyPredictions.js';
+// Read as text: importing the module would initialize the Firebase client.
+import seasonApiSource from '../api/season.ts?raw';
 
 /** @param {Array<[number, number]>} entries - [score, placement] pairs */
 const results = (entries) =>
@@ -20,6 +23,41 @@ const results = (entries) =>
 describe('buildQuestions', () => {
   it('question ids mirror the server catalog', () => {
     expect([...PREDICTION_QUESTION_IDS].sort()).toEqual([...SERVER_IDS].sort());
+  });
+
+  it('the server derives lines from the same recap window as the board', () => {
+    const match = /export const RECENT_RECAP_DAYS = (\d+);/.exec(seasonApiSource);
+    expect(match).not.toBeNull();
+    expect(Number(match?.[1])).toBe(SERVER_RECAP_DAYS);
+  });
+
+  it('uses server-issued lines in place of locally derived ones', () => {
+    const qs = buildQuestions(
+      results([
+        [69.0, 4],
+        [69.8, 6],
+      ]),
+      'worldClass',
+      { 'over-under': 69.7 }
+    );
+    const overUnder = qs.find((q) => q.id === 'over-under');
+    expect(overUnder?.threshold).toBe(69.7);
+    expect(overUnder?.text).toBe('Next score over or under 69.7?');
+    // Untouched lines keep the local derivation.
+    expect(qs.find((q) => q.id === 'beat-prev')?.threshold).toBe(69.0);
+  });
+
+  it('ignores non-numeric overrides', () => {
+    const qs = buildQuestions(
+      results([
+        [69.0, 4],
+        [69.8, 6],
+      ]),
+      'worldClass',
+      /** @type {any} */ ({ 'over-under': 'x', 'beat-prev': Number.NaN })
+    );
+    expect(qs.find((q) => q.id === 'over-under')?.threshold).toBe(69.4);
+    expect(qs.find((q) => q.id === 'beat-prev')?.threshold).toBe(69.0);
   });
 
   it('builds score-based questions for competitive classes', () => {

@@ -125,9 +125,13 @@ const submitPrediction = onCall({ cors: true }, async (request) => {
         typeof threshold === "number" &&
         Math.abs(threshold - canonicalThreshold) > 0.05
       ) {
+        // Hand back the canonical line so the board can show it and the
+        // director can pick again straight away, rather than bouncing off the
+        // same stale line on every tap.
         throw new HttpsError(
           "failed-precondition",
-          "Your prediction board is out of date — refresh and pick again."
+          "That line just moved — pick again against the updated number.",
+          { reason: "stale-line", questionId, threshold: canonicalThreshold }
         );
       }
 

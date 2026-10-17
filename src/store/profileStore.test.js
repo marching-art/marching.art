@@ -4,9 +4,17 @@
 // local short-circuit, the callable delegation, and the success feedback.
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 
-const { mockCallable, mockToastSuccess, mockTriggerXPFeedback } = vi.hoisted(() => ({
+const {
+  mockCallable,
+  mockSubmitPrediction,
+  mockToastSuccess,
+  mockToastError,
+  mockTriggerXPFeedback,
+} = vi.hoisted(() => ({
   mockCallable: vi.fn(),
+  mockSubmitPrediction: vi.fn(),
   mockToastSuccess: vi.fn(),
+  mockToastError: vi.fn(),
   mockTriggerXPFeedback: vi.fn(),
 }));
 
@@ -26,7 +34,7 @@ vi.mock('../api', () => ({
 
 vi.mock('../api/functions', () => ({
   completeDailyChallenge: mockCallable,
-  submitPrediction: vi.fn(),
+  submitPrediction: mockSubmitPrediction,
   resolvePredictions: vi.fn(),
 }));
 
@@ -45,7 +53,7 @@ vi.mock('firebase/functions', () => ({
 }));
 
 vi.mock('react-hot-toast', () => ({
-  default: { success: mockToastSuccess, error: vi.fn() },
+  default: { success: mockToastSuccess, error: mockToastError },
 }));
 
 import { useProfileStore } from './profileStore';
@@ -135,6 +143,84 @@ describe('profileStore.completeDailyChallenge', () => {
     const ok = await useProfileStore.getState().completeDailyChallenge('visit-scores');
     expect(ok).toBe(false);
     expect(mockTriggerXPFeedback).not.toHaveBeenCalled();
+  });
+});
+
+describe('profileStore.submitPrediction', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    useProfileStore.setState({
+      profile: null,
+      _currentUid: null,
+      predictionLines: null,
+      pendingPredictions: {},
+    });
+  });
+
+  test('saves the pick through the callable', async () => {
+    mockSubmitPrediction.mockResolvedValueOnce({
+      data: { success: true, picked: 'over-under' },
+    });
+    seedStore({ predictions: {} });
+
+    const ok = await useProfileStore
+      .getState()
+      .submitPrediction('over-under', 'Over', 69.4, 'worldClass', 'Show A');
+    expect(ok).toBe(true);
+    expect(mockSubmitPrediction).toHaveBeenCalledWith({
+      questionId: 'over-under',
+      pick: 'Over',
+      threshold: 69.4,
+      corpsClass: 'worldClass',
+      snapshotEvent: 'Show A',
+    });
+    expect(useProfileStore.getState().pendingPredictions).toEqual({});
+  });
+
+  test('a stale-line rejection stores the server line and tells the director', async () => {
+    mockSubmitPrediction.mockRejectedValueOnce(
+      Object.assign(new Error('That line just moved — pick again against the updated number.'), {
+        code: 'functions/failed-precondition',
+        details: { reason: 'stale-line', questionId: 'over-under', threshold: 69.7 },
+      })
+    );
+    seedStore({ predictions: {} });
+
+    const ok = await useProfileStore
+      .getState()
+      .submitPrediction('over-under', 'Over', 69.4, 'worldClass', 'Show A');
+    expect(ok).toBe(false);
+    expect(useProfileStore.getState().predictionLines).toEqual({
+      gameDay: getGameDay(),
+      lines: { 'over-under': 69.7 },
+    });
+    expect(mockToastError).toHaveBeenCalledWith(
+      'That line just moved — pick again against the updated number.'
+    );
+    expect(useProfileStore.getState().pendingPredictions).toEqual({});
+  });
+
+  test('any other rejection is surfaced, not swallowed', async () => {
+    mockSubmitPrediction.mockRejectedValueOnce(new Error('Too many requests.'));
+    seedStore({ predictions: {} });
+
+    const ok = await useProfileStore
+      .getState()
+      .submitPrediction('podium', 'Yes', 3, 'worldClass', 'Show A');
+    expect(ok).toBe(false);
+    expect(mockToastError).toHaveBeenCalledWith('Too many requests.');
+    expect(useProfileStore.getState().predictionLines).toBeNull();
+  });
+
+  test('ignores a second tap while the first pick is in flight', async () => {
+    seedStore({ predictions: {} });
+    useProfileStore.setState({ pendingPredictions: { 'over-under': true } });
+
+    const ok = await useProfileStore
+      .getState()
+      .submitPrediction('over-under', 'Under', 69.4, 'worldClass', 'Show A');
+    expect(ok).toBe(false);
+    expect(mockSubmitPrediction).not.toHaveBeenCalled();
   });
 });
 
