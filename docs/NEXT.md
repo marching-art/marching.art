@@ -427,6 +427,16 @@ src/scripts/buildClientVenues.js` → re-run `buildPlaceIndex.js` (see its
 
 ## Recently shipped (context, newest first — prune when stale)
 
+- 2026-10-17: **Over/Under prediction picks register** (Discord #bug-reports)
+  — the board derived its line from the last `RECENT_RECAP_DAYS` (10) recap
+  days but `submitPrediction` re-derived it from 15 (and every Podium day),
+  so a director who skipped shows got a different 3-score average and every
+  over/under pick was rejected as stale — silently, since the store swallowed
+  callable errors. Server now reads `PREDICTION_RECAP_DAYS` (= client window,
+  parity test) and drops zero/NaN scores like `buildQuestions`; a stale-line
+  rejection returns the canonical line (`details.threshold`), which the store
+  keeps in `predictionLines` and the board renders; every rejection toasts.
+
 - 2026-10-15: **One joint rehearsal per day** (owner direction) — accepting a
   joint now revokes (`status: "revoked"`, `supersededBy`) every other pending
   proposal touching either corps on that day or in the week it filled, inside

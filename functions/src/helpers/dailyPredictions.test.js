@@ -10,7 +10,10 @@ const {
   SCORE_FREE_QUESTION_IDS,
   resolveBucket,
   findRecentPodiumResults,
+  findRecentResultsForCorps,
   deriveQuestionThreshold,
+  fetchRecentRecaps,
+  PREDICTION_RECAP_DAYS,
 } = require("./dailyPredictions");
 
 describe("SoundSport prediction variant", () => {
@@ -124,5 +127,64 @@ describe("Podium Class recent results", () => {
   test("ignores other directors and respects the limit", () => {
     assert.deepEqual(findRecentPodiumResults(recapDocs, "nobody", 5), []);
     assert.equal(findRecentPodiumResults(recapDocs, uid, 1).length, 1);
+  });
+});
+
+// The over/under bug: the board (client) and submitPrediction (server) each
+// derive the line, and the server rejects a pick whose line drifted. They must
+// read the same window of recap days and keep the same score rows, or the
+// over/under line never matches and every pick bounces.
+describe("server lines match the client board", () => {
+  const uid = "dir-1";
+  /** @param {number} day @param {number|null} score */
+  const day = (day, score) => ({
+    offSeasonDay: day,
+    shows: score == null ? [] : [{ eventName: `Day ${day}`, results: [{ uid, corpsClass: "worldClass", totalScore: score, placement: 4 }] }],
+  });
+
+  test("ignores zero and NaN scores, like buildQuestions", () => {
+    const results = [
+      { eventName: "A", score: 69.0, placement: 4 },
+      { eventName: "B", score: 0, placement: 9 },
+      { eventName: "C", score: Number.NaN, placement: 9 },
+      { eventName: "D", score: 69.8, placement: 3 },
+    ];
+    assert.equal(deriveQuestionThreshold("over-under", results), 69.4);
+    assert.equal(deriveQuestionThreshold("beat-prev", results), 69.0);
+  });
+
+  test("fetchRecentRecaps reads only the client's window of days", async () => {
+    /** @type {number|undefined} */
+    let requestedLimit;
+    const db = /** @type {any} */ ({
+      collection: () => ({
+        orderBy: () => ({
+          limit: (/** @type {number} */ n) => {
+            requestedLimit = n;
+            return { get: async () => ({ empty: true, docs: [] }) };
+          },
+        }),
+      }),
+      doc: () => ({
+        get: async () => ({
+          exists: true,
+          data: () => ({ recaps: Array.from({ length: 20 }, (_, i) => day(i + 1, 60 + i)) }),
+        }),
+      }),
+    });
+    const recaps = await fetchRecentRecaps(db, "season-1");
+    assert.equal(requestedLimit, PREDICTION_RECAP_DAYS);
+    // Legacy fallback is windowed the same way: newest PREDICTION_RECAP_DAYS days.
+    assert.equal(recaps.length, PREDICTION_RECAP_DAYS);
+    assert.equal(recaps[0].offSeasonDay, 20);
+  });
+
+  test("a director who skipped shows gets the line the board shows", () => {
+    // Shows on days 15 and 12 sit inside a 10-day window; day 3 does not. A
+    // wider server window averaged in day 3 and the line never matched.
+    const window = [day(15, 69.0), day(14, null), day(13, null), day(12, 69.8)];
+    for (let d = 11; d >= 6; d--) window.push(day(d, null));
+    const results = findRecentResultsForCorps(window, uid, "worldClass", 5);
+    assert.equal(deriveQuestionThreshold("over-under", results), 69.4);
   });
 });

@@ -35,11 +35,18 @@ const ordinal = (n) => {
  * ranked classes, and SoundSport rows carry no numeric score at all — so every
  * field is optional and the body guards each one.
  *
+ * `lineOverrides` carries server-issued lines (question id → threshold) that
+ * replace the locally derived ones. submitPrediction re-derives every line
+ * server-side and, when the board's line has drifted from it, rejects the pick
+ * and returns the canonical number; the board then shows THAT line so the
+ * next tap registers instead of bouncing off the same stale value.
+ *
  * @param {Array<{score?: number, placement?: number, eventName?: string}>} recentResults
  * @param {string|null} [corpsClass]
+ * @param {Record<string, number>|null} [lineOverrides]
  * @returns {Array<{id: string, text: string, options: string[], xp: number, threshold: number}>}
  */
-export const buildQuestions = (recentResults, corpsClass) => {
+export const buildQuestions = (recentResults, corpsClass, lineOverrides) => {
   if (!recentResults || recentResults.length < 2) return [];
 
   if (corpsClass === 'soundSport') {
@@ -76,9 +83,15 @@ export const buildQuestions = (recentResults, corpsClass) => {
   );
   if (scores.length < 2) return [];
 
+  /** @param {string} id @param {number} fallback */
+  const lineFor = (id, fallback) => {
+    const override = lineOverrides?.[id];
+    return typeof override === 'number' && Number.isFinite(override) ? override : fallback;
+  };
+
   const avg = scores.slice(0, 3).reduce((s, v) => s + v, 0) / Math.min(scores.length, 3);
-  const line = Math.round(avg * 10) / 10;
-  const lastScore = scores[0];
+  const line = lineFor('over-under', Math.round(avg * 10) / 10);
+  const lastScore = lineFor('beat-prev', scores[0]);
 
   return [
     {

@@ -24,6 +24,17 @@ const PERFECT_BONUS_COIN = 25;
 const MAX_PREDICTION_DAYS_KEPT = 30;
 
 /**
+ * Recap days the prediction lines are derived from. MUST EQUAL the client's
+ * RECENT_RECAP_DAYS (src/api/season.ts) — the dashboard builds its board from
+ * exactly that window, and submitPrediction rejects a client line that drifts
+ * from the one derived here. A wider server window let a director who skipped
+ * a few shows see one over/under line and be scored against another, so every
+ * over/under pick bounced as "out of date" (parity test in
+ * src/utils/dailyPredictions.test.js).
+ */
+const PREDICTION_RECAP_DAYS = 10;
+
+/**
  * The prediction questions and how each resolves against an authoritative
  * result. `needs` names the result field required to resolve the question, so
  * a pick is left unresolved (rather than mis-scored) when that data is absent.
@@ -117,19 +128,25 @@ const SCORE_FREE_QUESTION_IDS = PREDICTION_QUESTIONS
  *
  * @param {import("firebase-admin/firestore").Firestore} db
  * @param {string} seasonUid
+ * @param {number} [days] - Most recent recap days to read.
  * @returns {Promise<RecapDay[]>}
  */
-async function fetchRecentRecaps(db, seasonUid) {
+async function fetchRecentRecaps(db, seasonUid, days = PREDICTION_RECAP_DAYS) {
   const daysSnap = await db
     .collection(`fantasy_recaps/${seasonUid}/days`)
     .orderBy("offSeasonDay", "desc")
-    .limit(15)
+    .limit(days)
     .get();
   if (!daysSnap.empty) return daysSnap.docs.map((doc) => doc.data());
 
   const legacyDoc = await db.doc(`fantasy_recaps/${seasonUid}`).get();
-  if (legacyDoc.exists) return legacyDoc.data()?.recaps || [];
-  return [];
+  if (!legacyDoc.exists) return [];
+  /** @type {RecapDay[]} */
+  const legacy = legacyDoc.data()?.recaps || [];
+  // Same window as the subcollection read (and the client's legacy fallback).
+  return [...legacy]
+    .sort((a, b) => (b.offSeasonDay || 0) - (a.offSeasonDay || 0))
+    .slice(0, days);
 }
 
 /**
@@ -184,12 +201,19 @@ function findLatestResultForCorps(recapDocs, uid, corpsClass) {
  * (keyed by competitionDay), NOT in fantasy_recaps — so the fantasy readers
  * above find nothing for podiumClass. Mirrors src/api/season.getPodiumSeasonRecaps.
  *
+ * Pass `days` to read only the most recent competition days — the same
+ * bounded window the client's getRecentPodiumRecaps reads for the board.
+ *
  * @param {import("firebase-admin/firestore").Firestore} db
  * @param {string} seasonUid
+ * @param {number} [days] - Most recent competition days; omit for all.
  * @returns {Promise<RecapDay[]>}
  */
-async function fetchPodiumRecaps(db, seasonUid) {
-  const daysSnap = await db.collection(`podium-recaps/${seasonUid}/days`).get();
+async function fetchPodiumRecaps(db, seasonUid, days) {
+  const collection = db.collection(`podium-recaps/${seasonUid}/days`);
+  const daysSnap = days
+    ? await collection.orderBy("competitionDay", "desc").limit(days).get()
+    : await collection.get();
   return daysSnap.docs.map((doc) => doc.data());
 }
 
@@ -244,7 +268,7 @@ function findRecentPodiumResults(recapDocs, uid, limit = 5) {
 async function fetchRecentResultsForClass(db, seasonUid, uid, corpsClass, limit = 5) {
   if (!seasonUid) return [];
   if (corpsClass === "podiumClass") {
-    const recapDocs = await fetchPodiumRecaps(db, seasonUid);
+    const recapDocs = await fetchPodiumRecaps(db, seasonUid, PREDICTION_RECAP_DAYS);
     return findRecentPodiumResults(recapDocs, uid, limit);
   }
   const recapDocs = await fetchRecentRecaps(db, seasonUid);
@@ -269,7 +293,11 @@ async function fetchRecentResultsForClass(db, seasonUid, uid, corpsClass, limit 
  */
 function deriveQuestionThreshold(questionId, recentResults) {
   if (!recentResults || recentResults.length < 2) return null;
-  const scores = recentResults.map((r) => r.score).filter((s) => typeof s === "number");
+  // Same rows the client's buildQuestions keeps: a missing, zero or NaN score
+  // is not something to build a line from.
+  const scores = recentResults.flatMap((r) =>
+    typeof r.score === "number" && r.score > 0 ? [r.score] : []
+  );
   switch (questionId) {
     case "over-under": {
       if (scores.length < 2) return null;
@@ -377,6 +405,7 @@ module.exports = {
   PREDICTION_COIN,
   PERFECT_BONUS_COIN,
   MAX_PREDICTION_DAYS_KEPT,
+  PREDICTION_RECAP_DAYS,
   PREDICTION_QUESTIONS,
   PREDICTION_QUESTION_IDS,
   PREDICTION_PICKS,

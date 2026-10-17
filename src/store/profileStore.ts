@@ -124,6 +124,17 @@ interface ProfileState {
   // Guard against overlapping resolvePredictions calls
   _resolvingPredictions: boolean;
 
+  /**
+   * Server-issued prediction lines for one game day (question id → line).
+   * submitPrediction re-derives every line server-side; when the board's
+   * line has drifted it rejects the pick and returns the canonical number,
+   * which lands here so the board shows it and the next tap registers.
+   */
+  predictionLines: { gameDay: string; lines: Record<string, number> } | null;
+
+  /** Question ids with a pick in flight — the board disables those buttons. */
+  pendingPredictions: Record<string, boolean>;
+
   initProfileListener: (uid: string | null | undefined) => () => void;
   cleanup: () => void;
   completeDailyChallenge: (challengeId: string) => Promise<boolean>;
@@ -171,6 +182,9 @@ export const useProfileStore = create<ProfileState>()((set, get) => ({
   // as results change; the callable is idempotent but the round trip is not
   // free).
   _resolvingPredictions: false,
+
+  predictionLines: null,
+  pendingPredictions: {},
 
   /**
    * Initialize the profile listener for a specific user
@@ -337,6 +351,8 @@ export const useProfileStore = create<ProfileState>()((set, get) => ({
       isAdmin: false,
       _currentUid: null,
       _unsubscribe: null,
+      predictionLines: null,
+      pendingPredictions: {},
     });
   },
 
@@ -387,17 +403,32 @@ export const useProfileStore = create<ProfileState>()((set, get) => ({
    * profile's server-only `predictions` ledger (client-writes are blocked by
    * firestore.rules). The onSnapshot listener syncs the store afterwards, so
    * no optimistic set is needed. Returns true when the pick was accepted.
+   *
+   * A rejection is never silent: the server's message is toasted, and a
+   * stale-line rejection stores the canonical line it returns
+   * (`predictionLines`) so the board re-renders with it and the director can
+   * pick again immediately.
    */
   submitPrediction: async (questionId, pick, threshold, corpsClass, snapshotEvent) => {
-    const { _currentUid, profile } = get();
-    if (!_currentUid || !profile) return false;
+    const { _currentUid, profile, pendingPredictions } = get();
+    if (!_currentUid || !profile || pendingPredictions[questionId]) return false;
 
     // Skip the round trip when the day is closed or the question is answered.
-    const bucket = profile.predictions?.[getGameDay()];
+    const gameDay = getGameDay();
+    const bucket = profile.predictions?.[gameDay];
     if (bucket?.resolved || bucket?.picks?.[questionId]) {
       return false;
     }
 
+    const setPending = (on: boolean) =>
+      set((state) => {
+        const next = { ...state.pendingPredictions };
+        if (on) next[questionId] = true;
+        else delete next[questionId];
+        return { pendingPredictions: next };
+      });
+
+    setPending(true);
     try {
       const { data } = await submitPredictionFn({
         questionId,
@@ -409,7 +440,29 @@ export const useProfileStore = create<ProfileState>()((set, get) => ({
       return !!data?.success && !data.alreadyPicked && !data.locked;
     } catch (error) {
       console.error('Error submitting prediction:', error);
+      const err = error as {
+        message?: string;
+        details?: { reason?: string; questionId?: string; threshold?: unknown };
+      };
+      const details = err?.details;
+      if (
+        details?.reason === 'stale-line' &&
+        typeof details.threshold === 'number' &&
+        Number.isFinite(details.threshold)
+      ) {
+        const current = get().predictionLines;
+        const lines = current?.gameDay === gameDay ? current.lines : {};
+        set({
+          predictionLines: {
+            gameDay,
+            lines: { ...lines, [details.questionId || questionId]: details.threshold },
+          },
+        });
+      }
+      toast.error(err?.message || "Couldn't save that prediction — try again.");
       return false;
+    } finally {
+      setPending(false);
     }
   },
 

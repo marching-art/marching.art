@@ -44,8 +44,12 @@ const PredictionGamePanelInner = ({ recentResults, corpsClass, embedded = false 
   const profile = useProfileStore((state) => state.profile);
   const submitPrediction = useProfileStore((state) => state.submitPrediction);
   const resolvePredictions = useProfileStore((state) => state.resolvePredictions);
+  const predictionLines = useProfileStore((state) => state.predictionLines);
+  const pendingPredictions = useProfileStore((state) => state.pendingPredictions);
 
   const gameDay = getGameDay();
+  // Server-issued lines only apply to the day they were issued for.
+  const lineOverrides = predictionLines?.gameDay === gameDay ? predictionLines.lines : null;
 
   const bucket = /** @type {PredictionBucket} */ (profile?.predictions?.[gameDay] || {});
   const picks = bucket.picks || {};
@@ -56,10 +60,11 @@ const PredictionGamePanelInner = ({ recentResults, corpsClass, embedded = false 
   );
 
   // Generate questions from current data. SoundSport gets the placement-only
-  // set (medal + improvement) — its numeric scores stay hidden.
+  // set (medal + improvement) — its numeric scores stay hidden. A line the
+  // server corrected (stale-line rejection) replaces the local one.
   const questions = useMemo(
-    () => buildQuestions(recentResults || [], corpsClass),
-    [recentResults, corpsClass]
+    () => buildQuestions(recentResults || [], corpsClass, lineOverrides),
+    [recentResults, corpsClass, lineOverrides]
   );
 
   // Trigger server-side resolution once a newer result arrives. The callable
@@ -188,6 +193,7 @@ const PredictionGamePanelInner = ({ recentResults, corpsClass, embedded = false 
           }
 
           // Open — show options
+          const pending = !!pendingPredictions?.[q.id];
           return (
             <div key={q.id} className="px-4 py-3">
               <p className="text-sm text-white mb-2">{q.text}</p>
@@ -195,8 +201,11 @@ const PredictionGamePanelInner = ({ recentResults, corpsClass, embedded = false 
                 {q.options.map((opt) => (
                   <button
                     key={opt}
+                    type="button"
+                    disabled={pending}
+                    aria-busy={pending}
                     onClick={() => handlePick(q.id, opt, q.threshold)}
-                    className="flex-1 py-1.5 text-xs font-bold border border-line bg-surface-raised hover:bg-line text-white transition-colors press-feedback"
+                    className="flex-1 py-1.5 text-xs font-bold border border-line bg-surface-raised hover:bg-line text-white transition-colors press-feedback disabled:opacity-50 disabled:cursor-wait"
                   >
                     {opt}
                   </button>
